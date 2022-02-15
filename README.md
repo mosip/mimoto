@@ -1,5 +1,5 @@
 # mimoto
-This is the mobile server backend supporting mobileid.
+This is the mobile server backend supporting Inji.
 
 ## Requirements
 - Java SE 11
