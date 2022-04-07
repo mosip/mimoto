@@ -129,7 +129,7 @@
         <dependency>
             <groupId>io.mosip.kernel</groupId>
             <artifactId>kernel-auth-adapter</artifactId>
-            <version>${mosip.kernel.core.version}</version>
+            <version>1.1.5.5-SNAPSHOT</version>
         </dependency>
 
         <dependency>
