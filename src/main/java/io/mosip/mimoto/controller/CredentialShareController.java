@@ -82,7 +82,7 @@ public class CredentialShareController {
      * @throws Exception
      */
     @PostMapping(path = "/callback/notify", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthenticateContentAndVerifyIntent(secret = "${mosip.event.secret}", callback = "${mosip.event.callBackUrl}", topic = "${mosip.event.topic}")
+    @PreAuthenticateContentAndVerifyIntent(secret = "${mosip.event.secret}", callback = "/credentialshare/callback/notify", topic = "${mosip.event.topic}")
     public ResponseEntity<GenericResponseDTO> handleSubscribeEvent(@RequestBody EventModel eventModel)
             throws Exception {
         logger.info("Received websub event:: transaction id = " + eventModel.getEvent().getTransactionId());
