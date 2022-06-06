@@ -529,14 +529,14 @@
                 </executions>
                 <configuration>
                     <generateGitPropertiesFile>true</generateGitPropertiesFile>
-                    <generateGitPropertiesFilename>${project.build.outputDirectory}/build.json</generateGitPropertiesFilename>
+                    <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
                     <includeOnlyProperties>
-                        <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>
+                        <includeOnlyProperty>^git.build.(time|version|host)$</includeOnlyProperty>
+                        <includeOnlyProperty>^git.(branch|tags)$</includeOnlyProperty>
                         <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>
                         <includeOnlyProperty>^git.branch$</includeOnlyProperty>
                     </includeOnlyProperties>
                     <commitIdGenerationMode>full</commitIdGenerationMode>
-                    <format>json</format>
                 </configuration>
             </plugin>
         </plugins>
