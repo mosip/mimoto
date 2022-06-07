@@ -1,7 +1,6 @@
 package io.mosip.mimoto.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,7 +26,6 @@ import io.mosip.mimoto.service.RestClientService;
 import io.mosip.mimoto.util.DateUtils;
 import io.mosip.mimoto.util.LoggerUtil;
 
-@SpringBootApplication
 @RestController
 public class ResidentServiceController {
 
