@@ -51,14 +51,7 @@ public class Config extends WebSecurityConfigurerAdapter {
         if (!isCSRFEnable) {
             http = http.csrf().disable();
         }
-        // http.authorizeRequests().antMatchers("*").authenticated().and().exceptionHandling()
-        // .authenticationEntryPoint(new AuthEntryPoint()).and().sessionManagement()
-        // .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
-        // http.addFilterBefore(authFilter(),
-        // UsernamePasswordAuthenticationFilter.class);
-
-        // FIXME: web security is disabled for all enpoints
         http.authorizeRequests().antMatchers("*").authenticated().anyRequest().permitAll().and().exceptionHandling();
         if (isCORSEnable) {
             http.addFilterBefore(new CorsFilter(origins), AuthFilter.class);
