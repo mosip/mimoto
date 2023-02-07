@@ -79,6 +79,8 @@
         <commons-codec>1.15</commons-codec>
         <swagger.version>2.9.2</swagger.version>
         <springdoc.version>1.5.10</springdoc.version>
+	<!-- Prometheus -->
+	<io.micrometer.prometheus.version>1.5.5</io.micrometer.prometheus.version>
 
 
         <sonar.coverage.exclusions>
