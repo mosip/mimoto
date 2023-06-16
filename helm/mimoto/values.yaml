@@ -457,7 +457,7 @@ istio:
   gateways:
     - istio-system/internal
     - istio-system/public
-  prefix: /mimotomobileapp
+  prefix: /residentmobileapp
   rewrite: /v1/mimoto
 
 enable_insecure: false
