@@ -67,42 +67,27 @@ function installing_onboarder() {
     s3_user_key=$( kubectl -n s3 get cm s3 -o json | jq -r '.data."s3-user-key"' )
 
     echo Onboarding default partners
-    helm -n $NS install mimoto-keybinding-partner-onboarder mosip/partner-onboarder \
+    helm -n $NS install mimoto-keybinding-partner-onboarder /home/techno-422/Desktop/MOSIP/mosip-helm/charts/partner-onboarder \
     --set onboarding.configmaps.s3.s3-host="$s3_url" \
     --set onboarding.configmaps.s3.s3-user-key="$s3_user_key" \
     --set onboarding.configmaps.s3.s3-region="$s3_region" \
     --set onboarding.configmaps.s3.s3-bucket-name="$s3_bucket" \
     $ENABLE_INSECURE \
     -f values.yaml \
-    --version $CHART_VERSION &
-    helm_install_pid=$!
+    --version $CHART_VERSION \
+    --wait
 
-    # Wait for the Helm installation command to finish
-    wait $helm_install_pid
+    kubectl wait --for=condition=complete job/mimoto-keybinding-partner-onboarder-mimoto-keybinding -n $NS --timeout=5m
 
-    # Check the status of the Helm installation job
-    if [ $? -eq 0 ]; then
-      # Helm installation command completed successfully, now check job status
-      kubectl wait --for=condition=complete job/mimoto-keybinding-partner-onboarder-mimoto-keybinding -n $NS --timeout=5m
 
-      # Check the status of the Helm installation job
-      if [ $? -eq 0 ]; then
-        wallet_binding_partner_api_key=$(kubectl logs -n $NS job/mimoto-keybinding-partner-onboarder-mimoto-keybinding | grep "mpartner default mimoto keybinding apikey:" | awk '{print $6}')
-        echo Wallet Binding Partner Api Key is $wallet_binding_partner_api_key
-        kubectl -n $NS create secret generic mimoto-wallet-binding-partner-api-key --from-literal=mimoto-wallet-binding-partner-api-key=$wallet_binding_partner_api_key --dry-run=client -o yaml | kubectl apply -f -
-        ./copy_cm_func.sh secret mimoto-wallet-binding-partner-api-key mimoto config-server
-        kubectl -n config-server set env --keys=mimoto-wallet-binding-partner-api-key --from secret/mimoto-wallet-binding-partner-api-key deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
-        kubectl -n config-server get deploy -o name |  xargs -n1 -t  kubectl -n config-server rollout status
-        kubectl rollout restart deployment -n mimoto mimoto
-        echo Mimoto wallet binding partner api key updated successfully.
-      else
-        # Helm installation job failed, handle the error here if needed
-        echo "Helm installation job failed. Please check the logs for more details."
-      fi
-    else
-      # Helm installation command failed, handle the error here if needed
-      echo "Helm installation failed. Please check the logs for more details."
-    fi
+    wallet_binding_partner_api_key=$(kubectl logs -n $NS job/mimoto-keybinding-partner-onboarder-mimoto-keybinding | grep "mpartner default mimoto keybinding apikey:" | awk '{print $6}')
+    echo Wallet Binding Partner Api Key is $wallet_binding_partner_api_key
+    kubectl -n $NS create secret generic mimoto-wallet-binding-partner-api-key --from-literal=mimoto-wallet-binding-partner-api-key=$wallet_binding_partner_api_key --dry-run=client -o yaml | kubectl apply -f -
+    ./copy_cm_func.sh secret mimoto-wallet-binding-partner-api-key mimoto config-server
+    kubectl -n config-server set env --keys=mimoto-wallet-binding-partner-api-key --from secret/mimoto-wallet-binding-partner-api-key deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
+    kubectl -n config-server get deploy -o name |  xargs -n1 -t  kubectl -n config-server rollout status
+    kubectl rollout restart deployment -n mimoto mimoto
+    echo Mimoto wallet binding partner api key updated successfully.
 
     echo Reports are moved to S3 under onboarder bucket
     return 0
