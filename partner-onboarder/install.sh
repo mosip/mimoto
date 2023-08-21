@@ -75,10 +75,7 @@ function installing_onboarder() {
     $ENABLE_INSECURE \
     -f values.yaml \
     --version $CHART_VERSION \
-    --wait
-
-    kubectl wait --for=condition=complete job/mimoto-keybinding-partner-onboarder-mimoto-keybinding -n $NS --timeout=5m
-
+    --wait --wait-for-jobs
 
     wallet_binding_partner_api_key=$(kubectl logs -n $NS job/mimoto-keybinding-partner-onboarder-mimoto-keybinding | grep "mpartner default mimoto keybinding apikey:" | awk '{print $6}')
     echo Wallet Binding Partner Api Key is $wallet_binding_partner_api_key
