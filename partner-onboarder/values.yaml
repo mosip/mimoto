@@ -20,3 +20,5 @@ onboarding:
       enabled: false
     - name: mimoto-keybinding
       enabled: true
+    - name: mimoto-oidc
+      enabled: true
