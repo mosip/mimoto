@@ -461,3 +461,9 @@ istio:
   rewrite: /v1/mimoto
 
 enable_insecure: false
+
+volumes:
+  secrets:
+    mimoto:
+      key: keystorep12
+      path: /home/mosip/certs
