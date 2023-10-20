@@ -72,7 +72,7 @@
         <google.zxing.version>3.3.3</google.zxing.version>
         <itextcore.version>7.2.0</itextcore.version>
         <itexthtml2pdf.version>2.0.0</itexthtml2pdf.version>
-        <itext.version>5.5.13</itext.version>
+        <itext.version>5.5.13.3</itext.version>
         <commons-math3>3.6.1</commons-math3>
         <commons-lang3>3.7</commons-lang3>
         <commons-io>2.11.0</commons-io>
