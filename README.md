@@ -23,7 +23,7 @@ cd partner-onboarder
 ./install.sh
 
 * During the execution of the 'install.sh' script, a prompt appears requesting information for the S3 bucket, including its name and URL.
-* Once the job is completed, log in to Minio and check the reports. There should not be any failures.
+* Once the job is completed, log in to S3 and check the reports. There should not be any failures.
 
 ```
 ```
