@@ -19,6 +19,7 @@ mvn spring-boot:run -Dspring.profiles.active=local
 
 ### Install
 ```
+1. run Onboarder
 cd partner-onboarder
 ./install.sh
 
@@ -27,6 +28,7 @@ cd partner-onboarder
 
 ```
 ```
+2. run mimoto
 cd helm/mimoto
 ./install.sh
 ```
