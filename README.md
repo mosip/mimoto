@@ -19,16 +19,16 @@ mvn spring-boot:run -Dspring.profiles.active=local
 
 ### Install
 
-1. Execute Onboarder install
+1. Execute Onboarder install script 
 
 ```
 cd partner-onboarder
 ./install.sh
 ```
-* During the execution of the 'install.sh' script, a prompt appears requesting information for the S3 bucket, including its name and URL.
+* During the execution of the `install.sh` script, a prompt appears requesting information for the S3 bucket, including its name and URL.
 * Once the job is completed, log in to S3 and check the reports. There should not be any failures.
 
-2. Execute mimoto install
+2. Execute mimoto install script
 
 ```
 cd helm/mimoto
