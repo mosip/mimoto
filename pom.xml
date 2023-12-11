@@ -38,11 +38,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
             <!-- mosip -->
-        <mosip.kernel.core.version>1.2.1-SNAPSHOT</mosip.kernel.core.version>
-        <mosip.biometric.util.version>1.2.1-SNAPSHOT</mosip.biometric.util.version>
+        <mosip.kernel.core.version>1.2.1</mosip.kernel.core.version>
+        <mosip.biometric.util.version>1.2.1</mosip.biometric.util.version>
         <mosip.kernel.auth.adapter.version>1.2.0.1-B1</mosip.kernel.auth.adapter.version>
-        <kernel.biometrics.api.version>1.2.1-SNAPSHOT</kernel.biometrics.api.version>
-        <kernel.cbeffutil.version>1.2.1-SNAPSHOT</kernel.cbeffutil.version>
+        <kernel.biometrics.api.version>1.2.1</kernel.biometrics.api.version>
+        <kernel.cbeffutil.version>1.2.1</kernel.cbeffutil.version>
         <vertx.version>3.9.1</vertx.version>
 
             <!-- maven -->
