@@ -14,10 +14,10 @@ import org.springframework.util.MultiValueMap;
 import java.util.Map;
 
 @Service
-public class IdpServiceImpl implements IdpService {
+public class IdpSunbirdServiceImpl implements IdpService {
 
-    @Value("${mosip.oidc.client.id}")
-    String clientId;
+    @Value("${mosip.oidc.sunbird.client.id}")
+    public String clientId;
 
     @Value("${mosip.oidc.client.assertion.type}")
     String clientAssertionType;
@@ -31,13 +31,13 @@ public class IdpServiceImpl implements IdpService {
     @Value("${mosip.oidc.p12.path}")
     String keyStorePath;
 
-    @Value("${mosip.oidc.p12.alias}")
+    @Value("${mosip.oidc.sunbird.p12.alias}")
     private String alias;
 
-    @Value("${mosip.oidc.esignet.aud}")
+    @Value("${mosip.oidc.sunbird.esignet.aud}")
     private String audience;
 
-    @Value("${mosip.oidc.esignet.token.endpoint}")
+    @Value("${mosip.oidc.sunbird.esignet.token.endpoint}")
     String tokenEndpoint;
 
     @Autowired
@@ -61,9 +61,10 @@ public class IdpServiceImpl implements IdpService {
 
         return new HttpEntity<>(map, headers);
     }
-
     @Override
     public String getTokenEndpoint(){
         return tokenEndpoint;
     }
+
+
 }

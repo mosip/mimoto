@@ -48,21 +48,6 @@ public class JoseUtil {
     @Autowired
     private CryptoCoreUtil cryptoCoreUtil;
 
-    @Value("${mosip.oidc.p12.filename}")
-    private String fileName;
-
-    @Value("${mosip.oidc.p12.password}")
-    private String cyptoPassword;
-
-    @Value("${mosip.oidc.p12.path}")
-    String keyStorePath;
-
-    @Value("${mosip.oidc.p12.alias}")
-    private String alias;
-
-    @Value("${mosip.oidc.esignet.aud}")
-    private String audience;
-
     public static JwkDto getJwkFromPublicKey(String publicKeyString) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
         RSAPublicKeySpec keySpec = publicKeyString.startsWith(BEGIN_KEY) ? getKeySpecForPublicKey(publicKeyString) : getKeySpecForRSAKey(publicKeyString);
@@ -145,7 +130,7 @@ public class JoseUtil {
         return responseWrapper;
     }
 
-    public String getJWT(String clientId) {
+    public String getJWT(String clientId, String keyStorePath, String fileName, String alias, String cyptoPassword, String audience) {
 
         Map<String, Object> header = new HashMap<>();
         header.put("alg", ALG_RS256);
