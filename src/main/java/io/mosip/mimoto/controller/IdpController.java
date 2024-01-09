@@ -1,6 +1,5 @@
 package io.mosip.mimoto.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import io.mosip.kernel.core.logger.spi.Logger;
@@ -14,9 +13,10 @@ import io.mosip.mimoto.exception.IdpException;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.RestClientService;
+import io.mosip.mimoto.service.impl.IdpSunbirdServiceImpl;
+import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BindingResult;
@@ -42,17 +42,13 @@ public class IdpController {
     private JoseUtil joseUtil;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private IdpSunbirdServiceImpl idpSunbirdServiceImpl;
+
+    @Autowired
+    private IdpServiceImpl idpServiceImpl;
 
     @Autowired
     RequestValidator requestValidator;
-
-    @Value("${mosip.oidc.esignet.token.endpoint}")
-    String tokenEndpoint;
-
-    @Autowired
-    IdpService idpService;
-
     @PostMapping("/binding-otp")
     @SuppressWarnings("unchecked")
     public ResponseEntity<Object> otpRequest(@Valid @RequestBody BindingOtpRequestDto requestDTO, BindingResult result) throws Exception {
@@ -108,13 +104,14 @@ public class IdpController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @PostMapping(value = "/get-token", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE})
-    public ResponseEntity getToken(@RequestParam Map<String, String> params) {
+    @PostMapping(value = {"/get-token","/get-token/{issuer}"}, consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE})
+    public ResponseEntity getToken(@RequestParam Map<String, String> params, @PathVariable(required = false) String issuer) {
         logger.debug("Started Token Call get-token-> " + params.toString());
         RestTemplate restTemplate = new RestTemplate();
         try {
+            IdpService idpService = "Sunbird".equals(issuer) ? idpSunbirdServiceImpl : idpServiceImpl;
             HttpEntity<MultiValueMap<String, String>> request = idpService.constructGetTokenRequest(params);
-            TokenResponseDTO response = restTemplate.postForObject(tokenEndpoint, request, TokenResponseDTO.class);
+            TokenResponseDTO response = restTemplate.postForObject(idpService.getTokenEndpoint(), request, TokenResponseDTO.class);
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception ex){
             logger.error("Exception Occured while invoking the get-token endpoint", ex);
