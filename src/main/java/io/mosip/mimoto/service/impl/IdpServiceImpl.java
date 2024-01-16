@@ -1,7 +1,10 @@
 package io.mosip.mimoto.service.impl;
 
+import io.mosip.kernel.core.logger.spi.Logger;
+import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.util.JoseUtil;
+import io.mosip.mimoto.util.LoggerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -15,9 +18,7 @@ import java.util.Map;
 
 @Service
 public class IdpServiceImpl implements IdpService {
-
-    @Value("${mosip.oidc.client.id}")
-    String clientId;
+    public IssuerDTO issuerDTO;
 
     @Value("${mosip.oidc.client.assertion.type}")
     String clientAssertionType;
@@ -31,39 +32,41 @@ public class IdpServiceImpl implements IdpService {
     @Value("${mosip.oidc.p12.path}")
     String keyStorePath;
 
-    @Value("${mosip.oidc.p12.alias}")
-    private String alias;
-
-    @Value("${mosip.oidc.esignet.aud}")
-    private String audience;
-
-    @Value("${mosip.oidc.esignet.token.endpoint}")
-    String tokenEndpoint;
-
     @Autowired
     JoseUtil joseUtil;
+
+    private final Logger logger = LoggerUtil.getLogger(IdpServiceImpl.class);
+
+
+    public IdpServiceImpl(IssuerDTO issuerDTO){
+        this.issuerDTO = issuerDTO;
+    }
 
     @Override
     public HttpEntity<MultiValueMap<String, String>> constructGetTokenRequest(Map<String, String> params) {
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        String clientAssertion = joseUtil.getJWT(clientId, keyStorePath, fileName, alias, cyptoPassword, audience);
-
         MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
-        map.add("code", params.get("code"));
-        map.add("client_id", clientId);
-        map.add("grant_type", params.get("grant_type"));
-        map.add("redirect_uri", params.get("redirect_uri"));
-        map.add("client_assertion", clientAssertion.replace("[","").replace("]",""));
-        map.add("client_assertion_type", clientAssertionType);
-        map.add("code_verifier", params.get("code_verifier"));
+        try {
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            String clientAssertion = joseUtil.getJWT(issuerDTO.getClient_id(), keyStorePath, fileName, issuerDTO.getClient_alias(), cyptoPassword, issuerDTO.getCredential_audience());
+
+            map.add("code", params.get("code"));
+            map.add("client_id", issuerDTO.getClient_id());
+            map.add("grant_type", params.get("grant_type"));
+            map.add("redirect_uri", params.get("redirect_uri"));
+            map.add("client_assertion", clientAssertion.replace("[","").replace("]",""));
+            map.add("client_assertion_type", clientAssertionType);
+            map.add("code_verifier", params.get("code_verifier"));
+        } catch (Exception e){
+            logger.error("Exception Occurred while Loading the Issuers for Get Token Endpoint");
+        }
+
 
         return new HttpEntity<>(map, headers);
     }
 
     @Override
     public String getTokenEndpoint(){
-        return tokenEndpoint;
+        return issuerDTO.getToken_endpoint();
     }
 }

@@ -1,19 +1,19 @@
 package io.mosip.mimoto.controller;
 
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.kernel.core.util.JsonUtils;
 import io.mosip.mimoto.constant.ApiName;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.ErrorDTO;
+import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.IdpException;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.IdpService;
+import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.RestClientService;
-import io.mosip.mimoto.service.impl.IdpSunbirdServiceImpl;
 import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,6 @@ public class IdpController {
     private final Logger logger = LoggerUtil.getLogger(IdpController.class);
     private static final boolean USE_BEARER_TOKEN = true;
     private static final String ID = "mosip.mimoto.idp";
-    private Gson gson = new Gson();
 
     @Autowired
     private RestClientService<Object> restClientService;
@@ -42,10 +41,7 @@ public class IdpController {
     private JoseUtil joseUtil;
 
     @Autowired
-    private IdpSunbirdServiceImpl idpSunbirdServiceImpl;
-
-    @Autowired
-    private IdpServiceImpl idpServiceImpl;
+    IssuersService issuersService;
 
     @Autowired
     RequestValidator requestValidator;
@@ -104,12 +100,13 @@ public class IdpController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @PostMapping(value = {"/get-token","/get-token/{issuer}"}, consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE})
+    @PostMapping(value = {"/get-token/{issuer}"}, consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE})
     public ResponseEntity getToken(@RequestParam Map<String, String> params, @PathVariable(required = false) String issuer) {
         logger.debug("Started Token Call get-token-> " + params.toString());
         RestTemplate restTemplate = new RestTemplate();
         try {
-            IdpService idpService = "Sunbird".equals(issuer) ? idpSunbirdServiceImpl : idpServiceImpl;
+            IssuerDTO issuerDTO = issuersService.getIssuerConfig(issuer);
+            IdpService idpService = new IdpServiceImpl(issuerDTO);
             HttpEntity<MultiValueMap<String, String>> request = idpService.constructGetTokenRequest(params);
             TokenResponseDTO response = restTemplate.postForObject(idpService.getTokenEndpoint(), request, TokenResponseDTO.class);
             return ResponseEntity.status(HttpStatus.OK).body(response);

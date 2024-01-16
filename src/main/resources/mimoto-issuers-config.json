@@ -112,6 +112,7 @@
       ],
       "protocol": "OpenId4VCI",
       "client_id": "7-*****************IWRDAg1x-M",
+      "client_alias": "mpartner-default-mimotooidc",
       "scopes_supported": [
         "mosip_identity_vc_ldp"
       ],
@@ -121,8 +122,12 @@
       ".well-known": null,
       "redirect_uri": "io.mosip.residentapp.inji://oauthredirect",
       "authorization_endpoint": "https://esignet.dev1.mosip.net/authorize",
-      "token_endpoint": "https://api.dev1.mosip.net/residentmobileapp/get-token",
+      "token_endpoint": "https://api.dev1.mosip.net/residentmobileapp/get-token/ESignet",
       "credential_endpoint": "https://api-internal.dev1.mosip.net/v1/esignet/vci/credential",
+      "credential_type": [
+        "VerifiableCredential",
+        "MOSIPVerifiableCredential"
+      ],
       "credential_audience": "https://esignet.dev1.mosip.net/v1/esignet"
     },
     {
@@ -139,6 +144,7 @@
       ],
       "protocol": "OpenId4VCI",
       "client_id": "${mimoto.oidc.partner.clientid}",
+      "client_alias": "esignet-sunbird-partner",
       "scopes_supported": ["sunbird_rc_insurance_vc_ldp"],
       "additional_headers": { "Accept": "application/json" },
       ".well-known": null,
@@ -146,6 +152,10 @@
       "authorization_endpoint": "https://${mosip.esignet.mock.host}/authorize",
       "token_endpoint": "https://${mosip.api.public.host}/residentmobileapp/get-token/Sunbird",
       "credential_endpoint": "https://${mosip.esignet.mock.host}/v1/esignet/vci/credential",
+      "credential_type": [
+        "VerifiableCredential",
+        "InsuranceCredential"
+      ],
       "credential_audience": "https://${mosip.esignet.mock.host}/v1/esignet"
     }
   ]

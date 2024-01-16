@@ -41,5 +41,7 @@ public class IssuerDTO {
     @JsonInclude(NON_NULL)
     String credential_audience;
     @JsonInclude(NON_NULL)
+    String client_alias;
+    @JsonInclude(NON_NULL)
     Map<String, String> additional_headers;
 }
