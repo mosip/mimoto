@@ -61,6 +61,6 @@ public class IdpServiceImpl implements IdpService {
 
     @Override
     public String getTokenEndpoint(IssuerDTO issuerDTO){
-        return issuerDTO.getToken_endpoint();
+        return issuerDTO.getProxy_token_endpoint();
     }
 }

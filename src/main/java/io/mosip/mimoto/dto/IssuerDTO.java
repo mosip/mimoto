@@ -35,6 +35,8 @@ public class IssuerDTO {
     @JsonInclude(NON_NULL)
     String token_endpoint;
     @JsonInclude(NON_NULL)
+    String proxy_token_endpoint;
+    @JsonInclude(NON_NULL)
     String credential_endpoint;
     @JsonInclude(NON_NULL)
     List<String> credential_type;
