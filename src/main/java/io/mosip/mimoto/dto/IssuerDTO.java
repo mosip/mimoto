@@ -33,6 +33,8 @@ public class IssuerDTO {
     @JsonInclude(NON_NULL)
     String authorization_endpoint;
     @JsonInclude(NON_NULL)
+    String authorization_audience;
+    @JsonInclude(NON_NULL)
     String token_endpoint;
     @JsonInclude(NON_NULL)
     String proxy_token_endpoint;
