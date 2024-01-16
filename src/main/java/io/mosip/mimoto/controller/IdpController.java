@@ -109,6 +109,7 @@ public class IdpController {
         RestTemplate restTemplate = new RestTemplate();
         try {
             IssuerDTO issuerDTO = issuersService.getIssuerConfig(issuer);
+            logger.info("Issuer DTO is > " + issuerDTO);
             HttpEntity<MultiValueMap<String, String>> request = idpService.constructGetTokenRequest(params, issuerDTO);
             TokenResponseDTO response = restTemplate.postForObject(idpService.getTokenEndpoint(issuerDTO), request, TokenResponseDTO.class);
             return ResponseEntity.status(HttpStatus.OK).body(response);
