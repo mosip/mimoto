@@ -44,6 +44,9 @@ public class IdpController {
     IssuersService issuersService;
 
     @Autowired
+    IdpService idpService;
+
+    @Autowired
     RequestValidator requestValidator;
     @PostMapping("/binding-otp")
     @SuppressWarnings("unchecked")
@@ -106,9 +109,8 @@ public class IdpController {
         RestTemplate restTemplate = new RestTemplate();
         try {
             IssuerDTO issuerDTO = issuersService.getIssuerConfig(issuer);
-            IdpService idpService = new IdpServiceImpl(issuerDTO);
-            HttpEntity<MultiValueMap<String, String>> request = idpService.constructGetTokenRequest(params);
-            TokenResponseDTO response = restTemplate.postForObject(idpService.getTokenEndpoint(), request, TokenResponseDTO.class);
+            HttpEntity<MultiValueMap<String, String>> request = idpService.constructGetTokenRequest(params, issuerDTO);
+            TokenResponseDTO response = restTemplate.postForObject(idpService.getTokenEndpoint(issuerDTO), request, TokenResponseDTO.class);
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception ex){
             logger.error("Exception Occured while invoking the get-token endpoint", ex);

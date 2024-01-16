@@ -18,7 +18,6 @@ import java.util.Map;
 
 @Service
 public class IdpServiceImpl implements IdpService {
-    public IssuerDTO issuerDTO;
 
     @Value("${mosip.oidc.client.assertion.type}")
     String clientAssertionType;
@@ -37,13 +36,8 @@ public class IdpServiceImpl implements IdpService {
 
     private final Logger logger = LoggerUtil.getLogger(IdpServiceImpl.class);
 
-
-    public IdpServiceImpl(IssuerDTO issuerDTO){
-        this.issuerDTO = issuerDTO;
-    }
-
     @Override
-    public HttpEntity<MultiValueMap<String, String>> constructGetTokenRequest(Map<String, String> params) {
+    public HttpEntity<MultiValueMap<String, String>> constructGetTokenRequest(Map<String, String> params, IssuerDTO issuerDTO) {
         HttpHeaders headers = new HttpHeaders();
         MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
         try {
@@ -66,7 +60,7 @@ public class IdpServiceImpl implements IdpService {
     }
 
     @Override
-    public String getTokenEndpoint(){
+    public String getTokenEndpoint(IssuerDTO issuerDTO){
         return issuerDTO.getToken_endpoint();
     }
 }
