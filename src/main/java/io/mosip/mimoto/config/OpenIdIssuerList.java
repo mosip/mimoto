@@ -33,25 +33,27 @@ public class OpenIdIssuerList implements ApplicationRunner {
         AtomicReference<String> fieldErrors = new AtomicReference<>("");
         AtomicReference<Set<String>> credentialIssuers = new AtomicReference<>(new HashSet<>());
 
-        issuerDTOList.getIssuers().forEach(issuerDTO -> {
-            if(!issuerDTO.getProtocol().equals("OTP")){
-                errors.set(new BeanPropertyBindingResult(issuerDTO, "issuerDTO"));
-                validator.validate(issuerDTO, errors.get());
-                String credentialIssuer = issuerDTO.getCredential_issuer();
-                String[] tokenEndpointArray = issuerDTO.getToken_endpoint().split("/");
-                Set<String> currentIssuers = credentialIssuers.get();
-                if(!currentIssuers.add(credentialIssuer)){
-                    throw new RuntimeException(VALIDATION_ERROR_MSG + "duplicate value found " + credentialIssuer );
+        if(issuerDTOList != null){
+            issuerDTOList.getIssuers().forEach(issuerDTO -> {
+                if (!issuerDTO.getProtocol().equals("OTP")) {
+                    errors.set(new BeanPropertyBindingResult(issuerDTO, "issuerDTO"));
+                    validator.validate(issuerDTO, errors.get());
+                    String credentialIssuer = issuerDTO.getCredential_issuer();
+                    String[] tokenEndpointArray = issuerDTO.getToken_endpoint().split("/");
+                    Set<String> currentIssuers = credentialIssuers.get();
+                    if (!currentIssuers.add(credentialIssuer)) {
+                        throw new RuntimeException(VALIDATION_ERROR_MSG + "duplicate value found " + credentialIssuer);
+                    }
+                    if (!tokenEndpointArray[tokenEndpointArray.length - 1].equals(credentialIssuer)) {
+                        throw new RuntimeException(VALIDATION_ERROR_MSG + "TokenEndpoint does not match with the credential issuer " + credentialIssuer);
+                    }
+                    credentialIssuers.set(currentIssuers);
                 }
-                if(!tokenEndpointArray[tokenEndpointArray.length -1].equals(credentialIssuer)){
-                    throw new RuntimeException(VALIDATION_ERROR_MSG + "TokenEndpoint does not match with the credential issuer " + credentialIssuer );
-                }
-                credentialIssuers.set(currentIssuers);
-            }
-        });
+            });
+        }
 
 
-        if (errors.get().hasErrors()) {
+        if (errors.get() != null && errors.get().hasErrors()) {
             errors.get().getFieldErrors().forEach(error -> {
                 fieldErrors.set(fieldErrors.get() + error.getField() + " " + error.getDefaultMessage() + "\n");
             });
