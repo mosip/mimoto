@@ -31,6 +31,20 @@ public class IssuersServiceImpl implements IssuersService {
         return issuers;
     }
 
+    @Override
+    public IssuersDTO getAllIssuersWithAllFields() throws ApiNotAccessibleException, IOException {
+        IssuersDTO issuers;
+        String issuersConfigJsonValue = utilities.getIssuersConfigJsonValue();
+        if (issuersConfigJsonValue == null) {
+            throw new ApiNotAccessibleException();
+        }
+        Gson gsonWithIssuerDataOnlyFilter = new GsonBuilder().create();
+        issuers = gsonWithIssuerDataOnlyFilter.fromJson(issuersConfigJsonValue, IssuersDTO.class);
+
+        return issuers;
+    }
+
+
 
     @Override
     public IssuerDTO getIssuerConfig(String issuerId) throws ApiNotAccessibleException, IOException {

@@ -123,6 +123,7 @@
       "redirect_uri": "io.mosip.residentapp.inji://oauthredirect",
       "authorization_endpoint": "https://esignet.dev1.mosip.net/authorize",
       "authorization_audience": "https://${mosip.esignet.host}/v1/esignet/oauth/v2/token",
+      "proxy_token_endpoint": "https://esignet-mock.dev1.mosip.net/v1/esignet/oauth/token",
       "token_endpoint": "https://api.dev1.mosip.net/residentmobileapp/get-token/ESignet",
       "credential_endpoint": "https://api-internal.dev1.mosip.net/v1/esignet/vci/credential",
       "credential_type": [
@@ -140,6 +141,8 @@
             "url": "https://sunbird.org/images/sunbird-logo-new.png",
             "alt_text": "a square logo of a Sunbird"
           },
+          "title": "Download Sunbird Credential",
+          "description": "Enter your Policy Number to download your card.",
           "language": "en"
         }
       ],
@@ -152,6 +155,7 @@
       "redirect_uri": "io.mosip.residentapp.inji://oauthredirect",
       "authorization_endpoint": "https://${mosip.esignet.mock.host}/authorize",
       "authorization_audience": "https://${mosip.esignet.mock.host}/v1/esignet/oauth/v2/token",
+      "proxy_token_endpoint": "https://esignet-mock.dev1.mosip.net/v1/esignet/oauth/token",
       "token_endpoint": "https://${mosip.api.public.host}/residentmobileapp/get-token/Sunbird",
       "credential_endpoint": "https://${mosip.esignet.mock.host}/v1/esignet/vci/credential",
       "credential_type": [
