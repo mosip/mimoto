@@ -9,5 +9,7 @@ import java.io.IOException;
 public interface IssuersService {
     IssuersDTO getAllIssuers() throws ApiNotAccessibleException, IOException;
 
+    IssuersDTO getAllIssuersWithAllFields() throws ApiNotAccessibleException, IOException;
+
     IssuerDTO getIssuerConfig(String issuerId) throws ApiNotAccessibleException, IOException;
 }
