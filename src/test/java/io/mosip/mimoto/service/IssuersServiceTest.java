@@ -18,10 +18,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -36,7 +33,7 @@ public class IssuersServiceTest {
     @Mock
     Utilities utilities;
 
-    List<String> issuerConfigRelatedFields = List.of("additional_headers", "authorization_endpoint", "token_endpoint", "credential_endpoint", "credential_audience", "redirect_uri");
+    List<String> issuerConfigRelatedFields = List.of("additional_headers", "authorization_endpoint","authorization_audience", "token_endpoint", "proxy_token_endpoint", "credential_endpoint", "credential_audience", "redirect_uri");
 
 
     static IssuerDTO getIssuerDTO(String issuerName, List<String> nullFields) {
@@ -55,12 +52,20 @@ public class IssuersServiceTest {
         else {
             if (!nullFields.contains("redirect_uri"))
                 issuer.setRedirect_uri("/redirection");
+            if (!nullFields.contains("authorization_audience"))
+                issuer.setAuthorization_audience("/authorization_audience");
+            if (!nullFields.contains("redirect_uri"))
+                issuer.setRedirect_uri("/redirection");
             if (!nullFields.contains("authorization_endpoint"))
                 issuer.setAuthorization_endpoint("/authorization_endpoint");
             if (!nullFields.contains("token_endpoint"))
-                issuer.setAuthorization_endpoint("/token_endpoint");
+                issuer.setToken_endpoint("/token_endpoint");
+            if (!nullFields.contains("proxy_token_endpoint"))
+                issuer.setProxy_token_endpoint("/proxy_token_endpoint");
             if (!nullFields.contains("credential_endpoint"))
-                issuer.setAuthorization_endpoint("/credential_endpoint");
+                issuer.setCredential_endpoint("/credential_endpoint");
+            if (!nullFields.contains("credential_audience"))
+                issuer.setCredential_audience("/credential_audience");
             if (!nullFields.contains("additional_headers"))
                 issuer.setAdditional_headers(Map.of("Content-Type", "application/json"));
         }
@@ -100,6 +105,17 @@ public class IssuersServiceTest {
         IssuerDTO issuer = issuersService.getIssuerConfig("Issuer1id");
 
         assertEquals(expectedIssuer, issuer);
+    }
+
+    @Test
+    public void shouldReturnIssuerDataAndConfigForAllIssuer() throws ApiNotAccessibleException, IOException {
+        IssuersDTO expectedIssuers = new IssuersDTO();
+        List<IssuerDTO> issuers = new ArrayList<>(List.of(getIssuerDTO("Issuer1", new ArrayList<>()), getIssuerDTO("Issuer2", new ArrayList<>())));
+        expectedIssuers.setIssuers(issuers);
+
+        IssuersDTO issuersDTO = issuersService.getAllIssuersWithAllFields();
+
+        assertEquals(expectedIssuers, issuersDTO);
     }
 
     @Test
