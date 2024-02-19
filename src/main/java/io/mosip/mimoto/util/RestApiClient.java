@@ -163,6 +163,41 @@ public class RestApiClient {
         return result;
     }
 
+    public <T> T postApi(String uri, MediaType mediaType, Object requestType, Class<?> responseClass, String bearerToken){
+        T result = null;
+        try {
+            result = (T) plainRestTemplate.postForObject(uri, setRequestHeader(requestType, mediaType, bearerToken), responseClass);
+        } catch (Exception e) {
+            logger.error("RestApiClient::postApi()::error uri: {} {} {}", uri, e.getMessage(), e);
+        }
+        return result;
+    }
+
+    private HttpEntity<Object> setRequestHeader(Object requestType, MediaType mediaType, String bearerToken){
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<String, String>();
+        if (mediaType != null) {
+            headers.add(CONTENT_TYPE, mediaType.toString());
+        }
+        headers.add("Authorization", "Bearer "+bearerToken);
+        if (requestType != null) {
+            try {
+                HttpEntity<Object> httpEntity = (HttpEntity<Object>) requestType;
+                HttpHeaders httpHeader = httpEntity.getHeaders();
+                Iterator<String> iterator = httpHeader.keySet().iterator();
+                while (iterator.hasNext()) {
+                    String key = iterator.next();
+                    if (!(headers.containsKey(CONTENT_TYPE) && key.equals(CONTENT_TYPE)))
+                        headers.add(key, Objects.requireNonNull(httpHeader.get(key)).get(0));
+                }
+
+                return new HttpEntity<Object>(httpEntity.getBody(), headers);
+            } catch (ClassCastException | NullPointerException e) {
+                return new HttpEntity<Object>(requestType, headers);
+            }
+        } else
+            return new HttpEntity<Object>(headers);
+    }
+
     private HttpEntity<Object> setRequestHeader(Object requestType, MediaType mediaType) throws IOException {
         return setRequestHeader(requestType, mediaType, false);
     }

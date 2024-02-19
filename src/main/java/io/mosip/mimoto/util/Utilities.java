@@ -103,6 +103,12 @@ public class Utilities {
     @Value("${mosip.openid.issuers}")
     private String getIssuersConfigJson;
 
+    @Value("${mosip.openid.v2.issuers}")
+    private String getV2IssuersConfigJson;
+
+    @Value("$mosip.openid.v2.issuer.credentialSupported}")
+    private String getIssuerCredentialSupportedJson;
+
     private String mappingJsonString = null;
 
     private String identityMappingJsonString = null;
@@ -111,10 +117,22 @@ public class Utilities {
 
     private String issuersConfigJsonString = null;
 
+    private String v2IssuersConfigJsonString = null;
+
+    private String v2CredentialsSupportedJsonString = null;
+
 //    uncomment for running mimoto Locally to populate the issuers json
 //    public Utilities(@Value("classpath:mimoto-issuers-config.json") Resource resource) throws IOException {
 //        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
 //    }
+    public Utilities(@Value("classpath:v2-issuers-config.json") Resource v2Resource,
+                     @Value("classpath:/wellKnownIssuer/Insurance.json") Resource v2CredentialsSupportedResource,
+                     @Value("classpath:mimoto-issuers-config.json") Resource resource) throws IOException{
+                issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
+
+        v2IssuersConfigJsonString = (Files.readString(v2Resource.getFile().toPath()));
+        v2CredentialsSupportedJsonString = (Files.readString(v2CredentialsSupportedResource.getFile().toPath()));
+    }
 
     public JSONObject getTemplate() throws JsonParseException, JsonMappingException, IOException {
         return objectMapper.readValue(classLoader.getResourceAsStream(defaultTemplate), JSONObject.class);
@@ -282,6 +300,16 @@ public class Utilities {
     public String getIssuersConfigJsonValue() throws IOException {
         return  (issuersConfigJsonString != null && !issuersConfigJsonString.isEmpty()) ?
                 issuersConfigJsonString : getJson(configServerFileStorageURL, getIssuersConfigJson);
+    }
+
+    public String getV2IssuersConfigJsonValue() throws IOException{
+        return (v2IssuersConfigJsonString != null && !v2IssuersConfigJsonString.isEmpty()) ?
+                v2IssuersConfigJsonString : getJson(configServerFileStorageURL, getV2IssuersConfigJson);
+    }
+
+    public String getV2CredentialsSupportedConfigJsonValue() throws IOException{
+        return (v2CredentialsSupportedJsonString != null && !v2CredentialsSupportedJsonString.isEmpty()) ?
+                v2CredentialsSupportedJsonString : getJson(configServerFileStorageURL, getIssuerCredentialSupportedJson);
     }
 
 
