@@ -4,8 +4,8 @@
   "credentials_supported": [
     {
       "format": "ldp_vc",
-      "id": "HealthInsuranceCredential_ldp",
-      "scope": "health_insurance_identity_vc_ldp",
+      "id": "InsuranceCredential",
+      "scope": "sunbird_rc_insurance_vc_ldp",
       "cryptographic_binding_methods_supported": [
         "did:jwk"
       ],
@@ -73,7 +73,7 @@
       },
       "display": [
         {
-          "name": "Health Insurance Credentials",
+          "name": "Insurance Credential",
           "locale": "en",
           "logo": {
             "url": "https://image.similarpng.com/very-thumbnail/2021/06/Medical-health-care-logo-design-template-on-transparent-background-PNG.png",

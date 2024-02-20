@@ -170,7 +170,7 @@ public class JoseUtil {
         }
         return null;
     }
-
+    //Added this Util for generating JWT as the existing Jwt builder will not allow to have a custom header "typ"
     public String generateJwt(PublicKey publicJwk, String keyStorePath, String fileName, String alias, String cyptoPassword, String audience, String clientId, String accessToken) throws ParseException {
         RSAKey jwk = new RSAKey.Builder((java.security.interfaces.RSAPublicKey) publicJwk)
                 .keyUse(KeyUse.SIGNATURE)

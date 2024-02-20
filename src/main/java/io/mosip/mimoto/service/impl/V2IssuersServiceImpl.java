@@ -160,7 +160,7 @@ public class V2IssuersServiceImpl implements V2IssuersService {
                         .build())
                 .credential_definition(VCCredentialDefinition.builder()
                         .type(credentialsSupportedResponse.getCredential_definition().getType())
-                        .context(List.of("https://challabeehyv.github.io/mimoto-config/insurance-context.json"))
+                        .context(List.of("https://www.w3.org/2018/credentials/v1"))
                         .build())
                 .build();
     }
