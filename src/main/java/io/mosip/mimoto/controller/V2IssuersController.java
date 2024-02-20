@@ -14,6 +14,7 @@ import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.V2IssuersService;
 import io.mosip.mimoto.util.DateUtils;
+import io.mosip.mimoto.util.Utilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,11 +27,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
@@ -52,6 +50,9 @@ public class V2IssuersController {
 
     @Autowired
     IssuersService issuersService;
+
+    @Autowired
+    Utilities utilities;
 
     @Value("${mosip.oidc.esignet.token.endpoint}")
     String tokenEndpoint;
@@ -100,14 +101,12 @@ public class V2IssuersController {
         return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
     }
 
-    @PostMapping(value = "/get-token/issuer", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE})
-    public ResponseEntity getToken(@RequestParam Map<String, String> params, @RequestParam String issuer) {
+    @PostMapping(value = "/get-token/{issuer}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE})
+    public ResponseEntity getToken(@RequestParam Map<String, String> params, @PathVariable String issuer) {
         logger.debug("Started Token Call get-token-> " + params.toString());
         try {
             IssuerDTO issuerDTO = null;
-            Reader reader = new InputStreamReader(Objects.requireNonNull(this.getClass()
-                    .getResourceAsStream("/v2-issuers-config.json")));
-            IssuersDTO issuersDto = new Gson().fromJson(reader, IssuersDTO.class);
+            IssuersDTO issuersDto = new Gson().fromJson(utilities.getV2IssuersConfigJsonValue(), IssuersDTO.class);
             Optional<IssuerDTO> issuerConfigResp = issuersDto.getIssuers().stream()
                     .filter(issuerResponse -> issuerResponse.getCredential_issuer().equals(issuer))
                     .findFirst();

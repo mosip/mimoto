@@ -85,7 +85,7 @@ public class V2IssuersServiceImpl implements V2IssuersService {
             IssuerDTO issuerDto = issuerConfigResp.get();
             CredentialIssuerWellKnownResponse response = restApiClient.getApi(issuerDto.getCredential_issuer(), CredentialIssuerWellKnownResponse.class);
             if (response == null) {
-                response = getCredentialWllKnownFromJson();
+                response = getCredentialWellKnownFromJson();
             }
             List<CredentialsSupportedResponse> issuerCredentialsSupported = response.getCredentials_supported();
             supportedCredentialsWithAuthorizationEndPoint.setAuthorization_endpoint(issuerDto.getAuthorization_endpoint());
@@ -101,7 +101,7 @@ public class V2IssuersServiceImpl implements V2IssuersService {
         return supportedCredentialsWithAuthorizationEndPoint;
     }
 
-    private CredentialIssuerWellKnownResponse getCredentialWllKnownFromJson() throws IOException, ApiNotAccessibleException {
+    private CredentialIssuerWellKnownResponse getCredentialWellKnownFromJson() throws IOException, ApiNotAccessibleException {
         String v2CredentialsSupportedResponseJson = utilities.getV2CredentialsSupportedConfigJsonValue();
         if (v2CredentialsSupportedResponseJson == null){
             throw new ApiNotAccessibleException();
@@ -118,7 +118,7 @@ public class V2IssuersServiceImpl implements V2IssuersService {
         if (issuerConfigResp.isPresent()){
             CredentialIssuerWellKnownResponse credentialIssuerResponse = restApiClient.getApi(issuerConfigResp.get().getWellKnownEndpoint(), CredentialIssuerWellKnownResponse.class); //TODO: check which url to pass
             if (credentialIssuerResponse == null) {
-                credentialIssuerResponse = getCredentialWllKnownFromJson();
+                credentialIssuerResponse = getCredentialWellKnownFromJson();
             }
             Optional<CredentialsSupportedResponse> credentialsSupportedResponse = credentialIssuerResponse.getCredentials_supported().stream()
                     .filter(credentialsSupported -> credentialsSupported.getId().equals(credentialsSupportedId))
@@ -160,7 +160,7 @@ public class V2IssuersServiceImpl implements V2IssuersService {
                         .build())
                 .credential_definition(VCCredentialDefinition.builder()
                         .type(credentialsSupportedResponse.getCredential_definition().getType())
-                        .context(List.of("https://www.w3.org/2018/credentials/v1"))
+                        .context(List.of("https://challabeehyv.github.io/mimoto-config/insurance-context.json"))
                         .build())
                 .build();
     }

@@ -21,7 +21,7 @@ public class VCCredentialProperties {
     private Map<String, Object> credentialSubject;
 
     @JsonProperty("@context")
-    private List<@NotBlank String> context;
+    private Object context;
 
     @NotEmpty
     private List<@NotBlank String> type;
