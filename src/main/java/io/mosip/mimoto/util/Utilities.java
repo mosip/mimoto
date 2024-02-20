@@ -117,20 +117,16 @@ public class Utilities {
 
     private String issuersConfigJsonString = null;
 
-    private String v2IssuersConfigJsonString = null;
-
     private String v2CredentialsSupportedJsonString = null;
 
 //    uncomment for running mimoto Locally to populate the issuers json
 //    public Utilities(@Value("classpath:mimoto-issuers-config.json") Resource resource) throws IOException {
 //        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
 //    }
-    public Utilities(@Value("classpath:v2-issuers-config.json") Resource v2Resource,
-                     @Value("classpath:/wellKnownIssuer/Insurance.json") Resource v2CredentialsSupportedResource,
-                     @Value("classpath:mimoto-issuers-config.json") Resource resource) throws IOException{
-                issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
+    public Utilities(@Value("classpath:/wellKnownIssuer/Insurance.json") Resource v2CredentialsSupportedResource,
+                     @Value("classpath:v2-issuers-config.json") Resource resource) throws IOException{
 
-        v2IssuersConfigJsonString = (Files.readString(v2Resource.getFile().toPath()));
+        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
         v2CredentialsSupportedJsonString = (Files.readString(v2CredentialsSupportedResource.getFile().toPath()));
     }
 
@@ -300,11 +296,6 @@ public class Utilities {
     public String getIssuersConfigJsonValue() throws IOException {
         return  (issuersConfigJsonString != null && !issuersConfigJsonString.isEmpty()) ?
                 issuersConfigJsonString : getJson(configServerFileStorageURL, getIssuersConfigJson);
-    }
-
-    public String getV2IssuersConfigJsonValue() throws IOException{
-        return (v2IssuersConfigJsonString != null && !v2IssuersConfigJsonString.isEmpty()) ?
-                v2IssuersConfigJsonString : getJson(configServerFileStorageURL, getV2IssuersConfigJson);
     }
 
     public String getV2CredentialsSupportedConfigJsonValue() throws IOException{

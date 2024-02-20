@@ -66,11 +66,11 @@ public class V2IssuersServiceImpl implements V2IssuersService {
     }
 
     public IssuersDTO getIssuersDtoFromJson() throws IOException, ApiNotAccessibleException {
-        String v2IssuersConfigJsonValue = utilities.getV2IssuersConfigJsonValue();
-        if (v2IssuersConfigJsonValue == null) {
+        String issuersConfigJsonValue = utilities.getIssuersConfigJsonValue();
+        if (issuersConfigJsonValue == null) {
             throw new ApiNotAccessibleException();
         }
-        return new Gson().fromJson(v2IssuersConfigJsonValue, IssuersDTO.class);
+        return new Gson().fromJson(issuersConfigJsonValue, IssuersDTO.class);
     }
 
     @Override

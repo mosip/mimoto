@@ -102,12 +102,12 @@ public class V2IssuersServiceTest {
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = getCredentialIssuerWellKnownResponseDto("Issuer1",
                 List.of(getCredentialSupportedResponse("CredentialSupported1"), getCredentialSupportedResponse("CredentialSupported2")));
         Mockito.when(utilities.getV2CredentialsSupportedConfigJsonValue()).thenReturn(new Gson().toJson(credentialIssuerWellKnownResponse));
-        Mockito.when(utilities.getV2IssuersConfigJsonValue()).thenReturn(new Gson().toJson(issuers));
+        Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(new Gson().toJson(issuers));
     }
 
     @Test(expected = ApiNotAccessibleException.class)
     public void shouldThrowApiNotAccessibleExceptionWhenIssuersDtoIsNullForGettingIssuersLIst() throws IOException, ApiNotAccessibleException {
-        Mockito.when(utilities.getV2IssuersConfigJsonValue()).thenReturn(null);
+        Mockito.when(utilities.getIssuersConfigJsonString()).thenReturn(null);
         v2IssuersService.getAllIssuers(null);
     }
 

@@ -54,8 +54,6 @@ public class V2IssuersController {
     @Autowired
     Utilities utilities;
 
-    @Value("${mosip.oidc.esignet.token.endpoint}")
-    String tokenEndpoint;
 
     @GetMapping
     public ResponseEntity<Object> getAllIssuers(@RequestParam(required = false) String search){
@@ -99,45 +97,6 @@ public class V2IssuersController {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
-    }
-
-    @PostMapping(value = "/get-token/{issuer}", consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE})
-    public ResponseEntity getToken(@RequestParam Map<String, String> params, @PathVariable String issuer) {
-        logger.debug("Started Token Call get-token-> " + params.toString());
-        try {
-            IssuerDTO issuerDTO = null;
-            IssuersDTO issuersDto = new Gson().fromJson(utilities.getV2IssuersConfigJsonValue(), IssuersDTO.class);
-            Optional<IssuerDTO> issuerConfigResp = issuersDto.getIssuers().stream()
-                    .filter(issuerResponse -> issuerResponse.getCredential_issuer().equals(issuer))
-                    .findFirst();
-            if (issuerConfigResp.isPresent()) issuerDTO = issuerConfigResp.get();
-            logger.info("Issuer DTO is > " + issuerDTO);
-            return ResponseEntity.status(HttpStatus.OK).body(getTokenResponseFromParams(params, issuerDTO));
-        } catch (Exception ex){
-            logger.error("Exception Occured while invoking the get-token endpoint", ex);
-            ResponseWrapper response = getErrorResponse(PlatformErrorMessages.MIMOTO_IDP_GENERIC_EXCEPTION.getCode(), ex.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-    }
-    public TokenResponseDTO getTokenResponseFromParams(Map<String, String> params, IssuerDTO issuer){
-        RestTemplate restTemplate = new RestTemplate();
-        HttpEntity<MultiValueMap<String, String>> request = idpService.constructGetTokenRequest(params, issuer);
-        return  restTemplate.postForObject(tokenEndpoint, request, TokenResponseDTO.class);
-    }
-
-    public ResponseWrapper getErrorResponse(String errorCode, String errorMessage) {
-        List<ErrorDTO> errors = getErrors(errorCode, errorMessage);
-        ResponseWrapper responseWrapper = new ResponseWrapper();
-        responseWrapper.setResponse(null);
-        responseWrapper.setResponsetime(DateUtils.getRequestTimeString());
-        responseWrapper.setId(ID);
-        responseWrapper.setErrors(errors);
-        return responseWrapper;
-    }
-
-    private List<ErrorDTO> getErrors(String errorCode, String errorMessage) {
-        ErrorDTO errorDTO = new ErrorDTO(errorCode, errorMessage);
-        return Lists.newArrayList(errorDTO);
     }
 
     @GetMapping("/{issuer-id}/credentials/{credentials-supported-id}/download")
