@@ -107,7 +107,7 @@ public class V2IssuersServiceTest {
 
     @Test(expected = ApiNotAccessibleException.class)
     public void shouldThrowApiNotAccessibleExceptionWhenIssuersDtoIsNullForGettingIssuersLIst() throws IOException, ApiNotAccessibleException {
-        Mockito.when(utilities.getIssuersConfigJsonString()).thenReturn(null);
+        Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(null);
         v2IssuersService.getAllIssuers(null);
     }
 
