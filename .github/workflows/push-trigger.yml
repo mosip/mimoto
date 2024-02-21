@@ -21,6 +21,7 @@ on:
       - develop*
       - MOSIP*
       - qa-develop
+      - injiweb-1
 
 jobs:
   build-mimoto:
