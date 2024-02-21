@@ -98,8 +98,9 @@
         <commons-codec>1.15</commons-codec>
         <swagger.version>2.9.2</swagger.version>
         <springdoc.version>1.5.10</springdoc.version>
-
-
+        <flying-saucer-pdf-version>9.3.1</flying-saucer-pdf-version>
+        <josup-version>1.16.2</josup-version>
+        <jjwt-version>0.9.1</jjwt-version>
         <sonar.coverage.exclusions>
             **/constant/**,**/config/**,**/httpfilter/**,**/cache/**,**/dto/**,**/entity/**,**/model/**,**/exception/**,**/repository/**,**/security/**,**/*Config.java,**/*BootApplication.java,**/*VertxApplication.java,**/cbeffutil/**,**/core.http/**,**/util/**
         </sonar.coverage.exclusions>
@@ -146,6 +147,20 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.xhtmlrenderer</groupId>
+            <artifactId>flying-saucer-pdf-openpdf</artifactId>
+            <version>${flying-saucer-pdf-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${josup-version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -364,6 +379,11 @@
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
             <version>9.25.6</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>${jjwt-version}</version>
         </dependency>
         <dependency>
             <groupId>org.bitbucket.b_c</groupId>

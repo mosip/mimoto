@@ -2,12 +2,16 @@ package io.mosip.mimoto.util;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.interfaces.RSAKeyProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.util.X509CertUtils;
+import com.nimbusds.jwt.JWTParser;
+import com.nimbusds.jwt.SignedJWT;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.kernel.core.util.CryptoUtil;
 import io.mosip.mimoto.core.http.ResponseWrapper;
@@ -16,7 +20,6 @@ import io.mosip.mimoto.dto.mimoto.WalletBindingInternalResponseDto;
 import io.mosip.mimoto.dto.mimoto.WalletBindingResponseDto;
 import org.jose4j.jws.JsonWebSignature;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -28,6 +31,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
@@ -153,5 +157,64 @@ public class JoseUtil {
                 .withExpiresAt(expiresAt)
                 .withIssuedAt(issuedAt)
                 .sign(Algorithm.RSA256(null, privateKey));
+    }
+
+    public PublicKey getPublicKeyString(String keyStorePath, String fileName, String alias, String cyptoPassword){
+        String keyStorePathWithFileName = keyStorePath + fileName;
+        try {
+            KeyStore.PrivateKeyEntry privateKeyEntry = cryptoCoreUtil.loadP12(keyStorePathWithFileName, alias, cyptoPassword);
+            PublicKey publicKey = privateKeyEntry.getCertificate().getPublicKey();
+            return publicKey;
+        } catch (IOException e) {
+            logger.error("Exception happened while loading the p12 file for invoking token call.");
+        }
+        return null;
+    }
+    //Added this Util for generating JWT as the existing Jwt builder will not allow to have a custom header "typ"
+    public String generateJwt(PublicKey publicJwk, String keyStorePath, String fileName, String alias, String cyptoPassword, String audience, String clientId, String accessToken) throws ParseException {
+        RSAKey jwk = new RSAKey.Builder((java.security.interfaces.RSAPublicKey) publicJwk)
+                .keyUse(KeyUse.SIGNATURE)
+                .algorithm(JWSAlgorithm.RS256)
+                .build();
+
+        Map<String, Object> header = new HashMap<>();
+
+        header.put("alg", ALG_RS256);
+        header.put("typ", "openid4vci-proof+jwt");
+        header.put("jwk", jwk.getRequiredParams());
+
+
+        String keyStorePathWithFileName = keyStorePath + fileName;
+        Date issuedAt = Date.from(Instant.now());
+        Date expiresAt = Date.from(Instant.now().plusMillis(120000000));
+        RSAPrivateKey privateKey = null;
+        try {
+            KeyStore.PrivateKeyEntry privateKeyEntry = cryptoCoreUtil.loadP12(keyStorePathWithFileName, alias, cyptoPassword);
+            privateKey = (RSAPrivateKey) privateKeyEntry.getPrivateKey();
+        } catch (IOException e) {
+            logger.error("Exception happened while loading the p12 file for invoking token call.");
+        }
+        SignedJWT jwt = (SignedJWT) JWTParser.parse(accessToken);
+        Map<String, Object> jsonObject = jwt.getPayload().toJSONObject();
+        String cNounce = (String) jsonObject.get("c_nonce");
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("sub", clientId);
+        payload.put("aud", audience);
+        payload.put("nonce", cNounce);
+        payload.put("iss", clientId);
+        payload.put("exp", expiresAt.toInstant().getEpochSecond());
+        payload.put("iat", issuedAt.toInstant().getEpochSecond());
+
+        return Jwts.builder()
+                .setHeader(header)
+                .setIssuer(clientId)
+                .setSubject(clientId)
+                .setAudience(audience)
+                .setExpiration(expiresAt)
+                .setIssuedAt(issuedAt)
+                .setClaims(payload)
+                .signWith(SignatureAlgorithm.RS256, privateKey)
+                .compact();
     }
 }

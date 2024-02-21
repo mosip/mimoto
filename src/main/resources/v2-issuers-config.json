@@ -1,0 +1,41 @@
+{
+  "issuers": [
+    {
+      "credential_issuer": "Insurance Department",
+      "display": [
+        {
+          "name": "Insurance Department",
+          "logo": {
+            "url": "https://imgs.search.brave.com/m_qtRC1Tukm-fxidbwkAdnWgoEjPktSyG-juAd6e8NM/rs:fit:860:0:0/g:ce/aHR0cHM6Ly9icmFu/ZGVwcy5jb20vbG9n/by1kb3dubG9hZC9M/L0xJQy1sb2dvLXZl/Y3Rvci0wMS5zdmc.svg",
+            "alt_text": "Lic-Logo"
+          },
+          "title": "Download via LIC",
+          "description": "Enter your policy number to download your card.",
+          "language": "en"
+        }
+      ],
+      "protocol": "OpenId4VCI",
+      "client_id": "aPeBSsrNISNrhEjQeJhikwvfMABC",
+      "client_alias": "mpartner-default-mimotooidc",
+      "scopes_supported": [
+        "sunbird_rc_insurance_vc_ldp"
+      ],
+      "additional_headers": {
+        "Accept": "application/json"
+      },
+      ".well-known": "http://localhost:8088/v1/esignet/.well-known",
+      "redirect_uri": "http://localhost:3001",
+      "authorization_endpoint": "http://localhost:3001/authorize",
+      "authorization_audience": "http://localhost:8088/v1/esignet/oauth/token",
+      "proxy_token_endpoint": "http://localhost:8088/v1/esignet/oauth/v2/token",
+      "token_endpoint": "https://${mosip.api.public.host}/residentmobileapp/get-token/Insurance Department",
+      "credential_endpoint": "http://localhost:8088/v1/esignet/vci/credential",
+      "credential_type": [
+        "VerifiableCredential",
+        "HealthInsuranceCredential",
+        "LifeInsuranceCredential"
+      ],
+      "credential_audience": "http://localhost:8088/v1/esignet"
+    }
+  ]
+}
