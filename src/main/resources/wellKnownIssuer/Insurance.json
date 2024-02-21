@@ -18,7 +18,7 @@
       "credential_definition": {
         "type": [
           "VerifiableCredential",
-          "HealthInsuranceCredential"
+          "InsuranceCredential"
         ],
         "credentialSubject": {
           "policyNumber": {
@@ -77,7 +77,7 @@
           "locale": "en",
           "logo": {
             "url": "https://image.similarpng.com/very-thumbnail/2021/06/Medical-health-care-logo-design-template-on-transparent-background-PNG.png",
-            "alt_text": "health insurance logo"
+            "alt_text": "insurance logo"
           },
           "background_color": "#76b5c5",
           "text_color": "#716E6D"
@@ -87,7 +87,7 @@
     {
       "format": "ldp_vc",
       "id": "LifeInsuranceCredential_ldp",
-      "scope": "life_insurance_identity_vc_ldp",
+      "scope": "life_insurance_vc_ldp",
       "cryptographic_binding_methods_supported": [
         "did:jwk"
       ],
