@@ -103,9 +103,6 @@ public class Utilities {
     @Value("${mosip.openid.issuers}")
     private String getIssuersConfigJson;
 
-    @Value("${mosip.openid.v2.issuers}")
-    private String getV2IssuersConfigJson;
-
     @Value("$mosip.openid.v2.issuer.credentialSupported}")
     private String getIssuerCredentialSupportedJson;
 
@@ -123,12 +120,12 @@ public class Utilities {
 //    public Utilities(@Value("classpath:mimoto-issuers-config.json") Resource resource) throws IOException {
 //        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
 //    }
-    public Utilities(@Value("classpath:/wellKnownIssuer/Insurance.json") Resource v2CredentialsSupportedResource,
-                     @Value("classpath:v2-issuers-config.json") Resource resource) throws IOException{
-
-        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
-        v2CredentialsSupportedJsonString = (Files.readString(v2CredentialsSupportedResource.getFile().toPath()));
-    }
+//    public Utilities(@Value("classpath:/wellKnownIssuer/Insurance.json") Resource v2CredentialsSupportedResource,
+//                     @Value("classpath:v2-issuers-config.json") Resource resource) throws IOException{
+//
+//        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
+//        v2CredentialsSupportedJsonString = (Files.readString(v2CredentialsSupportedResource.getFile().toPath()));
+//    }
 
     public JSONObject getTemplate() throws JsonParseException, JsonMappingException, IOException {
         return objectMapper.readValue(classLoader.getResourceAsStream(defaultTemplate), JSONObject.class);
