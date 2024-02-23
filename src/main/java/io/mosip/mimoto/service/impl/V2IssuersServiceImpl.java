@@ -10,6 +10,8 @@ import io.mosip.mimoto.util.JoseUtil;
 import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.Utilities;
 import org.apache.commons.lang.StringUtils;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.Velocity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -41,6 +43,14 @@ public class V2IssuersServiceImpl implements V2IssuersService {
 
     @Autowired
     JoseUtil joseUtil;
+
+    @Value("${config.server.file.storage.uri}")
+    private String configServerFileStorageURL;
+
+    @Value("${mosip.openid.v2.htmlTemplate}")
+    private String getHtmlTemplateString;
+
+
 
     @Value("${mosip.oidc.p12.filename}")
     private String fileName;
@@ -193,11 +203,24 @@ public class V2IssuersServiceImpl implements V2IssuersService {
         data.put("titleName", issuerName);
 
         context.setVariables(data);
-        String html = springTemplateEngine.process("CredentialTemplate", context);
 
+        String  credentialTemplate = utilities.getJson(configServerFileStorageURL, getHtmlTemplateString);
+
+        Properties props = new Properties();
+        props.setProperty("resource.loader", "class");
+        props.setProperty("class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+        Velocity.init(props);
+        VelocityContext velocityContext = new VelocityContext(data);
+
+        // Merge the context with the template
+        StringWriter writer = new StringWriter();
+        Velocity.evaluate(velocityContext, writer, "Credential Template", credentialTemplate);
+
+        // Get the merged HTML string
+        String mergedHtml = writer.toString();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ITextRenderer renderer = new ITextRenderer();
-        renderer.setDocumentFromString(html);
+        renderer.setDocumentFromString(mergedHtml);
         renderer.layout();
         renderer.createPDF(outputStream);
         return new ByteArrayInputStream(outputStream.toByteArray());
