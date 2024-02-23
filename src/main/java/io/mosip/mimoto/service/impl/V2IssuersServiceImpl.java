@@ -47,7 +47,7 @@ public class V2IssuersServiceImpl implements V2IssuersService {
     @Value("${config.server.file.storage.uri}")
     private String configServerFileStorageURL;
 
-    @Value("${mosip.oenid.v2.htmlTemplate}")
+    @Value("${mosip.openid.v2.htmlTemplate}")
     private String getHtmlTemplateString;
 
 
