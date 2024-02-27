@@ -1,12 +1,14 @@
 package io.mosip.mimoto.service.impl;
 
 import com.google.gson.Gson;
+import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.dto.v2.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.V2IssuersService;
 import io.mosip.mimoto.util.JoseUtil;
+import io.mosip.mimoto.util.LoggerUtil;
 import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.Utilities;
 import org.apache.commons.lang.StringUtils;
@@ -28,6 +30,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class V2IssuersServiceImpl implements V2IssuersService {
+
+    private Logger logger = LoggerUtil.getLogger(V2IssuersServiceImpl.class);
 
     @Autowired
     RestApiClient restApiClient;
@@ -140,8 +144,10 @@ public class V2IssuersServiceImpl implements V2IssuersService {
                 String backgroundColor = credentialsSupportedResponse.get().getDisplay().get(0).getBackground_color();
                 String textColor = credentialsSupportedResponse.get().getDisplay().get(0).getText_color();
                 VCCredentialRequest vcCredentialRequest = generateVCCredentialRequest(issuerConfigResp.get(), credentialsSupportedResponse.get(), accessToken);
+                logger.info("Request to VCIssuance: ", vcCredentialRequest);
                 VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialIssuerResponse.getCredential_endpoint(), MediaType.APPLICATION_JSON,
                         vcCredentialRequest, VCCredentialResponse.class, accessToken);
+                logger.info("Response received to VCIssuance: ", vcCredentialResponse);
                 Map<String, Object> credentialProperties = vcCredentialResponse.getCredential().getCredential().getCredentialSubject();
                 LinkedHashMap<String,Object> displayProperties = new LinkedHashMap<>();
                 vcPropertiesFromWellKnown.keySet().forEach(vcProperty -> displayProperties.put(vcPropertiesFromWellKnown.get(vcProperty), credentialProperties.get(vcProperty)));
@@ -203,8 +209,9 @@ public class V2IssuersServiceImpl implements V2IssuersService {
         data.put("titleName", issuerName);
 
         context.setVariables(data);
-
+        logger.info("URLs for getting credential template: ", configServerFileStorageURL, getHtmlTemplateString);
         String  credentialTemplate = utilities.getJson(configServerFileStorageURL, getHtmlTemplateString);
+        logger.info("Credential template", credentialTemplate);
 
         Properties props = new Properties();
         props.setProperty("resource.loader", "class");
