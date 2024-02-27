@@ -103,7 +103,7 @@ public class Utilities {
     @Value("${mosip.openid.issuers}")
     private String getIssuersConfigJson;
 
-    @Value("$mosip.openid.v2.issuer.credentialSupported}")
+    @Value("${mosip.openid.v2.issuer.credentialSupported}")
     private String getIssuerCredentialSupportedJson;
 
     private String mappingJsonString = null;
