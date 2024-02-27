@@ -144,11 +144,9 @@ public class V2IssuersServiceImpl implements V2IssuersService {
                 String backgroundColor = credentialsSupportedResponse.get().getDisplay().get(0).getBackground_color();
                 String textColor = credentialsSupportedResponse.get().getDisplay().get(0).getText_color();
                 VCCredentialRequest vcCredentialRequest = generateVCCredentialRequest(issuerConfigResp.get(), credentialsSupportedResponse.get(), accessToken);
-                logger.info("Request to VCIssuance: ", vcCredentialRequest);
                 VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialIssuerResponse.getCredential_endpoint(), MediaType.APPLICATION_JSON,
                         vcCredentialRequest, VCCredentialResponse.class, accessToken);
-                logger.info("Response received to VCIssuance: ", vcCredentialResponse);
-                Map<String, Object> credentialProperties = vcCredentialResponse.getCredential().getCredential().getCredentialSubject();
+                Map<String, Object> credentialProperties = vcCredentialResponse.getCredential().getCredentialSubject();
                 LinkedHashMap<String,Object> displayProperties = new LinkedHashMap<>();
                 vcPropertiesFromWellKnown.keySet().forEach(vcProperty -> displayProperties.put(vcPropertiesFromWellKnown.get(vcProperty), credentialProperties.get(vcProperty)));
                 String credentialSupportedLogoUrl =   credentialsSupportedResponse.get().getDisplay()
@@ -209,9 +207,7 @@ public class V2IssuersServiceImpl implements V2IssuersService {
         data.put("titleName", issuerName);
 
         context.setVariables(data);
-        logger.info("URLs for getting credential template: ", configServerFileStorageURL, getHtmlTemplateString);
         String  credentialTemplate = utilities.getJson(configServerFileStorageURL, getHtmlTemplateString);
-        logger.info("Credential template", credentialTemplate);
 
         Properties props = new Properties();
         props.setProperty("resource.loader", "class");

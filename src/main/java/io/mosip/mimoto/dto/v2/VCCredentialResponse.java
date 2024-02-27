@@ -14,5 +14,5 @@ public class VCCredentialResponse {
 
     @Valid
     @NotNull
-    private VCCredentialIssueBody credential;
+    private VCCredentialProperties credential;
 }
