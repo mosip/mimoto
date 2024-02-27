@@ -166,6 +166,7 @@ public class RestApiClient {
     public <T> T postApi(String uri, MediaType mediaType, Object requestType, Class<?> responseClass, String bearerToken){
         T result = null;
         try {
+            logger.info("RestApiClient::postApi()::entry uri: {}", uri);
             result = (T) plainRestTemplate.postForObject(uri, setRequestHeader(requestType, mediaType, bearerToken), responseClass);
         } catch (Exception e) {
             logger.error("RestApiClient::postApi()::error uri: {} {} {}", uri, e.getMessage(), e);
