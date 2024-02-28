@@ -199,14 +199,12 @@ public class V2IssuersServiceImpl implements V2IssuersService {
                 });
 
         int rowPropertiesCount =  rowProperties.size();
-        data.put("logoUrl", credentialSupportedLogoUrl);
+        data.put("logoUrl", issuerLogoUrl);
         data.put("headerProperties", headerProperties);
         data.put("rowProperties", rowProperties);
         data.put("keyFontColor", textColor);
         data.put("bgColor", backgroundColor);
         data.put("rowPropertiesMargin", rowPropertiesCount % 2 == 0 ? (rowPropertiesCount/2 -1)*40 : (rowPropertiesCount/2)*40); //for adjusting the height in pdf for dynamic properties
-        data.put("titleLogo", issuerLogoUrl);
-        data.put("titleName", issuerName);
 
         context.setVariables(data);
         String  credentialTemplate = utilities.getJson(configServerFileStorageURL, getHtmlTemplateString);
