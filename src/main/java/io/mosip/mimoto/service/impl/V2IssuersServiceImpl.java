@@ -71,7 +71,8 @@ public class V2IssuersServiceImpl implements V2IssuersService {
 
         if (!StringUtils.isEmpty(search)) {
             List<IssuerDTO> filteredIssuers = allIssuers.getIssuers().stream()
-                    .filter(issuer -> issuer.getCredential_issuer().toLowerCase().contains(search.toLowerCase()))
+                    .filter(issuer -> issuer.getDisplay().stream()
+                            .anyMatch(displayDTO -> displayDTO.getName().toLowerCase().contains(search.toLowerCase())))
                     .collect(Collectors.toList());
             allIssuers.setIssuers(filteredIssuers);
             return allIssuers;
@@ -107,7 +108,8 @@ public class V2IssuersServiceImpl implements V2IssuersService {
             if (!StringUtils.isEmpty(search)){
                 supportedCredentialsWithAuthorizationEndPoint.setSupportedCredentials(issuerCredentialsSupported
                         .stream()
-                        .filter(credentialsSupportedResponse -> credentialsSupportedResponse.getDisplay().get(0).getName().toLowerCase().contains(search.toLowerCase()))
+                        .filter(credentialsSupportedResponse -> credentialsSupportedResponse.getDisplay().stream()
+                                .anyMatch(credDisplay -> credDisplay.getName().toLowerCase().contains(search.toLowerCase())))
                         .collect(Collectors.toList()));
             }
             return supportedCredentialsWithAuthorizationEndPoint;
