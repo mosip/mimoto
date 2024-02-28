@@ -1,7 +1,7 @@
 {
   "issuers": [
     {
-      "credential_issuer": "Insurance Department",
+      "credential_issuer": "InsuranceDepartment",
       "display": [
         {
           "name": "Insurance Department",
@@ -28,7 +28,7 @@
       "authorization_endpoint": "http://localhost:3001/authorize",
       "authorization_audience": "http://localhost:8088/v1/esignet/oauth/token",
       "proxy_token_endpoint": "http://localhost:8088/v1/esignet/oauth/v2/token",
-      "token_endpoint": "https://${mosip.api.public.host}/residentmobileapp/get-token/Insurance Department",
+      "token_endpoint": "https://${mosip.api.public.host}/residentmobileapp/get-token/InsuranceDepartment",
       "credential_endpoint": "http://localhost:8088/v1/esignet/vci/credential",
       "credential_type": [
         "VerifiableCredential",
