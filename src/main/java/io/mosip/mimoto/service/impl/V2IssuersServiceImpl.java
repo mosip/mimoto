@@ -157,7 +157,7 @@ public class V2IssuersServiceImpl implements V2IssuersService {
                         .findFirst()
                         .orElse("");
                 return getPdfResourceFromVcProperties(displayProperties, textColor, backgroundColor,
-                        credentialSupportedLogoUrl, issuerId,
+                        credentialSupportedLogoUrl, issuerConfigResp.get().getDisplay().get(0).getName(),
                         issuerConfigResp.get().getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));
             }
         }
@@ -205,6 +205,7 @@ public class V2IssuersServiceImpl implements V2IssuersService {
         data.put("keyFontColor", textColor);
         data.put("bgColor", backgroundColor);
         data.put("rowPropertiesMargin", rowPropertiesCount % 2 == 0 ? (rowPropertiesCount/2 -1)*40 : (rowPropertiesCount/2)*40); //for adjusting the height in pdf for dynamic properties
+        data.put("titleName", issuerName);
 
         context.setVariables(data);
         String  credentialTemplate = utilities.getJson(configServerFileStorageURL, getHtmlTemplateString);
