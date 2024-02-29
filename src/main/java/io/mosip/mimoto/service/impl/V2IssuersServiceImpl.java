@@ -157,7 +157,7 @@ public class V2IssuersServiceImpl implements V2IssuersService {
                         .findFirst()
                         .orElse("");
                 return getPdfResourceFromVcProperties(displayProperties, textColor, backgroundColor,
-                        credentialSupportedLogoUrl, issuerConfigResp.get().getDisplay().get(0).getName(),
+                        credentialSupportedLogoUrl, credentialsSupportedResponse.get().getDisplay().get(0).getName(),
                         issuerConfigResp.get().getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));
             }
         }
