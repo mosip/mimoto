@@ -75,6 +75,9 @@ public class RestApiClient {
     @Value("${mosip.iam.adapter.appid}")
     private String appId;
 
+    @Value("${mosip.iam.adapter.disable-self-token-rest-template:false}")
+    private boolean disableSelfTokenRestTemplate;
+
     @Autowired
     Environment environment;
 
@@ -90,9 +93,13 @@ public class RestApiClient {
     @SuppressWarnings("unchecked")
     public <T> T getApi(URI uri, Class<?> responseType) throws Exception {
         T result = null;
+        RestTemplate rt = restTemplate;
+        if (disableSelfTokenRestTemplate) {
+            rt = plainRestTemplate;
+        }
         try {
             logger.info("RestApiClient::getApi()::entry uri: {}", uri);
-            result = (T) restTemplate.exchange(uri, HttpMethod.GET, setRequestHeader(null, null), responseType)
+            result = (T) rt.exchange(uri, HttpMethod.GET, setRequestHeader(null, null), responseType)
                     .getBody();
         } catch (Exception e) {
             logger.error("RestApiClient::getApi()::error uri: {} {} {}", uri, e.getMessage(), e);
@@ -111,8 +118,12 @@ public class RestApiClient {
     @SuppressWarnings("unchecked")
     public <T> T getApi(String url, Class<?> responseType) {
         T result = null;
+        RestTemplate rt = restTemplate;
+        if (disableSelfTokenRestTemplate) {
+            rt = plainRestTemplate;
+        }
         try {
-            result = (T) restTemplate.getForObject(url, responseType);
+            result = (T) rt.getForObject(url, responseType);
         } catch (Exception e) {
             logger.error("RestApiClient::getApi()::error uri:{} {} {}", url, e.getMessage(), e);
         }
@@ -133,9 +144,13 @@ public class RestApiClient {
     @SuppressWarnings("unchecked")
     public <T> T postApi(String uri, MediaType mediaType, Object requestType, Class<?> responseClass) throws Exception {
         T result = null;
+        RestTemplate rt = restTemplate;
+        if (disableSelfTokenRestTemplate) {
+            rt = plainRestTemplate;
+        }
         try {
             logger.info("RestApiClient::postApi()::entry uri: {}", uri);
-            result = (T) restTemplate.postForObject(uri, setRequestHeader(requestType, mediaType), responseClass);
+            result = (T) rt.postForObject(uri, setRequestHeader(requestType, mediaType), responseClass);
         } catch (Exception e) {
             logger.error("RestApiClient::postApi()::error uri: {} {} {}", uri, e.getMessage(), e);
         }
