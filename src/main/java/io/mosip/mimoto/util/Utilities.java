@@ -106,6 +106,9 @@ public class Utilities {
     @Value("${mosip.openid.v2.issuer.credentialSupported}")
     private String getIssuerCredentialSupportedJson;
 
+    @Value("${mosip.openid.v2.htmlTemplate}")
+    private String getCredentialSupportedHtml;
+
     private String mappingJsonString = null;
 
     private String identityMappingJsonString = null;
@@ -116,15 +119,15 @@ public class Utilities {
 
     private String v2CredentialsSupportedJsonString = null;
 
+    private String credentialTemplateHtmlString = null;
 //    uncomment for running mimoto Locally to populate the issuers json
-//    public Utilities(@Value("classpath:mimoto-issuers-config.json") Resource resource) throws IOException {
-//        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
-//    }
 //    public Utilities(@Value("classpath:/wellKnownIssuer/Insurance.json") Resource v2CredentialsSupportedResource,
-//                     @Value("classpath:v2-issuers-config.json") Resource resource) throws IOException{
+//                     @Value("classpath:mimoto-issuers-config.json") Resource resource,
+//                     @Value("classpath:/templates/CredentialTemplate.html") Resource credentialTemplateResource) throws IOException{
 //
 //        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
 //        v2CredentialsSupportedJsonString = (Files.readString(v2CredentialsSupportedResource.getFile().toPath()));
+//        credentialTemplateHtmlString = (Files.readString(credentialTemplateResource.getFile().toPath()));
 //    }
 
     public JSONObject getTemplate() throws JsonParseException, JsonMappingException, IOException {
@@ -298,6 +301,11 @@ public class Utilities {
     public String getV2CredentialsSupportedConfigJsonValue() throws IOException{
         return (v2CredentialsSupportedJsonString != null && !v2CredentialsSupportedJsonString.isEmpty()) ?
                 v2CredentialsSupportedJsonString : getJson(configServerFileStorageURL, getIssuerCredentialSupportedJson);
+    }
+
+    public String getCredentialSupportedTemplateString() throws IOException{
+        return (credentialTemplateHtmlString != null && !credentialTemplateHtmlString.isEmpty()) ?
+                credentialTemplateHtmlString : getJson(configServerFileStorageURL, getCredentialSupportedHtml);
     }
 
 

@@ -4,19 +4,21 @@ import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
+import io.mosip.mimoto.dto.v2.IssuerSupportedCredentialsResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -34,13 +36,13 @@ public class IssuersController {
     private final Logger logger = LoggerFactory.getLogger(IssuersController.class);
 
     @GetMapping()
-    public ResponseEntity<Object> getAllIssuers() {
+    public ResponseEntity<Object> getAllIssuers(@RequestParam(required = false) String search) {
         ResponseWrapper<IssuersDTO> responseWrapper = new ResponseWrapper<>();
         responseWrapper.setId(ID);
         responseWrapper.setVersion("v1");
         responseWrapper.setResponsetime(DateUtils.getRequestTimeString());
         try {
-            responseWrapper.setResponse(issuersService.getAllIssuers());
+            responseWrapper.setResponse(issuersService.getAllIssuers(search));
         } catch (ApiNotAccessibleException | IOException e) {
             logger.error("Exception occurred while fetching issuers ", e);
             responseWrapper.setErrors(List.of(new ErrorDTO(API_NOT_ACCESSIBLE_EXCEPTION.getCode(), API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
@@ -76,6 +78,50 @@ public class IssuersController {
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
+    }
+
+    @GetMapping("/{issuer-id}/credentials-supported")
+    public ResponseEntity<Object> getCredentialsSupportedForIssuer(@PathVariable("issuer-id") String issuerId,
+                                                                   @RequestParam(required = false) String search) {
+        ResponseWrapper<Object> responseWrapper = new ResponseWrapper<>();
+        responseWrapper.setId(ID);
+        responseWrapper.setVersion("v1");
+        responseWrapper.setResponsetime(DateUtils.getRequestTimeString());
+        IssuerSupportedCredentialsResponse credentialsSupported;
+        try {
+            credentialsSupported = issuersService.getCredentialsSupported(issuerId, search);
+        }catch (ApiNotAccessibleException | IOException exception){
+            logger.error("Exception occurred while fetching issuers ", exception);
+            responseWrapper.setErrors(List.of(new ErrorDTO(API_NOT_ACCESSIBLE_EXCEPTION.getCode(), API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseWrapper);
+        }
+        responseWrapper.setResponse(credentialsSupported);
+
+        if (credentialsSupported.getSupportedCredentials().isEmpty()) {
+            logger.error("invalid issuer id passed - {}", issuerId);
+            responseWrapper.setErrors(List.of(new ErrorDTO(INVALID_ISSUER_ID_EXCEPTION.getCode(), INVALID_ISSUER_ID_EXCEPTION.getMessage())));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseWrapper);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
+    }
+
+    @GetMapping("/{issuer-id}/credentials/{credentials-supported-id}/download")
+    public ResponseEntity<?> generatePdfForVCCredentials(@RequestHeader("Bearer") String token,
+                                                      @PathVariable("issuer-id") String issuerId,
+                                                      @PathVariable("credentials-supported-id") String credentialsSupportedId) {
+
+        try{
+            ByteArrayInputStream inputStream =  issuersService.generatePdfForVerifiableCredentials(token, issuerId, credentialsSupportedId);
+            return ResponseEntity
+                    .ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"Test.pdf\"")
+                    .body(new InputStreamResource(inputStream));
+        }catch (Exception e){
+            logger.error("Error at generating PDF", e);
+        }
+        return null;
     }
 
 }
