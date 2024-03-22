@@ -17,7 +17,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import io.mosip.kernel.core.logger.spi.Logger;
@@ -103,8 +102,11 @@ public class Utilities {
     @Value("${mosip.openid.issuers}")
     private String getIssuersConfigJson;
 
-    @Value("${mosip.openid.v2.issuer.credentialSupported}")
+    @Value("${mosip.openid.issuer.credentialSupported}")
     private String getIssuerCredentialSupportedJson;
+
+    @Value("${mosip.openid.htmlTemplate}")
+    private String getCredentialSupportedHtml;
 
     private String mappingJsonString = null;
 
@@ -114,17 +116,17 @@ public class Utilities {
 
     private String issuersConfigJsonString = null;
 
-    private String v2CredentialsSupportedJsonString = null;
+    private String credentialsSupportedJsonString = null;
 
+    private String credentialTemplateHtmlString = null;
 //    uncomment for running mimoto Locally to populate the issuers json
-//    public Utilities(@Value("classpath:mimoto-issuers-config.json") Resource resource) throws IOException {
-//        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
-//    }
-//    public Utilities(@Value("classpath:/wellKnownIssuer/Insurance.json") Resource v2CredentialsSupportedResource,
-//                     @Value("classpath:v2-issuers-config.json") Resource resource) throws IOException{
+//    public Utilities(@Value("classpath:/wellKnownIssuer/Insurance.json") Resource credentialsSupportedResource,
+//                     @Value("classpath:mimoto-issuers-config.json") Resource resource,
+//                     @Value("classpath:/templates/CredentialTemplate.html") Resource credentialTemplateResource) throws IOException{
 //
 //        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
-//        v2CredentialsSupportedJsonString = (Files.readString(v2CredentialsSupportedResource.getFile().toPath()));
+//        credentialsSupportedJsonString = (Files.readString(credentialsSupportedResource.getFile().toPath()));
+//        credentialTemplateHtmlString = (Files.readString(credentialTemplateResource.getFile().toPath()));
 //    }
 
     public JSONObject getTemplate() throws JsonParseException, JsonMappingException, IOException {
@@ -295,9 +297,14 @@ public class Utilities {
                 issuersConfigJsonString : getJson(configServerFileStorageURL, getIssuersConfigJson);
     }
 
-    public String getV2CredentialsSupportedConfigJsonValue() throws IOException{
-        return (v2CredentialsSupportedJsonString != null && !v2CredentialsSupportedJsonString.isEmpty()) ?
-                v2CredentialsSupportedJsonString : getJson(configServerFileStorageURL, getIssuerCredentialSupportedJson);
+    public String getCredentialsSupportedConfigJsonValue() throws IOException{
+        return (credentialsSupportedJsonString != null && !credentialsSupportedJsonString.isEmpty()) ?
+                credentialsSupportedJsonString : getJson(configServerFileStorageURL, getIssuerCredentialSupportedJson);
+    }
+
+    public String getCredentialSupportedTemplateString() throws IOException{
+        return (credentialTemplateHtmlString != null && !credentialTemplateHtmlString.isEmpty()) ?
+                credentialTemplateHtmlString : getJson(configServerFileStorageURL, getCredentialSupportedHtml);
     }
 
 

@@ -1,4 +1,4 @@
-package io.mosip.mimoto.dto.v2;
+package io.mosip.mimoto.dto.mimoto;
 
 import com.google.gson.annotations.Expose;
 import io.mosip.mimoto.dto.LogoDTO;
