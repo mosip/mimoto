@@ -153,7 +153,7 @@ public class InjiControllerTest {
     public void getAllIssuersTest() throws Exception {
         IssuersDTO issuers = new IssuersDTO();
         issuers.setIssuers((List.of(getIssuerDTO("Issuer1"), getIssuerDTO("Issuer2"))));
-        Mockito.when(issuersService.getAllIssuers())
+        Mockito.when(issuersService.getAllIssuers(null))
                 .thenReturn(issuers)
                 .thenThrow(new ApiNotAccessibleException());
 

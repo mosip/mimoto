@@ -81,7 +81,8 @@ public enum PlatformErrorMessages {
     MIMOTO_IDP_CONSENT_EXCEPTION(PlatformConstants.PREFIX + "032", "Idp consent exception occured"),
     MIMOTO_IDP_OTP_EXCEPTION(PlatformConstants.PREFIX + "033", "IDP Otp error occured"),
     MIMOTO_IDP_GENERIC_EXCEPTION(PlatformConstants.PREFIX + "034", "Could not get response from server"),
-    INVALID_ISSUER_ID_EXCEPTION(PlatformConstants.PREFIX + "035", "Invalid issuer ID");
+    INVALID_ISSUER_ID_EXCEPTION(PlatformConstants.PREFIX + "035", "Invalid issuer ID"),
+    INVALID_CREDENTIAL_SUPPORTED_TYPE_ID_EXCEPTION(PlatformConstants.PREFIX + "036", "Invalid Credential Supported Type Id");
 
     /** The error message. */
     private final String errorMessage;

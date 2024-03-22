@@ -89,8 +89,8 @@
         <bouncycastle.version>1.70</bouncycastle.version>
         <jwt.version> 3.8.1</jwt.version>
         <google.zxing.version>3.3.3</google.zxing.version>
-        <itextcore.version>7.2.0</itextcore.version>
-        <itexthtml2pdf.version>2.0.0</itexthtml2pdf.version>
+        <itextcore.version>8.0.3</itextcore.version>
+        <itexthtml2pdf.version>5.0.3</itexthtml2pdf.version>
         <itext.version>5.5.13</itext.version>
         <commons-math3>3.6.1</commons-math3>
         <commons-lang3>3.7</commons-lang3>
@@ -98,8 +98,7 @@
         <commons-codec>1.15</commons-codec>
         <swagger.version>2.9.2</swagger.version>
         <springdoc.version>1.5.10</springdoc.version>
-
-
+        <jjwt-version>0.9.1</jjwt-version>
         <sonar.coverage.exclusions>
             **/constant/**,**/config/**,**/httpfilter/**,**/cache/**,**/dto/**,**/entity/**,**/model/**,**/exception/**,**/repository/**,**/security/**,**/*Config.java,**/*BootApplication.java,**/*VertxApplication.java,**/cbeffutil/**,**/core.http/**,**/util/**
         </sonar.coverage.exclusions>
@@ -364,6 +363,11 @@
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
             <version>9.25.6</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>${jjwt-version}</version>
         </dependency>
         <dependency>
             <groupId>org.bitbucket.b_c</groupId>
