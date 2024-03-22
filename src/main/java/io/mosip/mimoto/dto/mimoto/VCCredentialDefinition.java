@@ -1,4 +1,4 @@
-package io.mosip.mimoto.dto.v2;
+package io.mosip.mimoto.dto.mimoto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;

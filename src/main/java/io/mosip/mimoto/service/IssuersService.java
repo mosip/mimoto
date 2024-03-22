@@ -2,7 +2,9 @@ package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
-import io.mosip.mimoto.dto.v2.IssuerSupportedCredentialsResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
+import io.mosip.mimoto.dto.mimoto.IssuerSupportedCredentialsResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 
 import java.io.ByteArrayInputStream;
@@ -17,6 +19,10 @@ public interface IssuersService {
 
     IssuerSupportedCredentialsResponse getCredentialsSupported(String issuerId, String search) throws ApiNotAccessibleException, IOException;
 
-    ByteArrayInputStream generatePdfForVerifiableCredentials(String token, String issuerId, String credentialsSupportedId) throws Exception;
+    CredentialIssuerWellKnownResponse getCredentialWellKnownFromJson() throws IOException, ApiNotAccessibleException;
+
+    ByteArrayInputStream generatePdfForVerifiableCredentials(String accessToken, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String credentialEndPoint) throws Exception;
+
+
 
 }

@@ -5,7 +5,13 @@ import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
 import io.mosip.mimoto.dto.DisplayDTO;
 import io.mosip.mimoto.dto.LogoDTO;
-import io.mosip.mimoto.dto.v2.*;
+import io.mosip.mimoto.dto.mimoto.CredentialDefinitionResponseDto;
+import io.mosip.mimoto.dto.mimoto.CredentialDisplayResponseDto;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerDisplayResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialSupportedDisplayResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
+import io.mosip.mimoto.dto.mimoto.IssuerSupportedCredentialsResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.RestApiClient;
@@ -27,7 +33,7 @@ import java.net.URI;
 import java.util.*;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 @SpringBootTest
@@ -123,8 +129,8 @@ public class IssuersServiceTest {
         issuers.setIssuers(List.of(getIssuerDTO("Issuer1", Collections.emptyList()), getIssuerDTO("Issuer2", Collections.emptyList())));
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = getCredentialIssuerWellKnownResponseDto("Issuer1",
                 List.of(getCredentialSupportedResponse("CredentialSupported1"), getCredentialSupportedResponse("CredentialSupported2")));
-        Mockito.when(utilities.getV2CredentialsSupportedConfigJsonValue()).thenReturn(new Gson().toJson(credentialIssuerWellKnownResponse));
-        Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(new Gson().toJson(issuers));
+        when(utilities.getCredentialsSupportedConfigJsonValue()).thenReturn(new Gson().toJson(credentialIssuerWellKnownResponse));
+        when(utilities.getIssuersConfigJsonValue()).thenReturn(new Gson().toJson(issuers));
     }
 
     @Test
@@ -145,7 +151,7 @@ public class IssuersServiceTest {
 
     @Test(expected = ApiNotAccessibleException.class)
     public void shouldThrowApiNotAccessibleExceptionWhenIssuersJsonStringIsNullForGettingAllIssuers() throws IOException, ApiNotAccessibleException {
-        Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(null);
+        when(utilities.getIssuersConfigJsonValue()).thenReturn(null);
 
         issuersService.getAllIssuers(null);
     }
@@ -179,15 +185,15 @@ public class IssuersServiceTest {
 
     @Test(expected = ApiNotAccessibleException.class)
     public void shouldThrowApiNotAccessibleExceptionWhenIssuersJsonStringIsNullForGettingIssuerConfig() throws IOException, ApiNotAccessibleException {
-        Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(null);
+        when(utilities.getIssuersConfigJsonValue()).thenReturn(null);
 
         issuersService.getIssuerConfig("Issuers1id");
     }
 
     @Test(expected = ApiNotAccessibleException.class)
     public void shouldThrowApiNotAccessibleExceptionWhenCredentialsSupportedJsonStringIsNullForGettingCredentialsSupportedList() throws Exception {
-        Mockito.when(utilities.getV2CredentialsSupportedConfigJsonValue()).thenReturn(null);
-        Mockito.when(restApiClient.getApi(Mockito.any(URI.class), Mockito.any(Class.class))).thenReturn(null);
+        when(utilities.getCredentialsSupportedConfigJsonValue()).thenReturn(null);
+        when(restApiClient.getApi(Mockito.any(URI.class), Mockito.any(Class.class))).thenReturn(null);
         issuersService.getCredentialsSupported("Issuer1id", null);
     }
 
@@ -201,7 +207,7 @@ public class IssuersServiceTest {
         expectedIssuerCredentialsSupported.setSupportedCredentials(credentialsSupportedResponses);
         expectedIssuerCredentialsSupported.setAuthorization_endpoint(authorization_endpoint);
 
-        Mockito.when(restApiClient.getApi(Mockito.any(URI.class), Mockito.any(Class.class))).thenReturn(null);
+        when(restApiClient.getApi(Mockito.any(URI.class), Mockito.any(Class.class))).thenReturn(null);
         IssuerSupportedCredentialsResponse issuerSupportedCredentialsResponse = issuersService.getCredentialsSupported("Issuer1id", null);
         assertEquals(issuerSupportedCredentialsResponse, expectedIssuerCredentialsSupported);
     }
@@ -215,12 +221,20 @@ public class IssuersServiceTest {
 
     @Test
     public void shouldParseHtmlStringToDocument() {
-        String htmlContent = "<html><body><h1>Hello World!</h1></body></html>";
-        VelocityContext velocityContext = mock(VelocityContext.class);
+        String htmlContent = "<html><body><h1>$message</h1></body></html>";
+        Map<String, Object> data = new HashMap<>();
+        data.put("message", "PDF");
+        // Create VelocityContext
+        VelocityContext velocityContext = new VelocityContext();
+        // Create StringWriter to capture output
         StringWriter writer = new StringWriter();
+        // Merge template with data
+        velocityContext.put("message", data.get("message"));
         Velocity.evaluate(velocityContext, writer, "Credential Template", htmlContent);
+        // Get merged HTML
         String mergedHtml = writer.toString();
-        assertNotNull(mergedHtml);
+        // Assertion
+        assertTrue(mergedHtml.contains("PDF"));
     }
 
 }
