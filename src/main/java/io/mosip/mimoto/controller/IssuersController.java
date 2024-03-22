@@ -32,7 +32,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.API_NOT_ACCESSIBLE_EXCEPTION;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.INVALID_CREDENTIAL_SUPPORTED_TYPE_ID_EXCEPTION;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.INVALID_ISSUER_ID_EXCEPTION;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION;
 
 @RestController
 @RequestMapping(value = "/issuers")
