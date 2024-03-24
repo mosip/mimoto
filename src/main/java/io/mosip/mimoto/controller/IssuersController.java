@@ -148,6 +148,7 @@ public class IssuersController {
                     .ok()
                     .contentType(MediaType.APPLICATION_PDF)
                     .header(HttpHeaders.CONTENT_DISPOSITION, String.format("attachment; filename=%s.pdf", pdfFileName))
+                    .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, "Content-Disposition")
                     .body(new InputStreamResource(inputStream));
         }catch (ApiNotAccessibleException | IOException exception){
             logger.error("Exception occurred while fetching issuer metadata ", exception);
