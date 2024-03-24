@@ -13,12 +13,8 @@ public class InvalidIssuerIdException extends BaseUncheckedException {
      * @param errorCode    The error code for this exception
      * @param errorMessage The error message for this exception
      */
-    public InvalidIssuerIdException(String errorCode, String errorMessage) {
-        super(errorCode, errorMessage);
-    }
 
-    public InvalidIssuerIdException(String errorMessage) {
-        super(PlatformErrorMessages.INVALID_ISSUER_ID_EXCEPTION.getCode(), errorMessage);
+    public InvalidIssuerIdException() {
+        super(PlatformErrorMessages.INVALID_ISSUER_ID_EXCEPTION.getCode(), PlatformErrorMessages.INVALID_ISSUER_ID_EXCEPTION.getMessage());
     }
-
 }

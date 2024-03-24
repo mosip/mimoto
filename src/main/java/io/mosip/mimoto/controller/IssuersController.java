@@ -22,6 +22,7 @@ import java.util.List;
 
 import static io.mosip.mimoto.exception.PlatformErrorMessages.API_NOT_ACCESSIBLE_EXCEPTION;
 import static io.mosip.mimoto.exception.PlatformErrorMessages.INVALID_ISSUER_ID_EXCEPTION;
+import static io.mosip.mimoto.util.Utilities.handleExceptionWithErrorCode;
 
 @RestController
 @RequestMapping(value = "/issuers")
@@ -61,9 +62,9 @@ public class IssuersController {
         IssuerDTO issuerConfig;
         try {
             issuerConfig = issuersService.getIssuerConfig(issuerId);
-        } catch (ApiNotAccessibleException | IOException exception) {
+        } catch (Exception exception ) {
             logger.error("Exception occurred while fetching issuers ", exception);
-            responseWrapper.setErrors(List.of(new ErrorDTO(API_NOT_ACCESSIBLE_EXCEPTION.getCode(), API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
+            responseWrapper = handleExceptionWithErrorCode(exception);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseWrapper);
         }
 

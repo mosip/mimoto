@@ -2,7 +2,6 @@ package io.mosip.mimoto.util;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.interfaces.RSAKeyProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.KeyUse;
@@ -14,9 +13,9 @@ import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.mimoto.JwkDto;
 import io.mosip.mimoto.dto.mimoto.WalletBindingInternalResponseDto;
 import io.mosip.mimoto.dto.mimoto.WalletBindingResponseDto;
+import io.mosip.mimoto.exception.IssuerOnboardingException;
 import org.jose4j.jws.JsonWebSignature;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -130,7 +129,7 @@ public class JoseUtil {
         return responseWrapper;
     }
 
-    public String getJWT(String clientId, String keyStorePath, String fileName, String alias, String cyptoPassword, String audience) {
+    public String getJWT(String clientId, String keyStorePath, String fileName, String alias, String cyptoPassword, String audience) throws IssuerOnboardingException, IOException {
 
         Map<String, Object> header = new HashMap<>();
         header.put("alg", ALG_RS256);
@@ -141,9 +140,13 @@ public class JoseUtil {
         RSAPrivateKey privateKey = null;
         try {
             KeyStore.PrivateKeyEntry privateKeyEntry = cryptoCoreUtil.loadP12(keyStorePathWithFileName, alias, cyptoPassword);
+            if(privateKeyEntry == null){
+                throw new IssuerOnboardingException("Private Key Entry is Missing for the alias " + alias);
+            }
             privateKey = (RSAPrivateKey) privateKeyEntry.getPrivateKey();
         } catch (IOException e) {
            logger.error("Exception happened while loading the p12 file for invoking token call.");
+           throw e;
         }
         return JWT.create()
                 .withHeader(header)

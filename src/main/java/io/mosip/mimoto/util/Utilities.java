@@ -35,6 +35,8 @@ import io.mosip.mimoto.service.RestClientService;
 import io.mosip.mimoto.service.impl.CredentialShareServiceImpl;
 import lombok.Data;
 
+import static io.mosip.mimoto.controller.IdpController.getErrorResponse;
+
 @Component
 @Data
 public class Utilities {
@@ -284,6 +286,16 @@ public class Utilities {
                 issuersConfigJsonString : getJson(configServerFileStorageURL, getIssuersConfigJson);
     }
 
+    public static ResponseWrapper<Object> handleExceptionWithErrorCode(Exception exception) {
+        String errorMessage = exception.getMessage();
+        String errorCode = PlatformErrorMessages.MIMOTO_IDP_GENERIC_EXCEPTION.getCode();
+
+        if(errorMessage.contains(" --> ")){
+            errorCode =errorMessage.split(" --> ")[0];
+            errorMessage = errorMessage.split(" --> ")[1];
+        }
+        return getErrorResponse(errorCode, errorMessage);
+    }
 
     /**
      * retrieve UIN from IDRepo by registration id.
