@@ -96,8 +96,8 @@ public class IssuersServiceTest {
         credentialSupportedDisplay.setLogo(logo);
         credentialSupportedDisplay.setName(credentialSupportedName);
         credentialSupportedDisplay.setLocale("en");
-        credentialSupportedDisplay.setText_color("#FFFFFF");
-        credentialSupportedDisplay.setBackground_color("#B34622");
+        credentialSupportedDisplay.setTextColor("#FFFFFF");
+        credentialSupportedDisplay.setBackgroundColor("#B34622");
         CredentialIssuerDisplayResponse credentialIssuerDisplayResponse = new CredentialIssuerDisplayResponse();
         credentialIssuerDisplayResponse.setName("Given Name");
         credentialIssuerDisplayResponse.setLocale("en");
@@ -111,16 +111,16 @@ public class IssuersServiceTest {
         credentialsSupportedResponse.setId(credentialSupportedName+"id");
         credentialsSupportedResponse.setScope(credentialSupportedName+"_vc_ldp");
         credentialsSupportedResponse.setDisplay(Collections.singletonList(credentialSupportedDisplay));
-        credentialsSupportedResponse.setProof_types_supported(Collections.singletonList("jwt"));
-        credentialsSupportedResponse.setCredential_definition(credentialDefinitionResponseDto);
+        credentialsSupportedResponse.setProofTypesSupported(Collections.singletonList("jwt"));
+        credentialsSupportedResponse.setCredentialDefinition(credentialDefinitionResponseDto);
         return credentialsSupportedResponse;
     }
 
     static CredentialIssuerWellKnownResponse getCredentialIssuerWellKnownResponseDto(String issuerName, List<CredentialsSupportedResponse> credentialsSupportedResponses){
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
-        credentialIssuerWellKnownResponse.setCredential_issuer(issuerName);
-        credentialIssuerWellKnownResponse.setCredential_endpoint("/credential_endpoint");
-        credentialIssuerWellKnownResponse.setCredentials_supported(credentialsSupportedResponses);
+        credentialIssuerWellKnownResponse.setCredentialIssuer(issuerName);
+        credentialIssuerWellKnownResponse.setCredentialEndPoint("/credential_endpoint");
+        credentialIssuerWellKnownResponse.setCredentialsSupported(credentialsSupportedResponses);
         return credentialIssuerWellKnownResponse;
     }
 
@@ -206,7 +206,7 @@ public class IssuersServiceTest {
 
         String authorization_endpoint = getIssuerDTO("Issuer1", issuerConfigRelatedFields).getAuthorization_endpoint();
         expectedIssuerCredentialsSupported.setSupportedCredentials(credentialsSupportedResponses);
-        expectedIssuerCredentialsSupported.setAuthorization_endpoint(authorization_endpoint);
+        expectedIssuerCredentialsSupported.setAuthorizationEndPoint(authorization_endpoint);
 
         IssuerSupportedCredentialsResponse issuerSupportedCredentialsResponse = issuersService.getCredentialsSupported("Issuer1id", null);
         assertEquals(issuerSupportedCredentialsResponse, expectedIssuerCredentialsSupported);
@@ -216,7 +216,7 @@ public class IssuersServiceTest {
     public void shouldReturnNullIfTheIssuerIdNotExistsForCredentialSupportedTypes() throws ApiNotAccessibleException, IOException {
         IssuerSupportedCredentialsResponse issuerSupportedCredentialsResponse = issuersService.getCredentialsSupported("Issuer3id", null);
         assertNull(issuerSupportedCredentialsResponse.getSupportedCredentials());
-        assertNull(issuerSupportedCredentialsResponse.getAuthorization_endpoint());
+        assertNull(issuerSupportedCredentialsResponse.getAuthorizationEndPoint());
     }
 
     @Test

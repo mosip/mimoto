@@ -49,6 +49,8 @@ import java.util.stream.Collectors;
 public class IssuersServiceImpl implements IssuersService {
     private final Logger logger = LoggerUtil.getLogger(IssuersServiceImpl.class);
 
+    private static final String context = "https://www.w3.org/2018/credentials/v1";
+
     @Autowired
     private Utilities utilities;
 
@@ -122,9 +124,10 @@ public class IssuersServiceImpl implements IssuersService {
 
     @Override
     public IssuerSupportedCredentialsResponse getCredentialsSupported(String issuerId, String search) throws ApiNotAccessibleException, IOException {
-        IssuerSupportedCredentialsResponse supportedCredentialsWithAuthorizationEndPoint = new IssuerSupportedCredentialsResponse();
+        IssuerSupportedCredentialsResponse credentialTypesWithAuthorizationEndpoint = new IssuerSupportedCredentialsResponse();
 
         IssuersDTO issuersDto = getAllIssuersWithAllFields();
+
         Optional<IssuerDTO> issuerConfigResp = issuersDto.getIssuers().stream()
                 .filter(issuer -> issuer.getCredential_issuer().equals(issuerId))
                 .findFirst();
@@ -136,21 +139,21 @@ public class IssuersServiceImpl implements IssuersService {
             if (response == null) {
                 response = getCredentialWellKnownFromJson();
             }
-            List<CredentialsSupportedResponse> issuerCredentialsSupported = response.getCredentials_supported();
-            supportedCredentialsWithAuthorizationEndPoint.setAuthorization_endpoint(issuerDto.getAuthorization_endpoint());
-            supportedCredentialsWithAuthorizationEndPoint.setSupportedCredentials(issuerCredentialsSupported);
+            List<CredentialsSupportedResponse> issuerCredentialsSupported = response.getCredentialsSupported();
+            credentialTypesWithAuthorizationEndpoint.setAuthorizationEndPoint(issuerDto.getAuthorization_endpoint());
+            credentialTypesWithAuthorizationEndpoint.setSupportedCredentials(issuerCredentialsSupported);
 
             // Filter Credential supported types with search string
             if (!StringUtils.isEmpty(search)){
-                supportedCredentialsWithAuthorizationEndPoint.setSupportedCredentials(issuerCredentialsSupported
+                credentialTypesWithAuthorizationEndpoint.setSupportedCredentials(issuerCredentialsSupported
                         .stream()
                         .filter(credentialsSupportedResponse -> credentialsSupportedResponse.getDisplay().stream()
                                 .anyMatch(credDisplay -> credDisplay.getName().toLowerCase().contains(search.toLowerCase())))
                         .collect(Collectors.toList()));
             }
-            return supportedCredentialsWithAuthorizationEndPoint;
+            return credentialTypesWithAuthorizationEndpoint;
         }
-        return supportedCredentialsWithAuthorizationEndPoint;
+        return credentialTypesWithAuthorizationEndpoint;
     }
 
     @Override
@@ -165,17 +168,17 @@ public class IssuersServiceImpl implements IssuersService {
     @Override
     public ByteArrayInputStream generatePdfForVerifiableCredentials(String accessToken, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String credentialEndPoint) throws Exception {
         LinkedHashMap<String, String> vcPropertiesFromWellKnown = new LinkedHashMap<>();
-        Map<String, CredentialDisplayResponseDto> credentialSubject = credentialsSupportedResponse.getCredential_definition().getCredentialSubject();
-        //populating display properties from credential supported json for pdf
+        Map<String, CredentialDisplayResponseDto> credentialSubject = credentialsSupportedResponse.getCredentialDefinition().getCredentialSubject();
+        //populating display properties from credential Types json for pdf
         credentialSubject.keySet().forEach(VCProperty -> vcPropertiesFromWellKnown.put(VCProperty, credentialSubject.get(VCProperty).getDisplay().get(0).getName()));
-        String backgroundColor = credentialsSupportedResponse.getDisplay().get(0).getBackground_color();
-        String textColor = credentialsSupportedResponse.getDisplay().get(0).getText_color();
+        String backgroundColor = credentialsSupportedResponse.getDisplay().get(0).getBackgroundColor();
+        String textColor = credentialsSupportedResponse.getDisplay().get(0).getTextColor();
         VCCredentialRequest vcCredentialRequest = generateVCCredentialRequest(issuerDTO, credentialsSupportedResponse, accessToken);
-        logger.info("VC Credential Request is -> " + vcCredentialRequest);
+        logger.debug("VC Credential Request is -> " + vcCredentialRequest);
         //Esignet API call for credential issue
         VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialEndPoint, MediaType.APPLICATION_JSON,
                 vcCredentialRequest, VCCredentialResponse.class, accessToken);
-        logger.info("VC Credential Response is -> " + vcCredentialResponse);
+        logger.debug("VC Credential Response is -> " + vcCredentialResponse);
         if (vcCredentialResponse == null) throw new RuntimeException("VC Credential Issue API not accessible");
         Map<String, Object> credentialProperties = vcCredentialResponse.getCredential().getCredentialSubject();
         LinkedHashMap<String,Object> displayProperties = new LinkedHashMap<>();
@@ -194,12 +197,12 @@ public class IssuersServiceImpl implements IssuersService {
         return VCCredentialRequest.builder()
                 .format(credentialsSupportedResponse.getFormat())
                 .proof(VCCredentialRequestProof.builder()
-                        .proof_type(credentialsSupportedResponse.getProof_types_supported().get(0))
+                        .proofType(credentialsSupportedResponse.getProofTypesSupported().get(0))
                         .jwt(jwt)
                         .build())
-                .credential_definition(VCCredentialDefinition.builder()
-                        .type(credentialsSupportedResponse.getCredential_definition().getType())
-                        .context(List.of("https://www.w3.org/2018/credentials/v1"))
+                .credentialDefinition(VCCredentialDefinition.builder()
+                        .type(credentialsSupportedResponse.getCredentialDefinition().getType())
+                        .context(List.of(context))
                         .build())
                 .build();
     }

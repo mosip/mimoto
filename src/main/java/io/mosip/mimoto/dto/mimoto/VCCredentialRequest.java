@@ -1,5 +1,6 @@
 package io.mosip.mimoto.dto.mimoto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 
@@ -19,7 +20,8 @@ public class VCCredentialRequest {
     @NotNull
     private VCCredentialRequestProof proof;
 
+    @JsonProperty("credential_definition")
     @Valid
     @NotNull
-    private VCCredentialDefinition credential_definition;
+    private VCCredentialDefinition credentialDefinition;
 }
