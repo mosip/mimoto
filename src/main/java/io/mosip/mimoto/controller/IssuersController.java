@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static io.mosip.mimoto.exception.PlatformErrorMessages.API_NOT_ACCESSIBLE_EXCEPTION;
-import static io.mosip.mimoto.exception.PlatformErrorMessages.INVALID_CREDENTIAL_TYPE_ID_EXCEPTION;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.INVALID_CREDENTIAL_TYPE_EXCEPTION;
 import static io.mosip.mimoto.exception.PlatformErrorMessages.INVALID_ISSUER_ID_EXCEPTION;
 import static io.mosip.mimoto.exception.PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION;
 
@@ -107,7 +107,7 @@ public class IssuersController {
         }catch (ApiNotAccessibleException | IOException exception){
             logger.error("Exception occurred while fetching credential types", exception);
             responseWrapper.setErrors(List.of(new ErrorDTO(API_NOT_ACCESSIBLE_EXCEPTION.getCode(), API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseWrapper);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
         }
         responseWrapper.setResponse(credentialTypes);
 
@@ -138,14 +138,14 @@ public class IssuersController {
                     .findFirst();
             if (credentialsSupportedResponse.isEmpty()){
                 logger.error("Invalid credential Type passed - {}", credentialType);
-                responseWrapper.setErrors(List.of(new ErrorDTO(INVALID_CREDENTIAL_TYPE_ID_EXCEPTION.getCode(), INVALID_CREDENTIAL_TYPE_ID_EXCEPTION.getMessage())));
+                responseWrapper.setErrors(List.of(new ErrorDTO(INVALID_CREDENTIAL_TYPE_EXCEPTION.getCode(), INVALID_CREDENTIAL_TYPE_EXCEPTION.getMessage())));
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
             }
             ByteArrayInputStream inputStream =  issuersService.generatePdfForVerifiableCredentials(token, issuerConfig, credentialsSupportedResponse.get(), credentialIssuerWellKnownResponse.getCredentialEndPoint());
             //PDF file name with issuer display name and credential type display name
-            String pdfFileName = issuerConfig.getDisplay().stream().filter(displayDTO -> displayDTO.getLanguage().equals(defaultLanguageConstant)).map(DisplayDTO::getName).findFirst().orElse(null) +
+            String pdfFileName = issuerConfig.getDisplay().stream().filter(displayDTO -> defaultLanguageConstant.equals(displayDTO.getLanguage())).map(DisplayDTO::getName).findFirst().orElse(null) +
                     "_" + credentialsSupportedResponse.get().getDisplay().stream()
-                    .filter(credentialSupportedDisplayResponse -> credentialSupportedDisplayResponse.getLocale().equals(defaultLanguageConstant)).map(CredentialSupportedDisplayResponse::getName).findFirst().orElse(null);
+                    .filter(credentialSupportedDisplayResponse -> defaultLanguageConstant.equals(credentialSupportedDisplayResponse.getLocale())).map(CredentialSupportedDisplayResponse::getName).findFirst().orElse(null);
             return ResponseEntity
                     .ok()
                     .contentType(MediaType.APPLICATION_PDF)

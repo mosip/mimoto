@@ -215,7 +215,7 @@ public class InjiControllerTest {
                         )
                 )));
         mockMvc.perform(get("/issuers/{issuer-id}/credentialTypes", "Issuer1").accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getCode())))
                 .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
 
