@@ -51,6 +51,8 @@ public class IssuersServiceTest {
         logo.setAlt_text("logo-url");
         DisplayDTO display = new DisplayDTO();
         display.setName(issuerName);
+        display.setTitle("Download via " + issuerName);
+        display.setDescription(issuerName + " description");
         display.setLanguage("en");
         display.setLogo(logo);
         IssuerDTO issuer = new IssuerDTO();
