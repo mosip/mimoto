@@ -90,7 +90,7 @@ public class IssuersServiceImpl implements IssuersService {
         if (!StringUtils.isEmpty(search)) {
             List<IssuerDTO> filteredIssuers = issuers.getIssuers().stream()
                     .filter(issuer -> issuer.getDisplay().stream()
-                            .anyMatch(displayDTO -> displayDTO.getName().toLowerCase().contains(search.toLowerCase())))
+                            .anyMatch(displayDTO -> displayDTO.getTitle().toLowerCase().contains(search.toLowerCase())))
                     .collect(Collectors.toList());
             issuers.setIssuers(filteredIssuers);
             return issuers;

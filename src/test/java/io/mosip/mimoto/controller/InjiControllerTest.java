@@ -264,7 +264,7 @@ public class InjiControllerTest {
 
         IssuersDTO filteredIssuers = new IssuersDTO();
         filteredIssuers.setIssuers(issuers.getIssuers().stream().filter(issuer -> issuer.getDisplay().stream()
-                        .anyMatch(displayDTO -> displayDTO.getName().toLowerCase().contains("Issuer1".toLowerCase())))
+                        .anyMatch(displayDTO -> displayDTO.getTitle().toLowerCase().contains("Issuer1".toLowerCase())))
                 .collect(Collectors.toList()));
 
         Mockito.when(issuersService.getAllIssuers("Issuer1"))
