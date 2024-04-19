@@ -144,7 +144,7 @@ public class IssuersServiceImpl implements IssuersService {
             IssuerDTO issuerDto = issuerConfigResp.get();
 
             // Get credential supported types from well known endpoint
-            CredentialIssuerWellKnownResponse response = restApiClient.getApi(issuerDto.getCredential_issuer(), CredentialIssuerWellKnownResponse.class);
+            CredentialIssuerWellKnownResponse response = restApiClient.getApi(issuerDto.getWellKnownEndpoint(), CredentialIssuerWellKnownResponse.class);
             if (response == null) {
                 response = getCredentialWellKnownFromJson();
             }
