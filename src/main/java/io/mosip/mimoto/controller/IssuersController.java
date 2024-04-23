@@ -12,6 +12,7 @@ import io.mosip.mimoto.dto.mimoto.IssuerSupportedCredentialsResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.DateUtils;
+import io.mosip.mimoto.util.RestApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,9 @@ import static io.mosip.mimoto.util.Utilities.handleExceptionWithErrorCode;
 public class IssuersController {
     @Autowired
     IssuersService issuersService;
+
+    @Autowired
+    private RestApiClient restApiClient;
 
     private static final String defaultLanguageConstant = "en";
 
@@ -124,7 +128,10 @@ public class IssuersController {
 
         try{
             IssuerDTO issuerConfig = issuersService.getIssuerConfig(issuerId);
-            CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = issuersService.getCredentialWellKnownFromJson();
+            CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = restApiClient.getApi(issuerConfig.getWellKnownEndpoint(), CredentialIssuerWellKnownResponse.class);
+            if (credentialIssuerWellKnownResponse == null) {
+                credentialIssuerWellKnownResponse = issuersService.getCredentialWellKnownFromJson();
+            }
             Optional<CredentialsSupportedResponse> credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialsSupported().stream()
                     .filter(credentialsSupported -> credentialsSupported.getId().equals(credentialType))
                     .findFirst();
