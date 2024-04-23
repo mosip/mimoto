@@ -130,7 +130,7 @@ public class IssuersController {
             IssuerDTO issuerConfig = issuersService.getIssuerConfig(issuerId);
             CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = restApiClient.getApi(issuerConfig.getWellKnownEndpoint(), CredentialIssuerWellKnownResponse.class);
             if (credentialIssuerWellKnownResponse == null) {
-                credentialIssuerWellKnownResponse = issuersService.getCredentialWellKnownFromJson();
+                throw new ApiNotAccessibleException();
             }
             Optional<CredentialsSupportedResponse> credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialsSupported().stream()
                     .filter(credentialsSupported -> credentialsSupported.getId().equals(credentialType))

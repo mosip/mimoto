@@ -24,10 +24,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.net.URI;
 import java.util.*;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 @SpringBootTest
@@ -124,9 +124,6 @@ public class IssuersServiceTest {
     public void setUp() throws Exception {
         IssuersDTO issuers = new IssuersDTO();
         issuers.setIssuers(List.of(getIssuerDTO("Issuer1", Collections.emptyList()), getIssuerDTO("Issuer2", Collections.emptyList())));
-        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = getCredentialIssuerWellKnownResponseDto("Issuer1",
-                List.of(getCredentialSupportedResponse("CredentialSupported1"), getCredentialSupportedResponse("CredentialSupported2")));
-        Mockito.when(utilities.getCredentialsSupportedConfigJsonValue()).thenReturn(new Gson().toJson(credentialIssuerWellKnownResponse));
         Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(new Gson().toJson(issuers));
     }
 
@@ -204,9 +201,8 @@ public class IssuersServiceTest {
 
     @Test(expected = ApiNotAccessibleException.class)
     public void shouldThrowApiNotAccessibleExceptionWhenCredentialsSupportedJsonStringIsNullForGettingCredentialsSupportedList() throws Exception {
-        Mockito.when(utilities.getCredentialsSupportedConfigJsonValue()).thenReturn(null);
+        Mockito.when(restApiClient.getApi(any(String.class), any(Class.class))).thenReturn(null);
         issuersService.getCredentialsSupported("Issuer1id", null);
-        Mockito.when(restApiClient.getApi(Mockito.any(URI.class), Mockito.any(Class.class))).thenReturn(null);
     }
 
     @Test
@@ -219,6 +215,8 @@ public class IssuersServiceTest {
         expectedIssuerCredentialsSupported.setSupportedCredentials(credentialsSupportedResponses);
         expectedIssuerCredentialsSupported.setAuthorizationEndPoint(authorization_endpoint);
 
+        Mockito.when(restApiClient.getApi(any(String.class), any())).thenReturn(getCredentialIssuerWellKnownResponseDto("Issuer1",
+                List.of(getCredentialSupportedResponse("CredentialSupported1"), getCredentialSupportedResponse("CredentialSupported2"))));
         IssuerSupportedCredentialsResponse issuerSupportedCredentialsResponse = issuersService.getCredentialsSupported("Issuer1id", null);
         assertEquals(issuerSupportedCredentialsResponse, expectedIssuerCredentialsSupported);
     }
