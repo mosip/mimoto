@@ -28,6 +28,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -40,16 +41,17 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.mosip.mimoto.exception.PlatformErrorMessages.API_NOT_ACCESSIBLE_EXCEPTION;
 import static io.mosip.mimoto.exception.PlatformErrorMessages.INVALID_ISSUER_ID_EXCEPTION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = TestBootApplication.class)
@@ -77,6 +79,9 @@ public class InjiControllerTest {
 
     @MockBean
     private IssuersServiceImpl issuersService;
+
+    @MockBean
+    public RestApiClient restApiClient;
 
     @Autowired
     private MockMvc mockMvc;
@@ -149,12 +154,125 @@ public class InjiControllerTest {
         return issuer;
     }
 
+    static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName){
+        LogoDTO logo = new LogoDTO();
+        logo.setUrl("/logo");
+        logo.setAlt_text("logo-url");
+        CredentialSupportedDisplayResponse credentialSupportedDisplay = new CredentialSupportedDisplayResponse();
+        credentialSupportedDisplay.setLogo(logo);
+        credentialSupportedDisplay.setName(credentialSupportedName);
+        credentialSupportedDisplay.setLocale("en");
+        credentialSupportedDisplay.setTextColor("#FFFFFF");
+        credentialSupportedDisplay.setBackgroundColor("#B34622");
+        CredentialIssuerDisplayResponse credentialIssuerDisplayResponse = new CredentialIssuerDisplayResponse();
+        credentialIssuerDisplayResponse.setName("Given Name");
+        credentialIssuerDisplayResponse.setLocale("en");
+        CredentialDisplayResponseDto credentialDisplayResponseDto = new CredentialDisplayResponseDto();
+        credentialDisplayResponseDto.setDisplay(Collections.singletonList(credentialIssuerDisplayResponse));
+        CredentialDefinitionResponseDto credentialDefinitionResponseDto = new CredentialDefinitionResponseDto();
+        credentialDefinitionResponseDto.setType(List.of("VerifiableCredential", credentialSupportedName));
+        credentialDefinitionResponseDto.setCredentialSubject(Map.of("name", credentialDisplayResponseDto));
+        CredentialsSupportedResponse credentialsSupportedResponse = new CredentialsSupportedResponse();
+        credentialsSupportedResponse.setFormat("ldp_vc");
+        credentialsSupportedResponse.setId(credentialSupportedName);
+        credentialsSupportedResponse.setScope(credentialSupportedName+"_vc_ldp");
+        credentialsSupportedResponse.setDisplay(Collections.singletonList(credentialSupportedDisplay));
+        credentialsSupportedResponse.setProofTypesSupported(Collections.singletonList("jwt"));
+        credentialsSupportedResponse.setCredentialDefinition(credentialDefinitionResponseDto);
+        return credentialsSupportedResponse;
+    }
+
+    static CredentialIssuerWellKnownResponse getCredentialIssuerWellKnownResponseDto(String issuerName, List<CredentialsSupportedResponse> credentialsSupportedResponses){
+        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
+        credentialIssuerWellKnownResponse.setCredentialIssuer(issuerName);
+        credentialIssuerWellKnownResponse.setCredentialEndPoint("credential_endpoint");
+        credentialIssuerWellKnownResponse.setCredentialsSupported(credentialsSupportedResponses);
+        return credentialIssuerWellKnownResponse;
+    }
+
+    @Test
+    public void getCredentialTypesTest() throws Exception{
+        IssuerSupportedCredentialsResponse credentialTypesResponse = new IssuerSupportedCredentialsResponse();
+        credentialTypesResponse.setSupportedCredentials(List.of(getCredentialSupportedResponse("credentialType1"),
+                getCredentialSupportedResponse("credentialType2")));
+        credentialTypesResponse.setAuthorizationEndPoint("authorization-endpoint");
+        Mockito.when(issuersService.getCredentialsSupported("Issuer1", null))
+                .thenReturn(credentialTypesResponse)
+                .thenThrow(new ApiNotAccessibleException());
+        Mockito.when(issuersService.getCredentialsSupported("invalidId", null))
+                        .thenReturn(new IssuerSupportedCredentialsResponse());
+
+        mockMvc.perform(get("/issuers/{issuer-id}/credentialTypes", "Issuer1").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response", Matchers.allOf(
+                        Matchers.hasKey("authorization_endpoint"),
+                        Matchers.hasKey("supportedCredentials")
+                )))
+                .andExpect(jsonPath("$.response.supportedCredentials", Matchers.everyItem(
+                        Matchers.allOf(
+                                Matchers.hasKey("format"),
+                                Matchers.hasKey("id"),
+                                Matchers.hasKey("scope"),
+                                Matchers.hasKey("display"),
+                                Matchers.hasKey("proof_types_supported"),
+                                Matchers.hasKey("credential_definition")
+                        )
+                )));
+        mockMvc.perform(get("/issuers/{issuer-id}/credentialTypes", "Issuer1").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getCode())))
+                .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
+
+        mockMvc.perform(get("/issuers/{issuer-id}/credentialTypes", "invalidId").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is(INVALID_ISSUER_ID_EXCEPTION.getCode())))
+                .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is(INVALID_ISSUER_ID_EXCEPTION.getMessage())));
+    }
+
+    @Test
+    public void generatePdfForVCTest() throws Exception {
+        Mockito.when(issuersService.getIssuerConfig("Issuer1"))
+                .thenReturn(getIssuerDTO("Issuer1"))
+                .thenThrow(new ApiNotAccessibleException());
+
+        Mockito.when(restApiClient.getApi(ArgumentMatchers.any(String.class), ArgumentMatchers.any()))
+                .thenReturn(getCredentialIssuerWellKnownResponseDto("Issuer1",
+                        List.of(getCredentialSupportedResponse("CredentialType1"))));
+
+
+        Mockito.when(issuersService.generatePdfForVerifiableCredentials("accessToken",
+                        getIssuerDTO("Issuer1"), getCredentialSupportedResponse("CredentialType1"),
+                        "credential_endpoint"))
+                .thenReturn(new ByteArrayInputStream("Mock Pdf".getBytes()))
+                .thenThrow(new Exception());
+
+        mockMvc.perform(get("/issuers/Issuer1/credentials/CredentialType1/download")
+                        .header("Bearer", "accessToken")
+                        .accept(MediaType.APPLICATION_PDF))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/issuers/Issuer1/credentials/CredentialType1/download")
+                        .header("Bearer", "accessToken").accept(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getCode())))
+                .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
+    }
+
     @Test
     public void getAllIssuersTest() throws Exception {
         IssuersDTO issuers = new IssuersDTO();
         issuers.setIssuers((List.of(getIssuerDTO("Issuer1"), getIssuerDTO("Issuer2"))));
-        Mockito.when(issuersService.getAllIssuers())
+        Mockito.when(issuersService.getAllIssuers(null))
                 .thenReturn(issuers)
+                .thenThrow(new ApiNotAccessibleException());
+
+        IssuersDTO filteredIssuers = new IssuersDTO();
+        filteredIssuers.setIssuers(issuers.getIssuers().stream().filter(issuer -> issuer.getDisplay().stream()
+                        .anyMatch(displayDTO -> displayDTO.getTitle().toLowerCase().contains("Issuer1".toLowerCase())))
+                .collect(Collectors.toList()));
+
+        Mockito.when(issuersService.getAllIssuers("Issuer1"))
+                .thenReturn(filteredIssuers)
                 .thenThrow(new ApiNotAccessibleException());
 
         mockMvc.perform(get("/issuers").accept(MediaType.APPLICATION_JSON_VALUE))
@@ -175,8 +293,32 @@ public class InjiControllerTest {
                         )
                 )));
 
+        mockMvc.perform(get("/issuers?search=Issuer1").accept(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response.issuers", Matchers.everyItem(
+                        Matchers.allOf(
+                                Matchers.hasKey("credential_issuer"),
+                                Matchers.hasKey("display"),
+                                Matchers.hasKey("client_id"),
+                                Matchers.hasKey(".well-known"),
+                                Matchers.not(Matchers.hasKey("redirect_url")),
+                                Matchers.not(Matchers.hasKey("authorization_endpoint")),
+                                Matchers.not(Matchers.hasKey("token_endpoint")),
+                                Matchers.not(Matchers.hasKey("credential_endpoint")),
+                                Matchers.not(Matchers.hasKey("credential_audience")),
+                                Matchers.not(Matchers.hasKey("additional_headers")),
+                                Matchers.not(Matchers.hasKey("scopes_supported"))
+                        )
+                )));
+
         mockMvc.perform(get("/issuers").accept(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getCode())))
+                .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
+
+
+        mockMvc.perform(get("/issuers?search=Issuer1").accept(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getCode())))
                 .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
     }
@@ -197,7 +339,7 @@ public class InjiControllerTest {
                 .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is(INVALID_ISSUER_ID_EXCEPTION.getMessage())));
 
         mockMvc.perform(get("/issuers/id1").accept(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getCode())))
                 .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
     }
@@ -350,7 +492,7 @@ public class InjiControllerTest {
 
         this.mockMvc.perform(post("/binding-otp").contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(JsonUtils.javaObjectToJsonString(requestDTO)))
-                .andExpect(status().isOk());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -373,7 +515,7 @@ public class InjiControllerTest {
 
         this.mockMvc.perform(post("/wallet-binding").contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(JsonUtils.javaObjectToJsonString(requestDTO)))
-                .andExpect(status().isOk());
+                .andExpect(status().isBadRequest());
     }
 
     @Test

@@ -65,4 +65,8 @@ public class IssuerDTO {
     String client_alias;
     @JsonInclude(NON_NULL)
     Map<String, String> additional_headers;
+    @Expose
+    @JsonInclude(NON_NULL)
+    @NotBlank
+    String enabled;
 }

@@ -1,25 +1,9 @@
 package io.mosip.mimoto.util;
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Component;
-
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.constant.ApiName;
 import io.mosip.mimoto.constant.LoggerFileConstant;
@@ -34,6 +18,23 @@ import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.RestClientService;
 import io.mosip.mimoto.service.impl.CredentialShareServiceImpl;
 import lombok.Data;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import static io.mosip.mimoto.constant.LoggerFileConstant.DELIMITER;
+import static io.mosip.mimoto.controller.IdpController.getErrorResponse;
 
 @Component
 @Data
@@ -103,6 +104,12 @@ public class Utilities {
     @Value("${mosip.openid.issuers}")
     private String getIssuersConfigJson;
 
+    @Value("${mosip.openid.issuer.credentialSupported}")
+    private String getIssuerCredentialSupportedJson;
+
+    @Value("${mosip.openid.htmlTemplate}")
+    private String getCredentialSupportedHtml;
+
     private String mappingJsonString = null;
 
     private String identityMappingJsonString = null;
@@ -111,9 +118,17 @@ public class Utilities {
 
     private String issuersConfigJsonString = null;
 
+    private String credentialsSupportedJsonString = null;
+
+    private String credentialTemplateHtmlString = null;
 //    uncomment for running mimoto Locally to populate the issuers json
-//    public Utilities(@Value("classpath:mimoto-issuers-config.json") Resource resource) throws IOException {
+//    public Utilities(@Value("classpath:/wellKnownIssuer/Insurance.json") Resource credentialsSupportedResource,
+//                     @Value("classpath:mimoto-issuers-config.json") Resource resource,
+//                     @Value("classpath:/templates/CredentialTemplate.html") Resource credentialTemplateResource) throws IOException{
+//
 //        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
+//        credentialsSupportedJsonString = (Files.readString(credentialsSupportedResource.getFile().toPath()));
+//        credentialTemplateHtmlString = (Files.readString(credentialTemplateResource.getFile().toPath()));
 //    }
 
     public JSONObject getTemplate() throws JsonParseException, JsonMappingException, IOException {
@@ -282,6 +297,28 @@ public class Utilities {
     public String getIssuersConfigJsonValue() throws IOException {
         return  (issuersConfigJsonString != null && !issuersConfigJsonString.isEmpty()) ?
                 issuersConfigJsonString : getJson(configServerFileStorageURL, getIssuersConfigJson);
+    }
+
+    public static ResponseWrapper<Object> handleExceptionWithErrorCode(Exception exception) {
+        String errorMessage = exception.getMessage();
+        String errorCode = PlatformErrorMessages.MIMOTO_IDP_GENERIC_EXCEPTION.getCode();
+
+        if(errorMessage.contains(DELIMITER)){
+            String[] errorSections = errorMessage.split(DELIMITER);
+            errorCode = errorSections[0];
+            errorMessage = errorSections[1];
+        }
+        return getErrorResponse(errorCode, errorMessage);
+    }
+
+    public String getCredentialsSupportedConfigJsonValue() throws IOException{
+        return (credentialsSupportedJsonString != null && !credentialsSupportedJsonString.isEmpty()) ?
+                credentialsSupportedJsonString : getJson(configServerFileStorageURL, getIssuerCredentialSupportedJson);
+    }
+
+    public String getCredentialSupportedTemplateString() throws IOException{
+        return (credentialTemplateHtmlString != null && !credentialTemplateHtmlString.isEmpty()) ?
+                credentialTemplateHtmlString : getJson(configServerFileStorageURL, getCredentialSupportedHtml);
     }
 
 
