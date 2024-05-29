@@ -1,0 +1,15 @@
+RequestAPIKeyForAuthPartner:
+   Mimoto_SubmitPartnerApiKeyRequest_Rejection_All_Valid_Smoke_sid:
+      endPoint: /v1/partnermanager/partners/$ID:PartnerSelfRegistration_All_Valid_Smoke_sid_partnerId$/policy/map
+      role: partner
+      restMethod: post 
+      inputTemplate: mimoto/PmsIntegration/RequestAPIKey/requestApiKey
+      outputTemplate: mimoto/PmsIntegration/RequestAPIKey/requestAPIKeyResult
+      input: '{
+        "policyName": "$ID:DefinePolicy_All_Valid_Smoke_sid_name$",
+        "useCaseDescription": "Need to submit the payment",
+        "requesttime": "$TIMESTAMP$"
+    }'
+      output: '{
+        "message": "Policy mapping request submitted successfully."
+}'
