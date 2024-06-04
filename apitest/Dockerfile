@@ -34,7 +34,7 @@ ADD entrypoint.sh $work_dir/entrypoint.sh
 
 # install packages and create user
 RUN apk update \
-&& apk add --no-cache unzip jq curl shadow \
+&& apk add --no-cache unzip jq curl shadow bash \
 && groupadd -g ${container_user_gid} ${container_user_group} \
 && useradd -u ${container_user_uid} -g ${container_user_group} -s /bin/sh -m ${container_user} \
 && curl -LO "https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" \
