@@ -39,7 +39,7 @@ RUN apk update \
 && useradd -u ${container_user_uid} -g ${container_user_group} -s /bin/sh -m ${container_user} \
 && curl -LO "https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" \
 && chmod +x kubectl \
-&& mv kubectl /usr/local/bin/
+&& mv kubectl /usr/local/bin/ \
 && chmod +x $work_dir/entrypoint.sh \
 && chown -R ${container_user}:${container_user} /home/${container_user} /opt/java/openjdk/lib/security/cacerts \
 && chmod 644 /opt/java/openjdk/lib/security/cacerts
