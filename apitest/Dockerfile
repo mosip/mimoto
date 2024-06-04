@@ -1,4 +1,4 @@
-FROM openjdk:11
+FROM eclipse-temurin:21-jre-alpine
 
 ARG SOURCE
 ARG COMMIT_HASH
@@ -24,10 +24,10 @@ ARG container_user_gid=1001
 ARG KUBECTL_VERSION=1.22.9
 
 # install packages and create user
-RUN apt-get -y update \
-&& apt-get install -y unzip jq \
-&& groupadd -g ${container_user_gid} ${container_user_group} \
-&& useradd -u ${container_user_uid} -g ${container_user_group} -s /bin/sh -m ${container_user} \
+RUN apk update \
+&& apk add unzip jq \
+&& addgroup -g ${container_user_gid} -S ${container_user_group} \
+&& adduser -u ${container_user_uid} -G ${container_user_group} -S ${container_user} -h ${container_user} --disabled-password \
 && curl -LO "https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" \
 && chmod +x kubectl \
 && mv kubectl /usr/local/bin/
