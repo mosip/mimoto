@@ -106,7 +106,7 @@ public class CredentialShareServiceTest {
         Mockito.when(util.getBIRTypeList(Mockito.anyString())).thenReturn(birs);
         Mockito.when(util.getPhotoByTypeAndSubType(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn("face image strring".getBytes());
 
-        PowerMockito.mockStatic(CommonUtil.class);
+        /*PowerMockito.mockStatic(CommonUtil.class);
         Mockito.when(CommonUtil.convertJP2ToJPEGBytes(Mockito.any(byte[].class))).thenReturn(("VkVSX1IyUePARBpE1-kwFG3i9AXxWsH67-sAbyvWC1joGfw-QgFjLTgLRCwUrzaPC0_K1NuXl" +
                 "t_TNHNyGu0aAcyqMe3zbBBgZXiP0sImJ0OjjkdbpjBdO_BGyWpLsz-T5eW3luz2RILFSKpDtTwDAVJ8y2jsSONgWDUza14cglCHvt9MT6UWv18oYJ8uCw2Aqx3Pf3Op" +
                 "9P3HJd_32G03U6HhrHD9AVRCon9R2Uh2IYgUmn8zwKozC7bWoGqO74LCYt15zsmYTvJg9v9zqVUAPxrPvo5VVJmbKm_kP8ZPtkslnPte_EML4wkVvZDPpa7D6H3aIn-t" +
@@ -114,6 +114,7 @@ public class CredentialShareServiceTest {
                 "v_I2wWvYKOR2UxXLmfPzgcjFDVpnIG3hDSGn-1Oat2liFgKBM_cBQvapPyMgqE3CokFI6DAvBeHJrOgtR1k5m4JuRsqwtrzf3_PCBFHW6jkEjYm9VJc5zBgAFi-0KiZoRF" +
                 "a-XG4L3ZCA42gOfTAlQ6iVq0_3M5uxi4BdSkr1Cyr0CBHZgAivU5vyajLbnvvJVlbDpGb_T3LqG7l7oBVvo9zq74QbQFKOaKwzJn9432_yD4DG2qOHBPnOmyopfxaSSoosM" +
                 "1qmDxC9CaE2zVWDjmJdPk630AkKJhvNmMJJXxkeZnvsGg5QsjP4_i2isLg63kjhb2MtNtgN0uCUsXNbqEyb3kJAVvM34KGR1bsmO5Zowq_yKenNCFm68zNWm05pFMW0_4").getBytes());
+    */
     }
 
     @Test

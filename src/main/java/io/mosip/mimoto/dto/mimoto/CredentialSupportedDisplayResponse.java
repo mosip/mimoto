@@ -6,8 +6,8 @@ import com.google.gson.annotations.SerializedName;
 import io.mosip.mimoto.dto.LogoDTO;
 import lombok.Data;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 
 @Data
 public class CredentialSupportedDisplayResponse {
