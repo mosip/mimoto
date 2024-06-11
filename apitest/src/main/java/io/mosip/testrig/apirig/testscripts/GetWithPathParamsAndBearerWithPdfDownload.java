@@ -32,14 +32,15 @@ import io.mosip.testrig.apirig.utils.GlobalConstants;
 import io.mosip.testrig.apirig.utils.GlobalMethods;
 import io.restassured.response.Response;
 
-public class GetWithPathParamAndBearerWithPdfDownload extends AdminTestUtil implements ITest {
-	private static final Logger logger = Logger.getLogger(GetWithPathParamAndBearerWithPdfDownload.class);
+public class GetWithPathParamsAndBearerWithPdfDownload extends AdminTestUtil implements ITest {
+	private static final Logger logger = Logger.getLogger(GetWithPathParamsAndBearerWithPdfDownload.class);
 	protected String testCaseName = "";
 	public Response response = null;
 	public byte[] pdf=null;
 	public String pdfAsText =null;
 	public boolean sendEsignetToken = false;
-	public final String COOKIENAME_BEARER = GlobalConstants.BEARER;
+	//public final String COOKIENAME_BEARER = GlobalConstants.BEARER;
+	String pathParams = null;
 	
 	@BeforeClass
 	public static void setLogLevel() {
@@ -65,6 +66,7 @@ public class GetWithPathParamAndBearerWithPdfDownload extends AdminTestUtil impl
 	@DataProvider(name = "testcaselist")
 	public Object[] getTestCaseList(ITestContext context) {
 		String ymlFile = context.getCurrentXmlTest().getLocalParameters().get("ymlFile");
+		pathParams = context.getCurrentXmlTest().getLocalParameters().get("pathParams");
 		sendEsignetToken = context.getCurrentXmlTest().getLocalParameters().containsKey("sendEsignetToken");
 		logger.info("Started executing yml: "+ymlFile);
 		return getYmlTestData(ymlFile);
@@ -95,7 +97,7 @@ public class GetWithPathParamAndBearerWithPdfDownload extends AdminTestUtil impl
 			}
 		}
 		
-		pdf = getWithPathParamAndBearerTokenForPdf(ApplnURI + testCaseDTO.getEndPoint(), getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), COOKIENAME_BEARER,  testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
+		pdf = getWithPathParamAndBearerTokenForPdf(ApplnURI + testCaseDTO.getEndPoint(), getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), COOKIENAME,  testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken, pathParams);
 		PdfReader pdfReader = null;
 		ByteArrayInputStream bIS = null;
 		

@@ -224,8 +224,9 @@
 	<test name="DownloadIssuerCredential">
 		<parameter name="ymlFile"
 			value="mimoto/DownloadIssuerCredential/DownloadIssuerCredential.yml" />
+		<parameter name="pathParams" value="issuerId,credentialType" />
 		<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.GetWithPathParamAndBearerWithPdfDownload" />
+			<class name="io.mosip.testrig.apirig.testscripts.GetWithPathParamsAndBearerWithPdfDownload" />
 		</classes>
 	</test>
 
