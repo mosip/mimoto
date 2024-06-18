@@ -4,7 +4,7 @@ package io.mosip.mimoto.dto;
 import com.google.gson.annotations.Expose;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 @Data
 public class LogoDTO {

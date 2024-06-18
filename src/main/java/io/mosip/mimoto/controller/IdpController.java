@@ -14,7 +14,6 @@ import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.RestClientService;
-import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;

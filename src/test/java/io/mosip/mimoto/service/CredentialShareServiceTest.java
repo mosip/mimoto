@@ -8,7 +8,6 @@ import io.mosip.kernel.biometrics.entities.BIR;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.AuditResponseDto;
 import io.mosip.mimoto.dto.CryptoWithPinResponseDto;
-import io.mosip.mimoto.exception.DocumentGeneratorException;
 import io.mosip.mimoto.model.Event;
 import io.mosip.mimoto.model.EventModel;
 import io.mosip.mimoto.service.impl.CredentialShareServiceImpl;
@@ -21,10 +20,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.URI;
 import java.security.InvalidKeyException;
@@ -35,9 +31,7 @@ import java.util.Map;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ URI.class, org.json.JSONObject.class, CommonUtil.class})
-@PowerMockIgnore({ "javax.management.*", "javax.net.ssl.*","com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*" })
+@RunWith(MockitoJUnitRunner.class)
 public class CredentialShareServiceTest {
 
     @InjectMocks
@@ -106,14 +100,6 @@ public class CredentialShareServiceTest {
         Mockito.when(util.getBIRTypeList(Mockito.anyString())).thenReturn(birs);
         Mockito.when(util.getPhotoByTypeAndSubType(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn("face image strring".getBytes());
 
-        PowerMockito.mockStatic(CommonUtil.class);
-        Mockito.when(CommonUtil.convertJP2ToJPEGBytes(Mockito.any(byte[].class))).thenReturn(("VkVSX1IyUePARBpE1-kwFG3i9AXxWsH67-sAbyvWC1joGfw-QgFjLTgLRCwUrzaPC0_K1NuXl" +
-                "t_TNHNyGu0aAcyqMe3zbBBgZXiP0sImJ0OjjkdbpjBdO_BGyWpLsz-T5eW3luz2RILFSKpDtTwDAVJ8y2jsSONgWDUza14cglCHvt9MT6UWv18oYJ8uCw2Aqx3Pf3Op" +
-                "9P3HJd_32G03U6HhrHD9AVRCon9R2Uh2IYgUmn8zwKozC7bWoGqO74LCYt15zsmYTvJg9v9zqVUAPxrPvo5VVJmbKm_kP8ZPtkslnPte_EML4wkVvZDPpa7D6H3aIn-t" +
-                "2l8G7w8zWRwnTjrQqBn_fmTS43cabLyr3Vc2RmVd0LOX_LXuikS-n5gEjy-Xw6Yc-xAZb0F_spB2Q_ihAi9Ej2FMAXa1Why1MYp0jNCK1FIyTns5S9oc7bonaaK5Zo1aqkut" +
-                "v_I2wWvYKOR2UxXLmfPzgcjFDVpnIG3hDSGn-1Oat2liFgKBM_cBQvapPyMgqE3CokFI6DAvBeHJrOgtR1k5m4JuRsqwtrzf3_PCBFHW6jkEjYm9VJc5zBgAFi-0KiZoRF" +
-                "a-XG4L3ZCA42gOfTAlQ6iVq0_3M5uxi4BdSkr1Cyr0CBHZgAivU5vyajLbnvvJVlbDpGb_T3LqG7l7oBVvo9zq74QbQFKOaKwzJn9432_yD4DG2qOHBPnOmyopfxaSSoosM" +
-                "1qmDxC9CaE2zVWDjmJdPk630AkKJhvNmMJJXxkeZnvsGg5QsjP4_i2isLg63kjhb2MtNtgN0uCUsXNbqEyb3kJAVvM34KGR1bsmO5Zowq_yKenNCFm68zNWm05pFMW0_4").getBytes());
     }
 
     @Test
