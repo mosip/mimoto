@@ -39,6 +39,10 @@ cd helm/mimoto
 * The init-container will proceed to download the server's self-signed SSL certificate and mount it to the specified location within the container's Java keystore (i.e., `cacerts`) file.
 * This particular functionality caters to scenarios where the script needs to be employed on a server utilizing self-signed SSL certificates.
 
+### For Onboarding new Issuer for VCI:
+
+- create a folder "certs" in the root and a file "oidckeystore.p12" inside certs and store the keys as different aliases for every issuers. for more details refer [here](https://docs.mosip.io/inji/inji-mobile-wallet/customization-overview/credential_providers)
+
 ### Docker compose stack folder structure:
 - bin: service jar files
 - conf: configuration files for docker services.
