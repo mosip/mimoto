@@ -474,7 +474,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type"
+      "errorCode": "invalid_auth_factor_type_format"
     }
   ],        
         "sendOtpResp": {
@@ -513,7 +513,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type"
+      "errorCode": "invalid_auth_factor_type_format"
     }
   ],        
         "sendOtpResp": {
@@ -552,7 +552,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type"
+      "errorCode": "invalid_auth_factor_type_format"
     }
   ],        
         "sendOtpResp": {
@@ -591,7 +591,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type"
+      "errorCode": "invalid_auth_factor_type_format"
     }
   ],        
         "sendOtpResp": {
@@ -630,7 +630,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type"
+      "errorCode": "invalid_auth_factor_type_format"
     }
   ],        
         "sendOtpResp": {
@@ -669,7 +669,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge"
+      "errorCode": "invalid_challenge_length"
     }
   ],       
         "sendOtpResp": {
@@ -708,7 +708,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge"
+      "errorCode": "invalid_challenge_length"
     }
   ],       
         "sendOtpResp": {
@@ -747,7 +747,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge"
+      "errorCode": "invalid_challenge_length"
     }
   ],       
         "sendOtpResp": {
@@ -786,7 +786,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge"
+      "errorCode": "invalid_challenge_length"
     }
   ],       
         "sendOtpResp": {
@@ -825,7 +825,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge"
+      "errorCode": "invalid_challenge_length"
     }
   ],       
         "sendOtpResp": {
@@ -864,7 +864,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge_format"
+      "errorCode": "invalid_auth_factor_type_format"
     }
   ],      
         "sendOtpResp": {
@@ -903,7 +903,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge_format"
+      "errorCode": "invalid_auth_factor_type_format"
     }
   ],      
         "sendOtpResp": {
@@ -942,7 +942,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge_format"
+      "errorCode": "invalid_auth_factor_type_format"
     }
   ],      
         "sendOtpResp": {
@@ -1020,7 +1020,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge_format"
+      "errorCode": "invalid_auth_factor_type_format"
     }
   ],
         "sendOtpResp": {
@@ -1933,7 +1933,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type"
+      "errorCode": "invalid_auth_factor_type_format"
     }
   ],        
         "sendOtpResp": {
@@ -2088,7 +2088,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type"
+      "errorCode": "invalid_auth_factor_type_format"
     }
   ],        
         "sendOtpResp": {
@@ -2282,7 +2282,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge"
+      "errorCode": "invalid_challenge_length"
     }
   ],       
         "sendOtpResp": {
@@ -2320,7 +2320,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge_format"
+      "errorCode": "invalid_auth_factor_type_format"
     }
   ],      
         "sendOtpResp": {
@@ -2475,7 +2475,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge_format"
+      "errorCode": "invalid_auth_factor_type_format"
     }
   ],
         "sendOtpResp": {
