@@ -132,7 +132,7 @@ jobs:
       OSSRH_SECRET: ${{ secrets.OSSRH_SECRET }}
       OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
       GPG_SECRET: ${{ secrets.GPG_SECRET }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
 
   publish_to_nexus_apitest:
     if: "${{ !contains(github.ref, 'master') && github.event_name != 'pull_request' && github.event_name != 'release' && github.event_name != 'prerelease' && github.event_name != 'publish' }}"
@@ -146,7 +146,7 @@ jobs:
       OSSRH_URL: ${{ secrets.OSSRH_SNAPSHOT_URL }}
       OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
       GPG_SECRET: ${{ secrets.GPG_SECRET }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
 
   build-apitest-mimoto-local:
     needs: build-maven-apitest-mimoto
@@ -218,7 +218,7 @@ jobs:
      DEV_NAMESPACE_DOCKER_HUB: ${{ secrets.DEV_NAMESPACE_DOCKER_HUB }}
      ACTOR_DOCKER_HUB: ${{ secrets.ACTOR_DOCKER_HUB }}
      RELEASE_DOCKER_HUB: ${{ secrets.RELEASE_DOCKER_HUB }}
-     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
 
   sonar_analysis_apitest_mimoto:
    needs: build-maven-apitest-mimoto
@@ -233,4 +233,4 @@ jobs:
      OSSRH_SECRET: ${{ secrets.OSSRH_SECRET }}
      OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
      GPG_SECRET: ${{ secrets.GPG_SECRET }}
-     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
