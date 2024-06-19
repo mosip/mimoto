@@ -5,10 +5,7 @@ import io.mosip.mimoto.dto.DisplayDTO;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
-import io.mosip.mimoto.dto.mimoto.CredentialSupportedDisplayResponse;
-import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
-import io.mosip.mimoto.dto.mimoto.IssuerSupportedCredentialsResponse;
+import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.DateUtils;
@@ -116,10 +113,12 @@ public class IssuersController {
         return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
     }
 
-    @GetMapping("/{issuer-id}/credentials/{credentialType}/download")
-    public ResponseEntity<?> generatePdfForVC(@RequestHeader("Bearer") String token,
-                                                         @PathVariable("issuer-id") String issuerId,
-                                                         @PathVariable("credentialType") String credentialType) {
+    @PostMapping("/{issuer-id}/credentials/{credentialType}/download")
+    public ResponseEntity<?> downloadCredentialAsPDF(
+            @RequestHeader("Authorization") String token,
+            @PathVariable("issuer-id") String issuerId,
+            @PathVariable("credentialType") String credentialType,
+            @RequestBody VCCredentialRequest vcCredentialRequest) {
 
         ResponseWrapper<Object> responseWrapper = new ResponseWrapper<>();
         responseWrapper.setId(ID);
@@ -128,27 +127,16 @@ public class IssuersController {
 
         try{
             IssuerDTO issuerConfig = issuersService.getIssuerConfig(issuerId);
-            CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = restApiClient.getApi(issuerConfig.getWellKnownEndpoint(), CredentialIssuerWellKnownResponse.class);
-            if (credentialIssuerWellKnownResponse == null) {
-                throw new ApiNotAccessibleException();
-            }
-            Optional<CredentialsSupportedResponse> credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialsSupported().stream()
-                    .filter(credentialsSupported -> credentialsSupported.getId().equals(credentialType))
-                    .findFirst();
-            if (credentialsSupportedResponse.isEmpty()){
-                logger.error("Invalid credential Type passed - {}", credentialType);
-                responseWrapper.setErrors(List.of(new ErrorDTO(INVALID_CREDENTIAL_TYPE_EXCEPTION.getCode(), INVALID_CREDENTIAL_TYPE_EXCEPTION.getMessage())));
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
-            }
-            ByteArrayInputStream inputStream =  issuersService.generatePdfForVerifiableCredentials(token, issuerConfig, credentialsSupportedResponse.get(), credentialIssuerWellKnownResponse.getCredentialEndPoint());
-            //PDF file name with issuer display name and credential type display name
-            String pdfFileName = issuerConfig.getDisplay().stream().filter(displayDTO -> defaultLanguageConstant.equals(displayDTO.getLanguage())).map(DisplayDTO::getName).findFirst().orElse(null) +
-                    "_" + credentialsSupportedResponse.get().getDisplay().stream()
-                    .filter(credentialSupportedDisplayResponse -> defaultLanguageConstant.equals(credentialSupportedDisplayResponse.getLocale())).map(CredentialSupportedDisplayResponse::getName).findFirst().orElse(null);
+            logger.info("issuerConfig => " +  issuerConfig);
+            CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = issuersService.getCredentialIssuerWellknown(issuerId, credentialType);
+            logger.info("Wellknown => " +  credentialIssuerWellKnownResponse);
+            CredentialsSupportedResponse credentialsSupportedResponse = issuersService.getCredentialSupported(credentialIssuerWellKnownResponse, credentialType);
+            VCCredentialResponse vcCredentialResponse = issuersService.downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, token);
+            logger.info("vcCredentialResponse" + vcCredentialResponse);
+            ByteArrayInputStream inputStream =  issuersService.generatePdfForVerifiableCredentials(vcCredentialResponse, issuerConfig, credentialsSupportedResponse, credentialIssuerWellKnownResponse.getCredentialEndPoint());
             return ResponseEntity
                     .ok()
                     .contentType(MediaType.APPLICATION_PDF)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, String.format("attachment; filename=%s.pdf", pdfFileName))
                     .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, "Content-Disposition")
                     .body(new InputStreamResource(inputStream));
         }catch (ApiNotAccessibleException | IOException exception){
