@@ -13,9 +13,12 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
+import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.exception.IdpException;
 import io.mosip.mimoto.service.CredentialService;
+import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.JoseUtil;
 import io.mosip.mimoto.util.LoggerUtil;
@@ -27,8 +30,11 @@ import org.apache.http.auth.InvalidCredentialsException;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -58,7 +64,31 @@ public class CredentialServiceImpl implements CredentialService {
     @Autowired
     IssuersService issuerService;
 
+    @Autowired
+    IdpService idpService;
+
     @Override
+    public TokenResponseDTO getTokenResponse(Map<String, String> params, String issuerId) throws ApiNotAccessibleException, IOException {
+        RestTemplate restTemplate = new RestTemplate();
+        IssuerDTO issuerDTO = issuerService.getIssuerConfig(issuerId);
+        HttpEntity<MultiValueMap<String, String>> request = idpService.constructGetTokenRequest(params, issuerDTO);
+        TokenResponseDTO response = restTemplate.postForObject(idpService.getTokenEndpoint(issuerDTO), request, TokenResponseDTO.class);
+        if(response == null) {
+            throw new IdpException("Exception occurred while performing the authorization");
+        }
+        return response;
+    }
+
+    @Override
+    public ByteArrayInputStream downloadCredentialAsPDF(String issuerId, String credentialType, TokenResponseDTO response) throws Exception {
+        IssuerDTO issuerConfig = issuerService.getIssuerConfig(issuerId);
+        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = getCredentialIssuerWellknown(issuerId, credentialType);
+        CredentialsSupportedResponse credentialsSupportedResponse = getCredentialSupported(credentialIssuerWellKnownResponse, credentialType);
+        VCCredentialRequest vcCredentialRequest = generateVCCredentialRequest(issuerConfig, credentialsSupportedResponse, response.getAccess_token());
+        VCCredentialResponse vcCredentialResponse = downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
+        return generatePdfForVerifiableCredentials(vcCredentialResponse, issuerConfig, credentialsSupportedResponse, credentialIssuerWellKnownResponse.getCredentialEndPoint());
+    }
+
     public VCCredentialResponse downloadCredential(String credentialEndpoint, VCCredentialRequest vcCredentialRequest, String accessToken) throws ApiNotAccessibleException, IOException, InvalidCredentialsException {
         VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialEndpoint, MediaType.APPLICATION_JSON,
                 vcCredentialRequest, VCCredentialResponse.class, accessToken);
@@ -82,7 +112,6 @@ public class CredentialServiceImpl implements CredentialService {
                 .build();
     }
 
-    @Override
     public ByteArrayInputStream generatePdfForVerifiableCredentials(VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String credentialEndPoint) throws Exception {
 
         LinkedHashMap<String,Object> displayProperties = new LinkedHashMap<>();
@@ -190,7 +219,6 @@ public class CredentialServiceImpl implements CredentialService {
         return imageString;
     }
 
-
     @Override
     public IssuerSupportedCredentialsResponse getCredentialsSupported(String issuerId, String search) throws ApiNotAccessibleException, IOException {
         IssuerSupportedCredentialsResponse credentialTypesWithAuthorizationEndpoint = new IssuerSupportedCredentialsResponse();
@@ -222,8 +250,6 @@ public class CredentialServiceImpl implements CredentialService {
         }
         return credentialTypesWithAuthorizationEndpoint;
     }
-
-    @Override
     public CredentialIssuerWellKnownResponse getCredentialIssuerWellknown(String issuerId, String search) throws ApiNotAccessibleException, IOException {
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         IssuersDTO issuersDto = issuerService.getAllIssuersWithAllFields();
@@ -239,7 +265,7 @@ public class CredentialServiceImpl implements CredentialService {
         }
         return credentialIssuerWellKnownResponse;
     }
-    @Override
+
     public CredentialsSupportedResponse getCredentialSupported(CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse, String credentialType) throws ApiNotAccessibleException, IOException, InvalidCredentialsException {
         Optional<CredentialsSupportedResponse> credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialsSupported().stream()
                 .filter(credentialsSupported -> credentialsSupported.getId().equals(credentialType))
@@ -250,4 +276,6 @@ public class CredentialServiceImpl implements CredentialService {
         }
         return credentialsSupportedResponse.get();
     }
+
+
 }

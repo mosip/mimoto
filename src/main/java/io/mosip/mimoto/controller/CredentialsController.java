@@ -14,6 +14,7 @@ import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.DateUtils;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,32 +56,23 @@ public class CredentialsController {
         responseWrapper.setId(ID);
         responseWrapper.setVersion("v1");
         responseWrapper.setResponsetime(DateUtils.getRequestTimeString());
-        try{
 
+        try {
             String issuerId = params.get("issuer");
             String credentialType = params.get("credential");
 
             logger.info("Initiated Token Call");
-            RestTemplate restTemplate = new RestTemplate();
-            IssuerDTO issuerDTO = issuersService.getIssuerConfig(issuerId);
-            HttpEntity<MultiValueMap<String, String>> request = idpService.constructGetTokenRequest(params, issuerDTO);
-            TokenResponseDTO response = restTemplate.postForObject(idpService.getTokenEndpoint(issuerDTO), request, TokenResponseDTO.class);
-            if(response == null) {
-                throw new IdpException("Exception occurred while performing the authorization");
-            }
+            TokenResponseDTO response = credentialService.getTokenResponse(params, issuerId);
+
             logger.info("Initiated Download Credential Call");
-            IssuerDTO issuerConfig = issuersService.getIssuerConfig(issuerId);
-            CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = credentialService.getCredentialIssuerWellknown(issuerId, credentialType);
-            CredentialsSupportedResponse credentialsSupportedResponse = credentialService.getCredentialSupported(credentialIssuerWellKnownResponse, credentialType);
-            VCCredentialRequest vcCredentialRequest = credentialService.generateVCCredentialRequest(issuerConfig, credentialsSupportedResponse, response.getAccess_token());
-            VCCredentialResponse vcCredentialResponse = credentialService.downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
-            ByteArrayInputStream inputStream =  credentialService.generatePdfForVerifiableCredentials(vcCredentialResponse, issuerConfig, credentialsSupportedResponse, credentialIssuerWellKnownResponse.getCredentialEndPoint());
+            ByteArrayInputStream inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response);
+
             return ResponseEntity
                     .ok()
                     .contentType(MediaType.APPLICATION_PDF)
                     .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, "Content-Disposition")
                     .body(new InputStreamResource(inputStream));
-        }catch (ApiNotAccessibleException | IOException exception){
+        } catch (ApiNotAccessibleException | IOException exception) {
             logger.error("Exception occurred while fetching credential types ", exception);
             responseWrapper.setErrors(List.of(new ErrorDTO(API_NOT_ACCESSIBLE_EXCEPTION.getCode(), API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
