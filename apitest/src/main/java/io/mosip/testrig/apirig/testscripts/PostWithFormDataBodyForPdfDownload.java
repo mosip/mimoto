@@ -38,7 +38,6 @@ public class PostWithFormDataBodyForPdfDownload extends AdminTestUtil implements
 	public Response response = null;
 	public byte[] pdf=null;
 	public String pdfAsText =null;
-	public boolean sendEsignetToken = false;
 	
 	@BeforeClass
 	public static void setLogLevel() {
@@ -64,7 +63,6 @@ public class PostWithFormDataBodyForPdfDownload extends AdminTestUtil implements
 	@DataProvider(name = "testcaselist")
 	public Object[] getTestCaseList(ITestContext context) {
 		String ymlFile = context.getCurrentXmlTest().getLocalParameters().get("ymlFile");
-		sendEsignetToken = context.getCurrentXmlTest().getLocalParameters().containsKey("sendEsignetToken");
 		logger.info("Started executing yml: "+ymlFile);
 		return getYmlTestData(ymlFile);
 	}
@@ -94,7 +92,7 @@ public class PostWithFormDataBodyForPdfDownload extends AdminTestUtil implements
 			}
 		}
 		
-		pdf = postWithFormDataBodyForPdf(ApplnURI + testCaseDTO.getEndPoint(), getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), COOKIENAME,  testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
+		pdf = postWithFormDataBodyForPdf(ApplnURI + testCaseDTO.getEndPoint(), getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), COOKIENAME,  testCaseDTO.getRole(), testCaseDTO.getTestCaseName());
 		PdfReader pdfReader = null;
 		ByteArrayInputStream bIS = null;
 		
