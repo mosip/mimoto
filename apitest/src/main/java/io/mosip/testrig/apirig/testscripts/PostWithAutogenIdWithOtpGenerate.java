@@ -236,17 +236,18 @@ public class PostWithAutogenIdWithOtpGenerate extends AdminTestUtil implements I
 
 	@AfterClass(alwaysRun = true)
 	public void waittime() {
-		try {
-			long delayTime = Long.parseLong(properties.getProperty("Delaytime"));
-			if (!BaseTestCase.isTargetEnvLTS())
-				delayTime = Long.parseLong(properties.getProperty("uinGenDelayTime"))
-						* Long.parseLong(properties.getProperty("uinGenMaxLoopCount"));
-			logger.info("waiting for " + delayTime + " mili secs after VID Generation In RESIDENT SERVICES");
-			Thread.sleep(delayTime);
-		} catch (Exception e) {
-			logger.error("Exception : " + e.getMessage());
-			Thread.currentThread().interrupt();
+		if (!testCaseName.contains(GlobalConstants._AUTHENTICATEUSER)) {
+			try {
+				long delayTime = Long.parseLong(properties.getProperty("Delaytime"));
+				if (!BaseTestCase.isTargetEnvLTS())
+					delayTime = Long.parseLong(properties.getProperty("uinGenDelayTime"))
+							* Long.parseLong(properties.getProperty("uinGenMaxLoopCount"));
+				logger.info("waiting for " + delayTime + " mili secs after VID Generation In RESIDENT SERVICES");
+				Thread.sleep(delayTime);
+			} catch (Exception e) {
+				logger.error("Exception : " + e.getMessage());
+				Thread.currentThread().interrupt();
+			}
 		}
-
 	}
 }

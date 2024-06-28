@@ -15,94 +15,15 @@
 			<class name="io.mosip.testrig.apirig.testscripts.AddIdentity" />
 		</classes>
 	</test>
-	<!--<test name="GenerateVID">
+	<test name="GenerateVID">
 		<parameter name="ymlFile"
 			value="mimoto/GenerateVID/createGenerateVID.yml" />
 			<parameter name="idKeyName"	value="vid" />
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.PostWithAutogenIdWithOtpGenerate" />
 		</classes>
-	</test>-->
-	
-	<test name="CreatePolicyGroup">
-		<parameter name="ymlFile"
-			value="mimoto/PmsIntegration/DefinePolicyGroup/DefinePolicyGroup.yml" />
-		<parameter name="idKeyName" value="id,name" />
-		<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
-		</classes>
-	</test>	
-	<test name="DefinePolicy">
-		<parameter name="ymlFile"
-			value="mimoto/PmsIntegration/DefinePolicy/DefinePolicy.yml" />
-		<parameter name="idKeyName" value="id,name" />
-		<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
-		</classes>
-	</test>	
-	<test name="PublishPolicy">
-		<parameter name="ymlFile"
-			value="mimoto/PmsIntegration/PublishPolicy/PublishPolicy.yml" />
-		<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.PostWithOnlyPathParam" />
-		</classes>
 	</test>
-	 <test name="CreatePartner">
-		<parameter name="ymlFile"
-			value="mimoto/PmsIntegration/CreatePartner/CreatePartner.yml" />
-			<parameter name="idKeyName" value="partnerId" />
-		<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
-		</classes>
-	</test>	
-	<test name ="UploadCACertificate">
-		<parameter name ="ymlFile"
-			value= "mimoto/PmsIntegration/UploadCertificate/UploadCertificate.yml" />
-	<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.SimplePost" />
-		</classes>
-	</test> 	
-	<test name ="UploadPartnerCertificate">
-		<parameter name ="ymlFile"
-			value= "mimoto/PmsIntegration/UploadCert/UploadCert.yml" />
-			<parameter name="idKeyName" value="signedCertificateData" />
-	<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
-		</classes>
-	</test>	
-	<test name="RequestAPIKeyForAuthPartner">
-		<parameter name="ymlFile"
-			value="mimoto/PmsIntegration/RequestAPIKey/RequestAPIKey.yml" />
-		<parameter name="idKeyName" value="mappingkey" />
-		<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
-		</classes>
-	</test>	
-	<test name="ApproveAPIKey">
-		<parameter name="ymlFile"
-			value="mimoto/PmsIntegration/ApproveAPIKey/ApproveAPIKey.yml" />
-		<parameter name="pathParams" value="mappingkey" />
-		<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.PutWithPathParamsAndBody" />
-		</classes>
-	</test>	
-	<test name="OIDCClient">
-		<parameter name="ymlFile"
-			value="mimoto/OidcClient/OIDCClient.yml" />
-			<parameter name="idKeyName"	value="clientId" />
-		<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
-		</classes>
-	</test>	
-	
-	<test name="OIDCClientUpdate">
-		<parameter name="ymlFile"
-			value="mimoto/UpdateOIDC/UpdateOIDC.yml" />
-		<parameter name="pathParams" value="clientId" />
-		<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.PutWithPathParamsAndBody" />
-		</classes>
-	</test>	
+		
 	<test name="OAuthDetailsRequest">
 		<parameter name="ymlFile"
 			value="mimoto/OAuthDetailsRequest/OAuthDetailsRequest.yml" />
@@ -126,16 +47,8 @@
 			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
 		</classes>
 	</test>
-	<test name="GenerateToken">
-		<parameter name="ymlFile"
-			value="mimoto/GenerateToken/GenerateToken.yml" />
-			<parameter name="idKeyName"	value="access_token" />
-		<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenIdForUrlEncoded" />
-		</classes>
-	</test>
 	
-	 <!--<test name="AuthLock">
+	 <test name="AuthLock">
 		<parameter name="ymlFile"
 			value="mimoto/AuthLock/createAuthLock.yml" />
 		<classes>
@@ -213,20 +126,19 @@
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.GetWithParam" />
 		</classes>
-	</test>-->
-	<!--<test name="GetAllCredentialTypes">
+	</test>
+	<test name="GetAllCredentialTypes">
 		<parameter name="ymlFile"
 			value="mimoto/GetAllCredentialTypes/GetAllCredentialTypes.yml" />
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.GetWithParam" />
 		</classes>
-	</test>-->
+	</test>
 	<test name="DownloadIssuerCredential">
 		<parameter name="ymlFile"
 			value="mimoto/DownloadIssuerCredential/DownloadIssuerCredential.yml" />
-		<parameter name="pathParams" value="issuerId,credentialType" />
 		<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.GetWithPathParamsAndBearerWithPdfDownload" />
+			<class name="io.mosip.testrig.apirig.testscripts.PostWithFormDataBodyForPdfDownload" />
 		</classes>
 	</test>
 
