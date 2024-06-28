@@ -32,7 +32,6 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
@@ -164,49 +163,32 @@ public class JoseUtil {
                 .sign(Algorithm.RSA256(null, privateKey));
     }
 
-    public PublicKey getPublicKeyString(String keyStorePath, String fileName, String alias, String cyptoPassword){
-        String keyStorePathWithFileName = keyStorePath + fileName;
-        try {
-            KeyStore.PrivateKeyEntry privateKeyEntry = cryptoCoreUtil.loadP12(keyStorePathWithFileName, alias, cyptoPassword);
-            PublicKey publicKey = privateKeyEntry.getCertificate().getPublicKey();
-            return publicKey;
-        } catch (IOException e) {
-            logger.error("Exception happened while loading the p12 file for invoking token call.");
-        }
-        return null;
-    }
-    //Added this Util for generating JWT as the existing Jwt builder will not allow to have a custom header "typ"
-    public String generateJwt(PublicKey publicJwk, String keyStorePath, String fileName, String alias, String cyptoPassword, String audience, String clientId, String accessToken) throws ParseException {
-        RSAKey jwk = new RSAKey.Builder((java.security.interfaces.RSAPublicKey) publicJwk)
+    public String generateJwt(String audience, String clientId, String accessToken) throws Exception {
+
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+        kpg.initialize(2048);
+        KeyPair kp = kpg.generateKeyPair();
+        RSAKey jwk = new RSAKey.Builder((RSAPublicKey) kp.getPublic())
                 .keyUse(KeyUse.SIGNATURE)
                 .algorithm(JWSAlgorithm.RS256)
                 .build();
 
         Map<String, Object> header = new HashMap<>();
-
         header.put("alg", ALG_RS256);
         header.put("typ", "openid4vci-proof+jwt");
         header.put("jwk", jwk.getRequiredParams());
 
-
-        String keyStorePathWithFileName = keyStorePath + fileName;
         Date issuedAt = Date.from(Instant.now());
         Date expiresAt = Date.from(Instant.now().plusMillis(120000000));
-        RSAPrivateKey privateKey = null;
-        try {
-            KeyStore.PrivateKeyEntry privateKeyEntry = cryptoCoreUtil.loadP12(keyStorePathWithFileName, alias, cyptoPassword);
-            privateKey = (RSAPrivateKey) privateKeyEntry.getPrivateKey();
-        } catch (IOException e) {
-            logger.error("Exception happened while loading the p12 file for invoking token call.");
-        }
+        RSAPrivateKey privateKey = (RSAPrivateKey) kp.getPrivate();
         SignedJWT jwt = (SignedJWT) JWTParser.parse(accessToken);
         Map<String, Object> jsonObject = jwt.getPayload().toJSONObject();
-        String cNounce = (String) jsonObject.get("c_nonce");
+        String cNonce = (String) jsonObject.get("c_nonce");
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("sub", clientId);
         payload.put("aud", audience);
-        payload.put("nonce", cNounce);
+        payload.put("nonce", cNonce);
         payload.put("iss", clientId);
         payload.put("exp", expiresAt.toInstant().getEpochSecond());
         payload.put("iat", issuedAt.toInstant().getEpochSecond());

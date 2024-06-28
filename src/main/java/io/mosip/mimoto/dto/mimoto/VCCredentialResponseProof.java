@@ -1,5 +1,6 @@
 package io.mosip.mimoto.dto.mimoto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -10,10 +11,16 @@ public class VCCredentialResponseProof {
     private String type;
     @NotBlank
     private String created;
-    @NotBlank
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String proofPurpose;
-    @NotBlank
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String verificationMethod;
-    @NotBlank
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String jws;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String proofValue;
 }
