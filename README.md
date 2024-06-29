@@ -19,7 +19,14 @@ mvn spring-boot:run -Dspring.profiles.active=local
 
 ### Install
 
-1. Execute Onboarder install script 
+1. Execute inji-config-server install script
+```
+cd helm/inji-config-server
+./install.sh
+```
+* Review values.yaml and make sure git repository parameters are as per your installation.
+
+2. Execute Onboarder install script 
 
 ```
 cd partner-onboarder
@@ -27,13 +34,6 @@ cd partner-onboarder
 ```
 * During the execution of the `install.sh` script, a prompt appears requesting information for the S3 bucket, including its name and URL.
 * Once the job is completed, log in to S3 and check the reports. There should not be any failures.
-
-2. Execute inji-config-server install script
-```
-cd helm/inji-config-server
-./install.sh
-```
-* Review values.yaml and make sure git repository parameters are as per your installation.
 
 3. Execute mimoto install script
 
