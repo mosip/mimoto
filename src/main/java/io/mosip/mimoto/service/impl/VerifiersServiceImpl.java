@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import io.mosip.mimoto.dto.openid.VerifierDTO;
 import io.mosip.mimoto.dto.openid.VerifiersDTO;
@@ -28,9 +29,9 @@ public class VerifiersServiceImpl implements VerifiersService {
         if (trustedVerifiersJsonValue == null) {
             throw new ApiNotAccessibleException();
         }
-        Gson gson = new Gson();
-        VerifiersDTO verifiersDTO = gson.fromJson(trustedVerifiersJsonValue, VerifiersDTO.class);
-        return verifiersDTO.getVerifiers().stream().filter(verifier -> verifier.getClient_id().equals(clientId)).findFirst();
+        ObjectMapper objectMapper = new ObjectMapper();
+        VerifiersDTO verifiersDTO = objectMapper.readValue(trustedVerifiersJsonValue, VerifiersDTO.class);
+        return verifiersDTO.getVerifiers().stream().filter(verifier -> verifier.getClientId().equals(clientId)).findFirst();
     }
     @Override
     public void validateVerifier(PresentationRequestDTO presentationRequestDTO) throws ApiNotAccessibleException, IOException {
@@ -38,7 +39,7 @@ public class VerifiersServiceImpl implements VerifiersService {
         if(verifierDTOOptional.isEmpty()){
             throw new InvalidVerifierException(PlatformErrorMessages.INVALID_VERIFIER_ID_EXCEPTION.getMessage());
         }
-        List<String> registeredRedirectUri = verifierDTOOptional.get().getRedirect_uri();
+        List<String> registeredRedirectUri = verifierDTOOptional.get().getRedirectUri();
         if(!registeredRedirectUri.contains(presentationRequestDTO.getRedirect_uri())){
             throw new InvalidVerifierException(PlatformErrorMessages.INVALID_VERIFIER_REDIRECT_URI_EXCEPTION.getMessage());
         }

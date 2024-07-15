@@ -41,7 +41,7 @@ public class PresentationServiceImpl implements PresentationService {
         VCCredentialProperties vcCredentialProperties = objectMapper.readValue(vcCredentialResponseString, VCCredentialProperties.class);
         PresentationDefinitionDTO presentationDefinitionDTO = objectMapper.readValue(presentationRequestDTO.getPresentation_definition(), PresentationDefinitionDTO.class);
 
-        if(presentationDefinitionDTO.getInput_descriptors().get(0).getFormat().getLdpVc().getProofTypes().get(0).equals(vcCredentialProperties.getProof().getType())){
+        if(presentationDefinitionDTO.getInputDescriptors().get(0).getFormat().getLdpVc().getProofTypes().get(0).equals(vcCredentialProperties.getProof().getType())){
             String vpToken = constructVerifiablePresentationString(vcCredentialProperties);
             String presentationSubmission =constructPresentationSubmission(vpToken);
             return String.format(injiVerifyRedirectUrl,
@@ -78,7 +78,7 @@ public class PresentationServiceImpl implements PresentationService {
         });
         presentationSubmissionDTO.setId(UUID.randomUUID().toString());
         presentationSubmissionDTO.setDefinition_id(UUID.randomUUID().toString());
-        presentationSubmissionDTO.setDescriptor_map(submissionDescriptorDTOList);
+        presentationSubmissionDTO.setDescriptorMap(submissionDescriptorDTOList);
         return objectMapper.writeValueAsString(presentationSubmissionDTO);
     }
 

@@ -251,7 +251,7 @@ public class CredentialServiceImpl implements CredentialService {
         inputDescriptorDTO.setFormat(format);
 
         presentationDefinitionDTO.setId(UUID.randomUUID().toString());
-        presentationDefinitionDTO.setInput_descriptors(Collections.singletonList(inputDescriptorDTO));
+        presentationDefinitionDTO.setInputDescriptors(Collections.singletonList(inputDescriptorDTO));
 
         return presentationDefinitionDTO;
     }

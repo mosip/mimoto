@@ -1,5 +1,6 @@
 package io.mosip.mimoto.dto.openid.presentation;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import java.util.List;
 
@@ -7,5 +8,6 @@ import java.util.List;
 public class PresentationSubmissionDTO {
     String id;
     String definition_id;
-    List<SubmissionDescriptorDTO> descriptor_map;
+    @JsonProperty("descriptor_map")
+    List<SubmissionDescriptorDTO> descriptorMap;
 }

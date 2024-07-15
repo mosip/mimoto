@@ -85,6 +85,7 @@
         "MOSIPVerifiableCredential"
       ],
       "credential_audience": "https://${mosip.esignet.host}/v1/esignet",
+      "ovp_qr_enabled": "false",
       "enabled": "false"
     },
     {
@@ -171,7 +172,6 @@
       "additional_headers": {
         "Accept": "application/json"
       },
-      "ovp_qr_enabled": "false",
       "enabled": "true",
       ".well-known": "https://esignet-insurance.dev1.mosip.net/.well-known/openid-credential-issuer?version=v11"
     }
