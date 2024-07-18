@@ -8,10 +8,7 @@ import io.mosip.kernel.core.util.JsonUtils;
 import io.mosip.kernel.websub.api.model.SubscriptionChangeResponse;
 import io.mosip.mimoto.TestBootApplication;
 import io.mosip.mimoto.core.http.ResponseWrapper;
-import io.mosip.mimoto.dto.DisplayDTO;
-import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
-import io.mosip.mimoto.dto.LogoDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.resident.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
@@ -45,7 +42,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static io.mosip.mimoto.exception.PlatformErrorMessages.API_NOT_ACCESSIBLE_EXCEPTION;
@@ -53,7 +52,8 @@ import static io.mosip.mimoto.exception.PlatformErrorMessages.INVALID_ISSUER_ID_
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = TestBootApplication.class)
@@ -187,7 +187,7 @@ public class InjiControllerTest {
 
 
         Mockito.when(credentialService.generatePdfForVerifiableCredentials(new VCCredentialResponse(),
-                        getIssuerDTO("Issuer1"), getCredentialSupportedResponse("CredentialType1")))
+                        getIssuerDTO("Issuer1"), getCredentialSupportedResponse("CredentialType1"), "data-share-url"))
                 .thenReturn(new ByteArrayInputStream("Mock Pdf".getBytes()))
                 .thenThrow(new Exception());
 

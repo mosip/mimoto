@@ -4,10 +4,8 @@ import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
-import io.mosip.mimoto.dto.idp.TokenResponseDTO;
-import io.mosip.mimoto.dto.mimoto.*;
+import io.mosip.mimoto.dto.mimoto.IssuerSupportedCredentialsResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
-import io.mosip.mimoto.exception.IdpException;
 import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
@@ -15,18 +13,15 @@ import io.mosip.mimoto.util.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.*;
-import org.springframework.util.MultiValueMap;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
-import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.API_NOT_ACCESSIBLE_EXCEPTION;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.INVALID_ISSUER_ID_EXCEPTION;
 import static io.mosip.mimoto.util.Utilities.handleExceptionWithErrorCode;
 
 @RestController

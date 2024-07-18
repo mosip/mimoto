@@ -74,6 +74,12 @@ public class CredentialServiceImpl implements CredentialService {
     IssuersService issuerService;
 
     @Autowired
+    DataShareServiceImpl dataShareService;
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    @Autowired
     IdpService idpService;
 
     @Value("${mosip.inji.web.authorize.url}")
@@ -98,7 +104,8 @@ public class CredentialServiceImpl implements CredentialService {
         CredentialsSupportedResponse credentialsSupportedResponse = getCredentialSupported(credentialIssuerWellKnownResponse, credentialType);
         VCCredentialRequest vcCredentialRequest = generateVCCredentialRequest(issuerConfig, credentialsSupportedResponse, response.getAccess_token());
         VCCredentialResponse vcCredentialResponse = downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
-        return generatePdfForVerifiableCredentials(vcCredentialResponse, issuerConfig, credentialsSupportedResponse);
+        String dataShareUrl = dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse));
+        return generatePdfForVerifiableCredentials(vcCredentialResponse, issuerConfig, credentialsSupportedResponse, dataShareUrl);
     }
 
     public VCCredentialResponse downloadCredential(String credentialEndpoint, VCCredentialRequest vcCredentialRequest, String accessToken) throws ApiNotAccessibleException, IOException, InvalidCredentialsException {
@@ -124,9 +131,9 @@ public class CredentialServiceImpl implements CredentialService {
                 .build();
     }
 
-    public ByteArrayInputStream generatePdfForVerifiableCredentials(VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse) throws Exception {
+    public ByteArrayInputStream generatePdfForVerifiableCredentials(VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl) throws Exception {
         LinkedHashMap<String, Object> displayProperties = loadDisplayPropertiesFromWellknown(vcCredentialResponse, credentialsSupportedResponse);
-        Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse,  vcCredentialResponse, issuerDTO);
+        Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse,  vcCredentialResponse, issuerDTO, dataShareUrl);
         return renderVCInCredentialTemplate(data);
     }
 
@@ -151,7 +158,7 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
 
-    private Map<String, Object> getPdfResourceFromVcProperties(LinkedHashMap<String, Object> displayProperties, CredentialsSupportedResponse credentialsSupportedResponse, VCCredentialResponse  vcCredentialResponse, IssuerDTO issuerDTO) throws IOException, WriterException {
+    private Map<String, Object> getPdfResourceFromVcProperties(LinkedHashMap<String, Object> displayProperties, CredentialsSupportedResponse credentialsSupportedResponse, VCCredentialResponse  vcCredentialResponse, IssuerDTO issuerDTO, String dataShareUrl) throws IOException, WriterException {
         Map<String, Object> data = new HashMap<>();
         LinkedHashMap<String, Object> rowProperties = new LinkedHashMap<>();
         String backgroundColor = credentialsSupportedResponse.getDisplay().get(0).getBackgroundColor();
@@ -177,7 +184,7 @@ public class CredentialServiceImpl implements CredentialService {
                 });
 
         String qrCodeImage = !"false".equals(issuerDTO.getOvp_qr_enabled()) ?
-                constructQRCodeWithAuthorizeRequest(vcCredentialResponse) :
+                constructQRCodeWithAuthorizeRequest(vcCredentialResponse, dataShareUrl) :
                 constructQRCodeWithVCData(credentialsSupportedResponse, vcCredentialResponse) ;
         data.put("qrCodeImage", qrCodeImage);
         data.put("logoUrl", issuerDTO.getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));
@@ -231,11 +238,11 @@ public class CredentialServiceImpl implements CredentialService {
         }
         return "";
     }
-    private String constructQRCodeWithAuthorizeRequest(VCCredentialResponse vcCredentialResponse) throws WriterException, JsonProcessingException {
+    private String constructQRCodeWithAuthorizeRequest(VCCredentialResponse vcCredentialResponse, String dataShareUrl) throws WriterException, JsonProcessingException {
         PresentationDefinitionDTO presentationDefinitionDTO = constructPresentationDefinition(vcCredentialResponse);
         ObjectMapper objectMapper = new ObjectMapper();
         String presentationString = objectMapper.writeValueAsString(presentationDefinitionDTO);
-        String qrData = String.format(injiWebAuthorizeUrl, URLEncoder.encode("https://raw.githubusercontent.com/tw-mosip/verify-credential-js/main/VC/sunbird_qr.json", StandardCharsets.UTF_8), URLEncoder.encode(presentationString, StandardCharsets.UTF_8));
+        String qrData = String.format(injiWebAuthorizeUrl, URLEncoder.encode(dataShareUrl, StandardCharsets.UTF_8), URLEncoder.encode(presentationString, StandardCharsets.UTF_8));
         return constructQRCode(qrData);
     }
 
