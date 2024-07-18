@@ -11,6 +11,7 @@
     <artifactId>mimoto</artifactId>
     <version>0.13.1-SNAPSHOT</version>
     <name>mimoto</name>
+    <url>https://github.com/mosip/mimoto</url>
     <description>Mobile server backend supporting Inji.</description>
     <licenses>
         <license>
