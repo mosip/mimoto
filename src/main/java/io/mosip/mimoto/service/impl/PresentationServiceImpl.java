@@ -54,19 +54,29 @@ public class PresentationServiceImpl implements PresentationService {
         VCCredentialResponse vcCredentialResponse = objectMapper.readValue(vcCredentialResponseString, VCCredentialResponse.class);
         PresentationDefinitionDTO presentationDefinitionDTO = objectMapper.readValue(presentationRequestDTO.getPresentation_definition(), PresentationDefinitionDTO.class);
 
-        String proofTypeInPresentationDefinition = presentationDefinitionDTO.getInputDescriptors().get(0).getFormat().getLdpVc().getProofTypes().get(0);
-        String proofTypeInCredential = vcCredentialResponse.getCredential().getProof().getType();
-
-        if(proofTypeInPresentationDefinition.equals(proofTypeInCredential)){
-            logger.info("Started the Construction of VP token");
-            String vpToken = constructVerifiablePresentationString(vcCredentialResponse.getCredential());
-            String presentationSubmission = constructPresentationSubmission(vpToken);
-            return String.format(injiVerifyRedirectUrl,
-                    presentationRequestDTO.getRedirect_uri(),
-                    Base64.getUrlEncoder().encodeToString(vpToken.getBytes(StandardCharsets.UTF_8)),
-                    URLEncoder.encode(presentationSubmission, StandardCharsets.UTF_8));
-        }
-        throw new VPNotCreatedException(PlatformErrorMessages.NO_CREDENTIALS_MATCH_VP_DEFINITION_EXCEPTION.getMessage());
+        return presentationDefinitionDTO.getInputDescriptors()
+                .stream()
+                .findFirst()
+                .map( inputDescriptorDTO -> {
+                    boolean matchingProofTypes = inputDescriptorDTO.getFormat().getLdpVc().getProofTypes()
+                            .stream()
+                            .anyMatch(proofType -> vcCredentialResponse.getCredential().getProof().getType().equals(proofType));
+                    if(matchingProofTypes){
+                        logger.info("Started the Construction of VP token");
+                        try {
+                            String vpToken = constructVerifiablePresentationString(vcCredentialResponse.getCredential());
+                            String presentationSubmission = constructPresentationSubmission(vpToken);
+                            return String.format(injiVerifyRedirectUrl,
+                                    presentationRequestDTO.getRedirect_uri(),
+                                    Base64.getUrlEncoder().encodeToString(vpToken.getBytes(StandardCharsets.UTF_8)),
+                                    URLEncoder.encode(presentationSubmission, StandardCharsets.UTF_8));
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    logger.info("No Credentials Matched the VP request.");
+                    throw new VPNotCreatedException(PlatformErrorMessages.NO_CREDENTIALS_MATCH_VP_DEFINITION_EXCEPTION.getMessage());
+                }).orElseThrow();
     }
 
     private String constructVerifiablePresentationString(VCCredentialProperties vcCredentialProperties) throws JsonProcessingException {

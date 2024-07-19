@@ -114,7 +114,7 @@ public class TestUtilities {
 
     public static PresentationRequestDTO getPresentationRequestDTO(){
         return PresentationRequestDTO.builder()
-                .presentation_definition("{\"id\":\"vp token example\",\"input_descriptors\":[{\"id\":\"id card credential\",\"format\":{\"ldpVc\":{\"proofTypes\":[\"Ed25519Signature2020\"]}}}]}")
+                .presentation_definition("{\"id\":\"test-id\",\"input_descriptors\":[{\"id\":\"test-input-id\",\"format\":{\"ldpVc\":{\"proofTypes\":[\"Ed25519Signature2020\"]}}}]}")
                 .client_id("test_client_id")
                 .resource("test_resource")
                 .response_type("test_response_type")
