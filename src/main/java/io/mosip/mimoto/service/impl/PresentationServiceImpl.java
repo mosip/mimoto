@@ -22,6 +22,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Service
 public class PresentationServiceImpl implements PresentationService {
@@ -76,7 +77,7 @@ public class PresentationServiceImpl implements PresentationService {
                     }
                     logger.info("No Credentials Matched the VP request.");
                     throw new VPNotCreatedException(PlatformErrorMessages.NO_CREDENTIALS_MATCH_VP_DEFINITION_EXCEPTION.getMessage());
-                }).orElseThrow();
+                }).orElseThrow(() -> new VPNotCreatedException(PlatformErrorMessages.NO_CREDENTIALS_MATCH_VP_DEFINITION_EXCEPTION.getMessage()));
     }
 
     private String constructVerifiablePresentationString(VCCredentialProperties vcCredentialProperties) throws JsonProcessingException {
@@ -92,14 +93,11 @@ public class PresentationServiceImpl implements PresentationService {
         VerifiablePresentationDTO verifiablePresentationDTO = objectMapper.readValue(vpToken, VerifiablePresentationDTO.class);
 
         AtomicInteger atomicInteger = new AtomicInteger(0);
-        List<SubmissionDescriptorDTO> submissionDescriptorDTOList = new ArrayList<>();
-        verifiablePresentationDTO.getVerifiableCredential().forEach(verifiableCredential -> {
-            SubmissionDescriptorDTO submissionDescriptorDTO = SubmissionDescriptorDTO.builder()
+        List<SubmissionDescriptorDTO> submissionDescriptorDTOList = verifiablePresentationDTO.getVerifiableCredential()
+                .stream().map(verifiableCredential -> SubmissionDescriptorDTO.builder()
                     .id(UUID.randomUUID().toString())
                     .format("ldp_vc")
-                    .path("$.verifiableCredential[" + atomicInteger.getAndIncrement() + "]").build();
-            submissionDescriptorDTOList.add(submissionDescriptorDTO);
-        });
+                    .path("$.verifiableCredential[" + atomicInteger.getAndIncrement() + "]").build()).collect(Collectors.toList());
 
         PresentationSubmissionDTO presentationSubmissionDTO = PresentationSubmissionDTO.builder()
                 .id(UUID.randomUUID().toString())

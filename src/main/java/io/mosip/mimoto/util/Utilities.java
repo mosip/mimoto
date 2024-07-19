@@ -96,9 +96,6 @@ public class Utilities {
     @Value("${mosip.openid.verifiers}")
     private String trustedVerifiers;
 
-    @Value("${mosip.openid.issuer.credentialSupported}")
-    private String getIssuerCredentialSupportedJson;
-
     @Value("${mosip.openid.htmlTemplate}")
     private String getCredentialSupportedHtml;
 
