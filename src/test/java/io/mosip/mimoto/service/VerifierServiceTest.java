@@ -39,7 +39,7 @@ public class VerifierServiceTest {
         VerifiersDTO verifiersDTO = TestUtilities.getTrustedVerifiers();
         String verifiersListString = TestUtilities.getObjectAsString(verifiersDTO);
         when(utilities.getTrustedVerifiersJsonValue()).thenReturn(verifiersListString);
-        Mockito.when(objectMapper.readValue(Mockito.anyString(), Mockito.eq(VerifiersDTO.class))).thenReturn(verifiersDTO);
+        Mockito.when(objectMapper.readValue(Mockito.eq(verifiersListString), Mockito.eq(VerifiersDTO.class))).thenReturn(verifiersDTO);
     }
 
     @Test

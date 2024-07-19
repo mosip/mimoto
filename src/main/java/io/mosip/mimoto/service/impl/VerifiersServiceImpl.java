@@ -1,7 +1,6 @@
 package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 import io.mosip.mimoto.dto.openid.VerifierDTO;
 import io.mosip.mimoto.dto.openid.VerifiersDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
@@ -37,13 +36,16 @@ public class VerifiersServiceImpl implements VerifiersService {
     }
     @Override
     public void validateVerifier(PresentationRequestDTO presentationRequestDTO) throws ApiNotAccessibleException, IOException {
-        Optional<VerifierDTO> verifierDTOOptional = getVerifiersByClientId(presentationRequestDTO.getClient_id());
-        if(verifierDTOOptional.isEmpty()){
-            throw new InvalidVerifierException(PlatformErrorMessages.INVALID_VERIFIER_ID_EXCEPTION.getMessage());
-        }
-        List<String> registeredRedirectUri = verifierDTOOptional.get().getRedirectUri();
-        if(!registeredRedirectUri.contains(presentationRequestDTO.getRedirect_uri())){
-            throw new InvalidVerifierException(PlatformErrorMessages.INVALID_VERIFIER_REDIRECT_URI_EXCEPTION.getMessage());
-        }
+        getVerifiersByClientId(presentationRequestDTO.getClient_id()).ifPresentOrElse(
+            (verifierDTO) -> {
+                List<String> registeredRedirectUri = verifierDTO.getRedirectUri();
+                if(!registeredRedirectUri.contains(presentationRequestDTO.getRedirect_uri())){
+                    throw new InvalidVerifierException(PlatformErrorMessages.INVALID_VERIFIER_REDIRECT_URI_EXCEPTION.getMessage());
+                }
+            },
+            () -> {
+                throw new InvalidVerifierException(PlatformErrorMessages.INVALID_VERIFIER_ID_EXCEPTION.getMessage());
+            }
+        );
     }
 }

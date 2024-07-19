@@ -6,6 +6,8 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.openid.presentation.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.exception.PlatformErrorMessages;
+import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.VerifiersService;
 import io.mosip.mimoto.util.RestApiClient;
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,49 +47,54 @@ public class PresentationServiceImpl implements PresentationService {
         verifiersService.validateVerifier(presentationRequestDTO);
 
         logger.info("Started the Credential Download From DataShare");
-        String credentials_uri = presentationRequestDTO.getResource();
-        String  vcCredentialResponseString = restApiClient.getApi(credentials_uri, String.class);
+        String credentialsResourceUri = presentationRequestDTO.getResource();
+        String  vcCredentialResponseString = restApiClient.getApi(credentialsResourceUri, String.class);
 
         logger.info("Started the ObjectMapping");
         VCCredentialResponse vcCredentialResponse = objectMapper.readValue(vcCredentialResponseString, VCCredentialResponse.class);
         PresentationDefinitionDTO presentationDefinitionDTO = objectMapper.readValue(presentationRequestDTO.getPresentation_definition(), PresentationDefinitionDTO.class);
 
-        if(presentationDefinitionDTO.getInputDescriptors().get(0).getFormat().getLdpVc().getProofTypes().get(0).equals(vcCredentialResponse.getCredential().getProof().getType())){
+        String proofTypeInPresentationDefinition = presentationDefinitionDTO.getInputDescriptors().get(0).getFormat().getLdpVc().getProofTypes().get(0);
+        String proofTypeInCredential = vcCredentialResponse.getCredential().getProof().getType();
+
+        if(proofTypeInPresentationDefinition.equals(proofTypeInCredential)){
             logger.info("Started the Construction of VP token");
             String vpToken = constructVerifiablePresentationString(vcCredentialResponse.getCredential());
-            String presentationSubmission =constructPresentationSubmission(vpToken);
+            String presentationSubmission = constructPresentationSubmission(vpToken);
             return String.format(injiVerifyRedirectUrl,
                     presentationRequestDTO.getRedirect_uri(),
                     Base64.getUrlEncoder().encodeToString(vpToken.getBytes(StandardCharsets.UTF_8)),
-                    Base64.getUrlEncoder().encodeToString(presentationSubmission.getBytes(StandardCharsets.UTF_8)));
+                    URLEncoder.encode(presentationSubmission, StandardCharsets.UTF_8));
         }
-        return null;
-
+        throw new VPNotCreatedException(PlatformErrorMessages.NO_CREDENTIALS_MATCH_VP_DEFINITION_EXCEPTION.getMessage());
     }
 
     private String constructVerifiablePresentationString(VCCredentialProperties vcCredentialProperties) throws JsonProcessingException {
-        VerifiablePresentationDTO verifiablePresentationDTO = new VerifiablePresentationDTO();
-        verifiablePresentationDTO.setVerifiableCredential(Collections.singletonList(vcCredentialProperties));
-        verifiablePresentationDTO.setType(Collections.singletonList("VerifiablePresentation"));
-        verifiablePresentationDTO.setContext(Collections.singletonList("https://www.w3.org/2018/credentials/v1"));
+        VerifiablePresentationDTO verifiablePresentationDTO = VerifiablePresentationDTO.builder()
+                .verifiableCredential(Collections.singletonList(vcCredentialProperties))
+                .type(Collections.singletonList("VerifiablePresentation"))
+                .context(Collections.singletonList("https://www.w3.org/2018/credentials/v1"))
+                .build();
         return objectMapper.writeValueAsString(verifiablePresentationDTO);
     }
 
     private String constructPresentationSubmission(String vpToken) throws JsonProcessingException {
         VerifiablePresentationDTO verifiablePresentationDTO = objectMapper.readValue(vpToken, VerifiablePresentationDTO.class);
-        PresentationSubmissionDTO presentationSubmissionDTO = new PresentationSubmissionDTO();
-        List<SubmissionDescriptorDTO> submissionDescriptorDTOList = new ArrayList<>();
+
         AtomicInteger atomicInteger = new AtomicInteger(0);
+        List<SubmissionDescriptorDTO> submissionDescriptorDTOList = new ArrayList<>();
         verifiablePresentationDTO.getVerifiableCredential().forEach(verifiableCredential -> {
-            SubmissionDescriptorDTO submissionDescriptorDTO = new SubmissionDescriptorDTO();
-            submissionDescriptorDTO.setId(UUID.randomUUID().toString());
-            submissionDescriptorDTO.setFormat("ldp_vc");
-            submissionDescriptorDTO.setPath("$.verifiableCredential[" + atomicInteger.getAndIncrement() + "]");
+            SubmissionDescriptorDTO submissionDescriptorDTO = SubmissionDescriptorDTO.builder()
+                    .id(UUID.randomUUID().toString())
+                    .format("ldp_vc")
+                    .path("$.verifiableCredential[" + atomicInteger.getAndIncrement() + "]").build();
             submissionDescriptorDTOList.add(submissionDescriptorDTO);
         });
-        presentationSubmissionDTO.setId(UUID.randomUUID().toString());
-        presentationSubmissionDTO.setDefinition_id(UUID.randomUUID().toString());
-        presentationSubmissionDTO.setDescriptorMap(submissionDescriptorDTOList);
+
+        PresentationSubmissionDTO presentationSubmissionDTO = PresentationSubmissionDTO.builder()
+                .id(UUID.randomUUID().toString())
+                .definition_id(UUID.randomUUID().toString())
+                .descriptorMap(submissionDescriptorDTOList).build();
         return objectMapper.writeValueAsString(presentationSubmissionDTO);
     }
 

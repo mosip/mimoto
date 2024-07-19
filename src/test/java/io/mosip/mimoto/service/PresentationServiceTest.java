@@ -2,12 +2,12 @@ package io.mosip.mimoto.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.dto.openid.presentation.VerifiablePresentationDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidVerifierException;
+import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.impl.PresentationServiceImpl;
 import io.mosip.mimoto.service.impl.VerifiersServiceImpl;
 import io.mosip.mimoto.util.RestApiClient;
@@ -54,29 +54,29 @@ public class PresentationServiceTest {
 
     @Test
     public void credentialProofMatchingWithVPRequest() throws Exception {
-        ObjectMapper realObjectMapper = new ObjectMapper();
-        String mockResponse = realObjectMapper.writeValueAsString(TestUtilities.getVCCredentialPropertiesDTO("Ed25519Signature2020"));
+
+        String mockResponse = TestUtilities.getObjectAsString(TestUtilities.getVCCredentialPropertiesDTO("Ed25519Signature2020"));
 
         doNothing().when(verifiersService).validateVerifier(Mockito.any());
         Mockito.when(restApiClient.getApi(Mockito.anyString(), Mockito.eq(String.class))).thenReturn(mockResponse);
         Mockito.when(objectMapper.readValue(Mockito.anyString(), Mockito.eq(VCCredentialResponse.class))).thenReturn(TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020"));
 
         String actualRedirectUrl = presentationService.authorizePresentation(TestUtilities.getPresentationRequestDTO());
-        String expectedRedirectUrl = "test_redirect_uri#vp_token=dGVzdC1kYXRh&presentation_submission=dGVzdC1kYXRh";
+        String expectedRedirectUrl = "test_redirect_uri#vp_token=dGVzdC1kYXRh&presentation_submission=test-data";
 
-        Assert.assertEquals(actualRedirectUrl, expectedRedirectUrl);
+        Assert.assertEquals(expectedRedirectUrl, actualRedirectUrl);
     }
 
-    @Test
+    @Test(expected = VPNotCreatedException.class)
     public void credentialProofMismatchWithVPRequest() throws ApiNotAccessibleException, IOException {
-        ObjectMapper realObjectMapper = new ObjectMapper();
-        String mockResponse = realObjectMapper.writeValueAsString(TestUtilities.getVCCredentialPropertiesDTO("RSASignature2020"));
+
+        String mockResponse = TestUtilities.getObjectAsString(TestUtilities.getVCCredentialPropertiesDTO("RSASignature2020"));
 
         doNothing().when(verifiersService).validateVerifier(Mockito.any());
         Mockito.when(restApiClient.getApi(Mockito.anyString(), Mockito.eq(String.class))).thenReturn(mockResponse);
         Mockito.when(objectMapper.readValue(Mockito.anyString(), Mockito.eq(VCCredentialResponse.class))).thenReturn(TestUtilities.getVCCredentialResponseDTO("RSASignature2020"));
 
-        String actualRedirectUrl = presentationService.authorizePresentation(TestUtilities.getPresentationRequestDTO());
-        Assert.assertNull(actualRedirectUrl);
+        presentationService.authorizePresentation(TestUtilities.getPresentationRequestDTO());
+
     }
 }

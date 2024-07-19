@@ -113,93 +113,82 @@ public class TestUtilities {
     }
 
     public static PresentationRequestDTO getPresentationRequestDTO(){
-        PresentationRequestDTO presentationRequestDTO = new PresentationRequestDTO();
-        presentationRequestDTO.setClient_id("test_client_id");
-        presentationRequestDTO.setResource("test_resource");
-        presentationRequestDTO.setResponse_type("test_response_type");
-        presentationRequestDTO.setRedirect_uri("test_redirect_uri");
-        presentationRequestDTO.setPresentation_definition("{\"id\":\"vp token example\",\"input_descriptors\":[{\"id\":\"id card credential\",\"format\":{\"ldpVc\":{\"proofTypes\":[\"Ed25519Signature2020\"]}}}]}");
-        return presentationRequestDTO;
+        return PresentationRequestDTO.builder()
+                .presentation_definition("{\"id\":\"vp token example\",\"input_descriptors\":[{\"id\":\"id card credential\",\"format\":{\"ldpVc\":{\"proofTypes\":[\"Ed25519Signature2020\"]}}}]}")
+                .client_id("test_client_id")
+                .resource("test_resource")
+                .response_type("test_response_type")
+                .redirect_uri("test_redirect_uri").build();
     }
 
     public static VCCredentialProperties getVCCredentialPropertiesDTO(String type){
-        VCCredentialProperties vcCredentialProperties = new VCCredentialProperties();
-        vcCredentialProperties.setId("test-id");
-        vcCredentialProperties.setIssuer("test-issuer");
-        vcCredentialProperties.setIssuanceDate("test-issuanceDate");
-        vcCredentialProperties.setExpirationDate("test-expirationDate");
 
         ArrayList<String> contextList = new ArrayList<>();
         contextList.add("context-1");
         contextList.add("context-2");
-        vcCredentialProperties.setContext(contextList);
 
         List<String> typeList = new ArrayList<>();
         typeList.add("VerifiableCredential");
         typeList.add("VCTypeCredential");
-        vcCredentialProperties.setContext(typeList);
-
-        VCCredentialResponseProof  vcCredentialResponseProof = new VCCredentialResponseProof();
-        vcCredentialResponseProof.setType(type);
-        vcCredentialResponseProof.setProofPurpose("test-proofPurpose");
-        vcCredentialResponseProof.setProofValue("test-proofValue");
-        vcCredentialResponseProof.setJws("test-jws");
-        vcCredentialResponseProof.setVerificationMethod("test-verificationMethod");
-        vcCredentialProperties.setProof(vcCredentialResponseProof);
 
         Map<String, Object> credentialSubject = new HashMap<>();
         credentialSubject.put("key1", "value1");
         credentialSubject.put("key2", "value2");
-        vcCredentialProperties.setCredentialSubject(credentialSubject);
 
-        return vcCredentialProperties;
+        VCCredentialResponseProof  vcCredentialResponseProof = VCCredentialResponseProof.builder()
+                .type(type)
+                .proofPurpose("test-proofPurpose")
+                .proofValue("test-proofValue")
+                .jws("test-jws")
+                .verificationMethod("test-verificationMethod").build();
+
+        return VCCredentialProperties.builder()
+                .id("test-id")
+                .issuer("test-issuer")
+                .issuanceDate("test-issuanceDate")
+                .expirationDate("test-expirationDate")
+                .context(contextList)
+                .type(typeList)
+                .proof(vcCredentialResponseProof)
+                .credentialSubject(credentialSubject).build();
     }
 
     public static VCCredentialResponse getVCCredentialResponseDTO(String type){
-        VCCredentialResponse vcCredentialResponse = new VCCredentialResponse();
-        VCCredentialProperties vcCredentialProperties = getVCCredentialPropertiesDTO(type);
-        vcCredentialResponse.setCredential(vcCredentialProperties);
-        vcCredentialResponse.setFormat("ldp_vc");
-        return vcCredentialResponse;
+        return VCCredentialResponse.builder()
+                .credential(getVCCredentialPropertiesDTO(type))
+                .format("ldp_vc").build();
     }
 
     public static PresentationDefinitionDTO getPresentationDefinitionDTO(){
-        PresentationDefinitionDTO presentationDefinitionDTO = new PresentationDefinitionDTO();
-        InputDescriptorDTO inputDescriptorDTO = new InputDescriptorDTO();
-        Format format = new Format();
-        LDPVc ldpVc = new LDPVc();
-        ldpVc.setProofTypes(Collections.singletonList("Ed25519Signature2020"));
-        format.setLdpVc(ldpVc);
-        inputDescriptorDTO.setId("test-input-id");
-        inputDescriptorDTO.setFormat(format);
-        presentationDefinitionDTO.setId("test-id");
-        presentationDefinitionDTO.setInputDescriptors(Collections.singletonList(inputDescriptorDTO));
-        return presentationDefinitionDTO;
+        LDPVc ldpVc = LDPVc.builder().proofTypes(Collections.singletonList("Ed25519Signature2020")).build();
+        Format format = Format.builder().ldpVc(ldpVc).build();
+        InputDescriptorDTO inputDescriptorDTO = InputDescriptorDTO.builder().id("test-input-id").format(format).build();
+
+        return PresentationDefinitionDTO.builder()
+                .inputDescriptors(Collections.singletonList(inputDescriptorDTO))
+                .id("test-id").build();
     }
 
     public static VerifiablePresentationDTO getVerifiablePresentationDTO(){
-        VerifiablePresentationDTO verifiablePresentationDTO = new VerifiablePresentationDTO();
-
-        ArrayList<String> contextList = new ArrayList<>();
+        List<String> contextList = new ArrayList<>();
         contextList.add("https://www.w3.org/2018/credentials/v1");
-        verifiablePresentationDTO.setContext(contextList);
 
         List<String> typeList = new ArrayList<>();
         typeList.add("VerifiablePresentation");
-        verifiablePresentationDTO.setType(typeList);
 
-        verifiablePresentationDTO.setVerifiableCredential(Collections.singletonList(getVCCredentialPropertiesDTO("Ed25519Signature2020")));
-        return verifiablePresentationDTO;
+        return VerifiablePresentationDTO.builder()
+                .verifiableCredential(Collections.singletonList(getVCCredentialPropertiesDTO("Ed25519Signature2020")))
+                .context(contextList)
+                .type(typeList).build();
     }
 
-    public static VerifiersDTO getTrustedVerifiers() throws JsonProcessingException {
+    public static VerifiersDTO getTrustedVerifiers() {
+        VerifierDTO verifierDTO = VerifierDTO.builder()
+                .clientId("test-clientId")
+                .redirectUri(Collections.singletonList("test-redirectUri")).build();
 
-        VerifiersDTO verifiersDTO = new VerifiersDTO();
-        VerifierDTO verifierDTO = new VerifierDTO();
-        verifierDTO.setClientId("test-clientId");
-        verifierDTO.setRedirectUri(Collections.singletonList("test-redirectUri"));
-        verifiersDTO.setVerifiers(Collections.singletonList(verifierDTO));
-        return verifiersDTO;
+        return VerifiersDTO.builder()
+                .verifiers(Collections.singletonList(verifierDTO)).build();
     }
 
     public static String getObjectAsString(Object object) throws JsonProcessingException {

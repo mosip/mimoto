@@ -85,7 +85,8 @@ public enum PlatformErrorMessages {
     INVALID_CREDENTIAL_TYPE_EXCEPTION(PlatformConstants.PREFIX + "036", "Invalid Credential Type Id"),
     MIMOTO_ISSUER_ONBOARDING_EXCEPTION(PlatformConstants.PREFIX + "037", "Issuers Onboarding exception occurred "),
     INVALID_VERIFIER_ID_EXCEPTION(PlatformConstants.PREFIX + "038", "Invalid Verifier ClientId"),
-    INVALID_VERIFIER_REDIRECT_URI_EXCEPTION(PlatformConstants.PREFIX + "039", "Invalid Redirect Uri");
+    INVALID_VERIFIER_REDIRECT_URI_EXCEPTION(PlatformConstants.PREFIX + "039", "Invalid Redirect Uri"),
+    NO_CREDENTIALS_MATCH_VP_DEFINITION_EXCEPTION(PlatformConstants.PREFIX + "040", "VP Request Results Empty Credentials");
 
     /** The error message. */
     private final String errorMessage;
