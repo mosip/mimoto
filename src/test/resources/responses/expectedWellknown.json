@@ -1,0 +1,58 @@
+﻿{
+    "id": "mosip.mimoto.issuers",
+    "version": "v1",
+    "str": null,
+    "metadata": null,
+    "response":
+    {
+        "credential_issuer": "id1",
+        "authorization_servers": null,
+        "credential_endpoint": "/credential_endpoint",
+        "credential_configurations_supported":
+        {
+            "CredentialType1":
+            {
+                "format": "ldp_vc",
+                "scope": "Credential1_vc_ldp",
+                "proof_types_supported": {},
+                "credential_definition":
+                {
+                    "type":
+                    [
+                        "VerifiableCredential",
+                        "Credential1"
+                    ],
+                    "credentialSubject":
+                    {
+                        "name":
+                        {
+                            "display":
+                            [
+                                {
+                                    "name": "Given Name",
+                                    "locale": "en"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "display":
+                [
+                    {
+                        "name": "Credential1",
+                        "locale": "en",
+                        "logo":
+                        {
+                            "url": "/logo",
+                            "alt_text": "logo-url"
+                        },
+                        "background_image": null,
+                        "background_color": "#B34622",
+                        "text_color": "#FFFFFF"
+                    }
+                ]
+            }
+        }
+    },
+    "errors": []
+}

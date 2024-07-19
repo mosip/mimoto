@@ -115,15 +115,14 @@ public class Utilities {
     private String credentialsSupportedJsonString = null;
 
     private String credentialTemplateHtmlString = null;
+
 //    uncomment for running mimoto Locally to populate the issuers json
-//    public Utilities(@Value("classpath:/wellKnownIssuer/Insurance.json") Resource credentialsSupportedResource,
-//                     @Value("classpath:mimoto-issuers-config.json") Resource resource,
+//    public Utilities(@Value("classpath:mimoto-issuers-config.json") Resource resource,
 //                     @Value("classpath:mimoto-trusted-verifiers.json") Resource trustedVerifiersResource,
 //                     @Value("classpath:/templates/credential-template.html") Resource credentialTemplateResource) throws IOException{
 //
 //        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
 //        trustedVerifiersJsonString = (Files.readString(trustedVerifiersResource.getFile().toPath()));
-//        credentialsSupportedJsonString = (Files.readString(credentialsSupportedResource.getFile().toPath()));
 //        credentialTemplateHtmlString = (Files.readString(credentialTemplateResource.getFile().toPath()));
 //    }
 

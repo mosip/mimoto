@@ -9,5 +9,5 @@ import java.util.List;
 public class IssuerSupportedCredentialsResponse {
     @JsonProperty("authorization_endpoint")
     private String authorizationEndPoint;
-    private List<CredentialsSupportedResponse> supportedCredentials;
+    private List<CredentialsSupportedResponseDraft11> supportedCredentials;
 }
