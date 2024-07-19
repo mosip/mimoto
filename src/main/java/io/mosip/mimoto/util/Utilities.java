@@ -109,8 +109,6 @@ public class Utilities {
 
     private String trustedVerifiersJsonString = null;
 
-    private String credentialsSupportedJsonString = null;
-
     private String credentialTemplateHtmlString = null;
 
 //    uncomment for running mimoto Locally to populate the issuers json
