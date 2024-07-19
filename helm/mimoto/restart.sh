@@ -8,7 +8,7 @@ fi
 
 function Restarting_mimoto() {
   NS=mimoto
-  kubectl -n $NS rollout restart deploy
+  kubectl -n $NS rollout restart deploy mimoto
 
   kubectl -n $NS  get deploy -o name |  xargs -n1 -t  kubectl -n $NS rollout status
 

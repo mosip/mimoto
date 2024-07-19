@@ -1,5 +1,5 @@
 #!/bin/bash
-# Onboards default partners 
+# Onboards default partners
 ## Usage: ./install.sh [kubeconfig]
 
 if [ $# -ge 1 ] ; then
@@ -21,7 +21,7 @@ if [ "$flag" = "n" ]; then
 fi
 
 NS=mimoto
-CHART_VERSION=12.0.2
+CHART_VERSION=0.0.1-develop
 
 echo Create $NS namespace
 kubectl create ns $NS
@@ -84,12 +84,12 @@ function installing_onboarder() {
     echo Updating Mimoto wallet binding partner api key and Mimoto OIDC Partner Client ID
     ./copy_cm_func.sh secret mimoto-wallet-binding-partner-api-key mimoto config-server
     ./copy_cm_func.sh secret mimoto-oidc-partner-clientid mimoto config-server
-    kubectl -n config-server set env --keys=mimoto-wallet-binding-partner-api-key --from secret/mimoto-wallet-binding-partner-api-key deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
-    kubectl -n config-server set env --keys=mimoto-oidc-partner-clientid --from secret/mimoto-oidc-partner-clientid deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
-    kubectl -n config-server set env --keys=mimoto-oidc-keystore-password --from secret/mimoto-oidc-keystore-password deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
+    kubectl -n config-server set env --keys=mimoto-wallet-binding-partner-api-key --from secret/mimoto-wallet-binding-partner-api-key deployment/inji-config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
+    kubectl -n config-server set env --keys=mimoto-oidc-partner-clientid --from secret/mimoto-oidc-partner-clientid deployment/inji-config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
+    kubectl -n config-server set env --keys=mimoto-oidc-keystore-password --from secret/mimoto-oidc-keystore-password deployment/inji-config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
 
-    kubectl -n config-server rollout restart deployment config-server
-    kubectl -n config-server rollout status deployment config-server
+    kubectl -n config-server rollout restart deployment inji-config-server
+    kubectl -n config-server rollout status deployment inji-config-server
 
     echo Reports are moved to S3 under onboarder bucket
     return 0

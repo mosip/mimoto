@@ -23,6 +23,31 @@
 			<class name="io.mosip.testrig.apirig.testscripts.PostWithAutogenIdWithOtpGenerate" />
 		</classes>
 	</test>
+		
+	<test name="OAuthDetailsRequest">
+		<parameter name="ymlFile"
+			value="mimoto/OAuthDetailsRequest/OAuthDetailsRequest.yml" />
+			<parameter name="idKeyName"	value="transactionId,encodedResp" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>	
+	<test name="AuthenticateUser">
+		<parameter name="ymlFile"
+			value="mimoto/AuthenticateUser/AuthenticateUser.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.PostWithAutogenIdWithOtpGenerate" />
+		</classes>
+	</test>	
+	<test name="AuthorizationCode">
+		<parameter name="ymlFile"
+			value="mimoto/AuthorizationCode/AuthorizationCode.yml" />
+			<parameter name="idKeyName"	value="code" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	
 	 <test name="AuthLock">
 		<parameter name="ymlFile"
 			value="mimoto/AuthLock/createAuthLock.yml" />
@@ -100,6 +125,20 @@
 			value="mimoto/GetAllIssuers/GetAllIssuers.yml" />
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.GetWithParam" />
+		</classes>
+	</test>
+	<test name="GetAllCredentialTypes">
+		<parameter name="ymlFile"
+			value="mimoto/GetAllCredentialTypes/GetAllCredentialTypes.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.GetWithParam" />
+		</classes>
+	</test>
+	<test name="DownloadIssuerCredential">
+		<parameter name="ymlFile"
+			value="mimoto/DownloadIssuerCredential/DownloadIssuerCredential.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.PostWithFormDataBodyForPdfDownload" />
 		</classes>
 	</test>
 

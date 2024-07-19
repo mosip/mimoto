@@ -12,4 +12,8 @@ public class IdpException extends BaseUncheckedException {
         super(PlatformErrorMessages.MIMOTO_IDP_GENERIC_EXCEPTION.getCode(),
                 PlatformErrorMessages.MIMOTO_IDP_GENERIC_EXCEPTION.getMessage());
     }
+
+    public IdpException(String message) {
+        super(PlatformErrorMessages.MIMOTO_IDP_GENERIC_EXCEPTION.getCode(), message);
+    }
 }

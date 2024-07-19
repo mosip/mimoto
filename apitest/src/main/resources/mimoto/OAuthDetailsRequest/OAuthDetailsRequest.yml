@@ -1,0 +1,26 @@
+OAuthDetailsRequest:
+   Mimoto_ESignet_OAuthDetailsRequest_all_Valid_Smoke_sid:
+      endPoint: /v1/esignet/authorization/v2/oauth-details
+      role: resident
+      restMethod: post
+      checkErrorsOnlyInResponse: true
+      inputTemplate: mimoto/OAuthDetailsRequest/OAuthDetailsRequest
+      outputTemplate: mimoto/OAuthDetailsRequest/OAuthDetailsRequestResult
+      input: '{
+      	"requestTime": "$TIMESTAMP$",
+      	"clientId": "$GETCLIENTIDFROMMIMOTOACTUATOR$",
+      	"scope": "mosip_identity_vc_ldp",
+      	"responseType": "code",
+      	"redirectUri": "$INJIREDIRECTURI$",
+      	"display": "popup",
+	    "prompt": "login",
+	    "acrValues": "mosip:idp:acr:generated-code mosip:idp:acr:linked-wallet mosip:idp:acr:biometrics",
+	    "nonce": "973eieljzng",
+	    "state": "eree2311",
+	    "claimsLocales": "en",
+	    "codeChallenge": "$CODECHALLENGE$",
+        "codeChallengeMethod": "S256"
+}'
+      output: '{
+       
+}'

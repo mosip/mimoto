@@ -1,0 +1,29 @@
+gitRepo:
+  uri: https://github.com/mosip/inji-config
+  version: develop
+  ## Folders within the base repo where properties may be found.
+  searchFolders: ""
+  private: false
+  ## User name of user who has access to the private repo. Ignore for public repo
+  username: ""
+  token: ""
+
+envVariables:
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_API_PUBLIC_HOST
+    valueFrom:
+      configMapKeyRef:
+        name: global
+        key: mosip-api-host
+    enabled: true
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_API_INTERNAL_HOST
+    valueFrom:
+      configMapKeyRef:
+        name: global
+        key: mosip-api-internal-host
+    enabled: true
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_INJIWEB_HOST
+    valueFrom:
+      configMapKeyRef:
+        name: global
+        key: mosip-injiweb-host
+    enabled: true

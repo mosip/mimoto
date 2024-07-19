@@ -8,10 +8,7 @@ import io.mosip.kernel.core.util.JsonUtils;
 import io.mosip.kernel.websub.api.model.SubscriptionChangeResponse;
 import io.mosip.mimoto.TestBootApplication;
 import io.mosip.mimoto.core.http.ResponseWrapper;
-import io.mosip.mimoto.dto.DisplayDTO;
-import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
-import io.mosip.mimoto.dto.LogoDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.resident.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
@@ -20,10 +17,12 @@ import io.mosip.mimoto.exception.BaseUncheckedException;
 import io.mosip.mimoto.model.Event;
 import io.mosip.mimoto.model.EventModel;
 import io.mosip.mimoto.service.RestClientService;
+import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.service.impl.CredentialShareServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.*;
 import org.hamcrest.Matchers;
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -50,6 +49,9 @@ import java.util.stream.Collectors;
 
 import static io.mosip.mimoto.exception.PlatformErrorMessages.API_NOT_ACCESSIBLE_EXCEPTION;
 import static io.mosip.mimoto.exception.PlatformErrorMessages.INVALID_ISSUER_ID_EXCEPTION;
+import static io.mosip.mimoto.util.TestUtilities.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -72,6 +74,9 @@ public class InjiControllerTest {
     private IssuersServiceImpl issuersService;
 
     @MockBean
+    private CredentialServiceImpl credentialService;
+
+    @MockBean
     public RestApiClient restApiClient;
 
     @Autowired
@@ -79,6 +84,9 @@ public class InjiControllerTest {
 
     @MockBean
     Utilities utilities;
+
+    @Autowired
+    IssuersController issuersController;
 
     @MockBean
     private AttestationOfflineVerify attestationOfflineVerify;
@@ -118,78 +126,18 @@ public class InjiControllerTest {
 
     }
 
-    static IssuerDTO getIssuerDTO(String issuerName) {
-        LogoDTO logo = new LogoDTO();
-        logo.setUrl("/logo");
-        logo.setAlt_text("logo-url");
-        DisplayDTO display = new DisplayDTO();
-        display.setName(issuerName);
-        display.setTitle("Download via " + issuerName);
-        display.setDescription(issuerName + " description");
-        display.setLanguage("en");
-        display.setLogo(logo);
-        IssuerDTO issuer = new IssuerDTO();
-        issuer.setCredential_issuer(issuerName + "id");
-        issuer.setDisplay(Collections.singletonList(display));
-        issuer.setClient_id("123");
-        if (issuerName.equals("Issuer1")) issuer.setWellKnownEndpoint("/.well-known");
-        else {
-            issuer.setRedirect_uri(null);
-            issuer.setAuthorization_endpoint(null);
-            issuer.setCredential_endpoint(null);
-            issuer.setToken_endpoint(null);
-            issuer.setScopes_supported(null);
-        }
-        return issuer;
-    }
-
-    static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName){
-        LogoDTO logo = new LogoDTO();
-        logo.setUrl("/logo");
-        logo.setAlt_text("logo-url");
-        CredentialSupportedDisplayResponse credentialSupportedDisplay = new CredentialSupportedDisplayResponse();
-        credentialSupportedDisplay.setLogo(logo);
-        credentialSupportedDisplay.setName(credentialSupportedName);
-        credentialSupportedDisplay.setLocale("en");
-        credentialSupportedDisplay.setTextColor("#FFFFFF");
-        credentialSupportedDisplay.setBackgroundColor("#B34622");
-        CredentialIssuerDisplayResponse credentialIssuerDisplayResponse = new CredentialIssuerDisplayResponse();
-        credentialIssuerDisplayResponse.setName("Given Name");
-        credentialIssuerDisplayResponse.setLocale("en");
-        CredentialDisplayResponseDto credentialDisplayResponseDto = new CredentialDisplayResponseDto();
-        credentialDisplayResponseDto.setDisplay(Collections.singletonList(credentialIssuerDisplayResponse));
-        CredentialDefinitionResponseDto credentialDefinitionResponseDto = new CredentialDefinitionResponseDto();
-        credentialDefinitionResponseDto.setType(List.of("VerifiableCredential", credentialSupportedName));
-        credentialDefinitionResponseDto.setCredentialSubject(Map.of("name", credentialDisplayResponseDto));
-        CredentialsSupportedResponse credentialsSupportedResponse = new CredentialsSupportedResponse();
-        credentialsSupportedResponse.setFormat("ldp_vc");
-        credentialsSupportedResponse.setId(credentialSupportedName);
-        credentialsSupportedResponse.setScope(credentialSupportedName+"_vc_ldp");
-        credentialsSupportedResponse.setDisplay(Collections.singletonList(credentialSupportedDisplay));
-        credentialsSupportedResponse.setProofTypesSupported(Collections.singletonList("jwt"));
-        credentialsSupportedResponse.setCredentialDefinition(credentialDefinitionResponseDto);
-        return credentialsSupportedResponse;
-    }
-
-    static CredentialIssuerWellKnownResponse getCredentialIssuerWellKnownResponseDto(String issuerName, List<CredentialsSupportedResponse> credentialsSupportedResponses){
-        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
-        credentialIssuerWellKnownResponse.setCredentialIssuer(issuerName);
-        credentialIssuerWellKnownResponse.setCredentialEndPoint("credential_endpoint");
-        credentialIssuerWellKnownResponse.setCredentialsSupported(credentialsSupportedResponses);
-        return credentialIssuerWellKnownResponse;
-    }
 
     @Test
-    public void getCredentialTypesTest() throws Exception{
+    public void getCredentialTypesTest() throws Exception {
         IssuerSupportedCredentialsResponse credentialTypesResponse = new IssuerSupportedCredentialsResponse();
-        credentialTypesResponse.setSupportedCredentials(List.of(getCredentialSupportedResponse("credentialType1"),
-                getCredentialSupportedResponse("credentialType2")));
+        credentialTypesResponse.setSupportedCredentials(List.of(getCredentialSupportedResponseDraft11("credentialType1"),
+                getCredentialSupportedResponseDraft11("credentialType2")));
         credentialTypesResponse.setAuthorizationEndPoint("authorization-endpoint");
-        Mockito.when(issuersService.getCredentialsSupported("Issuer1", null))
+        Mockito.when(credentialService.getCredentialsSupported("Issuer1", null))
                 .thenReturn(credentialTypesResponse)
                 .thenThrow(new ApiNotAccessibleException());
-        Mockito.when(issuersService.getCredentialsSupported("invalidId", null))
-                        .thenReturn(new IssuerSupportedCredentialsResponse());
+        Mockito.when(credentialService.getCredentialsSupported("invalidId", null))
+                .thenReturn(new IssuerSupportedCredentialsResponse());
 
         mockMvc.perform(get("/issuers/{issuer-id}/credentialTypes", "Issuer1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -226,12 +174,12 @@ public class InjiControllerTest {
                 .thenThrow(new ApiNotAccessibleException());
 
         Mockito.when(restApiClient.getApi(ArgumentMatchers.any(String.class), ArgumentMatchers.any()))
-                .thenReturn(getCredentialIssuerWellKnownResponseDto("Issuer1",
-                        List.of(getCredentialSupportedResponse("CredentialType1"))));
+                .thenReturn(getCredentialIssuerWellKnownResponseDtoDraft11("Issuer1",
+                        List.of(getCredentialSupportedResponseDraft11("CredentialType1"))));
 
 
-        Mockito.when(issuersService.generatePdfForVerifiableCredentials(new VCCredentialResponse(),
-                        getIssuerDTO("Issuer1"), getCredentialSupportedResponse("CredentialType1"),
+        Mockito.when(credentialService.generatePdfForVerifiableCredentials(new VCCredentialResponse(),
+                        getIssuerDTO("Issuer1"), getCredentialSupportedResponseDraft11("CredentialType1"),
                         "credential_endpoint"))
                 .thenReturn(new ByteArrayInputStream("Mock Pdf".getBytes()))
                 .thenThrow(new Exception());
@@ -333,6 +281,27 @@ public class InjiControllerTest {
                 .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getCode())))
                 .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is(API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
     }
+
+    @Test
+    public void getIssuerWellknownTest() throws Exception {
+        String issuerId = "id1";
+        File file = ResourceUtils.getFile(ResourceUtils.CLASSPATH_URL_PREFIX + "responses/expectedWellknown.json");
+        String expectedCredentialIssuerWellknownResponse = new String(Files.readAllBytes(file.toPath()));
+        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = getCredentialIssuerWellKnownResponseDto(issuerId, Map.of("CredentialType1", getCredentialSupportedResponse("Credential1")));
+        Mockito.when(issuersService.getIssuerWellknown(issuerId)).thenReturn(credentialIssuerWellKnownResponse);
+
+
+        String actualResponse=mockMvc.perform(get("/issuers/" + issuerId + "/wellknown").accept(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+
+        JSONAssert.assertEquals(new JSONObject(expectedCredentialIssuerWellknownResponse),new JSONObject(actualResponse),JSONCompareMode.LENIENT);
+
+    }
+
 
     @Test
     public void processOfflineTest() throws Exception {
