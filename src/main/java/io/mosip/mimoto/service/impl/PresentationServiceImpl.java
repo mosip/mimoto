@@ -106,4 +106,14 @@ public class PresentationServiceImpl implements PresentationService {
         return objectMapper.writeValueAsString(presentationSubmissionDTO);
     }
 
+    PresentationDefinitionDTO constructPresentationDefinition(VCCredentialResponse vcCredentialResponse){
+        LDPVc ldpVc = LDPVc.builder().proofTypes(Collections.singletonList(vcCredentialResponse.getCredential().getProof().getType())).build();
+        Format format = Format.builder().ldpVc(ldpVc).build();
+        InputDescriptorDTO inputDescriptorDTO = InputDescriptorDTO.builder().id(UUID.randomUUID().toString()).format(format).build();
+
+        return PresentationDefinitionDTO.builder()
+                .inputDescriptors(Collections.singletonList(inputDescriptorDTO))
+                .id(UUID.randomUUID().toString()).build();
+    }
+
 }

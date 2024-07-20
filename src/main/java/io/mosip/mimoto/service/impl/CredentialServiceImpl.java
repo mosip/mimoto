@@ -85,6 +85,9 @@ public class CredentialServiceImpl implements CredentialService {
     @Value("${mosip.inji.web.authorize.url}")
     String injiWebAuthorizeUrl;
 
+    @Autowired
+    PresentationServiceImpl presentationService;
+
     @Override
     public TokenResponseDTO getTokenResponse(Map<String, String> params, String issuerId) throws ApiNotAccessibleException, IOException {
         RestTemplate restTemplate = new RestTemplate();
@@ -239,31 +242,12 @@ public class CredentialServiceImpl implements CredentialService {
         return "";
     }
     private String constructQRCodeWithAuthorizeRequest(VCCredentialResponse vcCredentialResponse, String dataShareUrl) throws WriterException, JsonProcessingException {
-        PresentationDefinitionDTO presentationDefinitionDTO = constructPresentationDefinition(vcCredentialResponse);
+        PresentationDefinitionDTO presentationDefinitionDTO = presentationService.constructPresentationDefinition(vcCredentialResponse);
         ObjectMapper objectMapper = new ObjectMapper();
         String presentationString = objectMapper.writeValueAsString(presentationDefinitionDTO);
         String qrData = String.format(injiWebAuthorizeUrl, URLEncoder.encode(dataShareUrl, StandardCharsets.UTF_8), URLEncoder.encode(presentationString, StandardCharsets.UTF_8));
         return constructQRCode(qrData);
     }
-
-    private PresentationDefinitionDTO constructPresentationDefinition(VCCredentialResponse vcCredentialResponse){
-        PresentationDefinitionDTO presentationDefinitionDTO = new PresentationDefinitionDTO();
-        InputDescriptorDTO inputDescriptorDTO = new InputDescriptorDTO();
-        Format format = new Format();
-        LDPVc ldpVc = new LDPVc();
-
-        ldpVc.setProofTypes(Collections.singletonList(vcCredentialResponse.getCredential().getProof().getType()));
-        format.setLdpVc(ldpVc);
-        inputDescriptorDTO.setId(UUID.randomUUID().toString());
-        inputDescriptorDTO.setFormat(format);
-
-        presentationDefinitionDTO.setId(UUID.randomUUID().toString());
-        presentationDefinitionDTO.setInputDescriptors(Collections.singletonList(inputDescriptorDTO));
-
-        return presentationDefinitionDTO;
-    }
-
-
 
     public static String encodeToString(BufferedImage image, String type) {
         String imageString = null;

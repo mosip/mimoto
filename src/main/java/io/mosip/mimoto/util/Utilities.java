@@ -6,7 +6,6 @@ import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.exception.ExceptionUtils;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
-import io.mosip.mimoto.service.RestClientService;
 import io.mosip.mimoto.service.impl.CredentialShareServiceImpl;
 import lombok.Data;
 import org.json.simple.JSONObject;
@@ -46,46 +45,15 @@ public class Utilities {
 
     private Logger logger = LoggerUtil.getLogger(Utilities.class);
 
-    /**
-     * The Constant FILE_SEPARATOR.
-     */
-    public static final String FILE_SEPARATOR = "\\";
-
-    @Autowired
-    private ObjectMapper objMapper;
 
     @Autowired
     private RestApiClient restApiClient;
-
-    /**
-     * The rest client service.
-     */
-    @Autowired
-    private RestClientService<Object> restClientService;
 
     /**
      * The config server file storage URL.
      */
     @Value("${config.server.file.storage.uri}")
     private String configServerFileStorageURL;
-
-    /**
-     * The get reg processor identity json.
-     */
-    @Value("${registration.processor.identityjson}")
-    private String getRegProcessorIdentityJson;
-
-    /**
-     * The get reg processor demographic identity.
-     */
-    @Value("${registration.processor.demographic.identity}")
-    private String getRegProcessorDemographicIdentity;
-
-    /**
-     * The registration processor abis json.
-     */
-    @Value("${registration.processor.print.textfile}")
-    private String registrationProcessorPrintTextFile;
 
     /**
      * The get reg issuers config json.
@@ -98,12 +66,6 @@ public class Utilities {
 
     @Value("${mosip.openid.htmlTemplate}")
     private String getCredentialSupportedHtml;
-
-    private String mappingJsonString = null;
-
-    private String identityMappingJsonString = null;
-
-    private String printTextFileJsonString = null;
 
     private String issuersConfigJsonString = null;
 

@@ -10,18 +10,18 @@ import io.mosip.mimoto.exception.InvalidVerifierException;
 import io.mosip.mimoto.service.impl.VerifiersServiceImpl;
 import io.mosip.mimoto.util.TestUtilities;
 import io.mosip.mimoto.util.Utilities;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.util.Optional;
 
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -39,20 +39,20 @@ public class VerifierServiceTest {
         VerifiersDTO verifiersDTO = TestUtilities.getTrustedVerifiers();
         String verifiersListString = TestUtilities.getObjectAsString(verifiersDTO);
         when(utilities.getTrustedVerifiersJsonValue()).thenReturn(verifiersListString);
-        Mockito.when(objectMapper.readValue(Mockito.eq(verifiersListString), Mockito.eq(VerifiersDTO.class))).thenReturn(verifiersDTO);
+        when(objectMapper.readValue(eq(verifiersListString), eq(VerifiersDTO.class))).thenReturn(verifiersDTO);
     }
 
     @Test
     public void getCorrectVerifierWhenCorrectClientIdIsPassed() throws ApiNotAccessibleException, IOException {
         Optional<VerifierDTO> verifierDTO = verifiersService.getVerifiersByClientId("test-clientId");
-        Assert.assertNotNull(verifierDTO.get());
-        Assert.assertEquals(verifierDTO.get().getClientId(), "test-clientId");
+        assertNotNull(verifierDTO.get());
+        assertEquals(verifierDTO.get().getClientId(), "test-clientId");
     }
 
     @Test
     public void getNullWhenInvalidClientIdIsPassed() throws ApiNotAccessibleException, IOException {
         Optional<VerifierDTO> verifierDTO = verifiersService.getVerifiersByClientId("test-clientId2");
-        Assert.assertTrue(verifierDTO.isEmpty());
+        assertTrue(verifierDTO.isEmpty());
     }
 
     @Test
