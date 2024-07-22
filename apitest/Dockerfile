@@ -41,6 +41,10 @@ ADD ./apitest/target/ $work_dir
 
 ADD application.properties $work_dir
 
+ADD Biometric Devices $work_dir
+
+ADD resource $work_dir
+
 ADD entrypoint.sh $work_dir/entrypoint.sh
 
 RUN chmod +x $work_dir/entrypoint.sh
