@@ -1,19 +1,15 @@
 package io.mosip.mimoto.service;
 
 import com.google.gson.Gson;
-import io.mosip.mimoto.dto.DisplayDTO;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
-import io.mosip.mimoto.dto.LogoDTO;
-import io.mosip.mimoto.dto.mimoto.*;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
 import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.Utilities;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,18 +17,19 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-import static io.mosip.mimoto.util.TestUtilities.getIssuerConfigDTO;
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
+import static io.mosip.mimoto.util.TestUtilities.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
-@SpringBootTest
 public class IssuersServiceTest {
 
     @InjectMocks
@@ -40,6 +37,9 @@ public class IssuersServiceTest {
 
     @InjectMocks
     CredentialServiceImpl credentialService = new CredentialServiceImpl();
+
+    @Mock
+    RestApiClient restApiClient;
 
     @Mock
     Utilities utilities;
@@ -84,6 +84,21 @@ public class IssuersServiceTest {
         IssuerDTO issuer = issuersService.getIssuerConfig("Issuer1id");
 
         assertEquals(expectedIssuer, issuer);
+    }
+
+    @Test
+    public void shouldReturnIssuerWellknownForTheIssuerIdIfExist() throws ApiNotAccessibleException, IOException {
+        String issuerId = "Issuer1id";
+        String wellKnownUrl = "/.well-known";
+        CredentialIssuerWellKnownResponse expextedCredentialIssuerWellKnownResponse=getCredentialIssuerWellKnownResponseDto("Issuer1",
+               Map.of("CredentialType1",getCredentialSupportedResponse("CredentialType1")));
+
+        Mockito.when(restApiClient.getApi(wellKnownUrl , String.class))
+                .thenReturn(getExpectedWellKnownJson());
+
+        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse=issuersService.getIssuerWellknown(issuerId);
+        assertEquals(expextedCredentialIssuerWellKnownResponse,credentialIssuerWellKnownResponse);
+        verify(restApiClient, times(1)).getApi(wellKnownUrl, String.class);
     }
 
     @Test

@@ -9,8 +9,9 @@
     </parent>
     <groupId>io.mosip</groupId>
     <artifactId>mimoto</artifactId>
-    <version>0.10.0</version>
+    <version>0.13.0</version>
     <name>mimoto</name>
+    <url>https://github.com/mosip/mimoto</url>
     <description>Mobile server backend supporting Inji.</description>
     <licenses>
         <license>

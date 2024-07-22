@@ -1,8 +1,6 @@
 package io.mosip.mimoto.service;
 
-import com.google.gson.Gson;
 import io.mosip.mimoto.dto.IssuersDTO;
-import io.mosip.mimoto.dto.LogoDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.service.impl.CredentialServiceImpl;
@@ -58,15 +56,15 @@ public class CredentialServiceTest {
     @Test
     public void shouldReturnIssuerCredentialSupportedResponseForTheIssuerIdIfExist() throws Exception {
         IssuerSupportedCredentialsResponse expectedIssuerCredentialsSupported = new IssuerSupportedCredentialsResponse();
-        List<CredentialsSupportedResponse> credentialsSupportedResponses =List.of(getCredentialSupportedResponse("CredentialSupported1"),
-                getCredentialSupportedResponse("CredentialSupported2"));
+        List<CredentialsSupportedResponseDraft11> credentialsSupportedResponsDraft11s =List.of(getCredentialSupportedResponseDraft11("CredentialSupported1"),
+                getCredentialSupportedResponseDraft11("CredentialSupported2"));
 
         String authorization_endpoint = getIssuerConfigDTO("Issuer1", issuerConfigRelatedFields).getAuthorization_endpoint();
-        expectedIssuerCredentialsSupported.setSupportedCredentials(credentialsSupportedResponses);
+        expectedIssuerCredentialsSupported.setSupportedCredentials(credentialsSupportedResponsDraft11s);
         expectedIssuerCredentialsSupported.setAuthorizationEndPoint(authorization_endpoint);
 
-        Mockito.when(restApiClient.getApi(any(String.class), any())).thenReturn(getCredentialIssuerWellKnownResponseDto("Issuer1",
-                List.of(getCredentialSupportedResponse("CredentialSupported1"), getCredentialSupportedResponse("CredentialSupported2"))));
+        Mockito.when(restApiClient.getApi(any(String.class), any())).thenReturn(getCredentialIssuerWellKnownResponseDtoDraft11("Issuer1",
+                List.of(getCredentialSupportedResponseDraft11("CredentialSupported1"), getCredentialSupportedResponseDraft11("CredentialSupported2"))));
         IssuerSupportedCredentialsResponse issuerSupportedCredentialsResponse = credentialService.getCredentialsSupported("Issuer1id", null);
         assertEquals(issuerSupportedCredentialsResponse, expectedIssuerCredentialsSupported);
     }

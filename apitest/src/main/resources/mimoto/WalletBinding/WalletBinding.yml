@@ -474,7 +474,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type_format"
+      "errorCode": "invalid_auth_factor_type"
     }
   ],        
         "sendOtpResp": {
@@ -630,7 +630,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type_format"
+      "errorCode": "invalid_auth_factor_type"
     }
   ],        
         "sendOtpResp": {
@@ -669,7 +669,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge_length"
+      "errorCode": "invalid_challenge"
     }
   ],       
         "sendOtpResp": {
@@ -825,7 +825,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge_length"
+      "errorCode": "invalid_challenge"
     }
   ],       
         "sendOtpResp": {
@@ -864,7 +864,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type_format"
+      "errorCode": "invalid_challenge_format"
     }
   ],      
         "sendOtpResp": {
@@ -1020,7 +1020,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type_format"
+      "errorCode": "invalid_challenge_format"
     }
   ],
         "sendOtpResp": {
@@ -1933,7 +1933,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type_format"
+      "errorCode": "invalid_auth_factor_type"
     }
   ],        
         "sendOtpResp": {
@@ -2088,7 +2088,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type_format"
+      "errorCode": "invalid_auth_factor_type"
     }
   ],        
         "sendOtpResp": {
@@ -2282,7 +2282,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_challenge_length"
+      "errorCode": "invalid_challenge"
     }
   ],       
         "sendOtpResp": {
@@ -2320,7 +2320,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type_format"
+      "errorCode": "invalid_challenge_format"
     }
   ],      
         "sendOtpResp": {
@@ -2475,7 +2475,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_auth_factor_type_format"
+      "errorCode": "invalid_challenge_format"
     }
   ],
         "sendOtpResp": {

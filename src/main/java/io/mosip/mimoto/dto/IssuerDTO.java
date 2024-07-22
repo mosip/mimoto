@@ -61,6 +61,7 @@ public class IssuerDTO {
     @JsonInclude(NON_NULL)
     @NotBlank
     String client_alias;
+    String ovp_qr_enabled;
     @JsonInclude(NON_NULL)
     Map<String, String> additional_headers;
     @JsonInclude(NON_NULL)

@@ -8,7 +8,7 @@
 		<listener class-name="io.mosip.testrig.apirig.report.EmailableReport"/>
 	</listeners>
 		
-	<!--<test name="AddIdentity">
+	<test name="AddIdentity">
 		<parameter name="ymlFile"
 			value="mimoto/AddIdentity/AddIdentity.yml" />
 		<classes>
@@ -22,7 +22,7 @@
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.PostWithAutogenIdWithOtpGenerate" />
 		</classes>
-	</test>-->
+	</test>
 
 	<test name="CreatePolicySunBirdR">
 		<parameter name="ymlFile"
@@ -48,7 +48,7 @@
 	</test>
 	
 			
-	<!--<test name="OAuthDetailsRequest">
+	<test name="OAuthDetailsRequest">
 		<parameter name="ymlFile"
 			value="mimoto/OAuthDetailsRequest/OAuthDetailsRequest.yml" />
 			<parameter name="idKeyName"	value="transactionId,encodedResp" />
@@ -70,7 +70,7 @@
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
 		</classes>
-	</test>-->
+	</test>
 	
 	<test name="OAuthDetailsRequestSunBirdC">
 		<parameter name="ymlFile"
@@ -87,16 +87,16 @@
 			<class name="io.mosip.testrig.apirig.testscripts.SimplePost" />
 		</classes>
 	</test>
-	<!--<test name="AuthorizationCodeSunBirdC">
+	<test name="AuthorizationCodeSunBirdC">
 		<parameter name="ymlFile"
 			value="mimoto/SunBirdC/AuthorizationCodeSunBirdC/AuthorizationCodeSunBirdC.yml" />
 			<parameter name="idKeyName"	value="code" />
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
 		</classes>
-	</test>-->
+	</test>
 	
-	<!--<test name="AuthLock">
+	<test name="AuthLock">
 		<parameter name="ymlFile"
 			value="mimoto/AuthLock/createAuthLock.yml" />
 		<classes>
@@ -181,14 +181,14 @@
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.GetWithParam" />
 		</classes>
-	</test>-->
-	<!--<test name="DownloadIssuerCredential">
+	</test>
+	<test name="DownloadIssuerCredential">
 		<parameter name="ymlFile"
 			value="mimoto/DownloadIssuerCredential/DownloadIssuerCredential.yml" />
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.PostWithFormDataBodyForPdfDownload" />
 		</classes>
-	</test>-->
+	</test>
 	
 	<test name="DeletePolicySunBirdR">
 		<parameter name="ymlFile"
