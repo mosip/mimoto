@@ -44,6 +44,8 @@ public class PresentationServiceTest {
     public void setup() throws JsonProcessingException {
         PresentationDefinitionDTO presentationDefinitionDTO = TestUtilities.getPresentationDefinitionDTO();
         ReflectionTestUtils.setField(presentationService, "injiVerifyRedirectUrl", "%s#vp_token=%s&presentation_submission=%s");
+        ReflectionTestUtils.setField(presentationService, "dataShareUrl", "test_resource");
+
         when(objectMapper.readValue(eq(TestUtilities.getObjectAsString(presentationDefinitionDTO)), eq(PresentationDefinitionDTO.class))).thenReturn(presentationDefinitionDTO);
         when(objectMapper.writeValueAsString(any())).thenReturn("test-data");
     }

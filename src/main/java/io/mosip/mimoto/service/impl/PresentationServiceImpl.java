@@ -6,6 +6,7 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.openid.presentation.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
@@ -39,6 +40,9 @@ public class PresentationServiceImpl implements PresentationService {
     @Value("${mosip.inji.verify.redirect.url}")
     String injiVerifyRedirectUrl;
 
+    @Value("${mosip.data.share.url}")
+    String dataShareUrl;
+
     private final Logger logger = LoggerFactory.getLogger(PresentationServiceImpl.class);
 
     @Override
@@ -49,6 +53,10 @@ public class PresentationServiceImpl implements PresentationService {
 
         logger.info("Started the Credential Download From DataShare");
         String credentialsResourceUri = presentationRequestDTO.getResource();
+        if(!credentialsResourceUri.contains(dataShareUrl)){
+            throw new InvalidCredentialResourceException(PlatformErrorMessages.INVALID_CREDENTIAL_RESOURCE_URI_EXCEPTION.getMessage());
+        }
+
         String  vcCredentialResponseString = restApiClient.getApi(credentialsResourceUri, String.class);
 
         logger.info("Started the ObjectMapping");
