@@ -41,9 +41,8 @@ ADD ./apitest/target/ $work_dir
 
 ADD application.properties $work_dir
 
-COPY Biometric/Devices $work_dir/Biometric/Devices
-
-COPY resource $work_dir/resource
+COPY ["Biometric Devices/", "$work_dir"]
+COPY ["resource", "$work_dir"]
 
 ADD entrypoint.sh $work_dir/entrypoint.sh
 
