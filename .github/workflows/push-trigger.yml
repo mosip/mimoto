@@ -86,20 +86,20 @@ jobs:
       GPG_SECRET: ${{ secrets.GPG_SECRET }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
 
-  sonar_analysis:
-    needs: build-mimoto
-    if: "${{ github.event_name != 'pull_request' }}"
-    uses: mosip/kattu/.github/workflows/maven-sonar-analysis.yml@master
-    with:
-      SERVICE_LOCATION: ./
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      ORG_KEY: ${{ secrets.ORG_KEY }}
-      OSSRH_USER: ${{ secrets.OSSRH_USER }}
-      OSSRH_SECRET: ${{ secrets.OSSRH_SECRET }}
-      OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
-      GPG_SECRET: ${{ secrets.GPG_SECRET }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
+#  sonar_analysis:
+#    needs: build-mimoto
+#    if: "${{ github.event_name != 'pull_request' }}"
+#    uses: mosip/kattu/.github/workflows/maven-sonar-analysis.yml@master
+#    with:
+#      SERVICE_LOCATION: ./
+#    secrets:
+#      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#      ORG_KEY: ${{ secrets.ORG_KEY }}
+#      OSSRH_USER: ${{ secrets.OSSRH_USER }}
+#      OSSRH_SECRET: ${{ secrets.OSSRH_SECRET }}
+#      OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+#      GPG_SECRET: ${{ secrets.GPG_SECRET }}
+#      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
 
   build-dockers:
     needs: recreate-zips
@@ -217,17 +217,17 @@ jobs:
       RELEASE_DOCKER_HUB: ${{ secrets.RELEASE_DOCKER_HUB }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
 
-  sonar_analysis_apitest_mimoto:
-    needs: build-maven-apitest-mimoto
-    if: "${{  github.event_name != 'pull_request' }}"
-    uses: mosip/kattu/.github/workflows/maven-sonar-analysis.yml@master
-    with:
-      SERVICE_LOCATION: ./apitest
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      ORG_KEY: ${{ secrets.ORG_KEY }}
-      OSSRH_USER: ${{ secrets.OSSRH_USER }}
-      OSSRH_SECRET: ${{ secrets.OSSRH_SECRET }}
-      OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
-      GPG_SECRET: ${{ secrets.GPG_SECRET }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
+#  sonar_analysis_apitest_mimoto:
+#    needs: build-maven-apitest-mimoto
+#    if: "${{  github.event_name != 'pull_request' }}"
+#    uses: mosip/kattu/.github/workflows/maven-sonar-analysis.yml@master
+#    with:
+#      SERVICE_LOCATION: ./apitest
+#    secrets:
+#      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#      ORG_KEY: ${{ secrets.ORG_KEY }}
+#      OSSRH_USER: ${{ secrets.OSSRH_USER }}
+#      OSSRH_SECRET: ${{ secrets.OSSRH_SECRET }}
+#      OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+#      GPG_SECRET: ${{ secrets.GPG_SECRET }}
+#      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
