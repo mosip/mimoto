@@ -78,6 +78,12 @@ envVariables:
         key: mosip-esignet-insurance-host
         name: global
 
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_ESIGNET_HOST
+    valueFrom:
+      configMapKeyRef:
+        key: mosip-esignet-host
+        name: global
+
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_INTERNAL_URL
     valueFrom:
       configMapKeyRef:
