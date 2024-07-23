@@ -23,13 +23,6 @@ envVariables:
         key: mosip-api-internal-host
     enabled: true
 
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_INJIWEB_HOST
-    valueFrom:
-      configMapKeyRef:
-        name: global
-        key: mosip-injiweb-host
-    enabled: true
-
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_CERTIFY_MISP_KEY
     valueFrom:
       secretKeyRef:
