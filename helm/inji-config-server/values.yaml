@@ -23,59 +23,19 @@ envVariables:
         key: mosip-api-internal-host
     enabled: true
 
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_CERTIFY_MISP_KEY
-    valueFrom:
-      secretKeyRef:
-        key: mosip-certify-misp-key
-        name: certify-misp-onboarder-key
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_SOFTHSM_CERTIFY_SECURITY_PIN
-    valueFrom:
-      secretKeyRef:
-        key: security-pin
-        name: softhsm-certify
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MIMOTO_OIDC_MOCK_PARTNER_CLIENTID
-    valueFrom:
-      secretKeyRef:
-        key: mimoto-oidc-mock-partner-clientid
-        name: mimoto-oidc-mock-partner-clientid
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_SUNBIRD_URL
-    valueFrom:
-      configMapKeyRef:
-        key: mosip-sunbird-url
-        name: global
-
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_PARTNER_CRYPTO_P12_PASSWORD
     valueFrom:
       secretKeyRef:
         key: mosip-partner-crypto-p12-password
         name: conf-secrets-various
+    enabled: true
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MPARTNER_DEFAULT_MOBILE_SECRET
     valueFrom:
       secretKeyRef:
         key: mpartner_default_mobile_secret
-        name: keycloak-client-secret
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MIMOTO_OIDC_SUNBIRD_PARTNER_CLIENTID
-    valueFrom:
-      secretKeyRef:
-        key: mimoto-oidc-sunbird-partner-clientid
-        name: mimoto-oidc-sunbird-partner-clientid
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_ESIGNET_INSURANCE_HOST
-    valueFrom:
-      configMapKeyRef:
-        key: mosip-esignet-insurance-host
-        name: global
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_ESIGNET_HOST
-    valueFrom:
-      configMapKeyRef:
-        key: mosip-esignet-host
-        name: global
+        name: keycloak-client-secrets
+    enabled: true
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_INTERNAL_URL
     valueFrom:
