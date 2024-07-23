@@ -15,15 +15,121 @@ envVariables:
         name: global
         key: mosip-api-host
     enabled: true
+
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_API_INTERNAL_HOST
     valueFrom:
       configMapKeyRef:
         name: global
         key: mosip-api-internal-host
     enabled: true
+
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_INJIWEB_HOST
     valueFrom:
       configMapKeyRef:
         name: global
         key: mosip-injiweb-host
+    enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_CERTIFY_MISP_KEY
+    valueFrom:
+      secretKeyRef:
+        key: mosip-certify-misp-key
+        name: certify-misp-onboarder-key
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_SOFTHSM_CERTIFY_SECURITY_PIN
+    valueFrom:
+      secretKeyRef:
+        key: security-pin
+        name: softhsm-certify
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MIMOTO_OIDC_MOCK_PARTNER_CLIENTID
+    valueFrom:
+      secretKeyRef:
+        key: mimoto-oidc-mock-partner-clientid
+        name: mimoto-oidc-mock-partner-clientid
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_SUNBIRD_URL
+    valueFrom:
+      configMapKeyRef:
+        key: mosip-sunbird-url
+        name: global
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_PARTNER_CRYPTO_P12_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        key: mosip-partner-crypto-p12-password
+        name: conf-secrets-various
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MPARTNER_DEFAULT_MOBILE_SECRET
+    valueFrom:
+      secretKeyRef:
+        key: mpartner_default_mobile_secret
+        name: keycloak-client-secret
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MIMOTO_OIDC_SUNBIRD_PARTNER_CLIENTID
+    valueFrom:
+      secretKeyRef:
+        key: mimoto-oidc-sunbird-partner-clientid
+        name: mimoto-oidc-sunbird-partner-clientid
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_ESIGNET_INSURANCE_HOST
+    valueFrom:
+      configMapKeyRef:
+        key: mosip-esignet-insurance-host
+        name: global
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_INTERNAL_URL
+    valueFrom:
+      configMapKeyRef:
+        name: keycloak-host
+        key: keycloak-internal-url
+    enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_EXTERNAL_URL
+    valueFrom:
+      configMapKeyRef:
+        name: keycloak-host
+        key: keycloak-external-url
+    enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_INTERNAL_HOST
+    valueFrom:
+      configMapKeyRef:
+        name: keycloak-host
+        key: keycloak-internal-host
+    enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_EXTERNAL_HOST
+    valueFrom:
+      configMapKeyRef:
+        name: keycloak-host
+        key: keycloak-external-host
+    enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_DB_DBUSER_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: db-common-secrets
+        key: db-dbuser-password
+    enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_S3_ACCESSKEY
+    valueFrom:
+      configMapKeyRef:
+        name: s3
+        key: s3-user-key
+    enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_S3_REGION
+    valueFrom:
+      configMapKeyRef:
+        name: s3
+        key: s3-region
+    enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_S3_SECRETKEY
+    valueFrom:
+      secretKeyRef:
+        name: s3
+        key: s3-user-secret
     enabled: true
