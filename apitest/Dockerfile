@@ -28,11 +28,11 @@ WORKDIR /home/${container_user}
 ENV work_dir=/home/${container_user}
 
 # Combine all necessary files into a single COPY command
-COPY ./apitest/target $work_dir/target
-COPY application.properties $work_dir/
+ADD ./apitest/target $work_dir/target
+ADD application.properties $work_dir/
+ADD entrypoint.sh $work_dir
 COPY ["Biometric Devices", "$work_dir/Biometric Devices"]
 COPY ["resource", "$work_dir/resource"]
-COPY entrypoint.sh $work_dir
 
 # Combine all RUN commands into a single layer
 RUN apt-get -y update && \
