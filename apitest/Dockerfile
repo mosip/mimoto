@@ -27,14 +27,12 @@ WORKDIR /home/${container_user}
 
 ENV work_dir=/home/${container_user}
 
-# Combine all necessary files into a single COPY command
-ADD ./apitest/target $work_dir/target
-ADD application.properties $work_dir/
-ADD entrypoint.sh $work_dir
+COPY ./apitest/target $work_dir/
+COPY application.properties $work_dir/
 COPY ["Biometric Devices", "$work_dir/Biometric Devices"]
 COPY ["resource", "$work_dir/resource"]
+COPY entrypoint.sh $work_dir
 
-# Combine all RUN commands into a single layer
 RUN apt-get -y update && \
     apt-get install -y unzip jq && \
     groupadd -g ${container_user_gid} ${container_user_group} && \
@@ -45,6 +43,7 @@ RUN apt-get -y update && \
     chown -R ${container_user}:${container_user} /home/${container_user} /usr/local/openjdk-11/lib/security/cacerts && \
     chmod 644 /usr/local/openjdk-11/lib/security/cacerts && \
     chmod +x $work_dir/entrypoint.sh
+
 
 USER ${container_user_uid}:${container_user_gid}
 
