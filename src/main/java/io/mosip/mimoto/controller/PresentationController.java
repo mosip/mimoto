@@ -33,9 +33,12 @@ public class PresentationController {
     @Value("${mosip.inji.verify.error.redirect.url}")
     String injiVerifyErrorRedirectUrl;
 
+    @Value("${mosip.inji.web.redirect.url:http://injiweb.dev1.mosip.net/v1/mimoto/authorize}")
+    String injiWebErrorRedirectUrl;
+
     @GetMapping("/authorize")
     @CrossOrigin(origins = "*")
-    public ResponseEntity<Object> performAuthorization(HttpServletResponse response, @ModelAttribute PresentationRequestDTO presentationRequestDTO) throws IOException {
+    public void performAuthorization(HttpServletResponse response, @ModelAttribute PresentationRequestDTO presentationRequestDTO) throws IOException {
         response.setHeader("Access-Control-Allow-Origin", "*");
         try {
             logger.info("Started Presentation Authorization in the controller.");
@@ -44,13 +47,11 @@ public class PresentationController {
             response.sendRedirect(redirectString);
         } catch( InvalidVerifierException exception){
             logger.error("Exception Occurred in Authorizing the presentation" + exception);
-            ErrorDTO errorDTO = ErrorDTO.builder()
-                    .errorCode(exception.getErrorCode())
-                    .errorMessage(exception.getMessage())
-                    .build();
-            ResponseWrapper<Object> responseWrapper = new ResponseWrapper<>();
-            responseWrapper.setErrors(Collections.singletonList(errorDTO));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
+            String injiVerifyRedirectString = String.format(injiWebErrorRedirectUrl,
+                    presentationRequestDTO.getRedirect_uri(),
+                    exception.getErrorText(),
+                    exception.getErrorCode());
+            response.sendRedirect(injiVerifyRedirectString);
         } catch(VPNotCreatedException | InvalidCredentialResourceException exception){
             logger.error("Exception Occurred in Authorizing the presentation" + exception);
             String injiVerifyRedirectString = String.format(injiVerifyErrorRedirectUrl,
@@ -66,6 +67,5 @@ public class PresentationController {
                     OpenIdErrorMessages.INTERNAL_SERVER_ERROR.getErrorMessage());
             response.sendRedirect(injiVerifyRedirectString);
         }
-        return null;
     }
 }
