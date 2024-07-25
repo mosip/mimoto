@@ -36,12 +36,13 @@ public class IssuersController {
 
     @Autowired
     CredentialService credentialService;
+
     private static final String ID = "mosip.mimoto.issuers";
 
     private final Logger logger = LoggerFactory.getLogger(IssuersController.class);
 
     @GetMapping()
-    public ResponseEntity<Object> getAllIssuers(@RequestParam(required = false) String search) {
+    public ResponseEntity<Object> getAllIssuers(@RequestParam(required = false, name = "search") String search) {
         ResponseWrapper<IssuersDTO> responseWrapper = new ResponseWrapper<>();
         responseWrapper.setId(ID);
         responseWrapper.setVersion("v1");
@@ -103,7 +104,7 @@ public class IssuersController {
 
     @GetMapping("/{issuer-id}/credentialTypes")
     public ResponseEntity<Object> getCredentialTypes(@PathVariable("issuer-id") String issuerId,
-                                                     @RequestParam(required = false) String search) {
+                                                     @RequestParam(required = false, name = "search") String search) {
         ResponseWrapper<Object> responseWrapper = new ResponseWrapper<>();
         responseWrapper.setId(ID);
         responseWrapper.setVersion("v1");

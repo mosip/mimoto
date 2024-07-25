@@ -166,7 +166,7 @@ public class CredentialShareController {
      */
     @GetMapping(path = "/request/status/{requestId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @SuppressWarnings("unchecked")
-    public ResponseEntity<Object> requestStatus(@PathVariable String requestId)
+    public ResponseEntity<Object> requestStatus(@PathVariable("requestId") String requestId)
             throws Exception {
 
         List<String> pathSegment = new ArrayList<String>();

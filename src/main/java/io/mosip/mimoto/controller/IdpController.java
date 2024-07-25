@@ -14,7 +14,6 @@ import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.RestClientService;
-import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -107,13 +106,13 @@ public class IdpController {
     }
 
     @PostMapping(value = {"/get-token/{issuer}"}, consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE})
-    public ResponseEntity getToken(@RequestParam Map<String, String> params, @PathVariable(required = false) String issuer) {
+    public ResponseEntity getToken(@RequestParam Map<String, String> params, @PathVariable(required = true, name= "issuer") String issuer) {
+
         logger.info("Reached the getToken Controller for Issuer " + issuer);
-        RestTemplate restTemplate = new RestTemplate();
         try {
             IssuerDTO issuerDTO = issuersService.getIssuerConfig(issuer);
             HttpEntity<MultiValueMap<String, String>> request = idpService.constructGetTokenRequest(params, issuerDTO);
-            TokenResponseDTO response = restTemplate.postForObject(idpService.getTokenEndpoint(issuerDTO), request, TokenResponseDTO.class);
+            TokenResponseDTO response = new RestTemplate().postForObject(idpService.getTokenEndpoint(issuerDTO), request, TokenResponseDTO.class);
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception ex){
             logger.error("Exception Occurred while Invoking the Token Endpoint : ", ex);

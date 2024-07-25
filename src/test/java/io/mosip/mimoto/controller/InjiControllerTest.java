@@ -28,9 +28,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
-import org.mockito.InjectMocks;
 import org.mockito.Mockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +39,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.ResourceUtils;
 
@@ -65,17 +64,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = TestBootApplication.class)
 @AutoConfigureMockMvc
-@PrepareForTest({Files.class})
 public class InjiControllerTest {
-
-    @InjectMocks
-    private CommonInjiController commonInjiController = new CommonInjiController();
-
-    @InjectMocks
-    private CredentialShareController credentialShareController = new CredentialShareController();
-
-    @MockBean
-    private Map<String, String> injiConfig;
 
     @MockBean
     private CbeffUtil cbeffUtil;
@@ -103,6 +92,7 @@ public class InjiControllerTest {
 
     @Autowired
     IssuersController issuersController;
+
     @MockBean
     private AttestationOfflineVerify attestationOfflineVerify;
 
@@ -116,19 +106,7 @@ public class InjiControllerTest {
     public CryptoCoreUtil cryptoCoreUtil;
 
     @Before
-    public void setup() throws IOException {
-        //PowerMockito.mockStatic(Files.class);
-        //PowerMockito.doNothing().when(Files.write(Mockito.any(Path.class), Mockito.any(byte[].class)));
-
-        Map<String, String> injiConfig = new HashMap<>();
-        injiConfig.put("datashareUrl", "http://www.mosipdatashare.com");
-
-        ReflectionTestUtils.setField(commonInjiController, "injiConfig", injiConfig);
-        ReflectionTestUtils.setField(credentialShareController, "partnerEncryptionKey", "partnerkey");
-        ReflectionTestUtils.setField(credentialShareController, "partnerId", "partnerId");
-        ReflectionTestUtils.setField(credentialShareController, "topic", "topic");
-
-
+    public void setup() {
         Mockito.when(utilities.getDataPath()).thenReturn("target");
 
         Mockito.when(webSubSubscriptionHelper.subscribeEvent(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(new SubscriptionChangeResponse());
@@ -139,8 +117,18 @@ public class InjiControllerTest {
 
     @Test
     public void getAllPropertiesTest() throws Exception {
-        this.mockMvc.perform(get("/allProperties").accept(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(status().isOk());
+        File file = ResourceUtils.getFile(ResourceUtils.CLASSPATH_URL_PREFIX + "responses/InjiConfig.json");
+        String expectedResponse = new String(Files.readAllBytes(file.toPath()));
+
+        String actualResponse = this.mockMvc.perform(get("/allProperties")
+                        .accept(MediaType.APPLICATION_JSON_VALUE))
+                        .andExpect(status().isOk())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString();
+
+        JSONAssert.assertEquals(expectedResponse, actualResponse, JSONCompareMode.LENIENT);
+
     }
 
 

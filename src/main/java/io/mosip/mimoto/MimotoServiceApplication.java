@@ -22,6 +22,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 @SpringBootApplication(scanBasePackages = {
         "io.mosip.mimoto.*",
+        "io.mosip.kernel.websub.*",
         "${mosip.auth.adapter.impl.basepackage}"
 }, exclude = {
         SecurityAutoConfiguration.class,
