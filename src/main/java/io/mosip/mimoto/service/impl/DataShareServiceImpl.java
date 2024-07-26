@@ -33,6 +33,9 @@ public class DataShareServiceImpl {
     @Value("${mosip.data.share.url}")
     String dataShareUrl;
 
+    @Value("${mosip.data.share.create.retry.count:3}")
+    Integer maxRetryCount;
+
     private final Logger logger = LoggerFactory.getLogger(DataShareServiceImpl.class);
 
     @Autowired
@@ -51,10 +54,28 @@ public class DataShareServiceImpl {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
-        DataShareResponseWrapperDTO dataShareResponseWrapperDTO = restApiClient.postApi(dataShareUrl, MediaType.MULTIPART_FORM_DATA, requestEntity, DataShareResponseWrapperDTO.class);
+        DataShareResponseWrapperDTO dataShareResponseWrapperDTO = pushCredentialIntoDataShare(requestEntity);
         URL dataShareUrl = new URL(dataShareResponseWrapperDTO.getDataShare().getUrl());
 //        return publicHostUrl + dataShareUrl.getPath();
         return "https://api-internal.dev.mosip.net" + dataShareUrl.getPath();
+    }
+
+    private DataShareResponseWrapperDTO pushCredentialIntoDataShare(HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity) throws Exception {
+        int attempt =0 ;
+        DataShareResponseWrapperDTO dataShareResponseWrapperDTO = null;
+        while(attempt++ < maxRetryCount ){
+            try {
+                dataShareResponseWrapperDTO = restApiClient.postApi(dataShareUrl, MediaType.MULTIPART_FORM_DATA, requestEntity, DataShareResponseWrapperDTO.class);
+            } catch (Exception e) {
+                logger.error(attempt + " attempt to push credential failed");
+            }
+        }
+        if(dataShareResponseWrapperDTO != null){
+            throw new InvalidCredentialResourceException(
+                    OpenIdErrorMessages.REQUEST_TIMED_OUT.getErrorCode(),
+                    OpenIdErrorMessages.REQUEST_TIMED_OUT.getErrorMessage());
+        }
+        return dataShareResponseWrapperDTO;
     }
 
     public  VCCredentialResponse downloadCredentialFromDataShare(PresentationRequestDTO presentationRequestDTO) throws JsonProcessingException {
@@ -62,9 +83,15 @@ public class DataShareServiceImpl {
         String credentialsResourceUri = presentationRequestDTO.getResource();
         String vcCredentialResponseString = restApiClient.getApi(credentialsResourceUri, String.class);
         if (vcCredentialResponseString == null) {
-            throw new InvalidCredentialResourceException(OpenIdErrorMessages.INVALID_RESOURCE.getErrorMessage());
+            throw new InvalidCredentialResourceException(
+                    OpenIdErrorMessages.SERVER_UNAVAILABLE.getErrorCode(),
+                    OpenIdErrorMessages.SERVER_UNAVAILABLE.getErrorMessage());
         }
-        return  objectMapper.readValue(vcCredentialResponseString, VCCredentialResponse.class);
+        VCCredentialResponse vcCredentialResponse = objectMapper.readValue(vcCredentialResponseString, VCCredentialResponse.class);
+        if(vcCredentialResponse.getCredential() == null){
+            throw new InvalidCredentialResourceException(OpenIdErrorMessages.RESOURCE_EXPIRED.getErrorMessage());
+        }
+        return vcCredentialResponse;
     }
 
 }

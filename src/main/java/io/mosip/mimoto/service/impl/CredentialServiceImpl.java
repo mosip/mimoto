@@ -314,7 +314,7 @@ public class CredentialServiceImpl implements CredentialService {
                 .findFirst();
         if (credentialsSupportedResponse.isEmpty()){
             logger.error("Invalid credential Type passed - {}", credentialType);
-            throw new InvalidCredentialResourceException(OpenIdErrorMessages.INVALID_RESOURCE.getErrorMessage());
+            throw new InvalidCredentialResourceException(OpenIdErrorMessages.RESOURCE_NOT_FOUND.getErrorMessage());
         }
         return credentialsSupportedResponse.get();
     }

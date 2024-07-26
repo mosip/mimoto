@@ -7,6 +7,7 @@ import io.mosip.mimoto.dto.openid.VerifiersDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidVerifierException;
+import io.mosip.mimoto.exception.OpenIdErrorMessages;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.VerifiersService;
 import io.mosip.mimoto.util.Utilities;
@@ -45,11 +46,15 @@ public class VerifiersServiceImpl implements VerifiersService {
             (verifierDTO) -> {
                 List<String> registeredRedirectUri = verifierDTO.getRedirectUri();
                 if(!registeredRedirectUri.contains(presentationRequestDTO.getRedirect_uri())){
-                    throw new InvalidVerifierException(PlatformErrorMessages.INVALID_VERIFIER_REDIRECT_URI_EXCEPTION.getMessage());
+                    throw new InvalidVerifierException(
+                            OpenIdErrorMessages.INVALID_REDIRECT_URI.getErrorCode(),
+                            OpenIdErrorMessages.INVALID_REDIRECT_URI.getErrorMessage());
                 }
             },
             () -> {
-                throw new InvalidVerifierException(PlatformErrorMessages.INVALID_VERIFIER_ID_EXCEPTION.getMessage());
+                throw new InvalidVerifierException(
+                        OpenIdErrorMessages.INVALID_CLIENT.getErrorCode(),
+                        OpenIdErrorMessages.INVALID_CLIENT.getErrorMessage());
             }
         );
     }

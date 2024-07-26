@@ -15,6 +15,6 @@ public class InvalidCredentialResourceException extends BaseUncheckedException {
     }
 
     public InvalidCredentialResourceException(String errorMessage) {
-        super(OpenIdErrorMessages.INVALID_RESOURCE.getErrorCode(), errorMessage);
+        super(OpenIdErrorMessages.RESOURCE_NOT_FOUND.getErrorCode(), errorMessage);
     }
 }

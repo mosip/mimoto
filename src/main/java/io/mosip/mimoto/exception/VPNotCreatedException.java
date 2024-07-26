@@ -15,6 +15,6 @@ public class VPNotCreatedException extends BaseUncheckedException {
     }
 
     public VPNotCreatedException(String errorMessage) {
-        super(OpenIdErrorMessages.BAD_REQUEST.getErrorCode(), errorMessage);
+        super(OpenIdErrorMessages.INVALID_REQUEST.getErrorCode(), errorMessage);
     }
 }

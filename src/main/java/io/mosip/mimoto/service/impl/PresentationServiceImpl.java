@@ -60,10 +60,10 @@ public class PresentationServiceImpl implements PresentationService {
         try {
             presentationDefinitionDTO = objectMapper.readValue(presentationRequestDTO.getPresentation_definition(), PresentationDefinitionDTO.class);
             if (presentationDefinitionDTO == null) {
-                throw new VPNotCreatedException(OpenIdErrorMessages.BAD_REQUEST.getErrorMessage());
+                throw new VPNotCreatedException(OpenIdErrorMessages.INVALID_REQUEST.getErrorMessage());
             }
         } catch (IOException ioException) {
-            throw new VPNotCreatedException(OpenIdErrorMessages.BAD_REQUEST.getErrorMessage());
+            throw new VPNotCreatedException(OpenIdErrorMessages.INVALID_REQUEST.getErrorMessage());
         }
 
         logger.info("Started the Constructing VP Token");
@@ -84,12 +84,12 @@ public class PresentationServiceImpl implements PresentationService {
                                     Base64.getUrlEncoder().encodeToString(vpToken.getBytes(StandardCharsets.UTF_8)),
                                     URLEncoder.encode(presentationSubmission, StandardCharsets.UTF_8));
                         } catch (JsonProcessingException e) {
-                            throw new VPNotCreatedException(OpenIdErrorMessages.BAD_REQUEST.getErrorMessage());
+                            throw new VPNotCreatedException(OpenIdErrorMessages.INVALID_REQUEST.getErrorMessage());
                         }
                     }
                     logger.info("No Credentials Matched the VP request.");
-                    throw new VPNotCreatedException(OpenIdErrorMessages.BAD_REQUEST.getErrorMessage());
-                }).orElseThrow(() -> new VPNotCreatedException(OpenIdErrorMessages.BAD_REQUEST.getErrorMessage()));
+                    throw new VPNotCreatedException(OpenIdErrorMessages.INVALID_REQUEST.getErrorMessage());
+                }).orElseThrow(() -> new VPNotCreatedException(OpenIdErrorMessages.INVALID_REQUEST.getErrorMessage()));
     }
 
     private String constructVerifiablePresentationString(VCCredentialProperties vcCredentialProperties) throws JsonProcessingException {
