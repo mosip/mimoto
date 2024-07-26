@@ -92,3 +92,17 @@ envVariables:
         name: s3
         key: s3-user-secret
     enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_ESIGNET_HOST
+    valueFrom:
+      configMapKeyRef:
+        key: mosip-esignet-host
+        name: global
+    enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_ESIGNET_INSURANCE_HOST
+    valueFrom:
+      configMapKeyRef:
+         key: mosip-esignet-insurance-host
+         name: global
+    enabled: true
