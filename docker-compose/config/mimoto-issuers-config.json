@@ -1,0 +1,164 @@
+{
+  "issuers": [
+    {
+      "credential_issuer": "Mosip",
+      "display": [
+        {
+          "name": "National Identity Department",
+          "logo": {
+            "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
+            "alt_text": "mosip-logo"
+          },
+          "title": "National Identity Department",
+          "description": "Download MOSIP National / Foundational Identity Credential",
+          "language": "en"
+        },
+        {
+          "name": "دائرة الهوية الوطنية",
+          "logo": {
+            "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
+            "alt_text": "mosip-logo"
+          },
+          "title": "دائرة الهوية الوطنية",
+          "description": "قم بتنزيل بيانات اعتماد الهوية الوطنية / التأسيسية MOSIP" ,
+          "language": "ar"
+        },
+        {
+          "name": "राष्ट्रीय पहचान विभाग",
+          "logo": {
+            "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
+            "alt_text": "mosip-logo"
+          },
+          "title": "राष्ट्रीय पहचान विभाग",
+          "description":"MOSIP नेशनल/फाउंडेशनल आइडेंटिटी क्रेडेंशियल डाउनलोड करेंं",
+          "language": "hi"
+        },
+        {
+          "name": "ರಾಷ್ಟ್ರೀಯ ಗುರುತಿನ ಇಲಾಖೆ",
+          "logo": {
+            "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
+            "alt_text": "mosip-logo"
+          },
+          "title": "ರಾಷ್ಟ್ರೀಯ ಗುರುತಿನ ಇಲಾಖೆ",
+          "description": "MOSIP ರಾಷ್ಟ್ರೀಯ / ಫೌಂಡೇಶನಲ್ ಐಡೆಂಟಿಟಿ ರುಜುವಾತು ಡೌನ್\u200Cಲೋಡ್ ಮಾಡಿ",
+          "language": "kn"
+        },
+        {
+          "name": "தேசிய அடையாளத் துறை",
+          "logo": {
+            "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
+            "alt_text": "mosip-logo"
+          },
+          "title": "தேசிய அடையாளத் துறை",
+          "description":"MOSIP தேசிய / அடிப்படை அடையாளச் சான்றிதழைப் பதிவிறக்கவும்",
+          "language": "ta"
+        },
+        {
+          "name": "National Identity Department",
+          "logo": {
+            "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
+            "alt_text": "mosip-logo"
+          },
+          "title": "National Identity Department",
+          "description":"I-download ang MOSIP National / Foundational Identity Credential",
+          "language": "fil"
+        }
+      ],
+      "protocol": "OpenId4VCI",
+      "client_id": "mpartner-default-mimotooidc",
+      "client_alias": "mpartner-default-mimotooidc",
+      "scopes_supported": ["mosip_identity_vc_ldp"],
+      "additional_headers": { "Accept": "application/json" },
+      ".well-known": "https://esignet.collab.mosip.net/.well-known/openid-credential-issuer?version=v11",
+      "redirect_uri": "io.mosip.residentapp.inji://oauthredirect",
+      "authorization_endpoint": "https://esignet.collab.mosip.net/authorize",
+      "authorization_audience": "https://esignet.collab.mosip.net/v1/esignet/oauth/v2/token",
+      "token_endpoint": "http://localhost:8099/residentmobileapp/get-token/Mosip",
+      "proxy_token_endpoint": "https://esignet.collab.mosip.net/v1/esignet/oauth/v2/token",
+      "credential_endpoint": "https://esignet.collab.mosip.net/v1/esignet/vci/credential",
+      "credential_type": ["VerifiableCredential", "MOSIPVerifiableCredential"],
+      "credential_audience": "https://esignet.collab.mosip.net/v1/esignet",
+      "enabled": "true"
+    },
+    {
+      "credential_issuer": "Sunbird",
+      "display": [
+        {
+          "name": "Veridonia Insurance Company",
+          "logo": {
+            "url": "https://api.collab.mosip.net/inji/veridonia-logo.png",
+            "alt_text": "a Veridonia logo"
+          },
+          "language": "en",
+          "title": "Veridonia Insurance Company",
+          "description": "Download Insurance Credentials using policy details"
+        },
+        {
+          "name": "شركة فيريدونيا للتأمين",
+          "logo": {
+            "url": "https://api.collab.mosip.net/inji/veridonia-logo.png",
+            "alt_text": "شعار فيريدونيا"
+          },
+          "language": "ar",
+          "title": "شركة فيريدونيا للتأمين",
+          "description": "قم بتنزيل بيانات اعتماد التأمين باستخدام تفاصيل السياسة"
+        },
+        {
+          "name": "वेरिडोनिया बीमा कंपनींं",
+          "logo": {
+            "url": "https://api.collab.mosip.net/inji/veridonia-logo.png",
+            "alt_text": "एक वेरिडोनिया लोगो"
+          },
+          "language": "hi",
+          "title": "वेरिडोनिया बीमा कंपनींं",
+          "description": "पॉलिसी विवरण का उपयोग करके बीमा क्रेडेंशियल डाउनलोड करें"
+        },
+        {
+          "name": "ವೆರಿಡೋನಿಯಾ ವಿಮಾ ಕಂಪನಿ",
+          "logo": {
+            "url": "https://api.collab.mosip.net/inji/veridonia-logo.png",
+            "alt_text": "ವೆರಿಡೋನಿಯಾ ಲೋಗೋ"
+          },
+          "language": "kn",
+          "title": "ವೆರಿಡೋನಿಯಾ ವಿಮಾ ಕಂಪನಿ",
+          "description": "ಪಾಲಿಸಿ ವಿವರಗಳನ್ನು ಬಳಸಿಕೊಂಡು ವಿಮಾ ರುಜುವಾತುಗಳನ್ನು ಡೌನ್\u200Cಲೋಡ್ ಮಾಡಿ"
+        },
+        {
+          "name": "வெரிடோனியா இன்சூரன்ஸ் நிறுவனம்",
+          "logo": {
+            "url": "https://api.collab.mosip.net/inji/veridonia-logo.png",
+            "alt_text": "ஒரு வெரிடோனியா லோகோ"
+          },
+          "language": "ta",
+          "title": "வெரிடோனியா இன்சூரன்ஸ் நிறுவனம்",
+          "description": "பாலிசி விவரங்களைப் பயன்படுத்தி காப்பீட்டுச் சான்றுகளைப் பதிவிறக்கவும்"
+        },
+        {
+          "name": "Veridonia Insurance Company",
+          "logo": {
+            "url": "https://api.collab.mosip.net/inji/veridonia-logo.png",
+            "alt_text": "isang logo ng Veridonia"
+          },
+          "language": "fil",
+          "title": "Veridonia Insurance Company",
+          "description": "I-download ang Mga Kredensyal ng Seguro gamit ang mga detalye ng patakaran"
+        }
+      ],
+      "protocol": "OpenId4VCI",
+      "client_id": "esignet-sunbird-partner",
+      "client_alias": "esignet-sunbird-partner",
+      "scopes_supported": ["sunbird_rc_insurance_vc_ldp"],
+      "additional_headers": { "Accept": "application/json" },
+      ".well-known": "https://esignet-insurance.collab.mosip.net/.well-known/openid-credential-issuer?version=v11",
+      "redirect_uri": "io.mosip.residentapp.inji://oauthredirect",
+      "authorization_endpoint": "https://esignet-insurance.collab.mosip.net/authorize",
+      "authorization_audience": "https://esignet-insurance.collab.mosip.net/v1/esignet/oauth/v2/token",
+      "token_endpoint": "http://localhost:8099/residentmobileapp/get-token/Sunbird",
+      "proxy_token_endpoint": "https://esignet-insurance.collab.mosip.net/v1/esignet/oauth/v2/token",
+      "credential_endpoint": "https://esignet-insurance.collab.mosip.net/v1/esignet/vci/credential",
+      "credential_type": ["VerifiableCredential", "InsuranceCredential"],
+      "credential_audience": "https://esignet-insurance.collab.mosip.net/v1/esignet",
+      "enabled": "true"
+    }
+  ]
+}
