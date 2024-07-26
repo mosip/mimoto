@@ -3,11 +3,14 @@ package io.mosip.mimoto.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.dto.DisplayDTO;
+import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.LogoDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.openid.VerifierDTO;
 import io.mosip.mimoto.dto.openid.VerifiersDTO;
+import io.mosip.mimoto.dto.openid.datashare.DataShareResponseDTO;
+import io.mosip.mimoto.dto.openid.datashare.DataShareResponseWrapperDTO;
 import io.mosip.mimoto.dto.openid.presentation.*;
 
 import java.util.*;
@@ -270,5 +273,22 @@ public class TestUtilities {
     public static String getObjectAsString(Object object) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.writeValueAsString(object);
+    }
+
+    public static DataShareResponseWrapperDTO getDataShareResponseWrapperDTO(){
+        ErrorDTO errorDTO = ErrorDTO.builder().errorCode("test-errorCode").errorMessage("test-errorMessage").build();
+        DataShareResponseDTO dataShareResponseDTO = DataShareResponseDTO.builder()
+                .url("https://test-url")
+                .validForInMinutes(1)
+                .transactionsAllowed(1)
+                .policyId("static-policyid")
+                .subscriberId("static-subscriberId").build();
+
+        return DataShareResponseWrapperDTO.builder()
+                .id("test-id")
+                .version("test-version")
+                .responsetime("test-responsetime")
+                .dataShare(dataShareResponseDTO)
+                .errors(Collections.singletonList(errorDTO)).build();
     }
 }

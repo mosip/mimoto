@@ -29,7 +29,7 @@ public class PresentationController {
     @Value("${mosip.inji.verify.error.redirect.url}")
     String injiVerifyErrorRedirectUrl;
 
-    @Value("${mosip.inji.web.redirect.url:https://injiweb.dev1.mosip.net/authorize}")
+    @Value("${mosip.inji.web.redirect.url}")
     String injiWebErrorRedirectUrl;
 
     @GetMapping("/authorize")

@@ -27,13 +27,13 @@ public class DataShareServiceImpl {
     @Autowired
     RestApiClient restApiClient;
 
-    @Value("${public.url}")
-    String publicHostUrl;
-
     @Value("${mosip.data.share.url}")
-    String dataShareUrl;
+    String dataShareHostUrl;
 
-    @Value("${mosip.data.share.create.retry.count:3}")
+    @Value("${mosip.data.share.create.url}")
+    String dataShareCreateUrl;
+
+    @Value("${mosip.data.share.create.retry.count}")
     Integer maxRetryCount;
 
     private final Logger logger = LoggerFactory.getLogger(DataShareServiceImpl.class);
@@ -56,8 +56,7 @@ public class DataShareServiceImpl {
         HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
         DataShareResponseWrapperDTO dataShareResponseWrapperDTO = pushCredentialIntoDataShare(requestEntity);
         URL dataShareUrl = new URL(dataShareResponseWrapperDTO.getDataShare().getUrl());
-//        return publicHostUrl + dataShareUrl.getPath();
-        return "https://api-internal.dev.mosip.net" + dataShareUrl.getPath();
+        return dataShareHostUrl + dataShareUrl.getPath();
     }
 
     private DataShareResponseWrapperDTO pushCredentialIntoDataShare(HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity) throws Exception {
@@ -65,7 +64,7 @@ public class DataShareServiceImpl {
         DataShareResponseWrapperDTO dataShareResponseWrapperDTO = null;
         while(attempt++ < maxRetryCount ){
             try {
-                dataShareResponseWrapperDTO = restApiClient.postApi(dataShareUrl, MediaType.MULTIPART_FORM_DATA, requestEntity, DataShareResponseWrapperDTO.class);
+                dataShareResponseWrapperDTO = restApiClient.postApi(dataShareCreateUrl, MediaType.MULTIPART_FORM_DATA, requestEntity, DataShareResponseWrapperDTO.class);
             } catch (Exception e) {
                 logger.error(attempt + " attempt to push credential failed");
             }
