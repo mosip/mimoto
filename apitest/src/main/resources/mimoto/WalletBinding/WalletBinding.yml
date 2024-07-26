@@ -1,6 +1,6 @@
 WalletBinding:
    Mimoto_WalletBinding_uin_OTP_Valid_Smoke:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -21,7 +21,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -33,7 +33,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_OTP_Valid_Smoke:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -54,7 +54,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -66,7 +66,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Invalid_RequestTime_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -87,7 +87,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -104,7 +104,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_PastVal_RequestTime_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -125,7 +125,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -142,7 +142,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_FutureVal_RequestTime_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -163,7 +163,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -180,7 +180,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Empty_RequestTime_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -201,7 +201,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -218,7 +218,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Missing_RequestTime_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -239,7 +239,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -256,7 +256,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Invalid_IndividualId_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -277,7 +277,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -294,7 +294,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Empty_IndividualId_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -315,7 +315,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -332,7 +332,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Null_IndividualId_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -353,7 +353,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -370,7 +370,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Missing_IndividualId_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -391,7 +391,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -408,7 +408,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_SpaceVal_IndividualId_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -429,7 +429,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -446,7 +446,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Invalid_AuthFactorType_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_auth_factor_type
@@ -468,7 +468,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -485,7 +485,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Empty_AuthFactorType_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_auth_factor_type
@@ -507,7 +507,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -524,7 +524,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Missing_AuthFactorType_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_auth_factor_type
@@ -546,7 +546,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -563,7 +563,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_SpaceVal_AuthFactorType_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_auth_factor_type
@@ -585,7 +585,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -602,7 +602,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Null_AuthFactorType_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_auth_factor_type
@@ -624,7 +624,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -641,7 +641,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Invalid_Challenge_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge
@@ -663,7 +663,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -680,7 +680,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Missing_Challenge_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge
@@ -702,7 +702,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -719,7 +719,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Empty_Challenge_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge
@@ -741,7 +741,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -758,7 +758,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_SpaceVal_Challenge_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge
@@ -780,7 +780,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -797,7 +797,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Null_Challenge_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: 
@@ -819,7 +819,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -836,7 +836,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Invalid_Formate_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge_format
@@ -858,7 +858,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -875,7 +875,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Missing_Formate_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge_format
@@ -897,7 +897,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -914,7 +914,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Empty_Formate_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge_format
@@ -936,7 +936,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -953,7 +953,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_SpaceVal_Formate_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge_format
@@ -975,7 +975,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -992,7 +992,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Null_Formate_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge_format
@@ -1014,7 +1014,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1031,7 +1031,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Invalid_authFactorType1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1052,7 +1052,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1069,7 +1069,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Missing_authFactorType1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1090,7 +1090,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1107,7 +1107,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Empty_authFactorType1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1128,7 +1128,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1145,7 +1145,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_SpaceVal_authFactorType1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1166,7 +1166,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1183,7 +1183,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Null_authFactorType1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1204,7 +1204,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1221,7 +1221,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Invalid_format1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1242,7 +1242,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1259,7 +1259,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Missing_format1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1280,7 +1280,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1297,7 +1297,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Empty_format1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1318,7 +1318,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1335,7 +1335,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_SpaceVal_format1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1356,7 +1356,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1373,7 +1373,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Null_format1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1394,7 +1394,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1411,7 +1411,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Invalid_publicKey_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1432,7 +1432,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1449,7 +1449,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Null_publicKey_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1470,7 +1470,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1487,7 +1487,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_uin_Missing_publicKey_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1508,7 +1508,7 @@ WalletBinding:
             "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1525,7 +1525,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Invalid_RequestTime_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1546,7 +1546,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1563,7 +1563,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_PastVal_RequestTime_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1584,7 +1584,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1601,7 +1601,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_FutureVal_RequestTime_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1622,7 +1622,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1639,7 +1639,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Empty_RequestTime_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1660,7 +1660,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1677,7 +1677,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Missing_RequestTime_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1698,7 +1698,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1715,7 +1715,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Invalid_IndividualId_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1736,7 +1736,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1753,7 +1753,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Empty_IndividualId_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1774,7 +1774,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1791,7 +1791,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Null_IndividualId_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1812,7 +1812,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1829,7 +1829,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Missing_IndividualId_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1850,7 +1850,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1867,7 +1867,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_SpaceVal_IndividualId_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -1888,7 +1888,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1905,7 +1905,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Invalid_AuthFactorType_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_auth_factor_type
@@ -1927,7 +1927,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1944,7 +1944,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Empty_AuthFactorType_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_auth_factor_type
@@ -1966,7 +1966,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -1983,7 +1983,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Missing_AuthFactorType_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_auth_factor_type
@@ -2005,7 +2005,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2022,7 +2022,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_SpaceVal_AuthFactorType_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_auth_factor_type
@@ -2044,7 +2044,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2061,7 +2061,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Null_AuthFactorType_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2082,7 +2082,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2099,7 +2099,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Invalid_Challenge_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge
@@ -2121,7 +2121,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2138,7 +2138,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Missing_Challenge_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge
@@ -2160,7 +2160,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2177,7 +2177,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Empty_Challenge_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge
@@ -2199,7 +2199,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2216,7 +2216,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_SpaceVal_Challenge_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge
@@ -2238,7 +2238,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2255,7 +2255,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Null_Challenge_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2276,7 +2276,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2293,7 +2293,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Invalid_Formate_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2314,7 +2314,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2331,7 +2331,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Missing_Formate_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge_format
@@ -2353,7 +2353,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2370,7 +2370,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Empty_Formate_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge_format
@@ -2392,7 +2392,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2409,7 +2409,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_SpaceVal_Formate_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       allowedErrorCodes: invalid_challenge_format
@@ -2431,7 +2431,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2448,7 +2448,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Null_Formate_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2469,7 +2469,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2486,7 +2486,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Invalid_authFactorType1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2507,7 +2507,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2524,7 +2524,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Missing_authFactorType1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2545,7 +2545,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2562,7 +2562,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Empty_authFactorType1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2583,7 +2583,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2600,7 +2600,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_SpaceVal_authFactorType1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2621,7 +2621,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2638,7 +2638,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Null_authFactorType1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2659,7 +2659,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2676,7 +2676,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Invalid_format1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2697,7 +2697,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2714,7 +2714,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Missing_format1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2735,7 +2735,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2752,7 +2752,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Empty_format1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2773,7 +2773,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2790,7 +2790,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_SpaceVal_format1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2811,7 +2811,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2828,7 +2828,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Null_format1_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2849,7 +2849,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2866,7 +2866,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Invalid_publicKey_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2887,7 +2887,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2904,7 +2904,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Null_publicKey_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2925,7 +2925,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{
@@ -2942,7 +2942,7 @@ WalletBinding:
 }'
 
    Mimoto_WalletBinding_vid_Missing_publicKey_Neg:
-      endPoint: /residentmobileapp/wallet-binding
+      endPoint: /v1/mimoto/wallet-binding
       role: resident
       validityCheckRequired: true
       restMethod: post
@@ -2963,7 +2963,7 @@ WalletBinding:
             "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
            "otpChannels": [{channel: "EMAIL"},{channel: "PHONE"}],
            "sendOtpReqTemplate": "mimoto/BindingOtp/BindingOtp",
-           "sendOtpEndPoint": "/residentmobileapp/binding-otp"
+           "sendOtpEndPoint": "/v1/mimoto/binding-otp"
     }
 }'
       output: '{

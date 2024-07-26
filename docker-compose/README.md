@@ -27,10 +27,10 @@ Refer [here](https://docs.mosip.io/inji/inji-mobile-wallet/customization-overvie
 > docker-compose up
 
 7. Access Apis as
-   * http://localhost:8099/residentmobileapp/allProperties
-   * http://localhost:8099/residentmobileapp/issuers
-   * http://localhost:8099/residentmobileapp/issuers/Sunbird
-   * http://localhost:8099/residentmobileapp/issuers/Sunbird/credentialTypes
+   * http://localhost:8099/v1/mimoto/allProperties
+   * http://localhost:8099/v1/mimoto/issuers
+   * http://localhost:8099/v1/mimoto/issuers/Sunbird
+   * http://localhost:8099/v1/mimoto/issuers/Sunbird/credentialTypes
 
 
 Note:

@@ -1,0 +1,16 @@
+{
+    "id": "mosip.inji.properties",
+    "version": "v1",
+    "str": null,
+    "metadata": null,
+    "response": {
+        "allowedAuthType": "demo,otp,bio-Finger,bio-Iris,bio-Face",
+        "allowedEkycAuthType": "demo,otp,bio-Finger,bio-Iris,bio-Face",
+        "allowedInternalAuthType": "otp,bio-Finger,bio-Iris,bio-Face",
+        "openId4VCIDownloadVCTimeout": "30000",
+        "vcDownloadMaxRetry": "10",
+        "vcDownloadPoolInterval": "6000",
+        "issuer": "residentapp"
+    },
+    "errors": []
+}

@@ -1,6 +1,6 @@
 GetAllIssuers:
    Mimoto_GetAllIssuers_All_Valid_Smoke:
-      endPoint: /residentmobileapp/issuers
+      endPoint: /v1/mimoto/issuers
       role: resident
       restMethod: get
       checkErrorsOnlyInResponse: true
@@ -12,7 +12,7 @@ GetAllIssuers:
 }'
 
    Mimoto_GetAllIssuers_Specific_Issuer_All_Valid_Smoke:
-      endPoint: /residentmobileapp/issuers/ESignet
+      endPoint: /v1/mimoto/issuers/Mosip
       role: resident
       restMethod: get
       checkErrorsOnlyInResponse: true
@@ -24,7 +24,7 @@ GetAllIssuers:
 }'
 
    Mimoto_GetAllIssuers_Invalid_Issuer_Neg:
-      endPoint: /residentmobileapp/issuers/invalid
+      endPoint: /v1/mimoto/issuers/invalid
       role: resident
       restMethod: get
       checkErrorsOnlyInResponse: true

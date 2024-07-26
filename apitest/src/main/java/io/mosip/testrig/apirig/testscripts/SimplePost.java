@@ -156,8 +156,44 @@ public class SimplePost extends AdminTestUtil implements ITest {
 		}
 
 		else {
-			response = postWithBodyAndCookie(ApplnURI + testCaseDTO.getEndPoint(), inputJson, auditLogCheck, COOKIENAME,
-					testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
+			if (testCaseName.contains("ESignet_")) {
+				if (ConfigManager.isInServiceNotDeployedList(GlobalConstants.ESIGNET)) {
+					throw new SkipException("esignet is not deployed hence skipping the testcase");
+				}
+
+				String tempUrl = ApplnURI;
+				
+				if (testCaseDTO.getEndPoint().startsWith("$SUNBIRDBASEURL$") && testCaseName.contains("SunBirdR")) {
+
+					if (ConfigManager.isInServiceNotDeployedList("sunbirdrc"))
+						throw new SkipException(GlobalConstants.SERVICE_NOT_DEPLOYED_MESSAGE);
+
+					if (ConfigManager.getSunBirdBaseURL() != null && !ConfigManager.getSunBirdBaseURL().isBlank())
+						tempUrl = ConfigManager.getSunBirdBaseURL();
+						//Once sunbird registry is pointing to specific env, remove the above line and uncomment below line
+						//tempUrl = ApplnURI.replace(GlobalConstants.API_INTERNAL, ConfigManager.getSunBirdBaseURL());
+					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$SUNBIRDBASEURL$", ""));
+					
+					response = postWithBodyAndCookie(tempUrl + testCaseDTO.getEndPoint(), inputJson, auditLogCheck,
+							COOKIENAME, testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
+					
+				} else if (testCaseDTO.getEndPoint().startsWith("$ESIGNETMOCKBASEURL$")
+						&& testCaseName.contains("SunBirdC")) {
+					if (ConfigManager.isInServiceNotDeployedList("sunbirdrc"))
+						throw new SkipException(GlobalConstants.SERVICE_NOT_DEPLOYED_MESSAGE);
+
+					if (ConfigManager.getEsignetMockBaseURL() != null
+							&& !ConfigManager.getEsignetMockBaseURL().isBlank())
+						tempUrl = ApplnURI.replace("api-internal.", ConfigManager.getEsignetMockBaseURL());
+					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$ESIGNETMOCKBASEURL$", ""));
+					
+					response = postRequestWithCookieAuthHeaderAndXsrfToken(tempUrl + testCaseDTO.getEndPoint(),
+							inputJson, COOKIENAME, testCaseDTO.getTestCaseName());
+				}
+			} else {
+				response = postWithBodyAndCookie(ApplnURI + testCaseDTO.getEndPoint(), inputJson, auditLogCheck,
+						COOKIENAME, testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
+			}
 			Map<String, List<OutputValidationDto>> ouputValid = null;
 			if (testCaseName.contains("_StatusCode")) {
 

@@ -130,9 +130,36 @@ public class GetWithParam extends AdminTestUtil implements ITest {
 		}
 
 		else {
+			
+			if (testCaseName.contains("ESignet_")) {
+				if (ConfigManager.isInServiceNotDeployedList(GlobalConstants.ESIGNET)) {
+					throw new SkipException("esignet is not deployed hence skipping the testcase");
+				}
+
+				String tempUrl = ApplnURI;
+
+				if (testCaseDTO.getEndPoint().startsWith("$SUNBIRDBASEURL$") && testCaseName.contains("SunBirdR")) {
+
+					if (ConfigManager.isInServiceNotDeployedList("sunbirdrc"))
+						throw new SkipException(GlobalConstants.SERVICE_NOT_DEPLOYED_MESSAGE);
+
+					if (ConfigManager.getSunBirdBaseURL() != null && !ConfigManager.getSunBirdBaseURL().isBlank())
+						tempUrl = ConfigManager.getSunBirdBaseURL();
+						//Once sunbird registry is pointing to specific env, remove the above line and uncomment below line
+						//tempUrl = ApplnURI.replace(GlobalConstants.API_INTERNAL, ConfigManager.getSunBirdBaseURL());
+					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$SUNBIRDBASEURL$", ""));
+				}
+
+				response = getWithPathParamAndCookie(tempUrl + testCaseDTO.getEndPoint(),
+						getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), auditLogCheck,
+						COOKIENAME, testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
+
+			} else {
 				response = getWithPathParamAndCookie(ApplnURI + testCaseDTO.getEndPoint(),
 						getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), auditLogCheck,
 						COOKIENAME, testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
+			}
+				
 			Map<String, List<OutputValidationDto>> ouputValid = null;
 			if (testCaseName.contains("_StatusCode")) {
 

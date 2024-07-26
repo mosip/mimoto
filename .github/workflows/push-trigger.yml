@@ -25,7 +25,7 @@ on:
 
 jobs:
   build-mimoto:
-    uses: mosip/kattu/.github/workflows/maven-build.yml@master
+    uses: mosip/kattu/.github/workflows/maven-build.yml@master-java21
     with:
       SERVICE_LOCATION: ./
       BUILD_ARTIFACT: mimoto
@@ -75,7 +75,7 @@ jobs:
   publish_to_nexus:
     if: "${{ !contains(github.ref, 'master') && github.event_name != 'pull_request' }}"
     needs: build-mimoto
-    uses: mosip/kattu/.github/workflows/maven-publish-to-nexus.yml@master
+    uses: mosip/kattu/.github/workflows/maven-publish-to-nexus.yml@master-java21
     with:
       SERVICE_LOCATION: ./
     secrets:
@@ -89,7 +89,7 @@ jobs:
 #  sonar_analysis:
 #    needs: build-mimoto
 #    if: "${{ github.event_name != 'pull_request' }}"
-#    uses: mosip/kattu/.github/workflows/maven-sonar-analysis.yml@master
+#    uses: mosip/kattu/.github/workflows/maven-sonar-analysis.yml@master-java21
 #    with:
 #      SERVICE_LOCATION: ./
 #    secrets:
@@ -110,7 +110,7 @@ jobs:
             SERVICE_NAME: 'mimoto'
             BUILD_ARTIFACT: 'mimoto-recreated'
       fail-fast: false
-    uses: mosip/kattu/.github/workflows/docker-build.yml@master
+    uses: mosip/kattu/.github/workflows/docker-build.yml@master-java21
     name: ${{ matrix.SERVICE_NAME }}
     with:
       SERVICE_LOCATION: ${{ matrix.SERVICE_LOCATION }}
@@ -123,7 +123,7 @@ jobs:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
 
   build-maven-apitest-mimoto:
-    uses: mosip/kattu/.github/workflows/maven-build.yml@master
+    uses: mosip/kattu/.github/workflows/maven-build.yml@master-java21
     with:
       SERVICE_LOCATION: ./apitest
       BUILD_ARTIFACT: apitest-mimoto
@@ -137,7 +137,7 @@ jobs:
   publish_to_nexus_apitest_mimoto:
     if: "${{ !contains(github.ref, 'master') && github.event_name != 'pull_request' && github.event_name != 'release' && github.event_name != 'prerelease' && github.event_name != 'publish' }}"
     needs: build-maven-apitest-mimoto
-    uses: mosip/kattu/.github/workflows/maven-publish-to-nexus.yml@master
+    uses: mosip/kattu/.github/workflows/maven-publish-to-nexus.yml@master-java21
     with:
       SERVICE_LOCATION: ./apitest
     secrets:
@@ -157,12 +157,12 @@ jobs:
       SERVICE_LOCATION: apitest
       BUILD_ARTIFACT: apitest-mimoto-local
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK 11
-        uses: actions/setup-java@v1
+      - uses: actions/checkout@v3
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
         with:
-          ref: ${{ github.ref }}
-          java-version: 11
+          distribution: 'temurin'
+          java-version: '21'
           server-id: ossrh # Value of the distributionManagement/repository/id field of the pom.xml
           settings-path: ${{ github.workspace }} # location for the settings.xml file
       - name: Setup the settings file for ossrh server
@@ -205,7 +205,7 @@ jobs:
             ONLY_DOCKER: true
       fail-fast: false
     name: ${{ matrix.SERVICE_NAME }}
-    uses: mosip/kattu/.github/workflows/docker-build.yml@master
+    uses: mosip/kattu/.github/workflows/docker-build.yml@master-java21
     with:
       SERVICE_LOCATION: ${{ matrix.SERVICE_LOCATION }}
       SERVICE_NAME: ${{ matrix.SERVICE_NAME }}
@@ -220,7 +220,7 @@ jobs:
 #  sonar_analysis_apitest_mimoto:
 #    needs: build-maven-apitest-mimoto
 #    if: "${{  github.event_name != 'pull_request' }}"
-#    uses: mosip/kattu/.github/workflows/maven-sonar-analysis.yml@master
+#    uses: mosip/kattu/.github/workflows/maven-sonar-analysis.yml@master-java21
 #    with:
 #      SERVICE_LOCATION: ./apitest
 #    secrets:

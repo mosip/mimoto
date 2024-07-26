@@ -5,7 +5,7 @@
 	<!-- Passing Group as parmeter unsing "testType" Possible Groups are: smoke 
 		regression smokeAndRegression -->
 	<listeners>
-		<listener class-name="io.mosip.testrig.apirig.report.EmailableReport"/>
+		<listener class-name="io.mosip.testrig.apirig.report.EmailableReport" />
 	</listeners>
 		
 	<test name="AddIdentity">
@@ -23,7 +23,31 @@
 			<class name="io.mosip.testrig.apirig.testscripts.PostWithAutogenIdWithOtpGenerate" />
 		</classes>
 	</test>
-		
+
+	<test name="CreatePolicySunBirdR">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdR/CreatePolicySunBirdR/CreatePolicySunBirdR.yml" />
+		<parameter name="idKeyName" value="osid" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="GetPolicySunBirdR">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdR/GetPolicySunBirdR/GetPolicySunBirdR.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.GetWithParam" />
+		</classes>
+	</test>
+	<test name="SearchPolicySunBirdR">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdR/SearchPolicySunBirdR/SearchPolicySunBirdR.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePost" />
+		</classes>
+	</test>
+
+
 	<test name="OAuthDetailsRequest">
 		<parameter name="ymlFile"
 			value="mimoto/OAuthDetailsRequest/OAuthDetailsRequest.yml" />
@@ -31,14 +55,14 @@
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
 		</classes>
-	</test>	
+	</test>
 	<test name="AuthenticateUser">
 		<parameter name="ymlFile"
 			value="mimoto/AuthenticateUser/AuthenticateUser.yml" />
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.PostWithAutogenIdWithOtpGenerate" />
 		</classes>
-	</test>	
+	</test>
 	<test name="AuthorizationCode">
 		<parameter name="ymlFile"
 			value="mimoto/AuthorizationCode/AuthorizationCode.yml" />
@@ -47,8 +71,32 @@
 			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
 		</classes>
 	</test>
-	
-	 <test name="AuthLock">
+
+	<test name="OAuthDetailsRequestSunBirdC">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdC/OAuthDetailsRequestSunBirdC/OAuthDetailsRequestSunBirdC.yml" />
+			<parameter name="idKeyName"	value="transactionId,encodedResp" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="AuthenticateUserSunBirdC">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdC/AuthenticateUserSunBirdC/AuthenticateUserSunBirdC.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePost" />
+		</classes>
+	</test>
+	<test name="AuthorizationCodeSunBirdC">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdC/AuthorizationCodeSunBirdC/AuthorizationCodeSunBirdC.yml" />
+			<parameter name="idKeyName"	value="code" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+
+	<test name="AuthLock">
 		<parameter name="ymlFile"
 			value="mimoto/AuthLock/createAuthLock.yml" />
 		<classes>
@@ -139,6 +187,15 @@
 			value="mimoto/DownloadIssuerCredential/DownloadIssuerCredential.yml" />
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.PostWithFormDataBodyForPdfDownload" />
+		</classes>
+	</test>
+
+	<test name="DeletePolicySunBirdR">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdR/DeletePolicySunBirdR/DeletePolicySunBirdR.yml" />
+		<parameter name="pathParams" value="insuranceid" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.DeleteWithParam" />
 		</classes>
 	</test>
 
