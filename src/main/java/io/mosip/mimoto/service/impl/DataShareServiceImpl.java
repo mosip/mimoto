@@ -70,7 +70,7 @@ public class DataShareServiceImpl {
                 logger.error(attempt + " attempt to push credential failed");
             }
         }
-        if(dataShareResponseWrapperDTO != null){
+        if(dataShareResponseWrapperDTO == null){
             throw new InvalidCredentialResourceException(
                     OpenIdErrorMessages.REQUEST_TIMED_OUT.getErrorCode(),
                     OpenIdErrorMessages.REQUEST_TIMED_OUT.getErrorMessage());
