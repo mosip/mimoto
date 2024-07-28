@@ -48,6 +48,9 @@ public class PresentationServiceImpl implements PresentationService {
     @Value("${mosip.data.share.url}")
     String dataShareUrl;
 
+    @Value("${server.tomcat.max-http-response-header-size:65536}")
+    Integer maximumResponseHeaderSize;
+
     private final Logger logger = LoggerFactory.getLogger(PresentationServiceImpl.class);
 
     @Override
@@ -67,7 +70,7 @@ public class PresentationServiceImpl implements PresentationService {
         }
 
         logger.info("Started the Constructing VP Token");
-        return presentationDefinitionDTO.getInputDescriptors()
+        String redirectionString = presentationDefinitionDTO.getInputDescriptors()
                 .stream()
                 .findFirst()
                 .map(inputDescriptorDTO -> {
@@ -90,6 +93,12 @@ public class PresentationServiceImpl implements PresentationService {
                     logger.info("No Credentials Matched the VP request.");
                     throw new VPNotCreatedException(OpenIdErrorMessages.INVALID_REQUEST.getErrorMessage());
                 }).orElseThrow(() -> new VPNotCreatedException(OpenIdErrorMessages.INVALID_REQUEST.getErrorMessage()));
+        if(redirectionString.length() > maximumResponseHeaderSize) {
+            throw new VPNotCreatedException(
+                    OpenIdErrorMessages.URI_TOO_LONG.getErrorCode(),
+                    OpenIdErrorMessages.URI_TOO_LONG.getErrorMessage());
+        }
+        return redirectionString;
     }
 
     private String constructVerifiablePresentationString(VCCredentialProperties vcCredentialProperties) throws JsonProcessingException {

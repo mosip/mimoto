@@ -4,6 +4,7 @@ import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
@@ -66,6 +67,10 @@ public class CredentialsController {
         } catch (ApiNotAccessibleException | IOException exception) {
             logger.error("Exception occurred while fetching credential types ", exception);
             responseWrapper.setErrors(List.of(new ErrorDTO(API_NOT_ACCESSIBLE_EXCEPTION.getCode(), API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
+        } catch (InvalidCredentialResourceException invalidCredentialResourceException) {
+            logger.error("Exception occurred while pushing the data to data share ", invalidCredentialResourceException);
+            responseWrapper.setErrors(List.of(new ErrorDTO(invalidCredentialResourceException.getErrorCode(), invalidCredentialResourceException.getMessage())));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
         } catch (Exception exception) {
             logger.error("Exception occurred while generating pdf ", exception);
