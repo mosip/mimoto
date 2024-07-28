@@ -48,6 +48,7 @@ public class PresentationServiceTest {
         PresentationDefinitionDTO presentationDefinitionDTO = TestUtilities.getPresentationDefinitionDTO();
         ReflectionTestUtils.setField(presentationService, "injiVerifyRedirectUrl", "%s#vp_token=%s&presentation_submission=%s");
         ReflectionTestUtils.setField(presentationService, "dataShareUrl", "test_resource");
+        ReflectionTestUtils.setField(presentationService, "maximumResponseHeaderSize", 65536);
 
         when(objectMapper.readValue(eq(TestUtilities.getObjectAsString(presentationDefinitionDTO)), eq(PresentationDefinitionDTO.class))).thenReturn(presentationDefinitionDTO);
         when(objectMapper.writeValueAsString(any())).thenReturn("test-data");
