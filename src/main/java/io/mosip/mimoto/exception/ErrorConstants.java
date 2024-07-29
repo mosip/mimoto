@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum OpenIdErrorMessages {
+public enum ErrorConstants {
 
     INVALID_REQUEST("invalid_request", "Some incorrect parameters in the request"),
     UNSUPPORTED_FORMAT("unsupported_format", "No VC of this format is found"),

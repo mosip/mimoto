@@ -11,7 +11,7 @@ import io.mosip.mimoto.exception.InvalidVerifierException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.impl.DataShareServiceImpl;
 import io.mosip.mimoto.service.impl.PresentationServiceImpl;
-import io.mosip.mimoto.service.impl.VerifiersServiceImpl;
+import io.mosip.mimoto.service.impl.VerifierServiceImpl;
 import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.TestUtilities;
 import org.junit.Before;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class PresentationServiceTest {
     @Mock
-    VerifiersService verifiersService = new VerifiersServiceImpl();
+    VerifierService verifierService = new VerifierServiceImpl();
     @Mock
     RestApiClient restApiClient;
     @Mock
@@ -56,7 +56,7 @@ public class PresentationServiceTest {
     @Test(expected = InvalidVerifierException.class)
     public void throwInvalidVerifierExceptionWhenClientIdPassedIsIncorrect() throws ApiNotAccessibleException, IOException {
         PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
-        doThrow(InvalidVerifierException.class).when(verifiersService).validateVerifier(presentationRequestDTO);
+        doThrow(InvalidVerifierException.class).when(verifierService).validateVerifier(presentationRequestDTO);
         presentationService.authorizePresentation(TestUtilities.getPresentationRequestDTO());
     }
 
@@ -67,7 +67,7 @@ public class PresentationServiceTest {
         VerifiablePresentationDTO verifiablePresentationDTO = TestUtilities.getVerifiablePresentationDTO();
         PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
 
-        doNothing().when(verifiersService).validateVerifier(eq(presentationRequestDTO));
+        doNothing().when(verifierService).validateVerifier(eq(presentationRequestDTO));
         when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
         when(objectMapper.readValue(eq("test-data"), eq(VerifiablePresentationDTO.class))).thenReturn(verifiablePresentationDTO);
 
@@ -82,7 +82,7 @@ public class PresentationServiceTest {
         VCCredentialResponse vcCredentialResponse = TestUtilities.getVCCredentialResponseDTO("RSASignature2020");
         PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
 
-        doNothing().when(verifiersService).validateVerifier(eq(presentationRequestDTO));
+        doNothing().when(verifierService).validateVerifier(eq(presentationRequestDTO));
         when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
 
         presentationService.authorizePresentation(TestUtilities.getPresentationRequestDTO());

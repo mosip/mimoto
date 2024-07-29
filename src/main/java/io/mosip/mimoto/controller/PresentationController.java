@@ -3,7 +3,7 @@ package io.mosip.mimoto.controller;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.exception.InvalidVerifierException;
-import io.mosip.mimoto.exception.OpenIdErrorMessages;
+import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,11 +26,11 @@ public class PresentationController {
     PresentationService presentationService;
     private final Logger logger = LoggerFactory.getLogger(PresentationController.class);
 
-    @Value("${mosip.inji.verify.error.redirect.url}")
-    String injiVerifyErrorRedirectUrl;
+    @Value("${mosip.inji.ovp.error.redirect.url}")
+    String injiOvpErrorRedirectUrl;
 
     @Value("${mosip.inji.web.redirect.url}")
-    String injiWebErrorRedirectUrl;
+    String injiWebRedirectUrl;
 
     @GetMapping("/authorize")
     public void performAuthorization(HttpServletResponse response, @ModelAttribute PresentationRequestDTO presentationRequestDTO) throws IOException {
@@ -40,17 +40,17 @@ public class PresentationController {
             logger.info("Completed Presentation Authorization in the controller.");
             response.sendRedirect(redirectString);
         } catch( InvalidVerifierException exception){
-            sendRedirect(response, injiWebErrorRedirectUrl, exception.getErrorCode(), exception.getErrorText());
+            sendRedirect(response, injiWebRedirectUrl, exception.getErrorCode(), exception.getErrorText());
         } catch(VPNotCreatedException | InvalidCredentialResourceException exception){
             sendRedirect(response, presentationRequestDTO.getRedirect_uri(), exception.getErrorCode(), exception.getErrorText());
         } catch (Exception exception){
-            sendRedirect(response, presentationRequestDTO.getRedirect_uri(), OpenIdErrorMessages.INTERNAL_SERVER_ERROR.getErrorCode(), OpenIdErrorMessages.INTERNAL_SERVER_ERROR.getErrorMessage());
+            sendRedirect(response, presentationRequestDTO.getRedirect_uri(), ErrorConstants.INTERNAL_SERVER_ERROR.getErrorCode(), ErrorConstants.INTERNAL_SERVER_ERROR.getErrorMessage());
         }
     }
 
     private void sendRedirect(HttpServletResponse response, String domain, String code, String message) throws IOException {
         logger.error("Exception Occurred in Authorizing the presentation");
-        String injiVerifyRedirectString = String.format(injiVerifyErrorRedirectUrl,
+        String injiVerifyRedirectString = String.format(injiOvpErrorRedirectUrl,
                 domain,
                 code,
                 URLEncoder.encode(message, StandardCharsets.UTF_8));

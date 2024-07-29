@@ -7,9 +7,8 @@ import io.mosip.mimoto.dto.openid.VerifiersDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidVerifierException;
-import io.mosip.mimoto.exception.OpenIdErrorMessages;
-import io.mosip.mimoto.exception.PlatformErrorMessages;
-import io.mosip.mimoto.service.VerifiersService;
+import io.mosip.mimoto.exception.ErrorConstants;
+import io.mosip.mimoto.service.VerifierService;
 import io.mosip.mimoto.util.Utilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class VerifiersServiceImpl implements VerifiersService {
+public class VerifierServiceImpl implements VerifierService {
 
     @Autowired
     Utilities utilities;
@@ -28,10 +27,9 @@ public class VerifiersServiceImpl implements VerifiersService {
     @Autowired
     ObjectMapper objectMapper;
 
-    private final Logger logger = LoggerFactory.getLogger(VerifiersServiceImpl.class);
+    private final Logger logger = LoggerFactory.getLogger(VerifierServiceImpl.class);
 
-    @Override
-    public Optional<VerifierDTO> getVerifiersByClientId(String clientId) throws ApiNotAccessibleException, JsonProcessingException {
+    public Optional<VerifierDTO> getVerifierByClientId(String clientId) throws ApiNotAccessibleException, JsonProcessingException {
         String trustedVerifiersJsonValue = utilities.getTrustedVerifiersJsonValue();
         if (trustedVerifiersJsonValue == null) {
             throw new ApiNotAccessibleException();
@@ -42,19 +40,19 @@ public class VerifiersServiceImpl implements VerifiersService {
     @Override
     public void validateVerifier(PresentationRequestDTO presentationRequestDTO) throws ApiNotAccessibleException, JsonProcessingException {
         logger.info("Started the presentation Validation");
-        getVerifiersByClientId(presentationRequestDTO.getClient_id()).ifPresentOrElse(
+        getVerifierByClientId(presentationRequestDTO.getClient_id()).ifPresentOrElse(
             (verifierDTO) -> {
                 List<String> registeredRedirectUri = verifierDTO.getRedirectUri();
                 if(!registeredRedirectUri.contains(presentationRequestDTO.getRedirect_uri())){
                     throw new InvalidVerifierException(
-                            OpenIdErrorMessages.INVALID_REDIRECT_URI.getErrorCode(),
-                            OpenIdErrorMessages.INVALID_REDIRECT_URI.getErrorMessage());
+                            ErrorConstants.INVALID_REDIRECT_URI.getErrorCode(),
+                            ErrorConstants.INVALID_REDIRECT_URI.getErrorMessage());
                 }
             },
             () -> {
                 throw new InvalidVerifierException(
-                        OpenIdErrorMessages.INVALID_CLIENT.getErrorCode(),
-                        OpenIdErrorMessages.INVALID_CLIENT.getErrorMessage());
+                        ErrorConstants.INVALID_CLIENT.getErrorCode(),
+                        ErrorConstants.INVALID_CLIENT.getErrorMessage());
             }
         );
     }

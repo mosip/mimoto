@@ -7,7 +7,7 @@ import io.mosip.mimoto.dto.openid.VerifiersDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidVerifierException;
-import io.mosip.mimoto.service.impl.VerifiersServiceImpl;
+import io.mosip.mimoto.service.impl.VerifierServiceImpl;
 import io.mosip.mimoto.util.TestUtilities;
 import io.mosip.mimoto.util.Utilities;
 import org.junit.Before;
@@ -32,7 +32,7 @@ public class VerifierServiceTest {
     @Mock
     ObjectMapper objectMapper;
     @InjectMocks
-    VerifiersServiceImpl verifiersService;
+    VerifierServiceImpl verifiersService;
 
     @Before
     public void setUp() throws JsonProcessingException {
@@ -44,14 +44,14 @@ public class VerifierServiceTest {
 
     @Test
     public void getCorrectVerifierWhenCorrectClientIdIsPassed() throws ApiNotAccessibleException, IOException {
-        Optional<VerifierDTO> verifierDTO = verifiersService.getVerifiersByClientId("test-clientId");
+        Optional<VerifierDTO> verifierDTO = verifiersService.getVerifierByClientId("test-clientId");
         assertNotNull(verifierDTO.get());
         assertEquals(verifierDTO.get().getClientId(), "test-clientId");
     }
 
     @Test
     public void getNullWhenInvalidClientIdIsPassed() throws ApiNotAccessibleException, IOException {
-        Optional<VerifierDTO> verifierDTO = verifiersService.getVerifiersByClientId("test-clientId2");
+        Optional<VerifierDTO> verifierDTO = verifiersService.getVerifierByClientId("test-clientId2");
         assertTrue(verifierDTO.isEmpty());
     }
 

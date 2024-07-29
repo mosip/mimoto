@@ -6,10 +6,10 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.openid.presentation.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
-import io.mosip.mimoto.exception.OpenIdErrorMessages;
+import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
-import io.mosip.mimoto.service.VerifiersService;
+import io.mosip.mimoto.service.VerifierService;
 import io.mosip.mimoto.util.RestApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class PresentationServiceImpl implements PresentationService {
 
     @Autowired
-    VerifiersService verifiersService;
+    VerifierService verifierService;
 
     @Autowired
     DataShareServiceImpl dataShareService;
@@ -45,7 +45,7 @@ public class PresentationServiceImpl implements PresentationService {
     @Value("${mosip.inji.verify.redirect.url}")
     String injiVerifyRedirectUrl;
 
-    @Value("${mosip.data.share.url}")
+    @Value("${mosip.data.share.host}")
     String dataShareUrl;
 
     @Value("${server.tomcat.max-http-response-header-size:65536}")
@@ -56,17 +56,17 @@ public class PresentationServiceImpl implements PresentationService {
     @Override
     public String authorizePresentation(PresentationRequestDTO presentationRequestDTO) throws ApiNotAccessibleException, IOException {
 
-        verifiersService.validateVerifier(presentationRequestDTO);
+        verifierService.validateVerifier(presentationRequestDTO);
         VCCredentialResponse vcCredentialResponse = dataShareService.downloadCredentialFromDataShare(presentationRequestDTO);
 
         PresentationDefinitionDTO presentationDefinitionDTO;
         try {
             presentationDefinitionDTO = objectMapper.readValue(presentationRequestDTO.getPresentation_definition(), PresentationDefinitionDTO.class);
             if (presentationDefinitionDTO == null) {
-                throw new VPNotCreatedException(OpenIdErrorMessages.INVALID_REQUEST.getErrorMessage());
+                throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
             }
         } catch (IOException ioException) {
-            throw new VPNotCreatedException(OpenIdErrorMessages.INVALID_REQUEST.getErrorMessage());
+            throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
         }
 
         logger.info("Started the Constructing VP Token");
@@ -87,16 +87,16 @@ public class PresentationServiceImpl implements PresentationService {
                                     Base64.getUrlEncoder().encodeToString(vpToken.getBytes(StandardCharsets.UTF_8)),
                                     URLEncoder.encode(presentationSubmission, StandardCharsets.UTF_8));
                         } catch (JsonProcessingException e) {
-                            throw new VPNotCreatedException(OpenIdErrorMessages.INVALID_REQUEST.getErrorMessage());
+                            throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
                         }
                     }
                     logger.info("No Credentials Matched the VP request.");
-                    throw new VPNotCreatedException(OpenIdErrorMessages.INVALID_REQUEST.getErrorMessage());
-                }).orElseThrow(() -> new VPNotCreatedException(OpenIdErrorMessages.INVALID_REQUEST.getErrorMessage()));
+                    throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
+                }).orElseThrow(() -> new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage()));
         if(redirectionString.length() > maximumResponseHeaderSize) {
             throw new VPNotCreatedException(
-                    OpenIdErrorMessages.URI_TOO_LONG.getErrorCode(),
-                    OpenIdErrorMessages.URI_TOO_LONG.getErrorMessage());
+                    ErrorConstants.URI_TOO_LONG.getErrorCode(),
+                    ErrorConstants.URI_TOO_LONG.getErrorMessage());
         }
         return redirectionString;
     }

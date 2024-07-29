@@ -20,7 +20,7 @@ import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.IdpException;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
-import io.mosip.mimoto.exception.OpenIdErrorMessages;
+import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
@@ -314,7 +314,7 @@ public class CredentialServiceImpl implements CredentialService {
                 .findFirst();
         if (credentialsSupportedResponse.isEmpty()){
             logger.error("Invalid credential Type passed - {}", credentialType);
-            throw new InvalidCredentialResourceException(OpenIdErrorMessages.RESOURCE_NOT_FOUND.getErrorMessage());
+            throw new InvalidCredentialResourceException(ErrorConstants.RESOURCE_NOT_FOUND.getErrorMessage());
         }
         return credentialsSupportedResponse.get();
     }

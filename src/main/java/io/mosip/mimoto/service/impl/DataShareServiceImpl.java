@@ -6,7 +6,7 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseWrapperDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
-import io.mosip.mimoto.exception.OpenIdErrorMessages;
+import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.util.RestApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +27,7 @@ public class DataShareServiceImpl {
     @Autowired
     RestApiClient restApiClient;
 
-    @Value("${mosip.data.share.url}")
+    @Value("${mosip.data.share.host}")
     String dataShareHostUrl;
 
     @Value("${mosip.data.share.create.url}")
@@ -71,8 +71,8 @@ public class DataShareServiceImpl {
         }
         if(dataShareResponseWrapperDTO == null){
             throw new InvalidCredentialResourceException(
-                    OpenIdErrorMessages.REQUEST_TIMED_OUT.getErrorCode(),
-                    OpenIdErrorMessages.REQUEST_TIMED_OUT.getErrorMessage());
+                    ErrorConstants.REQUEST_TIMED_OUT.getErrorCode(),
+                    ErrorConstants.REQUEST_TIMED_OUT.getErrorMessage());
         }
         return dataShareResponseWrapperDTO;
     }
@@ -83,12 +83,12 @@ public class DataShareServiceImpl {
         String vcCredentialResponseString = restApiClient.getApi(credentialsResourceUri, String.class);
         if (vcCredentialResponseString == null) {
             throw new InvalidCredentialResourceException(
-                    OpenIdErrorMessages.SERVER_UNAVAILABLE.getErrorCode(),
-                    OpenIdErrorMessages.SERVER_UNAVAILABLE.getErrorMessage());
+                    ErrorConstants.SERVER_UNAVAILABLE.getErrorCode(),
+                    ErrorConstants.SERVER_UNAVAILABLE.getErrorMessage());
         }
         VCCredentialResponse vcCredentialResponse = objectMapper.readValue(vcCredentialResponseString, VCCredentialResponse.class);
         if(vcCredentialResponse.getCredential() == null){
-            throw new InvalidCredentialResourceException(OpenIdErrorMessages.RESOURCE_EXPIRED.getErrorMessage());
+            throw new InvalidCredentialResourceException(ErrorConstants.RESOURCE_EXPIRED.getErrorMessage());
         }
         return vcCredentialResponse;
     }
