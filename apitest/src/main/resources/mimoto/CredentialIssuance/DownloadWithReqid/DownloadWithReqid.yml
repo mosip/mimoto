@@ -1,6 +1,6 @@
 DownloadCredential:
    Mimoto_CredentialsStatus_All_Valid_Smoke_euin:
-      endPoint: /residentmobileapp/credentialshare/download
+      endPoint: /v1/mimoto/credentialshare/download
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: get
@@ -14,7 +14,7 @@ DownloadCredential:
         "Content-Type": "application/pdf"
 }'
    Mimoto_CredentialsStatus_StatusCode_InValid_Smoke_euin:
-      endPoint: /residentmobileapp/credentialshare/download
+      endPoint: /v1/mimoto/credentialshare/download
       role: resident
       restMethod: get
       inputTemplate: mimoto/CredentialIssuance/DownloadWithReqid/downloadwithreqid

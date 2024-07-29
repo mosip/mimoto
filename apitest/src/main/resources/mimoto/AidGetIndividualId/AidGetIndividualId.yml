@@ -1,6 +1,6 @@
 AidGetIndividualId:
    Mimoto_AidGetIndividualId_Getting_With_Valid_UIN_All:
-      endPoint: /residentmobileapp/aid/get-individual-id
+      endPoint: /v1/mimoto/aid/get-individual-id
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -14,7 +14,7 @@ AidGetIndividualId:
 		    "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$",
 		    "transactionID": "$TRANSACTIONID$",
 		    "sendOtpReqTemplate": "mimoto/SendOTPUIN/individualIdOtp",
-		    "sendOtpEndPoint": "/residentmobileapp/req/individualId/otp"
+		    "sendOtpEndPoint": "/v1/mimoto/req/individualId/otp"
 	 }
 }'
       output: '{
@@ -25,7 +25,7 @@ AidGetIndividualId:
 }'
 
    Mimoto_AidGetIndividualId_Getting_With_Invalid_AID_Neg:
-      endPoint: /residentmobileapp/aid/get-individual-id
+      endPoint: /v1/mimoto/aid/get-individual-id
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -39,7 +39,7 @@ AidGetIndividualId:
 		    "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$",
 		    "transactionID": "$TRANSACTIONID$",
 		    "sendOtpReqTemplate": "mimoto/SendOTPUIN/individualIdOtp",
-		    "sendOtpEndPoint": "/residentmobileapp/req/individualId/otp"
+		    "sendOtpEndPoint": "/v1/mimoto/req/individualId/otp"
 	 }
 }'
       output: '{
@@ -54,7 +54,7 @@ AidGetIndividualId:
 }'
 
    Mimoto_AidGetIndividualId_Getting_With_Invalid_Otp_Neg:
-      endPoint: /residentmobileapp/aid/get-individual-id
+      endPoint: /v1/mimoto/aid/get-individual-id
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -68,7 +68,7 @@ AidGetIndividualId:
 		    "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$",
 		    "transactionID": "$TRANSACTIONID$",
 		    "sendOtpReqTemplate": "mimoto/SendOTPUIN/individualIdOtp",
-		    "sendOtpEndPoint": "/residentmobileapp/req/individualId/otp"
+		    "sendOtpEndPoint": "/v1/mimoto/req/individualId/otp"
 	 }
 }'
       output: '{
@@ -83,7 +83,7 @@ AidGetIndividualId:
 }'
 
    Mimoto_AidGetIndividualId_Getting_With_Valid_Otp_All:
-      endPoint: /residentmobileapp/aid/get-individual-id
+      endPoint: /v1/mimoto/aid/get-individual-id
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -97,7 +97,7 @@ AidGetIndividualId:
 		    "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$",
 		    "transactionID": "$TRANSACTIONID$",
 		    "sendOtpReqTemplate": "mimoto/SendOTPUIN/individualIdOtp",
-		    "sendOtpEndPoint": "/residentmobileapp/req/individualId/otp"
+		    "sendOtpEndPoint": "/v1/mimoto/req/individualId/otp"
 	 }
 }'
       output: '{
@@ -108,7 +108,7 @@ AidGetIndividualId:
 }'
 
    Mimoto_AidGetIndividualId_Getting_With_Invalid_lenght_Of_AID_Neg:
-      endPoint: /residentmobileapp/aid/get-individual-id
+      endPoint: /v1/mimoto/aid/get-individual-id
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -122,7 +122,7 @@ AidGetIndividualId:
 		    "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$",
 		    "transactionID": "$TRANSACTIONID$",
 		    "sendOtpReqTemplate": "mimoto/SendOTPUIN/individualIdOtp",
-		    "sendOtpEndPoint": "/residentmobileapp/req/individualId/otp"
+		    "sendOtpEndPoint": "/v1/mimoto/req/individualId/otp"
 	 }
 }'
       output: '{

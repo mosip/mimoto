@@ -1,6 +1,6 @@
 AuthUnlock:
    Mimoto_AuthUnLock_Valid_UIN_All:
-      endPoint: /residentmobileapp/req/auth/unlock
+      endPoint: /v1/mimoto/req/auth/unlock
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -19,7 +19,7 @@ AuthUnlock:
     "individualId": "$ID:AddIdentity_withValidParameters_smoke_Pos_UIN$",
     "individualIdType": "UIN",
     "sendOtpReqTemplate": "mimoto/SendOTP/createSendOTP",
-    "sendOtpEndPoint": "/residentmobileapp/req/otp"
+    "sendOtpEndPoint": "/v1/mimoto/req/otp"
     }
     }'
       output: '{
@@ -28,7 +28,7 @@ AuthUnlock:
     }
 }'
    Mimoto_AuthUnLock_Valid_UIN_With_VID_All:
-      endPoint: /residentmobileapp/req/auth/unlock
+      endPoint: /v1/mimoto/req/auth/unlock
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -47,7 +47,7 @@ AuthUnlock:
     "individualId": "$ID:Generate_Perpetual_VID_Valid_Smoke_sid_vid$",
     "individualIdType": "VID",
     "sendOtpReqTemplate": "mimoto/SendOTP/createSendOTP",
-    "sendOtpEndPoint": "/residentmobileapp/req/otp"
+    "sendOtpEndPoint": "/v1/mimoto/req/otp"
     }
     }'
       output: '{
@@ -56,7 +56,7 @@ AuthUnlock:
     }
 }'
    Mimoto_AuthUnLock_With_InValid_OTP_All:
-      endPoint: /residentmobileapp/req/auth/unlock
+      endPoint: /v1/mimoto/req/auth/unlock
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -75,7 +75,7 @@ AuthUnlock:
     "individualId": "$ID:AddIdentity_withValidParameters_smoke_Pos_UIN$",
     "individualIdType": "UIN",
     "sendOtpReqTemplate": "mimoto/SendOTP/createSendOTP",
-    "sendOtpEndPoint": "/residentmobileapp/req/otp"
+    "sendOtpEndPoint": "/v1/mimoto/req/otp"
     }
     }'
       output: '{
@@ -89,7 +89,7 @@ AuthUnlock:
     }
 }'
    Mimoto_AuthUnLock_InValid_OTP_With_VID_All:
-      endPoint: /residentmobileapp/req/auth/unlock
+      endPoint: /v1/mimoto/req/auth/unlock
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -108,7 +108,7 @@ AuthUnlock:
     "individualId": "$ID:Generate_Perpetual_VID_Valid_Smoke_sid_vid$",
     "individualIdType": "VID",
     "sendOtpReqTemplate": "mimoto/SendOTP/createSendOTP",
-    "sendOtpEndPoint": "/residentmobileapp/req/otp"
+    "sendOtpEndPoint": "/v1/mimoto/req/otp"
     }
     }'
       output: '{

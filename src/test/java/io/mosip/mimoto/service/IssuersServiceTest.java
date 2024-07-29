@@ -44,8 +44,8 @@ public class IssuersServiceTest {
     @Mock
     Utilities utilities;
 
-    List<String> issuerConfigRelatedFields = List.of("additional_headers", "authorization_endpoint","authorization_audience", "token_endpoint", "proxy_token_endpoint", "credential_endpoint", "credential_audience", "redirect_uri");
-
+    List<String> issuerConfigRelatedFields11 = List.of("additional_headers", "authorization_endpoint","authorization_audience", "token_endpoint", "proxy_token_endpoint", "credential_endpoint", "credential_audience", "redirect_uri");
+    List<String> issuerConfigRelatedFields=List.of("additional_headers", "authorization_endpoint","authorization_audience","credential_endpoint", "credential_audience");
 
     @Before
     public void setUp() throws Exception {

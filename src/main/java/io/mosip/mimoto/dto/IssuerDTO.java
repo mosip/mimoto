@@ -6,9 +6,9 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +34,7 @@ public class IssuerDTO {
     @JsonProperty(".well-known")
     @Expose
     String wellKnownEndpoint;
+    @Expose
     @JsonInclude(NON_NULL)
     @NotBlank
     String redirect_uri;
@@ -46,8 +47,10 @@ public class IssuerDTO {
     @JsonInclude(NON_NULL)
     @NotBlank
     String authorization_audience;
+    @Expose
     @JsonInclude(NON_NULL)
     String token_endpoint;
+    @Expose
     @JsonInclude(NON_NULL)
     @NotBlank
     String proxy_token_endpoint;
@@ -58,6 +61,7 @@ public class IssuerDTO {
     List<String> credential_type;
     @JsonInclude(NON_NULL)
     String credential_audience;
+    @Expose
     @JsonInclude(NON_NULL)
     @NotBlank
     String client_alias;

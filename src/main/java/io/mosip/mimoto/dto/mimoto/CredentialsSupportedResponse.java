@@ -24,4 +24,5 @@ public class CredentialsSupportedResponse {
     @SerializedName("display")
     @JsonProperty("display")
     private List<CredentialSupportedDisplayResponse> display;
+    private Set<String> order;
 }

@@ -77,7 +77,7 @@
       "redirect_uri": "io.mosip.residentapp.inji://oauthredirect",
       "authorization_endpoint": "https://${mosip.esignet.host}/authorize",
       "authorization_audience": "https://${mosip.esignet.host}/v1/esignet/oauth/v2/token",
-      "token_endpoint": "https://${mosip.api.public.host}/residentmobileapp/get-token/ESignet",
+      "token_endpoint": "https://${mosip.api.public.host}/v1/mimoto/get-token/ESignet",
       "proxy_token_endpoint": "https://${mosip.api.public.host}/v1/esignet/oauth/v2/token",
       "credential_endpoint": "https://${mosip.api.public.host}/v1/esignet/vci/credential",
       "credential_type": [
@@ -160,7 +160,7 @@
       ],
       "authorization_endpoint": "https://esignet-insurance.dev1.mosip.net/authorize",
       "authorization_audience": "https://esignet-insurance.dev1.mosip.net/v1/esignet/oauth/v2/token",
-      "token_endpoint": "https://api.dev1.mosip.net/residentmobileapp/get-token/Sunbird",
+      "token_endpoint": "https://api.dev1.mosip.net/v1/mimoto/get-token/Sunbird",
       "proxy_token_endpoint": "https://esignet-insurance.dev1.mosip.net/v1/esignet/oauth/v2/token",
       "credential_endpoint": "https://esignet-insurance.dev1.mosip.net/v1/esignet/vci/credential",
       "credential_type": [

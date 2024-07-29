@@ -1,6 +1,6 @@
 individualOTP:
    Mimoto_individualOTP_All_Valid_Smoke:
-      endPoint: /residentmobileapp/req/individualId/otp
+      endPoint: /v1/mimoto/req/individualId/otp
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post

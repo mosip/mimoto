@@ -36,7 +36,7 @@ SendOTP:
 }'
 
    Mimoto_SendOTP_InValid_UIN_All:
-      endPoint: /residentmobileapp/req/otp
+      endPoint: /v1/mimoto/req/otp
       role: resident
       restMethod: post
       inputTemplate: mimoto/SendOTP1/createSendOTP

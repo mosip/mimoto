@@ -19,7 +19,9 @@ spec:
   http:
   - match:
       - uri:
-          prefix: {{ .Values.istio.prefix }}
+          prefix: {{ .Values.istio.prefix1 }}
+      - uri:
+          prefix: {{ .Values.istio.prefix2 }}
     rewrite:
       uri: {{ .Values.istio.rewrite }}
     route:
