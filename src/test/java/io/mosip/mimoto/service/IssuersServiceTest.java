@@ -93,12 +93,12 @@ public class IssuersServiceTest {
         CredentialIssuerWellKnownResponse expextedCredentialIssuerWellKnownResponse=getCredentialIssuerWellKnownResponseDto("Issuer1",
                Map.of("CredentialType1",getCredentialSupportedResponse("CredentialType1")));
 
-        Mockito.when(restApiClient.getApi(wellKnownUrl , String.class))
-                .thenReturn(getExpectedWellKnownJson());
+        Mockito.when(restApiClient.getApi(wellKnownUrl , CredentialIssuerWellKnownResponse.class))
+                .thenReturn(expextedCredentialIssuerWellKnownResponse);
 
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse=issuersService.getIssuerWellknown(issuerId);
         assertEquals(expextedCredentialIssuerWellKnownResponse,credentialIssuerWellKnownResponse);
-        verify(restApiClient, times(1)).getApi(wellKnownUrl, String.class);
+        verify(restApiClient, times(1)).getApi(wellKnownUrl, CredentialIssuerWellKnownResponse.class);
     }
 
     @Test
