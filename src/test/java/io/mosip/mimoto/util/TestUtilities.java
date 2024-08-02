@@ -20,33 +20,6 @@ import java.util.List;
 import java.util.Map;
 
 public class TestUtilities {
-    public static CredentialsSupportedResponseDraft11 getCredentialSupportedResponseDraft11(String credentialSupportedName){
-        LogoDTO logo = new LogoDTO();
-        logo.setUrl("/logo");
-        logo.setAlt_text("logo-url");
-        CredentialSupportedDisplayResponse credentialSupportedDisplay = new CredentialSupportedDisplayResponse();
-        credentialSupportedDisplay.setLogo(logo);
-        credentialSupportedDisplay.setName(credentialSupportedName);
-        credentialSupportedDisplay.setLocale("en");
-        credentialSupportedDisplay.setTextColor("#FFFFFF");
-        credentialSupportedDisplay.setBackgroundColor("#B34622");
-        CredentialIssuerDisplayResponse credentialIssuerDisplayResponse = new CredentialIssuerDisplayResponse();
-        credentialIssuerDisplayResponse.setName("Given Name");
-        credentialIssuerDisplayResponse.setLocale("en");
-        CredentialDisplayResponseDto credentialDisplayResponseDto = new CredentialDisplayResponseDto();
-        credentialDisplayResponseDto.setDisplay(Collections.singletonList(credentialIssuerDisplayResponse));
-        CredentialDefinitionResponseDto credentialDefinitionResponseDto = new CredentialDefinitionResponseDto();
-        credentialDefinitionResponseDto.setType(List.of("VerifiableCredential", credentialSupportedName));
-        credentialDefinitionResponseDto.setCredentialSubject(Map.of("name", credentialDisplayResponseDto));
-        CredentialsSupportedResponseDraft11 credentialsSupportedResponseDraft11 = new CredentialsSupportedResponseDraft11();
-        credentialsSupportedResponseDraft11.setFormat("ldp_vc");
-        credentialsSupportedResponseDraft11.setId(credentialSupportedName+"id");
-        credentialsSupportedResponseDraft11.setScope(credentialSupportedName+"_vc_ldp");
-        credentialsSupportedResponseDraft11.setDisplay(Collections.singletonList(credentialSupportedDisplay));
-        credentialsSupportedResponseDraft11.setProofTypesSupported(Collections.singletonList("jwt"));
-        credentialsSupportedResponseDraft11.setCredentialDefinition(credentialDefinitionResponseDto);
-        return credentialsSupportedResponseDraft11;
-    }
 
     public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName){
         LogoDTO logo = new LogoDTO();
@@ -74,16 +47,6 @@ public class TestUtilities {
         credentialsSupportedResponse.setCredentialDefinition(credentialDefinitionResponseDto);
         return credentialsSupportedResponse;
     }
-
-    public static CredentialIssuerWellKnownResponseDraft11 getCredentialIssuerWellKnownResponseDtoDraft11(String issuerName, List<CredentialsSupportedResponseDraft11> credentialsSupportedResponseDraft11sDraft11s){
-        CredentialIssuerWellKnownResponseDraft11 credentialIssuerWellKnownResponseDraft11 = new CredentialIssuerWellKnownResponseDraft11();
-        credentialIssuerWellKnownResponseDraft11.setCredentialIssuer(issuerName);
-        credentialIssuerWellKnownResponseDraft11.setCredentialEndPoint("/credential_endpoint");
-        credentialIssuerWellKnownResponseDraft11.setCredentialsSupported(credentialsSupportedResponseDraft11sDraft11s);
-        return credentialIssuerWellKnownResponseDraft11;
-    }
-
-
 
     public static CredentialIssuerWellKnownResponse getCredentialIssuerWellKnownResponseDto(String issuerName, Map<String,CredentialsSupportedResponse> credentialsSupportedResponses){
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse();

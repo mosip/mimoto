@@ -143,9 +143,9 @@ public class CredentialServiceImpl implements CredentialService {
         Map<String, CredentialDisplayResponseDto> credentialSubject = credentialsSupportedResponse.getCredentialDefinition().getCredentialSubject();
         credentialSubject.keySet().forEach(VCProperty -> vcPropertiesFromWellKnown.put(VCProperty, credentialSubject.get(VCProperty).getDisplay().get(0).getName()));
 
-        Set<String> orderProperty = credentialsSupportedResponse.getOrder();
+        List<String> orderProperty = credentialsSupportedResponse.getOrder();
 
-        Set<String> fieldProperties = orderProperty == null ? vcPropertiesFromWellKnown.keySet() : orderProperty;
+        List<String> fieldProperties = orderProperty == null ? new ArrayList<>(vcPropertiesFromWellKnown.keySet()) : orderProperty;
         fieldProperties.forEach(vcProperty -> {
             if(credentialProperties.get(vcProperty) != null) {
                 displayProperties.put(vcPropertiesFromWellKnown.get(vcProperty), credentialProperties.get(vcProperty));
@@ -241,37 +241,5 @@ public class CredentialServiceImpl implements CredentialService {
         String presentationString = objectMapper.writeValueAsString(presentationDefinitionDTO);
         String qrData = String.format(injiWebAuthorizeUrl, URLEncoder.encode(dataShareUrl, StandardCharsets.UTF_8), URLEncoder.encode(presentationString, StandardCharsets.UTF_8));
         return constructQRCode(qrData);
-    }
-
-    @Override
-    public IssuerSupportedCredentialsResponse getCredentialsSupported(String issuerId, String search) throws ApiNotAccessibleException, IOException {
-        IssuerSupportedCredentialsResponse credentialTypesWithAuthorizationEndpoint = new IssuerSupportedCredentialsResponse();
-
-        IssuersDTO issuersDto = issuerService.getAllIssuersWithAllFields();
-
-        Optional<IssuerDTO> issuerConfigResp = issuersDto.getIssuers().stream()
-                .filter(issuer -> issuer.getCredential_issuer().equals(issuerId))
-                .findFirst();
-        if (issuerConfigResp.isPresent()) {
-            IssuerDTO issuerDto = issuerConfigResp.get();
-
-            CredentialIssuerWellKnownResponseDraft11 response = restApiClient.getApi(issuerDto.getWellKnownEndpoint(), CredentialIssuerWellKnownResponseDraft11.class);
-            if (response == null) {
-                throw new ApiNotAccessibleException();
-            }
-            List<CredentialsSupportedResponseDraft11> issuerCredentialsSupported = response.getCredentialsSupported();
-            credentialTypesWithAuthorizationEndpoint.setAuthorizationEndPoint(issuerDto.getAuthorization_endpoint());
-            credentialTypesWithAuthorizationEndpoint.setSupportedCredentials(issuerCredentialsSupported);
-
-            if (!StringUtils.isEmpty(search)){
-                credentialTypesWithAuthorizationEndpoint.setSupportedCredentials(issuerCredentialsSupported
-                        .stream()
-                        .filter(credentialsSupportedResponse -> credentialsSupportedResponse.getDisplay().stream()
-                                .anyMatch(credDisplay -> credDisplay.getName().toLowerCase().contains(search.toLowerCase())))
-                        .collect(Collectors.toList()));
-            }
-            return credentialTypesWithAuthorizationEndpoint;
-        }
-        return credentialTypesWithAuthorizationEndpoint;
     }
 }
