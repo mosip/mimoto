@@ -72,10 +72,8 @@ public class TestUtilities {
         if (issuerName.equals("Issuer1")) issuer.setWellKnownEndpoint("/.well-known");
         else {
             issuer.setRedirect_uri(null);
-            issuer.setAuthorization_endpoint(null);
             issuer.setCredential_endpoint(null);
             issuer.setToken_endpoint(null);
-            issuer.setScopes_supported(null);
         }
         return issuer;
     }
@@ -138,8 +136,6 @@ public class TestUtilities {
                 issuer.setAuthorization_audience("/authorization_audience");
             if (!nullFields.contains("redirect_uri"))
                 issuer.setRedirect_uri("/redirection");
-            if (!nullFields.contains("authorization_endpoint"))
-                issuer.setAuthorization_endpoint("/authorization_endpoint");
             if (!nullFields.contains("token_endpoint"))
                 issuer.setToken_endpoint("/token_endpoint");
             if (!nullFields.contains("proxy_token_endpoint"))

@@ -39,12 +39,6 @@ public class IssuerDTO {
     @NotBlank
     String redirect_uri;
     @JsonInclude(NON_NULL)
-    @NotEmpty
-    List<String> scopes_supported;
-    @JsonInclude(NON_NULL)
-    @NotBlank
-    String authorization_endpoint;
-    @JsonInclude(NON_NULL)
     @NotBlank
     String authorization_audience;
     @Expose
@@ -56,9 +50,6 @@ public class IssuerDTO {
     String proxy_token_endpoint;
     @JsonInclude(NON_NULL)
     String credential_endpoint;
-    @JsonInclude(NON_NULL)
-    @NotEmpty
-    List<String> credential_type;
     @JsonInclude(NON_NULL)
     String credential_audience;
     @Expose
