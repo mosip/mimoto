@@ -48,34 +48,13 @@ public class IssuerDTO {
     @JsonInclude(NON_NULL)
     @NotBlank
     String proxy_token_endpoint;
-    @JsonInclude(NON_NULL)
-    String credential_endpoint;
-    @JsonInclude(NON_NULL)
-    String credential_audience;
     @Expose
     @JsonInclude(NON_NULL)
     @NotBlank
     String client_alias;
     String ovp_qr_enabled;
-    @JsonInclude(NON_NULL)
-    Map<String, String> additional_headers;
-    @JsonInclude(NON_NULL)
-    List<SupportedCredential> credentials_supported;
     @Expose
     @JsonInclude(NON_NULL)
     @NotBlank
     String enabled;
-}
-
-
-@Data
-class SupportedCredential {
-    @NotEmpty
-    String format;
-    @NotEmpty
-    String id;
-    Map<String, Object> credential_definition;
-    String scope;
-    @JsonInclude(NON_NULL)
-    List<Object> display;
 }
