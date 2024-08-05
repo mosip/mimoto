@@ -96,17 +96,11 @@ public class IssuersServiceImpl implements IssuersService {
 
     @Override
     public CredentialIssuerWellKnownResponse getIssuerWellknown(String issuerId) throws ApiNotAccessibleException, IOException {
-        AtomicReference<CredentialIssuerWellKnownResponse> credentialIssuerWellKnownResponse = new AtomicReference<>(new CredentialIssuerWellKnownResponse());
-        IssuersDTO issuersDto = getAllIssuersWithAllFields();
-        issuersDto.getIssuers().stream()
+        return (CredentialIssuerWellKnownResponse) getAllIssuersWithAllFields().getIssuers().stream()
                 .filter(issuer -> issuer.getCredential_issuer().equals(issuerId))
                 .findFirst()
-                .map(issuerDTO -> {
-                    credentialIssuerWellKnownResponse.set(restApiClient.getApi(issuerDTO.getWellKnownEndpoint(), CredentialIssuerWellKnownResponse.class));
-                    return credentialIssuerWellKnownResponse;
-                })
+                .map(issuerDTO -> restApiClient.getApi(issuerDTO.getWellKnownEndpoint(), CredentialIssuerWellKnownResponse.class))
                 .orElseThrow(ApiNotAccessibleException::new);
-        return credentialIssuerWellKnownResponse.get();
     }
 
     @Override
