@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 
@@ -95,20 +96,17 @@ public class IssuersServiceImpl implements IssuersService {
 
     @Override
     public CredentialIssuerWellKnownResponse getIssuerWellknown(String issuerId) throws ApiNotAccessibleException, IOException {
-        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
+        AtomicReference<CredentialIssuerWellKnownResponse> credentialIssuerWellKnownResponse = new AtomicReference<>(new CredentialIssuerWellKnownResponse());
         IssuersDTO issuersDto = getAllIssuersWithAllFields();
-        Optional<IssuerDTO> issuerConfigResp = Optional.ofNullable(issuersDto.getIssuers().stream()
+        issuersDto.getIssuers().stream()
                 .filter(issuer -> issuer.getCredential_issuer().equals(issuerId))
                 .findFirst()
-                .orElseThrow(ApiNotAccessibleException::new));
-        if (issuerConfigResp.isPresent()) {
-            IssuerDTO issuerDto = issuerConfigResp.get();
-            credentialIssuerWellKnownResponse = restApiClient.getApi(issuerDto.getWellKnownEndpoint(), CredentialIssuerWellKnownResponse.class);
-            if (credentialIssuerWellKnownResponse == null) {
-                throw new ApiNotAccessibleException();
-            }
-        }
-        return credentialIssuerWellKnownResponse;
+                .map(issuerDTO -> {
+                    credentialIssuerWellKnownResponse.set(restApiClient.getApi(issuerDTO.getWellKnownEndpoint(), CredentialIssuerWellKnownResponse.class));
+                    return credentialIssuerWellKnownResponse;
+                })
+                .orElseThrow(ApiNotAccessibleException::new);
+        return credentialIssuerWellKnownResponse.get();
     }
 
     @Override
