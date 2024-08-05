@@ -97,9 +97,10 @@ public class IssuersServiceImpl implements IssuersService {
     public CredentialIssuerWellKnownResponse getIssuerWellknown(String issuerId) throws ApiNotAccessibleException, IOException {
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         IssuersDTO issuersDto = getAllIssuersWithAllFields();
-        Optional<IssuerDTO> issuerConfigResp = issuersDto.getIssuers().stream()
+        Optional<IssuerDTO> issuerConfigResp = Optional.ofNullable(issuersDto.getIssuers().stream()
                 .filter(issuer -> issuer.getCredential_issuer().equals(issuerId))
-                .findFirst();
+                .findFirst()
+                .orElseThrow(ApiNotAccessibleException::new));
         if (issuerConfigResp.isPresent()) {
             IssuerDTO issuerDto = issuerConfigResp.get();
             credentialIssuerWellKnownResponse = restApiClient.getApi(issuerDto.getWellKnownEndpoint(), CredentialIssuerWellKnownResponse.class);

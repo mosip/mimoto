@@ -159,6 +159,7 @@ public class CredentialServiceImpl implements CredentialService {
         Map<String, Object> data = new HashMap<>();
         LinkedHashMap<String, Object> rowProperties = new LinkedHashMap<>();
         String backgroundColor = credentialsSupportedResponse.getDisplay().get(0).getBackgroundColor();
+        String backgroundImage = credentialsSupportedResponse.getDisplay().get(0).getBackgroundImage().getUri();
         String textColor = credentialsSupportedResponse.getDisplay().get(0).getTextColor();
         String credentialSupportedType = credentialsSupportedResponse.getDisplay().get(0).getName();
         String face = vcCredentialResponse.getCredential().getCredentialSubject().get("face") != null ? (String) vcCredentialResponse.getCredential().getCredentialSubject().get("face") : null;
@@ -188,6 +189,7 @@ public class CredentialServiceImpl implements CredentialService {
         data.put("rowProperties", rowProperties);
         data.put("textColor", textColor);
         data.put("backgroundColor", backgroundColor);
+        data.put("backgroundImage", backgroundImage);
         data.put("titleName", credentialSupportedType);
         data.put("face", face);
         return data;
