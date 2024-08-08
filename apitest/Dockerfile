@@ -23,6 +23,7 @@ ARG container_user_gid=1001
 
 ARG KUBECTL_VERSION=1.22.9
 
+# set working directory for the user
 WORKDIR /home/${container_user}
 
 ENV work_dir=/home/${container_user}
