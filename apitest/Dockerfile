@@ -47,7 +47,7 @@ RUN apt-get -y update \
     chown -R ${container_user}:${container_user} /home/${container_user} /etc/ssl/certs/java/cacerts \
     chmod 644 /etc/ssl/certs/java/cacerts
 
-#select container user for all tasks
+# select container user for all tasks
 USER ${container_user_uid}:${container_user_gid}
 
 EXPOSE 8083
