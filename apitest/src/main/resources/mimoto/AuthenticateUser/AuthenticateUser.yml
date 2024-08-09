@@ -1,6 +1,7 @@
 AuthenticateUser:
    Mimoto_ESignet_AuthenticateUserIDP_uin_Otp_Valid_Smoke:
       endPoint: /v1/esignet/authorization/authenticate
+      description: Authenticate user to download credentials with all valid parameters
       role: resident
       restMethod: post
       checkErrorsOnlyInResponse: true

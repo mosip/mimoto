@@ -1,6 +1,7 @@
 SendOTP:
    Resident_SendOTP_Valid_UIN_All_Smoke:
       endPoint: /resident/v1/req/otp
+      description: Creating resident requesting OTP with valid UIN
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -19,6 +20,7 @@ SendOTP:
 
    Resident_SendOTP_Invalid_UIN_Neg:
       endPoint: /resident/v1/req/otp
+      description: Creating resident requesting OTP with invalid UIN
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -37,6 +39,7 @@ SendOTP:
 
    Resident_SendOTP_Invalid_VID_Neg:
       endPoint: /resident/v1/req/otp
+      description: Creating requesting OTP with invalid VID
       role: resident
       restMethod: post
       inputTemplate: resident/SendOTP/createSendOTP

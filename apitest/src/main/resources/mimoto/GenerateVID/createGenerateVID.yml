@@ -1,6 +1,7 @@
 GenerateVID:
    Mimoto_Generate_Perpetual_VID_Valid_Smoke_sid:
       endPoint: /v1/mimoto/vid
+      description: Creating Perpetual VID with all valid parameters
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -28,6 +29,7 @@ GenerateVID:
 }'
    Mimoto_Generate_Perpetual_VID_InValid_Otp_sid:
       endPoint: /v1/mimoto/vid
+      description: Creating Perpetual VID with invalid OTP
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -60,6 +62,7 @@ GenerateVID:
 }'
    Mimoto_Generate_Perpetual_VID_with_InvalidUIN_Valid_Otp_sid:
       endPoint: /v1/mimoto/vid
+      description: Creating Perpetual VID with invalid UIN
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -93,6 +96,7 @@ GenerateVID:
 
    mimoto_Generate_Temporary_VID_Valid_Smoke_sid:
       endPoint: /v1/mimoto/vid
+      description: Creating temporary VID with all valid request
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -121,6 +125,7 @@ GenerateVID:
 
    Mimoto_Generate_Perpetual_VID_Invalid_TransactionId_Neg:
       endPoint: /v1/mimoto/vid
+      description: Creating perpetual VID with invalid transactionID
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -154,6 +159,7 @@ GenerateVID:
 
    Mimoto_Generate_Perpetual_VID_Binding_Valid_Smoke_sid:
       endPoint: /v1/mimoto/vid
+      description: Creating perpetual VID with binding valid request
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post

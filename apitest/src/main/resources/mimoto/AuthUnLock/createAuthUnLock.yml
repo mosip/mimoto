@@ -1,6 +1,7 @@
 AuthUnlock:
    Mimoto_AuthUnLock_Valid_UIN_All:
-      endPoint: /v1/mimoto/req/auth/unlock
+      endPoint: v1/mimoto/req/auth/unlock
+      description: Auth unlock a particular UIN with valid parameters
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -29,6 +30,7 @@ AuthUnlock:
 }'
    Mimoto_AuthUnLock_Valid_UIN_With_VID_All:
       endPoint: /v1/mimoto/req/auth/unlock
+      description: Auth unlock a particular VID with valid parameters
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -57,6 +59,7 @@ AuthUnlock:
 }'
    Mimoto_AuthUnLock_With_InValid_OTP_All:
       endPoint: /v1/mimoto/req/auth/unlock
+      description: Auth unlock a particular UIN with invalid OTP
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -90,6 +93,7 @@ AuthUnlock:
 }'
    Mimoto_AuthUnLock_InValid_OTP_With_VID_All:
       endPoint: /v1/mimoto/req/auth/unlock
+      description: Unlock a particular VID with invalid OTP
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post

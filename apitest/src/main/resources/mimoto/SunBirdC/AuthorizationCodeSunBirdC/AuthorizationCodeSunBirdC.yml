@@ -1,6 +1,7 @@
 AuthorizationCodeSunBirdC:
    Mimoto_ESignet_AuthorizationCode_SunBirdC_All_Valid_Smoke_sid:
       endPoint: $ESIGNETMOCKBASEURL$/v1/esignet/authorization/auth-code
+      description: Generating authorization code for downloading sunbird VC
       role: resident
       restMethod: post
       checkErrorsOnlyInResponse: true

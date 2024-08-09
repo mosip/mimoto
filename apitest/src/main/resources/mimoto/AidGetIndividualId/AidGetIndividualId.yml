@@ -1,6 +1,7 @@
 AidGetIndividualId:
    Mimoto_AidGetIndividualId_Getting_With_Valid_UIN_All:
       endPoint: /v1/mimoto/aid/get-individual-id
+      description: Generating AID status with valid AID
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -26,6 +27,7 @@ AidGetIndividualId:
 
    Mimoto_AidGetIndividualId_Getting_With_Invalid_AID_Neg:
       endPoint: /v1/mimoto/aid/get-individual-id
+      description: Generating individualID with invalid AID
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -54,7 +56,8 @@ AidGetIndividualId:
 }'
 
    Mimoto_AidGetIndividualId_Getting_With_Invalid_Otp_Neg:
-      endPoint: /v1/mimoto/aid/get-individual-id
+      endPoint: v1/mimoto/aid/get-individual-id
+      description: Generating individualID with Invalid OTP
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -84,6 +87,7 @@ AidGetIndividualId:
 
    Mimoto_AidGetIndividualId_Getting_With_Valid_Otp_All:
       endPoint: /v1/mimoto/aid/get-individual-id
+      description: Generating individualID with valid OTP
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -109,6 +113,7 @@ AidGetIndividualId:
 
    Mimoto_AidGetIndividualId_Getting_With_Invalid_lenght_Of_AID_Neg:
       endPoint: /v1/mimoto/aid/get-individual-id
+      description: Generating individualID with invalid lengh of AID
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
