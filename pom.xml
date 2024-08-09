@@ -117,6 +117,11 @@
             <version>1.2.1-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>io.mosip.vercred</groupId>
+            <artifactId>vcverifier</artifactId>
+            <version>1.1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
         </dependency>

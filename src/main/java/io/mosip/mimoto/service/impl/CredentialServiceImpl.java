@@ -13,7 +13,6 @@ import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.dto.IssuerDTO;
-import io.mosip.mimoto.dto.IssuersDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
@@ -28,7 +27,12 @@ import io.mosip.mimoto.util.LoggerUtil;
 import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
-import org.apache.commons.lang.StringUtils;
+import io.mosip.vercred.CredentialsVerifier;
+import io.mosip.vercred.exception.ProofDocumentNotFoundException;
+import io.mosip.vercred.exception.ProofTypeNotFoundException;
+import io.mosip.vercred.exception.SignatureVerificationException;
+import io.mosip.vercred.exception.UnknownException;
+import jakarta.annotation.PostConstruct;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +43,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,7 +51,6 @@ import java.io.StringWriter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class CredentialServiceImpl implements CredentialService {
@@ -81,6 +83,13 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Autowired
     PresentationServiceImpl presentationService;
+
+    CredentialsVerifier credentialsVerifier;
+
+    @PostConstruct
+    private void postConstruct() {
+         credentialsVerifier = new CredentialsVerifier();
+    }
 
     @Override
     public TokenResponseDTO getTokenResponse(Map<String, String> params, String issuerId) throws ApiNotAccessibleException, IOException {
@@ -132,6 +141,10 @@ public class CredentialServiceImpl implements CredentialService {
         LinkedHashMap<String, Object> displayProperties = loadDisplayPropertiesFromWellknown(vcCredentialResponse, credentialsSupportedResponse);
         Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse,  vcCredentialResponse, issuerDTO, dataShareUrl);
         return renderVCInCredentialTemplate(data);
+    }
+
+    public Boolean verifyCredential(String credential) throws ProofDocumentNotFoundException, ProofTypeNotFoundException, SignatureVerificationException, UnknownException{
+        return credentialsVerifier.verifyCredentials(credential);
     }
 
     @NotNull

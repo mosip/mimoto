@@ -21,16 +21,14 @@ import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.service.impl.CredentialShareServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.*;
+import io.mosip.vercred.exception.ProofTypeNotFoundException;
 import org.hamcrest.Matchers;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-import org.skyscreamer.jsonassert.JSONAssert;
-import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,17 +40,14 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.ResourceUtils;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static io.mosip.mimoto.exception.PlatformErrorMessages.API_NOT_ACCESSIBLE_EXCEPTION;
-import static io.mosip.mimoto.exception.PlatformErrorMessages.INVALID_ISSUER_ID_EXCEPTION;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -122,10 +117,10 @@ public class InjiControllerTest {
 
         String actualResponse = this.mockMvc.perform(get("/allProperties")
                         .accept(MediaType.APPLICATION_JSON_VALUE))
-                        .andExpect(status().isOk())
-                        .andReturn()
-                        .getResponse()
-                        .getContentAsString();
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
         JSONAssert.assertEquals(expectedResponse, actualResponse, JSONCompareMode.LENIENT);
 
@@ -638,5 +633,31 @@ public class InjiControllerTest {
         this.mockMvc.perform(post("/aid/get-individual-id").contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(JsonUtils.javaObjectToJsonString(requestDTO)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    public void verifyCredentialTest() throws Exception {
+        File file = ResourceUtils.getFile(ResourceUtils.CLASSPATH_URL_PREFIX + "responses/VerifiableCredential.json");
+        String credential = new String(Files.readAllBytes(file.toPath()));
+
+        Mockito.when(credentialService.verifyCredential(credential))
+                .thenReturn(true)
+                .thenThrow(new ProofTypeNotFoundException("Proof Type available in received credentials is not matching with supported proof terms"));
+
+        this.mockMvc.perform(post("/credentials/verify")
+                        .accept(MediaType.APPLICATION_JSON_VALUE)
+                        .content(credential))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response", Matchers.is(true)));
+
+
+        this.mockMvc.perform(post("/credentials/verify")
+                        .accept(MediaType.APPLICATION_JSON_VALUE)
+                        .content(credential))
+                .andExpect(status().is5xxServerError())
+                .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is(PROOF_TYPE_NOT_SUPPORTED_EXCEPTION.getCode())))
+                .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is(PROOF_TYPE_NOT_SUPPORTED_EXCEPTION.getMessage())));
+
+
     }
 }
