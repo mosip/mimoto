@@ -42,8 +42,8 @@ public class PresentationServiceImpl implements PresentationService {
     @Autowired
     ObjectMapper objectMapper;
 
-    @Value("${mosip.inji.verify.redirect.url}")
-    String injiVerifyRedirectUrl;
+    @Value("${mosip.inji.ovp.redirect.url.pattern}")
+    String injiOvpRedirectURLPattern;
 
     @Value("${mosip.data.share.host}")
     String dataShareUrl;
@@ -61,7 +61,7 @@ public class PresentationServiceImpl implements PresentationService {
 
         PresentationDefinitionDTO presentationDefinitionDTO;
         try {
-            presentationDefinitionDTO = objectMapper.readValue(presentationRequestDTO.getPresentation_definition(), PresentationDefinitionDTO.class);
+            presentationDefinitionDTO = objectMapper.readValue(presentationRequestDTO.getPresentationDefinition(), PresentationDefinitionDTO.class);
             if (presentationDefinitionDTO == null) {
                 throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
             }
@@ -80,10 +80,11 @@ public class PresentationServiceImpl implements PresentationService {
                     if (matchingProofTypes) {
                         logger.info("Started the Construction of VP token");
                         try {
-                            String vpToken = constructVerifiablePresentationString(vcCredentialResponse.getCredential());
-                            String presentationSubmission = constructPresentationSubmission(vpToken);
-                            return String.format(injiVerifyRedirectUrl,
-                                    presentationRequestDTO.getRedirect_uri(),
+                            VerifiablePresentationDTO verifiablePresentationDTO = constructVerifiablePresentationString(vcCredentialResponse.getCredential());
+                            String presentationSubmission = constructPresentationSubmission(verifiablePresentationDTO);
+                            String vpToken = objectMapper.writeValueAsString(verifiablePresentationDTO);
+                            return String.format(injiOvpRedirectURLPattern,
+                                    presentationRequestDTO.getRedirectUri(),
                                     Base64.getUrlEncoder().encodeToString(vpToken.getBytes(StandardCharsets.UTF_8)),
                                     URLEncoder.encode(presentationSubmission, StandardCharsets.UTF_8));
                         } catch (JsonProcessingException e) {
@@ -101,18 +102,15 @@ public class PresentationServiceImpl implements PresentationService {
         return redirectionString;
     }
 
-    private String constructVerifiablePresentationString(VCCredentialProperties vcCredentialProperties) throws JsonProcessingException {
-        VerifiablePresentationDTO verifiablePresentationDTO = VerifiablePresentationDTO.builder()
+    private VerifiablePresentationDTO constructVerifiablePresentationString(VCCredentialProperties vcCredentialProperties) throws JsonProcessingException {
+        return VerifiablePresentationDTO.builder()
                 .verifiableCredential(Collections.singletonList(vcCredentialProperties))
                 .type(Collections.singletonList("VerifiablePresentation"))
                 .context(Collections.singletonList("https://www.w3.org/2018/credentials/v1"))
                 .build();
-        return objectMapper.writeValueAsString(verifiablePresentationDTO);
     }
 
-    private String constructPresentationSubmission(String vpToken) throws JsonProcessingException {
-        VerifiablePresentationDTO verifiablePresentationDTO = objectMapper.readValue(vpToken, VerifiablePresentationDTO.class);
-
+    private String constructPresentationSubmission(VerifiablePresentationDTO verifiablePresentationDTO) throws JsonProcessingException {
         AtomicInteger atomicInteger = new AtomicInteger(0);
         List<SubmissionDescriptorDTO> submissionDescriptorDTOList = verifiablePresentationDTO.getVerifiableCredential()
                 .stream().map(verifiableCredential -> SubmissionDescriptorDTO.builder()

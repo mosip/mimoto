@@ -1,5 +1,6 @@
 package io.mosip.mimoto.dto.openid.presentation;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,10 +12,14 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PresentationRequestDTO {
 
-    String response_type;
+    @JsonProperty("response_type")
+    String responseType;
     String resource;
-    String presentation_definition;
-    String client_id;
-    String redirect_uri;
+    @JsonProperty("presentation_definition")
+    String presentationDefinition;
+    @JsonProperty("client_id")
+    String clientId;
+    @JsonProperty("redirect_uri")
+    String redirectUri;
 
 }

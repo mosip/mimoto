@@ -145,11 +145,11 @@ public class TestUtilities {
 
     public static PresentationRequestDTO getPresentationRequestDTO(){
         return PresentationRequestDTO.builder()
-                .presentation_definition("{\"id\":\"test-id\",\"input_descriptors\":[{\"id\":\"test-input-id\",\"format\":{\"ldpVc\":{\"proofTypes\":[\"Ed25519Signature2020\"]}}}]}")
-                .client_id("test_client_id")
+                .presentationDefinition("{\"id\":\"test-id\",\"input_descriptors\":[{\"id\":\"test-input-id\",\"format\":{\"ldpVc\":{\"proofTypes\":[\"Ed25519Signature2020\"]}}}]}")
+                .clientId("test_client_id")
                 .resource("test_resource")
-                .response_type("test_response_type")
-                .redirect_uri("test_redirect_uri").build();
+                .responseType("test_response_type")
+                .redirectUri("test_redirect_uri").build();
     }
 
     public static VCCredentialProperties getVCCredentialPropertiesDTO(String type){
@@ -216,7 +216,7 @@ public class TestUtilities {
     public static VerifiersDTO getTrustedVerifiers() {
         VerifierDTO verifierDTO = VerifierDTO.builder()
                 .clientId("test-clientId")
-                .redirectUri(Collections.singletonList("test-redirectUri")).build();
+                .redirectUri(Collections.singletonList("https://test-redirectUri")).build();
 
         return VerifiersDTO.builder()
                 .verifiers(Collections.singletonList(verifierDTO)).build();

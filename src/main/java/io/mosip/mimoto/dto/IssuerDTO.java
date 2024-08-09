@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import lombok.Data;
-
+import io.mosip.mimoto.model.QRCodeType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.Data;
+
 import java.util.List;
-import java.util.Map;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -52,7 +52,7 @@ public class IssuerDTO {
     @JsonInclude(NON_NULL)
     @NotBlank
     String client_alias;
-    String ovp_qr_enabled;
+    QRCodeType qr_code_type;
     @Expose
     @JsonInclude(NON_NULL)
     @NotBlank
