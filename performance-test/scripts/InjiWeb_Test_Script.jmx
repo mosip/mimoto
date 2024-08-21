@@ -715,7 +715,7 @@ log.info(data);</stringProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">false</boolProp>
       </ThreadGroup>
       <hashTree>
-        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config" enabled="true">
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="Load Vid data from file" enabled="true">
           <stringProp name="filename">./runtime-files/vid_testdata.txt</stringProp>
           <stringProp name="fileEncoding"></stringProp>
           <stringProp name="variableNames">vId</stringProp>
@@ -1609,7 +1609,7 @@ vars.put(&quot;utcTime&quot;, utcTime);
         <boolProp name="ThreadGroup.same_user_on_next_iteration">false</boolProp>
       </ThreadGroup>
       <hashTree>
-        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config" enabled="true">
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="Load Auth Token from file" enabled="true">
           <stringProp name="filename">./runtime-files/authcode_token.txt</stringProp>
           <stringProp name="fileEncoding"></stringProp>
           <stringProp name="variableNames">codeTokenEndpoint,codeChallenge,codeVerifier</stringProp>
