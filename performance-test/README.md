@@ -39,6 +39,22 @@
 </dependency>
 
 
+* eSignet-default properties: Update the value for the properties according to the execution setup. Perform the execution for eSignet api's with redis setup. So check for the redis setup accordingly. 
+	
+	* Enabling redis cache of eSignet application.
+		*spring.cache.type=redis
+		*spring.redis.host=redis-master-0.redis-headless.redis.svc.cluster.local
+		*spring.redis.port=6379
+		*management.health.redis.enabled=false
+	
+	* Increasing the expire time to 24 hours for field mosip.esignet.cache.expire-in-seconds
+		*'clientdetails' : 86400
+		*'authcodegenerated': 86400
+		*'authtokens': 86400
+		
+* id-authentication-default.properties: Update the value for the properties according to the execution setup. 	
+		*mosip.ida.kyc.token.expire.time.adjustment.seconds=86400
+
 ### Execution points for eSignet Authentication API's
 
 *InjiWeb_Test_Script.jmx.jmx
