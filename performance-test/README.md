@@ -1,10 +1,10 @@
 
 ### Contains
 * This folder contains performance Test script of below API endpoint categories.
-    01. Create Identities in MOSIP Authentication System (Setup)
-    02. S01 User accessing Inji Web portal landing page (Execution)
-    03. S02 User choosing an issuer and landing on credential types screen (Execution)
-	04. S03 User downloads MOSIP National ID credential (Preparation)
+    01. Create Identities in MOSIP Identity System (Setup)
+    02. S03 User downloads MOSIP National ID credential (Preparation)
+    03. S01 User accessing Inji Web portal landing page (Execution)
+	04. S02 User choosing an issuer and landing on credential types screen (Execution)
 	05. S03 User downloads MOSIP National ID credential (Execution)
 
 * Open source Tools used,
@@ -57,9 +57,13 @@
 
 ### Execution points for eSignet Authentication API's
 
-*InjiWeb_Test_Script.jmx.jmx
+*InjiWeb_Test_Script.jmx
 	
-	* Create Identities in MOSIP Authentication System (Setup) : This thread contains the authorization api's for regproc and idrepo from which the auth token will be generated. There is set of 4 api's generate RID, generate UIN, add identity and add VID. From here we will get the VID which can be further used as individual id. These 4 api's are present in the loop controller where we can define the number of samples for creating identities in which "addIdentitySetup" is used as a variable. 
+	* Create Identities in MOSIP Identity System (Setup) : This thread contains the authorization api's for regproc and idrepo from which the auth token will be generated. There is set of 4 api's generate RID, generate UIN, add identity and add VID. From here we will get the VID which can be further used as individual id. These 4 api's are present in the loop controller where we can define the number of samples for creating identities in which "addIdentitySetup" is used as a variable. 
+	
+	* S03 User downloads MOSIP National ID credential (Preparation) : This thread generates authcode-token for the download of National ID department PDF. The number of testdata created is depended upon the TPS planned for test execution.
+		*For eg: 100 TPS (
+				
 	
 	* S01 User accessing Inji Web portal landing page (Execution) :
 		* S01 T01 Issuers : This thread executes issuer endpoint.
@@ -68,8 +72,6 @@
 		* S02 T01 Issuers : This thread executes issuer endpoint.
 		* S02 T02 Issuer Id : This thread executes eSignet issuer endpoint.
 		* S02 T03 Credential Types : This thread executes credential type endpoint.
-		
-	* S03 User downloads MOSIP National ID credential (Preparation) : This thread generates authcode-token for the download of National ID department PDF.
 	
 	* S03 User downloads MOSIP National ID credential (Execution):
 		* S03 T01 Issuers : This thread executes issuer endpoint.
