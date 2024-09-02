@@ -275,7 +275,7 @@ vars.put(&quot;utcTime&quot;, utcTime);</stringProp>
         </LoopController>
         <hashTree>
           <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="Load Center-Machine ID Values From File" enabled="true">
-            <stringProp name="filename">./Center-MachineIDValues.csv</stringProp>
+            <stringProp name="filename">./support-files/center_machine_id_values.csv</stringProp>
             <stringProp name="fileEncoding"></stringProp>
             <stringProp name="variableNames">machineID,centerID</stringProp>
             <boolProp name="ignoreFirstLine">true</boolProp>
@@ -287,7 +287,7 @@ vars.put(&quot;utcTime&quot;, utcTime);</stringProp>
           </CSVDataSet>
           <hashTree/>
           <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="Load Biometrics Details From File" enabled="true">
-            <stringProp name="filename">C:/Users/nihal.lk/Downloads/biometrics1.txt</stringProp>
+            <stringProp name="filename">./support-files/biometrics_data.txt</stringProp>
             <stringProp name="fileEncoding"></stringProp>
             <stringProp name="variableNames">biometrics</stringProp>
             <boolProp name="ignoreFirstLine">false</boolProp>
@@ -299,7 +299,7 @@ vars.put(&quot;utcTime&quot;, utcTime);</stringProp>
           </CSVDataSet>
           <hashTree/>
           <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="Load Add Identity Request Details From File" enabled="true">
-            <stringProp name="filename">./addIdentityRequestDetails.csv</stringProp>
+            <stringProp name="filename">./support-files/add_identity_request_details.csv</stringProp>
             <stringProp name="fileEncoding"></stringProp>
             <stringProp name="variableNames">firstName,dateOfBirth,gender</stringProp>
             <boolProp name="ignoreFirstLine">true</boolProp>
@@ -1912,7 +1912,9 @@ vars.put(&quot;utcTime&quot;, utcTime);
             </HeaderManager>
             <hashTree/>
             <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion" enabled="true">
-              <collectionProp name="Asserion.test_strings"/>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="79058">PDF</stringProp>
+              </collectionProp>
               <stringProp name="Assertion.custom_message"></stringProp>
               <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
               <boolProp name="Assertion.assume_success">false</boolProp>
@@ -1928,15 +1930,6 @@ vars.put(&quot;utcTime&quot;, utcTime);
               <boolProp name="Assertion.assume_success">false</boolProp>
               <intProp name="Assertion.test_type">2</intProp>
             </ResponseAssertion>
-            <hashTree/>
-            <ResultSaver guiclass="ResultSaverGui" testclass="ResultSaver" testname="Save Responses to a file" enabled="true">
-              <stringProp name="FileSaver.filename">./runtime-files/NationalID.pdf</stringProp>
-              <boolProp name="FileSaver.errorsonly">false</boolProp>
-              <boolProp name="FileSaver.successonly">false</boolProp>
-              <boolProp name="FileSaver.skipsuffix">true</boolProp>
-              <boolProp name="FileSaver.skipautonumber">true</boolProp>
-              <boolProp name="FileSaver.ignoreTC">false</boolProp>
-            </ResultSaver>
             <hashTree/>
           </hashTree>
         </hashTree>
