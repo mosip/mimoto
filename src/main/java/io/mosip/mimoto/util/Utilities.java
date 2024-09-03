@@ -7,10 +7,14 @@ import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.exception.ExceptionUtils;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.impl.CredentialShareServiceImpl;
+import jakarta.annotation.PostConstruct;
 import lombok.Data;
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
@@ -77,15 +81,19 @@ public class Utilities {
 
     private String credentialTemplateHtmlString = null;
 
-//    uncomment for running mimoto Locally to populate the issuers json
-//    public Utilities(@Value("classpath:mimoto-issuers-config.json") Resource resource,
-//                     @Value("classpath:mimoto-trusted-verifiers.json") Resource trustedVerifiersResource,
-//                     @Value("classpath:/templates/credential-template.html") Resource credentialTemplateResource) throws IOException{
-//
-//        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
-//        trustedVerifiersJsonString = (Files.readString(trustedVerifiersResource.getFile().toPath()));
-//        credentialTemplateHtmlString = (Files.readString(credentialTemplateResource.getFile().toPath()));
-//    }
+
+    @PostConstruct
+    @Profile(value = "local")
+    public void setUp() throws IOException {
+        Resource resource = new ClassPathResource("mimoto-issuers-config.json");
+        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
+
+        Resource trustedVerifiersResource = new ClassPathResource("mimoto-trusted-verifiers.json");
+        trustedVerifiersJsonString = (Files.readString(trustedVerifiersResource.getFile().toPath()));
+
+        Resource credentialTemplateResource = new ClassPathResource("/templates/credential-template.html");
+        credentialTemplateHtmlString = (Files.readString(credentialTemplateResource.getFile().toPath()));
+    }
 
     public static String encodeToString(BufferedImage image, String type) {
         String imageString = null;

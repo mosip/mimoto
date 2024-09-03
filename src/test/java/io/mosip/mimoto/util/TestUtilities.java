@@ -188,6 +188,16 @@ public class TestUtilities {
                 .format("ldp_vc").build();
     }
 
+    public static io.mosip.mimoto.dto.idp.TokenResponseDTO getTokenResponseDTO(){
+        return io.mosip.mimoto.dto.idp.TokenResponseDTO.builder()
+                .id_token("test-id-token")
+                .access_token("test-accesstoken")
+                .expires_in(12345)
+                .scope("test-scope")
+                .token_type("test-token-type")
+                .build();
+    }
+
     public static PresentationDefinitionDTO getPresentationDefinitionDTO(){
         FilterDTO filterDTO = FilterDTO.builder().type("String").pattern("test-credential").build();
         FieldDTO fieldDTO = FieldDTO.builder().path(new String[]{"$.type"}).filter(filterDTO).build();

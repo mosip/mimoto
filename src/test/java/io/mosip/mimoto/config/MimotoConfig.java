@@ -100,9 +100,4 @@ public class MimotoConfig {
 
     }
 
-    @Bean
-    @ConfigurationProperties(prefix = "mosip.inji")
-    public Map<String, String> injiConfig() {
-        return new HashMap<>();
-    }
 }

@@ -6,8 +6,6 @@ import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
-import io.mosip.mimoto.service.CredentialService;
-import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.DateUtils;
 import org.slf4j.Logger;
@@ -30,12 +28,6 @@ import static io.mosip.mimoto.util.Utilities.handleExceptionWithErrorCode;
 public class IssuersController {
     @Autowired
     IssuersService issuersService;
-
-    @Autowired
-    IdpService idpService;
-
-    @Autowired
-    CredentialService credentialService;
 
     private static final String ID = "mosip.mimoto.issuers";
 
