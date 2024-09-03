@@ -61,10 +61,26 @@
 	
 	* Create Identities in MOSIP Identity System (Setup) : This thread contains the authorization api's for regproc and idrepo from which the auth token will be generated. There is set of 4 api's generate RID, generate UIN, add identity and add VID. From here we will get the VID which can be further used as individual id. These 4 api's are present in the loop controller where we can define the number of samples for creating identities in which "addIdentitySetup" is used as a variable. 
 	
-	* S03 User downloads MOSIP National ID credential (Preparation) : This thread generates authcode-token for the download of National ID department PDF. The number of testdata created is depended upon the TPS planned for test execution.
-		*For eg: 100 TPS (
-				
-	
+	* S03 User downloads MOSIP National ID credential (Preparation) : This thread generates authcode-token for the download of National ID department PDF. The number of testdata created is depended upon the TPS planned for test execution. The testdata created is non-reusable, We need to create unique set of testdata for the get-token endpoint.
+	  
+	  *Procedure to calculate number of authcodegenerated token values.
+		* Considering load of 100 TPS volume : As per the request page, 40% Load will be consumed by User downloads MOSIP National ID credential Scenario which is equivalent to 40 TPS. 
+		* User downloads MOSIP National ID credential Scenario consists following 5 endpoints.
+			*/issuers
+			*/issuers/<issuerId>
+			*/issuers/<issuerId>/credentialTypes
+			*/get-token/<issuerid>
+			*/issuers/<issuerId>/credential/download
+		* Each point url will consume 8 TPS ( 40 TPS / 5 requests).
+		* If we are executing test only for one hour then number of testdata will be as follows
+			* Total Number of testdata = TPS value X 3600(number of seconds in one hour)
+									   = 8 X 3600
+								       = 28800
+		* After calculating number of testdata. provide random number of threads in threadgroup (Assuming thread numbers equal to 4 for the sake of calculation),  calculate number of iterations as follows
+			* Number of iterations = Total testdata required / Number of users
+								   = 28800 / 4
+								   = 7200
+			
 	* S01 User accessing Inji Web portal landing page (Execution) :
 		* S01 T01 Issuers : This thread executes issuer endpoint.
 		
@@ -77,8 +93,8 @@
 		* S03 T01 Issuers : This thread executes issuer endpoint.
 		* S03 T02 Issuer Id : This thread executes eSignet issuer endpoint.
 		* S03 T03 Credential Types : This thread executes credential type endpoint.
-		* S03 T09 Get Token : This thread fetches token from eSignet cache and generates access token.
-		* S03 T10 Download File : This thread downloads National ID department PDF file.
+		* S03 T04 Get Token : This thread fetches token from eSignet cache and generates access token.
+		* S03 T05 Download File : This thread downloads National ID department PDF file.
  	
 ### Downloading Plugin manager jar file for the purpose installing other JMeter specific plugins
 

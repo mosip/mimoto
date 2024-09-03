@@ -1506,7 +1506,7 @@ vars.put(&quot;utcTime&quot;, utcTime);
             <stringProp name="HTTPSampler.port"></stringProp>
             <stringProp name="HTTPSampler.protocol">https</stringProp>
             <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/ESignet</stringProp>
+            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/${issuerName}</stringProp>
             <stringProp name="HTTPSampler.method">GET</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
@@ -1517,6 +1517,27 @@ vars.put(&quot;utcTime&quot;, utcTime);
             <stringProp name="HTTPSampler.response_timeout"></stringProp>
           </HTTPSamplerProxy>
           <hashTree>
+            <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Generating Issuer Value" enabled="true">
+              <stringProp name="scriptLanguage">groovy</stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="script">// Define your array
+def array = [&quot;ESignet&quot;,&quot;Sunbird&quot;]
+
+// Create a Random object
+def random = new Random()
+
+// Get a random index within the bounds of the array
+def randomIndex = random.nextInt(array.size())
+
+// Fetch the value at the random index
+def randomValue = array[randomIndex]
+
+// Set the value to a JMeter variable
+vars.put(&quot;issuerName&quot;, randomValue)</stringProp>
+            </JSR223PreProcessor>
+            <hashTree/>
             <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion" enabled="true">
               <collectionProp name="Asserion.test_strings">
                 <stringProp name="685365575">&quot;errors&quot;:[]</stringProp>
@@ -1552,7 +1573,7 @@ vars.put(&quot;utcTime&quot;, utcTime);
             <stringProp name="HTTPSampler.port"></stringProp>
             <stringProp name="HTTPSampler.protocol">https</stringProp>
             <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/ESignet/credentialTypes</stringProp>
+            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/${issuerName}/credentialTypes</stringProp>
             <stringProp name="HTTPSampler.method">GET</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
@@ -1846,11 +1867,13 @@ vars.put(&quot;utcTime&quot;, utcTime);
             </HeaderManager>
             <hashTree/>
             <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion" enabled="true">
-              <collectionProp name="Asserion.test_strings"/>
+              <collectionProp name="Asserion.test_strings">
+                <stringProp name="-1938933922">access_token</stringProp>
+              </collectionProp>
               <stringProp name="Assertion.custom_message"></stringProp>
               <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
               <boolProp name="Assertion.assume_success">false</boolProp>
-              <intProp name="Assertion.test_type">16</intProp>
+              <intProp name="Assertion.test_type">2</intProp>
             </ResponseAssertion>
             <hashTree/>
             <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion - Response Code" enabled="true">
