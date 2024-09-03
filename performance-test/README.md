@@ -61,7 +61,7 @@
 	
 	* Create Identities in MOSIP Identity System (Setup) : This thread contains the authorization api's for regproc and idrepo from which the auth token will be generated. There is set of 4 api's generate RID, generate UIN, add identity and add VID. From here we will get the VID which can be further used as individual id. These 4 api's are present in the loop controller where we can define the number of samples for creating identities in which "addIdentitySetup" is used as a variable. 
 	
-	* S03 User downloads MOSIP National ID credential (Preparation) : This thread generates authcode-token for the download of National ID department PDF. The number of testdata created is depended upon the TPS planned for test execution. The testdata created is non-reusable, We need to create unique set of testdata for the get-token endpoint.
+	* S03 User downloads MOSIP National ID credential (Preparation) : This thread generates authcode-token for the download of National ID department PDF. The number of testdata created is depended upon the TPS planned for test execution. The testdata created is non-reusable and expires after 24 hours. We need to create unique set of testdata for the get-token endpoint for every 24 hours.
 	  
 	  *Procedure to calculate number of authcodegenerated token values.
 		* Considering load of 100 TPS volume : As per the request page, 40% Load will be consumed by User downloads MOSIP National ID credential Scenario which is equivalent to 40 TPS. 
