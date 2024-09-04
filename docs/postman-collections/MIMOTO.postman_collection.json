@@ -15,7 +15,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{HOST}}/issuers/",
+							"raw": "{{HOST}}/issuers",
 							"host": [
 								"{{HOST}}"
 							],
@@ -33,13 +33,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{HOST}}/issuers/ESignet",
+							"raw": "{{HOST}}/issuers/StayProtected",
 							"host": [
 								"{{HOST}}"
 							],
 							"path": [
 								"issuers",
-								"ESignet"
+								"StayProtected"
 							]
 						}
 					},
