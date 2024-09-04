@@ -40,7 +40,9 @@ public class TestUtilities {
         credentialsSupportedResponse.setFormat("ldp_vc");
         credentialsSupportedResponse.setScope(credentialSupportedName+"_vc_ldp");
         credentialsSupportedResponse.setDisplay(Collections.singletonList(credentialSupportedDisplay));
-        credentialsSupportedResponse.setProofTypesSupported(new HashMap<>());
+        HashMap<String,ProofTypesSupported> proofTypesSupportedHashMap=new HashMap<>();
+        proofTypesSupportedHashMap.put("jwt",new ProofTypesSupported());
+        credentialsSupportedResponse.setProofTypesSupported(proofTypesSupportedHashMap);
         credentialsSupportedResponse.setCredentialDefinition(credentialDefinitionResponseDto);
         return credentialsSupportedResponse;
     }

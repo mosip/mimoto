@@ -31,6 +31,7 @@ import io.mosip.testrig.apirig.utils.AdminTestUtil;
 import io.mosip.testrig.apirig.utils.AuthenticationTestException;
 import io.mosip.testrig.apirig.utils.ConfigManager;
 import io.mosip.testrig.apirig.utils.GlobalConstants;
+import io.mosip.testrig.apirig.utils.MimotoUtil;
 import io.mosip.testrig.apirig.utils.OutputValidationUtil;
 import io.mosip.testrig.apirig.utils.ReportUtil;
 import io.restassured.response.Response;
@@ -98,7 +99,7 @@ public class SimplePostForAutoGenId extends AdminTestUtil implements ITest {
 			}
 		}
 
-		testCaseName = isTestCaseValidForExecution(testCaseDTO);
+		testCaseName = MimotoUtil.isTestCaseValidForExecution(testCaseDTO);
 		String[] templateFields = testCaseDTO.getTemplateFields();
 		String inputJson = "";
 
@@ -152,6 +153,11 @@ public class SimplePostForAutoGenId extends AdminTestUtil implements ITest {
 						//Once sunbird registry is pointing to specific env, remove the above line and uncomment below line
 						//tempUrl = ApplnURI.replace(GlobalConstants.API_INTERNAL, ConfigManager.getSunBirdBaseURL());
 					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$SUNBIRDBASEURL$", ""));
+				}
+				
+				if (inputJson.contains("$GETCLIENTIDFROMMIMOTOACTUATOR$")) {
+					inputJson = replaceKeywordWithValue(inputJson, "$GETCLIENTIDFROMMIMOTOACTUATOR$",
+							getValueFromMimotoActuator("overrides", "mimoto.oidc.partner.clientid"));
 				}
 				if (testCaseName.contains("_AuthorizationCode_")) {
 					response = postRequestWithCookieAuthHeaderAndXsrfTokenForAutoGenId(

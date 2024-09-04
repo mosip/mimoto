@@ -30,6 +30,7 @@ public class IssuerDTO {
     @Expose
     @NotBlank
     String client_id;
+    @NotBlank
     @SerializedName(".well-known")
     @JsonProperty(".well-known")
     @Expose

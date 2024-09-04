@@ -12,10 +12,14 @@ import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
 import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
+import io.mosip.mimoto.exception.InvalidWellknownResponseException;
 import io.mosip.mimoto.service.IssuersService;
+import io.mosip.mimoto.util.CredentialIssuerWellknownResponseValidator;
 import io.mosip.mimoto.util.LoggerUtil;
 import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.Utilities;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -33,6 +38,9 @@ public class IssuersServiceImpl implements IssuersService {
 
     @Autowired
     private Utilities utilities;
+
+    @Autowired
+    private Validator validator;
 
     @Autowired
     private RestApiClient restApiClient;
@@ -107,8 +115,10 @@ public class IssuersServiceImpl implements IssuersService {
                 .map(issuerDTO -> {
                     String wellknownResponse = restApiClient.getApi(issuerDTO.getWellKnownEndpoint(), String.class);
                     try {
-                        return objectMapper.readValue(wellknownResponse,CredentialIssuerWellKnownResponse.class);
-                    } catch (JsonProcessingException e) {
+                        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = objectMapper.readValue(wellknownResponse, CredentialIssuerWellKnownResponse.class);
+                        new CredentialIssuerWellknownResponseValidator().validate(credentialIssuerWellKnownResponse, validator);
+                        return credentialIssuerWellKnownResponse;
+                    } catch (JsonProcessingException | ApiNotAccessibleException | InvalidWellknownResponseException e) {
                         throw new RuntimeException(e);
                     }
                 })
@@ -124,6 +134,8 @@ public class IssuersServiceImpl implements IssuersService {
         }
         return credentialsSupportedResponse;
     }
+
+
 }
 
 
