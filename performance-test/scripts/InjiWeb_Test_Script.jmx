@@ -721,7 +721,7 @@ log.info(data);</stringProp>
       </ThreadGroup>
       <hashTree>
         <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="Load Vid data from file" enabled="true">
-          <stringProp name="filename">./runtime-files/vid_testdata.txt</stringProp>
+          <stringProp name="filename">${runTimeFilePath}/vid_testdata.txt</stringProp>
           <stringProp name="fileEncoding"></stringProp>
           <stringProp name="variableNames">vId</stringProp>
           <boolProp name="ignoreFirstLine">true</boolProp>
@@ -1636,7 +1636,7 @@ vars.put(&quot;issuerName&quot;, randomValue)</stringProp>
       </ThreadGroup>
       <hashTree>
         <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="Load Auth Token from file" enabled="true">
-          <stringProp name="filename">./runtime-files/authcode_token.txt</stringProp>
+          <stringProp name="filename">${runTimeFilePath}/authcode_token.txt</stringProp>
           <stringProp name="fileEncoding"></stringProp>
           <stringProp name="variableNames">codeTokenEndpoint,codeChallenge,codeVerifier</stringProp>
           <boolProp name="ignoreFirstLine">true</boolProp>
