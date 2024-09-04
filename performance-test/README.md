@@ -93,7 +93,7 @@
 		* S03 T01 Issuers : This thread executes issuer endpoint.
 		* S03 T02 Issuer Id : This thread executes eSignet issuer endpoint.
 		* S03 T03 Credential Types : This thread executes credential type endpoint.
-		* S03 T04 Get Token : This thread fetches access token from eSignet.
+		* S03 T04 Get Token : This thread connects to eSignet /token endpoint with the authorization code.
 		* S03 T05 Download File : This thread downloads National ID department PDF file.
  	
 ### Downloading Plugin manager jar file for the purpose installing other JMeter specific plugins
