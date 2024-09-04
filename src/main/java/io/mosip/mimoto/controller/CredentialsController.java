@@ -7,12 +7,9 @@ import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
+import io.mosip.mimoto.exception.VCVerificationException;
 import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.util.DateUtils;
-import io.mosip.vercred.exception.ProofDocumentNotFoundException;
-import io.mosip.vercred.exception.ProofTypeNotSupportedException;
-import io.mosip.vercred.exception.SignatureVerificationException;
-import io.mosip.vercred.exception.UnknownException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +70,10 @@ public class CredentialsController {
         } catch (InvalidCredentialResourceException invalidCredentialResourceException) {
             logger.error("Exception occurred while pushing the data to data share ", invalidCredentialResourceException);
             responseWrapper.setErrors(List.of(new ErrorDTO(invalidCredentialResourceException.getErrorCode(), invalidCredentialResourceException.getMessage())));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
+        } catch (VCVerificationException exception) {
+            logger.error("Exception occurred while verification of the verifiable Credential", exception);
+            responseWrapper.setErrors(List.of(new ErrorDTO(exception.getErrorCode(), exception.getMessage())));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
         } catch (Exception exception) {
             logger.error("Exception occurred while generating pdf ", exception);

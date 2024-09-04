@@ -87,12 +87,7 @@ public enum PlatformErrorMessages {
     INVALID_VERIFIER_ID_EXCEPTION(PlatformConstants.PREFIX + "038", "Invalid Verifier ClientId"),
     INVALID_VERIFIER_REDIRECT_URI_EXCEPTION(PlatformConstants.PREFIX + "039", "Invalid Redirect Uri"),
     INVALID_CREDENTIAL_RESOURCE_URI_EXCEPTION(PlatformConstants.PREFIX + "040", "The Credential Resource is Invalid"),
-    INVALID_CREDENTIAL_ISSUER_WELLKNOWN_RESPONSE_EXCEPTION(PlatformConstants.PREFIX + "041", "Invalid Wellknown from Issuer"),
-    PROOF_TYPE_NOT_SUPPORTED_EXCEPTION(PlatformConstants.PREFIX + "042", "Proof Type available in received credentials is not matching with supported proof terms" ),
-    SIGNATURE_VERIFICATION_EXCEPTION(PlatformConstants.PREFIX + "043", "Error while doing signature verification" ),
-    JSON_PARSING_EXCEPTION(PlatformConstants.PREFIX + "044", "Given data couldn't be parsed to JSON string" ),
-    UNKNOWN_EXCEPTION(PlatformConstants.PREFIX + "045", "Error while doing verification of verifiable credential" ),
-    PROOF_DOCUMENT_NOT_FOUND_EXCEPTION(PlatformConstants.PREFIX + "046", "Proof document is not available in the received credentials" );
+    INVALID_CREDENTIAL_ISSUER_WELLKNOWN_RESPONSE_EXCEPTION(PlatformConstants.PREFIX + "041", "Invalid Wellknown from Issuer");
 
 
     /** The error message. */

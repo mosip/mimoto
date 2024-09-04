@@ -52,7 +52,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
+import static io.mosip.mimoto.exception.ErrorConstants.*;
 
 @Service
 public class CredentialServiceImpl implements CredentialService {
@@ -124,13 +124,13 @@ public class CredentialServiceImpl implements CredentialService {
         CredentialsSupportedResponse credentialsSupportedResponse = issuerService.getIssuerWellknownForCredentialType(issuerId, credentialType);
         VCCredentialRequest vcCredentialRequest = generateVCCredentialRequest(issuerConfig, credentialIssuerWellKnownResponse,  credentialsSupportedResponse, response.getAccess_token());
         VCCredentialResponse vcCredentialResponse = downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
-        Boolean verificationStatus = verifyCredential(vcCredentialResponse);
+        boolean verificationStatus = vcCredentialResponse.getCredential().getProof().getType().equals("RsaSignature2018") ? verifyCredential(vcCredentialResponse) : true;
         if(verificationStatus) {
             String dataShareUrl = dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse));
             return generatePdfForVerifiableCredentials(vcCredentialResponse, issuerConfig, credentialsSupportedResponse, dataShareUrl);
         }
-        throw new VCVerificationException(PlatformErrorMessages.SIGNATURE_VERIFICATION_EXCEPTION.getCode(),
-                PlatformErrorMessages.SIGNATURE_VERIFICATION_EXCEPTION.getMessage());
+        throw new VCVerificationException(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(),
+                SIGNATURE_VERIFICATION_EXCEPTION.getErrorMessage());
     }
 
     public VCCredentialResponse downloadCredential(String credentialEndpoint, VCCredentialRequest vcCredentialRequest, String accessToken) throws InvalidCredentialResourceException {
@@ -167,24 +167,24 @@ public class CredentialServiceImpl implements CredentialService {
             String credentialString = objectMapper.writeValueAsString(credential.getCredential());
             return credentialsVerifier.verifyCredentials(credentialString);
         } catch ( ProofDocumentNotFoundException | ProofTypeNotSupportedException | SignatureVerificationException | UnknownException | JsonProcessingException exception ) {
-            String errorCode = UNKNOWN_EXCEPTION.getCode();
-            String errorMessage = UNKNOWN_EXCEPTION.getMessage();
+            String errorCode = UNKNOWN_EXCEPTION.getErrorCode();
+            String errorMessage = UNKNOWN_EXCEPTION.getErrorMessage();
             switch (exception.getClass().getSimpleName()) {
                 case "ProofDocumentNotFoundException" -> {
-                    errorCode = PROOF_DOCUMENT_NOT_FOUND_EXCEPTION.getCode();
-                    errorMessage = PROOF_DOCUMENT_NOT_FOUND_EXCEPTION.getMessage();
+                    errorCode = PROOF_DOCUMENT_NOT_FOUND_EXCEPTION.getErrorCode();
+                    errorMessage = PROOF_DOCUMENT_NOT_FOUND_EXCEPTION.getErrorMessage();
                 }
                 case "ProofTypeNotSupportedException" -> {
-                    errorCode = PROOF_TYPE_NOT_SUPPORTED_EXCEPTION.getCode();
-                    errorMessage = PROOF_TYPE_NOT_SUPPORTED_EXCEPTION.getMessage();
+                    errorCode = PROOF_TYPE_NOT_SUPPORTED_EXCEPTION.getErrorCode();
+                    errorMessage = PROOF_TYPE_NOT_SUPPORTED_EXCEPTION.getErrorMessage();
                 }
                 case "SignatureVerificationException" -> {
-                    errorCode = SIGNATURE_VERIFICATION_EXCEPTION.getCode();
-                    errorMessage = SIGNATURE_VERIFICATION_EXCEPTION.getMessage();
+                    errorCode = SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode();
+                    errorMessage = SIGNATURE_VERIFICATION_EXCEPTION.getErrorMessage();
                 }
                 case "JsonProcessingException" -> {
-                    errorCode = JSON_PARSING_EXCEPTION.getCode();
-                    errorMessage = JSON_PARSING_EXCEPTION.getMessage();
+                    errorCode = JSON_PARSING_EXCEPTION.getErrorCode();
+                    errorMessage = JSON_PARSING_EXCEPTION.getErrorMessage();
                 }
             }
             throw new VCVerificationException(errorCode, errorMessage);

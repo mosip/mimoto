@@ -68,7 +68,7 @@
       "client_id": "XusU7P1y10lMr9NA1qnrny_fqynODwV4SCvWPP8cfdY",
       "redirect_uri": "io.mosip.residentapp.inji://oauthredirect",
       "token_endpoint": "https://api.dev1.mosip.net/v1/mimoto/get-token/Mosip",
-      "authorization_audience": "https://esignet-insurance.dev1.mosip.net/v1/esignet/oauth/v2/token",
+      "authorization_audience": "https://esignet-mosipid.dev1.mosip.net/v1/esignet/oauth/v2/token",
       "proxy_token_endpoint": "https://esignet-mosipid.dev1.mosip.net/v1/esignet/oauth/v2/token",
       "client_alias": "mpartner-default-test-mosipid",
       "qr_code_type": "OVPRequest",
