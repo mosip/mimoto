@@ -33,11 +33,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- mosip -->
-        <mosip.kernel.core.version>1.2.1-SNAPSHOT</mosip.kernel.core.version>
-        <mosip.biometric.util.version>1.2.1-SNAPSHOT</mosip.biometric.util.version>
-        <mosip.kernel.auth.adapter.version>1.2.1-SNAPSHOT</mosip.kernel.auth.adapter.version>
-        <kernel.biometrics.api.version>1.2.1-SNAPSHOT</kernel.biometrics.api.version>
-        <kernel.cbeffutil.version>1.2.1-SNAPSHOT</kernel.cbeffutil.version>
+        <mosip.kernel.core.version>1.3.0-beta.1</mosip.kernel.core.version>
+        <mosip.biometric.util.version>1.3.0-SNAPSHOT</mosip.biometric.util.version>
+        <mosip.kernel.auth.adapter.version>1.3.0-SNAPSHOT</mosip.kernel.auth.adapter.version>
+        <kernel.biometrics.api.version>1.3.0-SNAPSHOT</kernel.biometrics.api.version>
+        <kernel.cbeffutil.version>1.3.0-SNAPSHOT</kernel.cbeffutil.version>
 
         <vertx.version>3.9.1</vertx.version>
 
@@ -209,7 +209,7 @@
         <dependency>
             <groupId>io.mosip.kernel</groupId>
             <artifactId>kernel-websubclient-api</artifactId>
-            <version>1.2.1-SNAPSHOT</version>
+            <version>1.3.0-beta.1</version>
         </dependency>
 
         <dependency>
@@ -412,8 +412,8 @@
         </dependency>
         <dependency>
             <groupId>io.mosip</groupId>
-            <artifactId>pixelpass</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <artifactId>pixelpass-jar</artifactId>
+            <version>0.3.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>

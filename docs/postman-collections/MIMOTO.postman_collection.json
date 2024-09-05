@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "3f372076-5eb8-45f3-8476-2a591301de8b",
+		"_postman_id": "070c5a99-ffc3-48fb-9259-d9170916c728",
 		"name": "MIMOTO",
-		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "26539037"
 	},
 	"item": [
@@ -14,7 +14,16 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": "{{HOST}}/issuers/"
+						"url": {
+							"raw": "{{HOST}}/issuers",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"issuers",
+								""
+							]
+						}
 					},
 					"response": []
 				},
@@ -23,7 +32,150 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": "{{HOST}}/issuers/ESignet"
+						"url": {
+							"raw": "{{HOST}}/issuers/StayProtected",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"issuers",
+								"StayProtected"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get Issuers Wellknown",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{HOST}}/issuers/StayProtected/.well-known",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"issuers",
+								"StayProtected",
+								".well-known"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Issuers List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{HOST}}/issuers?search=Sunbird",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"issuers"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "Sunbird"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Download Credential With GetToken",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "text"
+								},
+								{
+									"key": "code",
+									"value": "GL9N1V-zW_OFgLSa2VBANv8qz6XOxh3yBkoaonjplms",
+									"type": "text"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://injiweb.dev1.mosip.net/redirect",
+									"type": "text"
+								},
+								{
+									"key": "code_verifier",
+									"value": "Sq6nZNToevtx8LX-H2LI_~_Ds9vZGAImDKYjXw70LCJ",
+									"type": "text"
+								},
+								{
+									"key": "issuer",
+									"value": "StayProtected",
+									"type": "text"
+								},
+								{
+									"key": "credential",
+									"value": "InsuranceCredential",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{HOST}}/credentials/download",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"credentials",
+								"download"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Presentation Authorize",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{HOST}}/authorize?response_type=vp_token&resource=https://raw.githubusercontent.com/tw-mosip/verify-credential-js/main/VC/sunbird_qr.json&client_id=https://injiverify.dev2.mosip.net&redirect_uri=https://injiverify.dev2.mosip.net/redirect&presentation_definition=%7B%22id%22%3A%22vp%20token%20example%22%2C%22input_descriptors%22%3A%5B%7B%22id%22%3A%22id%20card%20credential%22%2C%22format%22%3A%7B%22ldpVc%22%3A%7B%22proofTypes%22%3A%5B%22Ed25519Signature2020%22%5D%7D%7D%7D%5D%7D",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"authorize"
+							],
+							"query": [
+								{
+									"key": "response_type",
+									"value": "vp_token"
+								},
+								{
+									"key": "resource",
+									"value": "https://raw.githubusercontent.com/tw-mosip/verify-credential-js/main/VC/sunbird_qr.json"
+								},
+								{
+									"key": "client_id",
+									"value": "https://injiverify.dev2.mosip.net"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://injiverify.dev2.mosip.net/redirect"
+								},
+								{
+									"key": "presentation_definition",
+									"value": "%7B%22id%22%3A%22vp%20token%20example%22%2C%22input_descriptors%22%3A%5B%7B%22id%22%3A%22id%20card%20credential%22%2C%22format%22%3A%7B%22ldpVc%22%3A%7B%22proofTypes%22%3A%5B%22Ed25519Signature2020%22%5D%7D%7D%7D%5D%7D"
+								}
+							]
+						}
 					},
 					"response": []
 				}
@@ -46,7 +198,16 @@
 								}
 							}
 						},
-						"url": "{{HOST}}/req/otp"
+						"url": {
+							"raw": "{{HOST}}/req/otp",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"req",
+								"otp"
+							]
+						}
 					},
 					"response": []
 				},
@@ -75,7 +236,16 @@
 								}
 							}
 						},
-						"url": "{{HOST}}/credentialshare/request"
+						"url": {
+							"raw": "{{HOST}}/credentialshare/request",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"credentialshare",
+								"request"
+							]
+						}
 					},
 					"response": []
 				},
@@ -96,7 +266,18 @@
 								}
 							}
 						},
-						"url": "{{HOST}}/credentialshare/request/status/c0fc00ae-6fc7-4e9f-b818-f51827582c2f"
+						"url": {
+							"raw": "{{HOST}}/credentialshare/request/status/c0fc00ae-6fc7-4e9f-b818-f51827582c2f",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"credentialshare",
+								"request",
+								"status",
+								"c0fc00ae-6fc7-4e9f-b818-f51827582c2f"
+							]
+						}
 					},
 					"response": []
 				},
@@ -125,7 +306,16 @@
 								}
 							}
 						},
-						"url": "{{HOST}}/credentialshare/download"
+						"url": {
+							"raw": "{{HOST}}/credentialshare/download",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"credentialshare",
+								"download"
+							]
+						}
 					},
 					"response": []
 				}
@@ -152,7 +342,15 @@
 							"mode": "raw",
 							"raw": "{\n    \"requestTime\": \"{{$isoTimestamp}}\",\n    \"request\": {\n        \"individualId\": \"4536710485\",\n        \"otpChannels\": [\n            \"EMAIL\",\n            \"PHONE\"\n        ]\n    }\n}"
 						},
-						"url": "{{HOST}}/binding-otp"
+						"url": {
+							"raw": "{{HOST}}/binding-otp",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"binding-otp"
+							]
+						}
 					},
 					"response": []
 				},
@@ -174,7 +372,15 @@
 							"mode": "raw",
 							"raw": "{\n    \"requestTime\": \"{{$isoTimestamp}}\",\n    \"request\": {\n        \"individualId\": \"6148072053\",\n        \"challengeList\": [\n            {\n                \"authFactorType\": \"OTP\",\n                \"challenge\": \"111111\",\n                \"format\": \"alpha-numeric\"\n            }\n        ],\n        \"publicKey\": \"-----BEGIN RSA PUBLIC KEY-----\\nMIICCgKCAgEArk/N6Us8TkfH+r1UGCqTGWegJ3UzqHXmj49uE3l9ygIPrTB7Hee8\\ntiVnlNKcQR/7EipumAcNzOFzaysUUIX8rh/QSdlwYYXvC4OT9fLg5tmToYc5x3pN\\nO1k7qg9fnMb/Ksr4D95xUUxQjMLlbojBNWjLhvdP4da1gWUeAdfjIfyLjZGYiD8r\\nUqsVqOfmrec9Y0nLsIsUq735NVl2WIP9mMfjXuRId4MgEE3mN6x/Gj9Ov0AWfb48\\n22wLgybggTdIJZlCBAnPn/n+oiowqUdXADAB4CIaVH8hDJ1fz3Ag2RetriqwrcLF\\nVSK+PyVuLD261BhIeQrgyHdKC6qilVBOYIMqtXjazCdjGICNFoEa1nVP6mu85RN1\\ny8TTS+4ATUTm44++TFSNfsEEpagvd6O/BWlj6mJNGB9dmtEohowwR5fcSHgKbGtP\\ng5J49fKeSDapEln2A/xL7Ubk8KFzzgcQvPWttGaazs7tqdOE4iOMkI72XFbyvIVz\\nzwQEB7vOuRJRclP30SkcR81u694vCtXJ2t2pFUMQVJXat9ypg5BtiZMwBtAnc0Pz\\nDWdGCR5LIpJIaDISmPumHGAzeeRfREbsoVaCdi99vORoxBjuscpEOa5+MgYDKM3S\\nsJZWl2E2/7Kt9KCRVJoqeEkFFKq696zKVD3qbhbZJG3TjBcgYfbN2jMCAwEAAQ==\\n-----END RSA PUBLIC KEY-----\\n\",\n        \"authFactorType\": \"WLA\",\n        \"format\": \"jwt\"\n    }\n}"
 						},
-						"url": "{{HOST}}/wallet-binding"
+						"url": {
+							"raw": "{{HOST}}/wallet-binding",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"wallet-binding"
+							]
+						}
 					},
 					"response": []
 				}
@@ -185,7 +391,15 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": "{{HOST}}/allProperties"
+				"url": {
+					"raw": "{{HOST}}/allProperties",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"allProperties"
+					]
+				}
 			},
 			"response": []
 		},
@@ -203,7 +417,17 @@
 						}
 					}
 				},
-				"url": "{{HOST}}/req/individualId/otp"
+				"url": {
+					"raw": "{{HOST}}/req/individualId/otp",
+					"host": [
+						"{{HOST}}"
+					],
+					"path": [
+						"req",
+						"individualId",
+						"otp"
+					]
+				}
 			},
 			"response": []
 		}
