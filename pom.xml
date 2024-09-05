@@ -412,8 +412,8 @@
         </dependency>
         <dependency>
             <groupId>io.mosip</groupId>
-            <artifactId>pixelpass</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <artifactId>pixelpass-jar</artifactId>
+            <version>0.3.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
