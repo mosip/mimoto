@@ -27,10 +27,7 @@ import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
 import io.mosip.vercred.CredentialsVerifier;
-import io.mosip.vercred.exception.ProofDocumentNotFoundException;
-import io.mosip.vercred.exception.ProofTypeNotSupportedException;
-import io.mosip.vercred.exception.SignatureVerificationException;
-import io.mosip.vercred.exception.UnknownException;
+import io.mosip.vercred.exception.*;
 import jakarta.annotation.PostConstruct;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -39,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -162,12 +160,16 @@ public class CredentialServiceImpl implements CredentialService {
         return renderVCInCredentialTemplate(data);
     }
 
-    public Boolean verifyCredential(VCCredentialResponse credential) throws VCVerificationException {
+    public Boolean verifyCredential(VCCredentialResponse vcCredentialResponse) throws VCVerificationException {
         try {
-            credential.getCredential().getProof().setType("123");
-            String credentialString = objectMapper.writeValueAsString(credential.getCredential());
+            MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+            converter.setSupportedMediaTypes(Collections.singletonList(MediaType.TEXT_PLAIN));
+            restTemplate.getMessageConverters().add(converter);
+            vcCredentialResponse = restTemplate.getForObject("https://raw.githubusercontent.com/tw-mosip/verify-credential-js/main/VC/errorhandlingvc.json", VCCredentialResponse.class);
+            String credentialString = objectMapper.writeValueAsString(vcCredentialResponse.getCredential());
             return credentialsVerifier.verifyCredentials(credentialString);
-        } catch ( ProofDocumentNotFoundException | ProofTypeNotSupportedException | SignatureVerificationException | UnknownException | JsonProcessingException exception ) {
+        } catch (ProofDocumentNotFoundException | ProofTypeNotSupportedException | SignatureVerificationException | UnknownException | JsonProcessingException |
+                 PublicKeyNotFoundException exception ) {
             String errorCode = UNKNOWN_EXCEPTION.getErrorCode();
             String errorMessage = UNKNOWN_EXCEPTION.getErrorMessage();
             switch (exception.getClass().getSimpleName()) {
@@ -186,6 +188,10 @@ public class CredentialServiceImpl implements CredentialService {
                 case "JsonProcessingException" -> {
                     errorCode = JSON_PARSING_EXCEPTION.getErrorCode();
                     errorMessage = JSON_PARSING_EXCEPTION.getErrorMessage();
+                }
+                case "PublicKeyNotFoundException" -> {
+                    errorCode = PUBLIC_KEY_NOT_FOUND_EXCEPTION.getErrorCode();
+                    errorMessage = PUBLIC_KEY_NOT_FOUND_EXCEPTION.getErrorMessage();
                 }
             }
             throw new VCVerificationException(errorCode, errorMessage);
