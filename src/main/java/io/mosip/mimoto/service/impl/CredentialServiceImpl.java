@@ -16,7 +16,10 @@ import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
-import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.exception.IdpException;
+import io.mosip.mimoto.exception.InvalidCredentialResourceException;
+import io.mosip.mimoto.exception.VCVerificationException;
 import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.IdpService;
@@ -36,7 +39,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -162,10 +164,6 @@ public class CredentialServiceImpl implements CredentialService {
 
     public Boolean verifyCredential(VCCredentialResponse vcCredentialResponse) throws VCVerificationException {
         try {
-            MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
-            converter.setSupportedMediaTypes(Collections.singletonList(MediaType.TEXT_PLAIN));
-            restTemplate.getMessageConverters().add(converter);
-            vcCredentialResponse = restTemplate.getForObject("https://raw.githubusercontent.com/tw-mosip/verify-credential-js/main/VC/errorhandlingvc.json", VCCredentialResponse.class);
             String credentialString = objectMapper.writeValueAsString(vcCredentialResponse.getCredential());
             return credentialsVerifier.verifyCredentials(credentialString);
         } catch (ProofDocumentNotFoundException | ProofTypeNotSupportedException | SignatureVerificationException | UnknownException | JsonProcessingException |
