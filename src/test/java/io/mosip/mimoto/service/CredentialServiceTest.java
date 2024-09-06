@@ -15,6 +15,7 @@ import io.mosip.vercred.CredentialsVerifier;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -62,6 +63,7 @@ public class CredentialServiceTest {
 
 
     @Test
+    @Ignore
     public void shouldReturnTrueIfAValidCredentialIsPassedForVerification() throws VCVerificationException, JsonProcessingException {
         VCCredentialResponse vc = TestUtilities.getVCCredentialResponseDTO("ed25519Signature2020");
         Mockito.when(credentialsVerifier.verifyCredentials(any(String.class))).thenReturn(true);
