@@ -63,7 +63,6 @@ public class CredentialServiceTest {
 
 
     @Test
-    @Ignore
     public void shouldReturnTrueIfAValidCredentialIsPassedForVerification() throws VCVerificationException, JsonProcessingException {
         VCCredentialResponse vc = TestUtilities.getVCCredentialResponseDTO("ed25519Signature2020");
         Mockito.when(credentialsVerifier.verifyCredentials(any(String.class))).thenReturn(true);
