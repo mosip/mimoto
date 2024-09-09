@@ -68,8 +68,8 @@
             <stringProp name="Argument.value">idrepo</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
-          <elementProp name="addIdentitySetup" elementType="Argument">
-            <stringProp name="Argument.name">addIdentitySetup</stringProp>
+          <elementProp name="numberOfIdentitiesPerUser" elementType="Argument">
+            <stringProp name="Argument.name">numberOfIdentitiesPerUser</stringProp>
             <stringProp name="Argument.value">50</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
@@ -91,6 +91,11 @@
           <elementProp name="runTimeFilePath" elementType="Argument">
             <stringProp name="Argument.name">runTimeFilePath</stringProp>
             <stringProp name="Argument.value">./runtime-files</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="issuerName" elementType="Argument">
+            <stringProp name="Argument.name">issuerName</stringProp>
+            <stringProp name="Argument.value">ESignet</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
@@ -276,7 +281,7 @@ vars.put(&quot;utcTime&quot;, utcTime);</stringProp>
         </hashTree>
         <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">true</boolProp>
-          <stringProp name="LoopController.loops">${addIdentitySetup}</stringProp>
+          <stringProp name="LoopController.loops">${numberOfIdentitiesPerUser}</stringProp>
         </LoopController>
         <hashTree>
           <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="Load Center-Machine ID Values From File" enabled="true">
@@ -791,7 +796,7 @@ vars.put(&quot;starttime&quot;,starttime);</stringProp>
             <stringProp name="HTTPSampler.port"></stringProp>
             <stringProp name="HTTPSampler.protocol">https</stringProp>
             <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/ESignet</stringProp>
+            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/${issuerName}</stringProp>
             <stringProp name="HTTPSampler.method">GET</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
@@ -841,7 +846,7 @@ vars.put(&quot;starttime&quot;,starttime);</stringProp>
             <stringProp name="HTTPSampler.port"></stringProp>
             <stringProp name="HTTPSampler.protocol">https</stringProp>
             <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/ESignet/credentialTypes</stringProp>
+            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/${issuerName}/credentialTypes</stringProp>
             <stringProp name="HTTPSampler.method">GET</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
@@ -1522,27 +1527,6 @@ vars.put(&quot;utcTime&quot;, utcTime);
             <stringProp name="HTTPSampler.response_timeout"></stringProp>
           </HTTPSamplerProxy>
           <hashTree>
-            <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Generating Issuer Value" enabled="true">
-              <stringProp name="scriptLanguage">groovy</stringProp>
-              <stringProp name="parameters"></stringProp>
-              <stringProp name="filename"></stringProp>
-              <stringProp name="cacheKey">true</stringProp>
-              <stringProp name="script">// Define your array
-def array = [&quot;ESignet&quot;,&quot;Sunbird&quot;]
-
-// Create a Random object
-def random = new Random()
-
-// Get a random index within the bounds of the array
-def randomIndex = random.nextInt(array.size())
-
-// Fetch the value at the random index
-def randomValue = array[randomIndex]
-
-// Set the value to a JMeter variable
-vars.put(&quot;issuerName&quot;, randomValue)</stringProp>
-            </JSR223PreProcessor>
-            <hashTree/>
             <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion" enabled="true">
               <collectionProp name="Asserion.test_strings">
                 <stringProp name="685365575">&quot;errors&quot;:[]</stringProp>
@@ -1706,7 +1690,7 @@ vars.put(&quot;issuerName&quot;, randomValue)</stringProp>
             <stringProp name="HTTPSampler.port"></stringProp>
             <stringProp name="HTTPSampler.protocol">https</stringProp>
             <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/ESignet</stringProp>
+            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/${issuerName}</stringProp>
             <stringProp name="HTTPSampler.method">GET</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
@@ -1762,7 +1746,7 @@ vars.put(&quot;issuerName&quot;, randomValue)</stringProp>
             <stringProp name="HTTPSampler.port"></stringProp>
             <stringProp name="HTTPSampler.protocol">https</stringProp>
             <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/ESignet/credentialTypes</stringProp>
+            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/${issuerName}/credentialTypes</stringProp>
             <stringProp name="HTTPSampler.method">GET</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
@@ -1851,7 +1835,7 @@ vars.put(&quot;issuerName&quot;, randomValue)</stringProp>
             <stringProp name="HTTPSampler.port">${serverPortNo}</stringProp>
             <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-            <stringProp name="HTTPSampler.path">v1/mimoto/get-token/ESignet</stringProp>
+            <stringProp name="HTTPSampler.path">v1/mimoto/get-token/${issuerName}</stringProp>
             <stringProp name="HTTPSampler.method">POST</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
@@ -1915,7 +1899,7 @@ vars.put(&quot;issuerName&quot;, randomValue)</stringProp>
             <stringProp name="HTTPSampler.port">${serverPortNo}</stringProp>
             <stringProp name="HTTPSampler.protocol">${protocol}</stringProp>
             <stringProp name="HTTPSampler.contentEncoding"></stringProp>
-            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/ESignet/credentials/MOSIPVerifiableCredential/download</stringProp>
+            <stringProp name="HTTPSampler.path">v1/mimoto/issuers/${issuerName}/credentials/MOSIPVerifiableCredential/download</stringProp>
             <stringProp name="HTTPSampler.method">GET</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
             <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
