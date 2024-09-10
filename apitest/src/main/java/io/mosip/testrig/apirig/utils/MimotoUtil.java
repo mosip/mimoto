@@ -16,10 +16,12 @@ public class MimotoUtil extends AdminTestUtil {
 	public static final String OTP_FEATURE_NOT_SUPPORTED = "OTP feature not supported. Hence skipping the testcase";
 	
 	
-	private static String otpEnabled = "true";
+	private static String otpEnabled = "false";
 
-	public static String isOTPEnabled() {
-		String value = getValueFromMimotoActuator("/mimoto-default.properties", "mosip.otp.download.enable");
+	public static String isOTPEnabled() {		
+		String value = getValueFromMimotoActuator("/mimoto-default.properties", "mosip.otp.download.enable").isBlank()
+				? System.getenv("isOTPEnabled")
+				: getValueFromMimotoActuator("/mimoto-default.properties", "mosip.otp.download.enable");
 		if (value != null && !(value.isBlank()))
 			otpEnabled = value;
 		return otpEnabled;
