@@ -72,9 +72,6 @@ public class Utilities {
     @Value("${mosip.openid.verifiers}")
     private String trustedVerifiers;
 
-    @Value("${spring.profiles.active}")
-    private String activeProfile;
-
     @Value("${mosip.openid.htmlTemplate}")
     private String getCredentialSupportedHtml;
 
@@ -84,19 +81,15 @@ public class Utilities {
 
     private String credentialTemplateHtmlString = null;
 
-
-    @PostConstruct
-    public void setUp() throws IOException {
-        if(activeProfile.equals("local")) {
-            Resource resource = new ClassPathResource(getIssuersConfigJson);
-            Resource trustedVerifiersResource = new ClassPathResource(trustedVerifiers);
-            Resource credentialTemplateResource = new ClassPathResource("templates/"+getCredentialSupportedHtml);
-
-            trustedVerifiersJsonString = (Files.readString(trustedVerifiersResource.getFile().toPath()));
-            issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
-            credentialTemplateHtmlString = (Files.readString(credentialTemplateResource.getFile().toPath()));
-        }
-    }
+    //    uncomment for running mimoto Locally to populate the issuers json
+//    public Utilities(@Value("classpath:mimoto-issuers-config.json") Resource resource,
+//                     @Value("classpath:mimoto-trusted-verifiers.json") Resource trustedVerifiersResource,
+//                     @Value("classpath:/templates/credential-template.html") Resource credentialTemplateResource) throws IOException{
+//
+//        issuersConfigJsonString = (Files.readString(resource.getFile().toPath()));
+//        trustedVerifiersJsonString = (Files.readString(trustedVerifiersResource.getFile().toPath()));
+//        credentialTemplateHtmlString = (Files.readString(credentialTemplateResource.getFile().toPath()));
+//    }
 
     public static String encodeToString(BufferedImage image, String type) {
         String imageString = null;
