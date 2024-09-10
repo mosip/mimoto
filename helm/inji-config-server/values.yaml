@@ -103,6 +103,18 @@ envVariables:
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_ESIGNET_INSURANCE_HOST
     valueFrom:
       configMapKeyRef:
-         key: mosip-esignet-insurance-host
-         name: global
+        key: mosip-esignet-insurance-host
+        name: global
     enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_INJI_DATASHARE_HOST
+    valueFrom:
+      configMapKeyRef:
+        key: mosip-inji-datashare-host
+        name: global
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_INJIWEB_HOST
+    valueFrom:
+      configMapKeyRef:
+        key: mosip-injiweb-host
+        name: global

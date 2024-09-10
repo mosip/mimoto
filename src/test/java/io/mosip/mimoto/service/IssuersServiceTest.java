@@ -11,6 +11,7 @@ import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.Utilities;
+import jakarta.validation.Validator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,7 +19,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,6 +28,7 @@ import java.util.Map;
 
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -36,6 +37,9 @@ public class IssuersServiceTest {
 
     @InjectMocks
     IssuersServiceImpl issuersService = new IssuersServiceImpl();
+
+    @Mock
+    Validator validator;
 
     @InjectMocks
     CredentialServiceImpl credentialService = new CredentialServiceImpl();
@@ -101,6 +105,7 @@ public class IssuersServiceTest {
         Mockito.when(restApiClient.getApi(wellKnownUrl , String.class))
                 .thenReturn(getExpectedWellKnownJson());
         Mockito.when(objectMapper.readValue(getExpectedWellKnownJson(), CredentialIssuerWellKnownResponse.class)).thenReturn(expextedCredentialIssuerWellKnownResponse);
+        Mockito.when(validator.validate(any())).thenReturn(Collections.emptySet());
 
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse=issuersService.getIssuerWellknown(issuerId);
         assertEquals(expextedCredentialIssuerWellKnownResponse,credentialIssuerWellKnownResponse);

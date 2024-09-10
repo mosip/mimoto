@@ -28,6 +28,7 @@ import io.mosip.testrig.apirig.utils.AdminTestUtil;
 import io.mosip.testrig.apirig.utils.AuthenticationTestException;
 import io.mosip.testrig.apirig.utils.ConfigManager;
 import io.mosip.testrig.apirig.utils.GlobalConstants;
+import io.mosip.testrig.apirig.utils.MimotoUtil;
 import io.mosip.testrig.apirig.utils.OutputValidationUtil;
 import io.mosip.testrig.apirig.utils.ReportUtil;
 import io.restassured.response.Response;
@@ -91,7 +92,7 @@ public class PostWithBodyWithOtpGenerate extends AdminTestUtil implements ITest 
 			}
 		}
 
-		testCaseName = isTestCaseValidForExecution(testCaseDTO);
+		testCaseName = MimotoUtil.isTestCaseValidForExecution(testCaseDTO);
 		auditLogCheck = testCaseDTO.isAuditLogCheck();
 		String tempUrl = ConfigManager.getEsignetBaseUrl();
 		JSONObject req = new JSONObject(testCaseDTO.getInput());

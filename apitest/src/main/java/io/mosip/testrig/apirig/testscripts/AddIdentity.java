@@ -34,6 +34,7 @@ import io.mosip.testrig.apirig.utils.AuthenticationTestException;
 import io.mosip.testrig.apirig.utils.ConfigManager;
 import io.mosip.testrig.apirig.utils.GlobalConstants;
 import io.mosip.testrig.apirig.utils.KernelAuthentication;
+import io.mosip.testrig.apirig.utils.MimotoUtil;
 import io.mosip.testrig.apirig.utils.OutputValidationUtil;
 import io.mosip.testrig.apirig.utils.ReportUtil;
 import io.mosip.testrig.apirig.utils.RestClient;
@@ -97,7 +98,7 @@ public class AddIdentity extends AdminTestUtil implements ITest {
 								new KernelAuthentication().getTokenByRole(testCaseDTO.getRole())).asString(),
 						"response.uin");
 
-		testCaseName = isTestCaseValidForExecution(testCaseDTO);
+		testCaseName = MimotoUtil.isTestCaseValidForExecution(testCaseDTO);
 
 		DateFormat dateFormatter = new SimpleDateFormat("yyyyMMddHHmmss");
 		Calendar cal = Calendar.getInstance();

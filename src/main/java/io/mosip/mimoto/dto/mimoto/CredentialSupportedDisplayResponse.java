@@ -5,6 +5,7 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import io.mosip.mimoto.dto.BackgroundImageDTO;
 import io.mosip.mimoto.dto.LogoDTO;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import jakarta.validation.Valid;
@@ -23,13 +24,15 @@ public class CredentialSupportedDisplayResponse {
     String locale;
 
     @Expose
+    @NotNull
     @Valid
     LogoDTO logo;
 
     @JsonProperty("background_image")
     @SerializedName("background_image")
     @Expose
-    @NotBlank
+    @Valid
+    @NotNull
     BackgroundImageDTO backgroundImage;
 
     @JsonProperty("background_color")
