@@ -68,8 +68,8 @@
             <stringProp name="Argument.value">idrepo</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
-          <elementProp name="numberOfIdentitiesPerUser" elementType="Argument">
-            <stringProp name="Argument.name">numberOfIdentitiesPerUser</stringProp>
+          <elementProp name="numberOfIdentitiesPerThread" elementType="Argument">
+            <stringProp name="Argument.name">numberOfIdentitiesPerThread</stringProp>
             <stringProp name="Argument.value">50</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
@@ -281,7 +281,7 @@ vars.put(&quot;utcTime&quot;, utcTime);</stringProp>
         </hashTree>
         <LoopController guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">true</boolProp>
-          <stringProp name="LoopController.loops">${numberOfIdentitiesPerUser}</stringProp>
+          <stringProp name="LoopController.loops">${numberOfIdentitiesPerThread}</stringProp>
         </LoopController>
         <hashTree>
           <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="Load Center-Machine ID Values From File" enabled="true">
