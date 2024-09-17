@@ -2410,35 +2410,44 @@
                 "summary": "Get Issuers Wellknown"
             }
         },
-        "/issuers/{issuer-id}/credentials/{credentialType}/download": {
-            "get": {
-                "operationId": "generatePdfForVC",
-                "parameters": [
-                    {
-                        "name": "Bearer",
-                        "in": "header",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
+        "/credentials/download": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "grant_type": {
+                                        "type": "string",
+                                        "example": "authorization_code"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": "GL9N1V-authorizationcodeyBkoaonjplms"
+                                    },
+                                    "redirect_uri": {
+                                        "type": "string",
+                                        "example": "https://injiweb.collab.mosip.net/redirect"
+                                    },
+                                    "code_verifier": {
+                                        "type": "string",
+                                        "example": "Sq6nZNToevcodeVerifierjXw70LCJ"
+                                    },
+                                    "issuer": {
+                                        "type": "string",
+                                        "example": "Mosip"
+                                    },
+                                    "credential": {
+                                        "type": "string",
+                                        "example": "MosipVerifiableCredential"
+                                    }
+                                }
+                            }
                         }
                     },
-                    {
-                        "name": "issuer-id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "credentialType",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
+                    "required": true
+                },
                 "tags": [
                     "Trusted Issuers"
                 ],
@@ -2446,6 +2455,17 @@
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "BAD_REQUEST",
                         "content": {
                             "application/pdf": {
                                 "schema": {
@@ -2506,7 +2526,10 @@
                         }
                     }
                 },
-                "summary": "Download Credential As PDF"
+                "summary": "Download Credential As PDF",
+                "x-stoplight": {
+                    "id": "42bjevdfa0stx"
+                }
             }
         },
         "/authorize": {
