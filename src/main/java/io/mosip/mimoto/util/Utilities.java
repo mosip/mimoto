@@ -167,7 +167,7 @@ public class Utilities {
     public String getJson(String configString, String resourcePath) {
         String json = configString;
         try {
-            if(!StringUtils.isEmpty(json)){
+            if(StringUtils.isEmpty(json)){
                 json = restApiClient.getApi(URI.create(configServerFileStorageURL + resourcePath), String.class);
             }
         } catch (Exception e) {
