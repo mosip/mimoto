@@ -118,3 +118,9 @@ envVariables:
       configMapKeyRef:
         key: mosip-injiweb-host
         name: global
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_INJIVERIFY_HOST
+      valueFrom:
+        configMapKeyRef:
+          key: mosip-injiverify-host
+          name: global
