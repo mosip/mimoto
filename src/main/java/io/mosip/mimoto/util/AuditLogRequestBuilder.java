@@ -51,7 +51,7 @@ public class AuditLogRequestBuilder {
      */
     @SuppressWarnings("unchecked")
     public ResponseWrapper<AuditResponseDto> createAuditRequestBuilder(String description, String eventId, String eventName, String eventType, String registrationId, ApiName apiname) {
-        logger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+        log.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
                 registrationId,
                 "AuditLogRequestBuilder:: createAuditRequestBuilder(String description, String eventId, String eventName, String eventType,\r\n            String registrationId, ApiName apiname)::entry");
 
