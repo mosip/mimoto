@@ -1,8 +1,4 @@
 {
-    "id": "mosip.inji.properties",
-    "version": "v1",
-    "str": null,
-    "metadata": null,
     "response": {
         "allowedAuthType": "demo,otp,bio-Finger,bio-Iris,bio-Face",
         "allowedEkycAuthType": "demo,otp,bio-Finger,bio-Iris,bio-Face",
