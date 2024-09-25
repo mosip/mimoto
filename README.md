@@ -2,7 +2,7 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=mosip_mimoto&id=mosip_mimoto&metric=alert_status)](https://sonarcloud.io/project/overview?id=mosip_mimoto)
 
 # mimoto
-
+## Note: This branch is created to host updated testrig code for CRE checks.
 ## Overview
 This repository contains source code for backend service of Inji Mobile and Inji Web. The modules exposes API endpoints.
 
