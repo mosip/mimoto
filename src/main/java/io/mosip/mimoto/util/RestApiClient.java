@@ -75,6 +75,9 @@ public class RestApiClient {
     @Value("${mosip.iam.adapter.appid}")
     private String appId;
 
+    @Value("${mosip.iam.adapter.disable-self-token-rest-template:false}")
+    private boolean disableSelfTokenRestTemplate;
+
     @Autowired
     Environment environment;
 
@@ -90,9 +93,13 @@ public class RestApiClient {
     @SuppressWarnings("unchecked")
     public <T> T getApi(URI uri, Class<?> responseType) throws Exception {
         T result = null;
+        RestTemplate rt = restTemplate;
+        if (disableSelfTokenRestTemplate) {
+            rt = plainRestTemplate;
+        }
         try {
             logger.info("RestApiClient::getApi()::entry uri: {}", uri);
-            result = (T) restTemplate.exchange(uri, HttpMethod.GET, setRequestHeader(null, null), responseType)
+            result = (T) rt.exchange(uri, HttpMethod.GET, setRequestHeader(null, null), responseType)
                     .getBody();
         } catch (Exception e) {
             logger.error("RestApiClient::getApi()::error uri: {} {} {}", uri, e.getMessage(), e);
@@ -111,8 +118,12 @@ public class RestApiClient {
     @SuppressWarnings("unchecked")
     public <T> T getApi(String url, Class<?> responseType) {
         T result = null;
+        RestTemplate rt = restTemplate;
+        if (disableSelfTokenRestTemplate) {
+            rt = plainRestTemplate;
+        }
         try {
-            result = (T) restTemplate.getForObject(url, responseType);
+            result = (T) rt.getForObject(url, responseType);
         } catch (Exception e) {
             logger.error("RestApiClient::getApi()::error uri:{} {} {}", url, e.getMessage(), e);
         }
@@ -133,9 +144,13 @@ public class RestApiClient {
     @SuppressWarnings("unchecked")
     public <T> T postApi(String uri, MediaType mediaType, Object requestType, Class<?> responseClass) throws Exception {
         T result = null;
+        RestTemplate rt = restTemplate;
+        if (disableSelfTokenRestTemplate) {
+            rt = plainRestTemplate;
+        }
         try {
             logger.info("RestApiClient::postApi()::entry uri: {}", uri);
-            result = (T) restTemplate.postForObject(uri, setRequestHeader(requestType, mediaType), responseClass);
+            result = (T) rt.postForObject(uri, setRequestHeader(requestType, mediaType), responseClass);
         } catch (Exception e) {
             logger.error("RestApiClient::postApi()::error uri: {} {} {}", uri, e.getMessage(), e);
         }
@@ -161,6 +176,42 @@ public class RestApiClient {
             }
         }
         return result;
+    }
+
+    public <T> T postApi(String uri, MediaType mediaType, Object requestType, Class<?> responseClass, String bearerToken){
+        T result = null;
+        try {
+            logger.info("RestApiClient::postApi()::entry uri: {}", uri);
+            result = (T) plainRestTemplate.postForObject(uri, setRequestHeader(requestType, mediaType, bearerToken), responseClass);
+        } catch (Exception e) {
+            logger.error("RestApiClient::postApi()::error uri: {} {} {}", uri, e.getMessage(), e);
+        }
+        return result;
+    }
+
+    private HttpEntity<Object> setRequestHeader(Object requestType, MediaType mediaType, String bearerToken){
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<String, String>();
+        if (mediaType != null) {
+            headers.add(CONTENT_TYPE, mediaType.toString());
+        }
+        headers.add("Authorization", "Bearer "+bearerToken);
+        if (requestType != null) {
+            try {
+                HttpEntity<Object> httpEntity = (HttpEntity<Object>) requestType;
+                HttpHeaders httpHeader = httpEntity.getHeaders();
+                Iterator<String> iterator = httpHeader.keySet().iterator();
+                while (iterator.hasNext()) {
+                    String key = iterator.next();
+                    if (!(headers.containsKey(CONTENT_TYPE) && key.equals(CONTENT_TYPE)))
+                        headers.add(key, Objects.requireNonNull(httpHeader.get(key)).get(0));
+                }
+
+                return new HttpEntity<Object>(httpEntity.getBody(), headers);
+            } catch (ClassCastException | NullPointerException e) {
+                return new HttpEntity<Object>(requestType, headers);
+            }
+        } else
+            return new HttpEntity<Object>(headers);
     }
 
     private HttpEntity<Object> setRequestHeader(Object requestType, MediaType mediaType) throws IOException {

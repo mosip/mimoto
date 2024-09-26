@@ -11,8 +11,8 @@ function deleting_onboarder() {
   while true; do
       read -p "Are you sure you want to delete all partner-onboarder ?(Y/n) " yn
       if [ $yn = "Y" ]; then
-        echo Deleting mimoto-keybinding-partner-onboarder helm
-        helm -n $NS delete mimoto-keybinding-partner-onboarder
+        echo Deleting mimoto-partner-onboarder helm
+        helm -n $NS delete mimoto-partner-onboarder
         break
       fi
   done

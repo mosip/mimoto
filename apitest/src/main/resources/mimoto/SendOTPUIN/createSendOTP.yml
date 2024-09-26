@@ -1,0 +1,15 @@
+individualOTP:
+   Mimoto_individualOTP_All_Valid_Smoke:
+      endPoint: /v1/mimoto/req/individualId/otp
+      description: generating individual OTP with valid parameters
+      role: resident
+      checkErrorsOnlyInResponse: true
+      restMethod: post
+      inputTemplate: mimoto/SendOTPUIN/individualIdOtp
+      outputTemplate: mimoto/SendOTPUIN/individualIdOtpResult
+      input: '{
+      "transactionID": "$TRANSACTIONID$",
+    "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$"
+  }'
+      output: '{
+    }'

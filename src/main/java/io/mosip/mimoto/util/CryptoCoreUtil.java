@@ -83,7 +83,7 @@ public class CryptoCoreUtil {
         return decryptedData;
     }
 
-    public PrivateKeyEntry loadP12() throws IOException {
+    public PrivateKeyEntry loadP12(String fileName, String alias, String cyptoPassword) throws IOException {
         PrivateKeyEntry privateKeyEntry = null;
         InputStream keystoreResourceStream = null;
         try {
@@ -105,6 +105,9 @@ public class CryptoCoreUtil {
             }
         }
         return privateKeyEntry;
+    }
+    public PrivateKeyEntry loadP12() throws IOException {
+        return loadP12(fileName, alias, cyptoPassword);
     }
 
     public byte[] decryptData(byte[] requestData, PrivateKeyEntry privateKey) throws Exception {
@@ -174,7 +177,7 @@ public class CryptoCoreUtil {
     }
 
     /**
-     * 
+     *
      * @param privateKey
      * @param keyModulus
      * @param data

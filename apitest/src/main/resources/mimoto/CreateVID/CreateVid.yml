@@ -1,0 +1,54 @@
+CreateVID:
+  Mimoto_Generate_Perpetual_VID_Valid_Smoke_sid:
+      endPoint: /idrepository/v1/vid
+      description: Create perpetual VID with valid details
+      role: idrepo
+      restMethod: post
+      inputTemplate: mimoto/CreateVID/createVid
+      outputTemplate: mimoto/CreateVID/createVidResult
+      input: '{
+    "vidType": "Perpetual",
+    "UIN": "$ID:AddIdentity_withValidParameters_smoke_Pos_UIN$",
+    "version": "v1",
+    "id": "mosip.vid.create",
+    "requesttime": "$TIMESTAMP$"
+}'
+      output: '{
+  "vidStatus":"ACTIVE"
+}'
+
+  Mimoto_Generate_Temporary_VID_Valid_Smoke_sid:
+      endPoint: /idrepository/v1/vid
+      description: Create temporary VID with valid details
+      role: idrepo
+      restMethod: post
+      inputTemplate: mimoto/CreateVID/createVid
+      outputTemplate: mimoto/CreateVID/createVidResult
+      input: '{
+    "vidType": "Perpetual",
+    "UIN": "$ID:AddIdentity_withValidParameters_smoke_Pos_UIN$",
+    "version": "v1",
+    "id": "mosip.vid.create",
+    "requesttime": "$TIMESTAMP$"
+}'
+      output: '{
+  "vidStatus":"ACTIVE"
+}'
+
+  Mimoto_Generate_Perpetual_VID_Binding_Valid_Smoke_sid:
+      endPoint: /idrepository/v1/vid
+      description: Create perpetual VID for binding with valid details
+      role: idrepo
+      restMethod: post
+      inputTemplate: mimoto/CreateVID/createVid
+      outputTemplate: mimoto/CreateVID/createVidResult
+      input: '{
+    "vidType": "Perpetual",
+    "UIN": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
+    "version": "v1",
+    "id": "mosip.vid.create",
+    "requesttime": "$TIMESTAMP$"
+}'
+      output: '{
+  "vidStatus":"ACTIVE"
+}'

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Onboards default partners 
+# Onboards default partners
 ## Usage: ./install.sh [kubeconfig]
 
 if [ $# -ge 1 ] ; then
@@ -21,7 +21,7 @@ if [ "$flag" = "n" ]; then
 fi
 
 NS=mimoto
-CHART_VERSION=12.0.2
+CHART_VERSION=0.0.1-develop
 
 echo Create $NS namespace
 kubectl create ns $NS
@@ -67,7 +67,7 @@ function installing_onboarder() {
     s3_user_key=$( kubectl -n s3 get cm s3 -o json | jq -r '.data."s3-user-key"' )
 
     echo Onboarding default partners
-    helm -n $NS install mimoto-keybinding-partner-onboarder mosip/partner-onboarder \
+    helm -n $NS install mimoto-partner-onboarder mosip/partner-onboarder \
     --set onboarding.configmaps.s3.s3-host="$s3_url" \
     --set onboarding.configmaps.s3.s3-user-key="$s3_user_key" \
     --set onboarding.configmaps.s3.s3-region="$s3_region" \
@@ -77,14 +77,19 @@ function installing_onboarder() {
     --version $CHART_VERSION \
     --wait --wait-for-jobs
 
-    wallet_binding_partner_api_key=$(kubectl logs -n $NS job/mimoto-keybinding-partner-onboarder-mimoto-keybinding | grep "mpartner default mimoto keybinding apikey:" | awk '{print $6}')
-    echo Wallet Binding Partner Api Key is $wallet_binding_partner_api_key
-    kubectl -n $NS create secret generic mimoto-wallet-binding-partner-api-key --from-literal=mimoto-wallet-binding-partner-api-key=$wallet_binding_partner_api_key --dry-run=client -o yaml | kubectl apply -f -
+    echo Updating mimoto-oidc-keystore-password value
+    kubectl -n $NS create secret generic mimoto-oidc-keystore-password --from-literal=mimoto-oidc-keystore-password='mosip123' --dry-run=client -o yaml | kubectl apply -f -
+    ./copy_cm_func.sh secret mimoto-oidc-keystore-password mimoto config-server
+
+    echo Updating Mimoto wallet binding partner api key and Mimoto OIDC Partner Client ID
     ./copy_cm_func.sh secret mimoto-wallet-binding-partner-api-key mimoto config-server
-    kubectl -n config-server set env --keys=mimoto-wallet-binding-partner-api-key --from secret/mimoto-wallet-binding-partner-api-key deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
-    kubectl -n config-server get deploy -o name |  xargs -n1 -t  kubectl -n config-server rollout status
-    kubectl rollout restart deployment -n mimoto mimoto
-    echo Mimoto wallet binding partner api key updated successfully.
+    ./copy_cm_func.sh secret mimoto-oidc-partner-clientid mimoto config-server
+    kubectl -n config-server set env --keys=mimoto-wallet-binding-partner-api-key --from secret/mimoto-wallet-binding-partner-api-key deployment/inji-config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
+    kubectl -n config-server set env --keys=mimoto-oidc-partner-clientid --from secret/mimoto-oidc-partner-clientid deployment/inji-config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
+    kubectl -n config-server set env --keys=mimoto-oidc-keystore-password --from secret/mimoto-oidc-keystore-password deployment/inji-config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
+
+    kubectl -n config-server rollout restart deployment inji-config-server
+    kubectl -n config-server rollout status deployment inji-config-server
 
     echo Reports are moved to S3 under onboarder bucket
     return 0

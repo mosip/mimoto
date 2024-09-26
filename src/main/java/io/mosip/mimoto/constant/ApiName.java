@@ -2,7 +2,7 @@ package io.mosip.mimoto.constant;
 
 /**
  * The Enum ApiName.
- * 
+ *
  * @author Rishabh Keshari
  */
 public enum ApiName {
@@ -105,7 +105,7 @@ public enum ApiName {
     RESIDENT_AUTH_UNLOCK,
     RESIDENT_INDIVIDUALID_OTP,
     RESIDENT_AID_GET_INDIVIDUALID,
-    
+
     IDP_LINK_TRANSACTION,
     IDP_AUTHENTICATE,
     IDP_CONSENT,

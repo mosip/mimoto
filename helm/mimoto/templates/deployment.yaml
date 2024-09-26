@@ -93,6 +93,8 @@ spec:
               value: {{ .Values.containerSecurityContext.runAsUser }}
             - name: JDK_JAVA_OPTIONS
               value: {{ .Values.additionalResources.javaOpts }}
+            - name: KEYSTORE_P12_PATH
+              value: {{ .Values.volumes.secrets.mimotooidc.path }}
             {{- if .Values.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
@@ -112,6 +114,12 @@ spec:
           volumeMounts:
             - name: landing-folder
               mountPath: {{ .Values.persistence.mountDir }}
+            {{- if .Values.volumes.secrets }}
+            {{- range $secretName, $value := .Values.volumes.secrets }}
+            - name: {{ $secretName }}
+              mountPath: {{ $value.path }}
+            {{- end }}
+            {{- end }}
             {{- if .Values.enable_insecure }}
             - mountPath: /usr/local/openjdk-11/lib/security/cacerts
               name: cacerts
@@ -146,7 +154,14 @@ spec:
             claimName: {{ .Values.persistence.existingClaim | default (include "common.names.fullname" .) }}
           {{- else }}
           emptyDir: {}
-          {{ end }}
+          {{- end }}
+        {{- if .Values.volumes.secrets }}
+        {{- range $secretName, $value := .Values.volumes.secrets }}
+        - name: {{ $secretName }}
+          secret:
+            secretName: {{ $secretName }}
+        {{- end }}
+        {{- end }}
         {{- if .Values.enable_insecure }}
         - name: cacerts
           emptyDir: {}

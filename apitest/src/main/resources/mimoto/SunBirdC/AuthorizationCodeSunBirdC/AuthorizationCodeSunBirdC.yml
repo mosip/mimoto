@@ -1,0 +1,18 @@
+AuthorizationCodeSunBirdC:
+   Mimoto_ESignet_AuthorizationCode_SunBirdC_All_Valid_Smoke_sid:
+      endPoint: $ESIGNETMOCKBASEURL$/v1/esignet/authorization/auth-code
+      description: Generating authorization code for downloading sunbird VC
+      role: resident
+      restMethod: post
+      checkErrorsOnlyInResponse: true
+      validityCheckRequired: true
+      inputTemplate: mimoto/SunBirdC/AuthorizationCodeSunBirdC/AuthorizationCodeSunBirdC
+      outputTemplate: mimoto/SunBirdC/AuthorizationCodeSunBirdC/AuthorizationCodeSunBirdCResult
+      input: '{
+        "encodedHash": "$ID:ESignet_OAuthDetailsRequest_SunBirdC_all_Valid_Smoke_sid_encodedResp$",
+      	"requestTime": "$TIMESTAMP$",
+      	"transactionId": "$ID:ESignet_OAuthDetailsRequest_SunBirdC_all_Valid_Smoke_sid_transactionId$",
+      	"permittedAuthorizeScopes": [{scope: "sunbird_rc_insurance_vc_ldp"}]
+}'
+      output: '{
+}'

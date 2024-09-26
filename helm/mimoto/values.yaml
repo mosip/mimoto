@@ -246,7 +246,7 @@ extraEnvVars: []
 ##
 extraEnvVarsCM:
   - global
-  - config-server-share
+  - inji-config-server-share
   - artifactory-share
 
 ## Secret with extra environment variables
@@ -457,7 +457,14 @@ istio:
   gateways:
     - istio-system/internal
     - istio-system/public
-  prefix: /residentmobileapp
+  prefix1: /residentmobileapp
+  prefix2: /v1/mimoto
   rewrite: /v1/mimoto
 
 enable_insecure: false
+
+volumes:
+  secrets:
+    mimotooidc:
+      key: oidckeystore.p12
+      path: /home/mosip/certs

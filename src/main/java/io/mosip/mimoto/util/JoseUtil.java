@@ -1,29 +1,41 @@
 package io.mosip.mimoto.util;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.util.X509CertUtils;
+import com.nimbusds.jwt.JWTParser;
+import com.nimbusds.jwt.SignedJWT;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.kernel.core.util.CryptoUtil;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.mimoto.JwkDto;
 import io.mosip.mimoto.dto.mimoto.WalletBindingInternalResponseDto;
 import io.mosip.mimoto.dto.mimoto.WalletBindingResponseDto;
+import io.mosip.mimoto.exception.IssuerOnboardingException;
 import org.jose4j.jws.JsonWebSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.math.BigInteger;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.Instant;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -32,9 +44,13 @@ public class JoseUtil {
     private final Logger logger = LoggerUtil.getLogger(JoseUtil.class);
     private static final String BEGIN_KEY = "-----BEGIN PUBLIC KEY-----";
     private static final String END_KEY = "-----END PUBLIC KEY-----";
+    private static final String ALG_RS256 = "RS256";
 
     @Autowired
     private ObjectMapper mapper;
+
+    @Autowired
+    private CryptoCoreUtil cryptoCoreUtil;
 
     public static JwkDto getJwkFromPublicKey(String publicKeyString) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
@@ -116,5 +132,76 @@ public class JoseUtil {
         }
 
         return responseWrapper;
+    }
+
+    public String getJWT(String clientId, String keyStorePath, String fileName, String alias, String cyptoPassword, String audience) throws IssuerOnboardingException, IOException {
+
+        Map<String, Object> header = new HashMap<>();
+        header.put("alg", ALG_RS256);
+
+        String keyStorePathWithFileName = keyStorePath + fileName;
+        Date issuedAt = Date.from(Instant.now());
+        Date expiresAt = Date.from(Instant.now().plusMillis(120000));
+        RSAPrivateKey privateKey = null;
+        try {
+            KeyStore.PrivateKeyEntry privateKeyEntry = cryptoCoreUtil.loadP12(keyStorePathWithFileName, alias, cyptoPassword);
+            if(privateKeyEntry == null){
+                throw new IssuerOnboardingException("Private Key Entry is Missing for the alias " + alias);
+            }
+            privateKey = (RSAPrivateKey) privateKeyEntry.getPrivateKey();
+        } catch (IOException e) {
+           logger.error("Exception happened while loading the p12 file for invoking token call.");
+           throw e;
+        }
+        return JWT.create()
+                .withHeader(header)
+                .withIssuer(clientId)
+                .withSubject(clientId)
+                .withAudience(audience)
+                .withExpiresAt(expiresAt)
+                .withIssuedAt(issuedAt)
+                .sign(Algorithm.RSA256(null, privateKey));
+    }
+
+    public String generateJwt(String audience, String clientId, String accessToken) throws Exception {
+
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+        kpg.initialize(2048);
+        KeyPair kp = kpg.generateKeyPair();
+        RSAKey jwk = new RSAKey.Builder((RSAPublicKey) kp.getPublic())
+                .keyUse(KeyUse.SIGNATURE)
+                .algorithm(JWSAlgorithm.RS256)
+                .build();
+
+        Map<String, Object> header = new HashMap<>();
+        header.put("alg", ALG_RS256);
+        header.put("typ", "openid4vci-proof+jwt");
+        header.put("jwk", jwk.getRequiredParams());
+
+        Date issuedAt = Date.from(Instant.now());
+        Date expiresAt = Date.from(Instant.now().plusMillis(120000000));
+        RSAPrivateKey privateKey = (RSAPrivateKey) kp.getPrivate();
+        SignedJWT jwt = (SignedJWT) JWTParser.parse(accessToken);
+        Map<String, Object> jsonObject = jwt.getPayload().toJSONObject();
+        String cNonce = (String) jsonObject.get("c_nonce");
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("sub", clientId);
+        payload.put("aud", audience);
+        payload.put("nonce", cNonce);
+        payload.put("iss", clientId);
+        payload.put("exp", expiresAt.toInstant().getEpochSecond());
+        payload.put("iat", issuedAt.toInstant().getEpochSecond());
+
+        return Jwts.builder()
+                .setHeader(header)
+                .setIssuer(clientId)
+                .setSubject(clientId)
+                .setAudience(audience)
+                .setExpiration(expiresAt)
+                .setIssuedAt(issuedAt)
+                .setClaims(payload)
+                .signWith(SignatureAlgorithm.RS256, privateKey)
+                .compact();
     }
 }

@@ -1,0 +1,142 @@
+AidGetIndividualId:
+   Mimoto_AidGetIndividualId_Getting_With_Valid_UIN_All:
+      endPoint: /v1/mimoto/aid/get-individual-id
+      description: Generating AID status with valid AID
+      role: resident
+      checkErrorsOnlyInResponse: true
+      restMethod: post
+      inputTemplate: mimoto/AidGetIndividualId/aidGetIndividualId
+      outputTemplate: mimoto/AidGetIndividualId/aidGetIndividualIdResult
+      input: '{
+        "otp": "$ID:AddIdentity_withValidParameters_smoke_Pos_EMAIL$",
+        "transactionID": "$TRANSACTIONID$",
+        "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$",
+        "sendOtp":{
+		    "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$",
+		    "transactionID": "$TRANSACTIONID$",
+		    "sendOtpReqTemplate": "mimoto/SendOTPUIN/individualIdOtp",
+		    "sendOtpEndPoint": "/v1/mimoto/req/individualId/otp"
+	 }
+}'
+      output: '{
+       "aidStatus": "PROCESSED",
+        "sendOtpResp":{
+	        "sendOtpResTemplate":"mimoto/SendOTPUIN/individualIdOtpResult"
+	 }
+}'
+
+   Mimoto_AidGetIndividualId_Getting_With_Invalid_AID_Neg:
+      endPoint: /v1/mimoto/aid/get-individual-id
+      description: Generating individualID with invalid AID
+      role: resident
+      checkErrorsOnlyInResponse: true
+      restMethod: post
+      inputTemplate: mimoto/AidGetIndividualId/aidGetIndividualId
+      outputTemplate: mimoto/error
+      input: '{
+        "otp": "$ID:AddIdentity_withValidParameters_smoke_Pos_EMAIL$",
+        "transactionID": "$TRANSACTIONID$",
+        "aid": "$yt55g",
+        "sendOtp":{
+		    "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$",
+		    "transactionID": "$TRANSACTIONID$",
+		    "sendOtpReqTemplate": "mimoto/SendOTPUIN/individualIdOtp",
+		    "sendOtpEndPoint": "/v1/mimoto/req/individualId/otp"
+	 }
+}'
+      output: '{
+  "errors": [
+    {
+      "errorCode": "RES-SER-457"
+    }
+  ],
+        "sendOtpResp":{
+	        "sendOtpResTemplate":"mimoto/SendOTPUIN/individualIdOtpResult"
+	 }
+}'
+
+   Mimoto_AidGetIndividualId_Getting_With_Invalid_Otp_Neg:
+      endPoint: /v1/mimoto/aid/get-individual-id
+      description: Generating individualID with Invalid OTP
+      role: resident
+      checkErrorsOnlyInResponse: true
+      restMethod: post
+      inputTemplate: mimoto/AidGetIndividualId/aidGetIndividualId
+      outputTemplate: mimoto/error
+      input: '{
+        "otp": "1234",
+        "transactionID": "$TRANSACTIONID$",
+        "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$",
+        "sendOtp":{
+		    "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$",
+		    "transactionID": "$TRANSACTIONID$",
+		    "sendOtpReqTemplate": "mimoto/SendOTPUIN/individualIdOtp",
+		    "sendOtpEndPoint": "/v1/mimoto/req/individualId/otp"
+	 }
+}'
+      output: '{
+  "errors": [
+    {
+      "errorCode": "RES-SER-422"
+    }
+  ],
+        "sendOtpResp":{
+	        "sendOtpResTemplate":"mimoto/SendOTPUIN/individualIdOtpResult"
+	 }
+}'
+
+   Mimoto_AidGetIndividualId_Getting_With_Valid_Otp_All:
+      endPoint: /v1/mimoto/aid/get-individual-id
+      description: Generating individualID with valid OTP
+      role: resident
+      checkErrorsOnlyInResponse: true
+      restMethod: post
+      inputTemplate: mimoto/AidGetIndividualId/aidGetIndividualId
+      outputTemplate: mimoto/AidGetIndividualId/aidGetIndividualIdResult
+      input: '{
+        "otp": "$ID:AddIdentity_withValidParameters_smoke_Pos_EMAIL$",
+        "transactionID": "$TRANSACTIONID$",
+        "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$",
+        "sendOtp":{
+		    "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$",
+		    "transactionID": "$TRANSACTIONID$",
+		    "sendOtpReqTemplate": "mimoto/SendOTPUIN/individualIdOtp",
+		    "sendOtpEndPoint": "/v1/mimoto/req/individualId/otp"
+	 }
+}'
+      output: '{
+       "aidStatus": "PROCESSED",
+        "sendOtpResp":{
+	        "sendOtpResTemplate":"mimoto/SendOTPUIN/individualIdOtpResult"
+	 }
+}'
+
+   Mimoto_AidGetIndividualId_Getting_With_Invalid_lenght_Of_AID_Neg:
+      endPoint: /v1/mimoto/aid/get-individual-id
+      description: Generating individualID with invalid lengh of AID
+      role: resident
+      checkErrorsOnlyInResponse: true
+      restMethod: post
+      inputTemplate: mimoto/AidGetIndividualId/aidGetIndividualId
+      outputTemplate: mimoto/error
+      input: '{
+        "otp": "$ID:AddIdentity_withValidParameters_smoke_Pos_EMAIL$",
+        "transactionID": "$TRANSACTIONID$",
+        "aid": "2745538921628455389216202302041241544770230204124154278477",
+        "sendOtp":{
+		    "aid": "$ID:AddIdentity_withValidParameters_smoke_Pos_RID$",
+		    "transactionID": "$TRANSACTIONID$",
+		    "sendOtpReqTemplate": "mimoto/SendOTPUIN/individualIdOtp",
+		    "sendOtpEndPoint": "/v1/mimoto/req/individualId/otp"
+	 }
+}'
+      output: '{
+      "errors": [
+    {
+      "errorCode": "RES-SER-457"
+    }
+  ],
+          "sendOtpResp":{
+	        "sendOtpResTemplate":"mimoto/SendOTPUIN/individualIdOtpResult"
+	 }
+}'

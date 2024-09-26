@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+
+	<suite name="MobileId Suite">
+	<!-- Passing Group as parmeter unsing "testType" Possible Groups are: smoke 
+		regression smokeAndRegression -->
+	<listeners>
+		<listener class-name="io.mosip.testrig.apirig.report.EmailableReport" />
+	</listeners>
+		
+	<test name="Adding Identity">
+		<parameter name="ymlFile" value="mimoto/AddIdentity/AddIdentity.yml" />
+		<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.AddIdentity" />
+		</classes>
+	</test>
+	<test name="GenerateVID">
+		<parameter name="ymlFile"
+			value="mimoto/GenerateVID/createGenerateVID.yml" />
+		<parameter name="idKeyName" value="vid" />
+		<classes>
+			<class
+				name="io.mosip.testrig.apirig.testscripts.PostWithAutogenIdWithOtpGenerate" />
+		</classes>
+	</test>
+	<test name="CreateVID">
+		<parameter name="ymlFile" value="mimoto/CreateVID/CreateVid.yml" />
+		<parameter name="idKeyName" value="VID" />
+		<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class
+				name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+
+	<test name="CreatePolicySunBirdR">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdR/CreatePolicySunBirdR/CreatePolicySunBirdR.yml" />
+		<parameter name="idKeyName" value="osid" />
+		<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="GetPolicySunBirdR">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdR/GetPolicySunBirdR/GetPolicySunBirdR.yml" />
+			<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.GetWithParam" />
+		</classes>
+	</test>
+	<test name="SearchPolicySunBirdR">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdR/SearchPolicySunBirdR/SearchPolicySunBirdR.yml" />
+			<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePost" />
+		</classes>
+	</test>
+	<test name="OAuthDetailsRequest">
+		<parameter name="ymlFile"
+			value="mimoto/OAuthDetailsRequest/OAuthDetailsRequest.yml" />
+			<parameter name="idKeyName"	value="transactionId,encodedResp" />
+			<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="AuthenticateUser">
+		<parameter name="ymlFile"
+			value="mimoto/AuthenticateUser/AuthenticateUser.yml" />
+			<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.PostWithAutogenIdWithOtpGenerate" />
+		</classes>
+	</test>
+	<test name="AuthorizationCode">
+		<parameter name="ymlFile"
+			value="mimoto/AuthorizationCode/AuthorizationCode.yml" />
+			<parameter name="prerequisite" value="Yes" />
+			<parameter name="idKeyName"	value="code" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="OAuthDetailsRequestSunBirdC">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdC/OAuthDetailsRequestSunBirdC/OAuthDetailsRequestSunBirdC.yml" />
+			<parameter name="idKeyName"	value="transactionId,encodedResp" />
+			<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="AuthenticateUserSunBirdC">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdC/AuthenticateUserSunBirdC/AuthenticateUserSunBirdC.yml" />
+			<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePost" />
+		</classes>
+	</test>
+	<test name="AuthorizationCodeSunBirdC">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdC/AuthorizationCodeSunBirdC/AuthorizationCodeSunBirdC.yml" />
+			<parameter name="idKeyName"	value="code" />
+			<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+
+	<test name="AuthLock">
+		<parameter name="ymlFile"
+			value="mimoto/AuthLock/createAuthLock.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.PostWithBodyWithOtpGenerate" />
+		</classes>
+	</test>
+	<test name="AuthUnLock">
+		<parameter name="ymlFile"
+			value="mimoto/AuthUnLock/createAuthUnLock.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.PostWithBodyWithOtpGenerate" />
+		</classes>
+	</test>
+	
+	<test name="RequestCredentials">
+		<parameter name="ymlFile"
+			value="mimoto/CredentialIssuance/RequestCredentials/ReqCredential.yml" />
+			<parameter name="idKeyName"	value="requestId" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.PostWithAutogenIdWithOtpGenerate" />
+		</classes>
+	</test>
+	 <test name="CredentialCheckStatus">
+		<parameter name="ymlFile"
+			value="mimoto/CredentialIssuance/CredentialCheckStatus/CredentialCheckStatus.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.GetWithParam" />
+		</classes>
+	</test>
+	<test name="DownloadCredential">
+		<parameter name="ymlFile"
+			value="mimoto/CredentialIssuance/DownloadWithReqid/DownloadWithReqid.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePost" />
+		</classes>
+	</test>
+	<test name="SendOTP">
+		<parameter name="ymlFile"
+			value="mimoto/SendOTPUIN/createSendOTP.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePost" />
+		</classes>
+	</test>
+	<test name="AidGetIndividualId">
+		<parameter name="ymlFile"
+			value="mimoto/AidGetIndividualId/AidGetIndividualId.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.PostWithBodyWithOtpGenerate" />
+		</classes>
+	</test>
+	<test name="BindingOtp">
+		<parameter name="ymlFile"
+			value="mimoto/BindingOtp/BindingOtp.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.SimplePost" />
+		</classes>
+	</test>
+	<test name="WalletBinding">
+		<parameter name="ymlFile"
+			value="mimoto/WalletBinding/WalletBinding.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.PostWithBodyWithOtpGenerate" />
+		</classes>
+	</test>
+	 <test name="GetAllIssuers">
+		<parameter name="ymlFile"
+			value="mimoto/GetAllIssuers/GetAllIssuers.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.GetWithParam" />
+		</classes>
+	</test>
+	<test name="GetAllCredentialTypes">
+		<parameter name="ymlFile"
+			value="mimoto/GetAllCredentialTypes/GetAllCredentialTypes.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.GetWithParam" />
+		</classes>
+	</test>
+	<test name="DownloadIssuerCredential">
+		<parameter name="ymlFile"
+			value="mimoto/DownloadIssuerCredential/DownloadIssuerCredential.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.PostWithFormDataBodyForPdfDownload" />
+		</classes>
+	</test>
+	
+	<test name="DeletePolicySunBirdR">
+		<parameter name="ymlFile"
+			value="mimoto/SunBirdR/DeletePolicySunBirdR/DeletePolicySunBirdR.yml" />
+		<parameter name="pathParams" value="insuranceid" />
+		<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.DeleteWithParam" />
+		</classes>
+	</test>
+
+</suite>
