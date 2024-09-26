@@ -31,7 +31,7 @@ public class DataShareServiceImpl {
     @Autowired
     RestApiClient restApiClient;
 
-    @Value("${mosip.data.share.host}")
+    @Value("${mosip.data.share.url}")
     String dataShareHostUrl;
 
     @Value("${mosip.data.share.create.url}")
