@@ -64,7 +64,7 @@ public class VerifierServiceImpl implements VerifierService {
         logger.info("Started the presentation Validation");
         getVerifierByClientId(clientId).ifPresentOrElse(
             (verifierDTO) -> {
-                boolean isValidVerifier = verifierDTO.getRedirectUri().stream().anyMatch(registeredRedirectUri ->
+                boolean isValidVerifier = verifierDTO.getRedirectUris().stream().anyMatch(registeredRedirectUri ->
                         urlValidator.isValid(registeredRedirectUri) &&
                         urlValidator.isValid(redirectUri) &&
                         pathMatcher.match(registeredRedirectUri, redirectUri));

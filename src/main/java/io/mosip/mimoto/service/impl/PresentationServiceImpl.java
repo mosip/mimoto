@@ -38,7 +38,7 @@ public class PresentationServiceImpl implements PresentationService {
     @Value("${mosip.inji.ovp.redirect.url.pattern}")
     String injiOvpRedirectURLPattern;
 
-    @Value("${mosip.data.share.host}")
+    @Value("${mosip.data.share.url}")
     String dataShareUrl;
 
     @Value("${server.tomcat.max-http-response-header-size:65536}")

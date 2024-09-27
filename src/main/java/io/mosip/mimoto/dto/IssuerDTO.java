@@ -31,10 +31,8 @@ public class IssuerDTO {
     @NotBlank
     String client_id;
     @NotBlank
-    @SerializedName(".well-known")
-    @JsonProperty(".well-known")
     @Expose
-    String wellKnownEndpoint;
+    String wellknown_endpoint;
     @Expose
     @JsonInclude(NON_NULL)
     @NotBlank

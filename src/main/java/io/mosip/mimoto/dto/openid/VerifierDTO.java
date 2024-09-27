@@ -16,8 +16,8 @@ public class VerifierDTO {
     @JsonProperty("client_id")
     String clientId;
 
-    @JsonProperty("redirect_uri")
-    List<String> redirectUri;
+    @JsonProperty("redirect_uris")
+    List<String> redirectUris;
 
     @JsonProperty("response_uri")
     List<String> responseUri;

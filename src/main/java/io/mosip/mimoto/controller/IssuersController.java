@@ -50,7 +50,7 @@ public class IssuersController {
         return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
     }
 
-    @GetMapping(value = "/{issuer-id}/.well-known", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{issuer-id}/well-known-proxy", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> getIssuerWellknown(@PathVariable("issuer-id") String issuerId) {
         try {
             CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = issuersService.getIssuerWellknown(issuerId);
