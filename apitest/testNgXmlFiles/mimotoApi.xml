@@ -173,9 +173,9 @@
 			<class name="io.mosip.testrig.apirig.testscripts.GetWithParam" />
 		</classes>
 	</test>
-	<test name="GetAllCredentialTypes">
+	<test name="GetIssuerWellKnown">
 		<parameter name="ymlFile"
-			value="mimoto/GetAllCredentialTypes/GetAllCredentialTypes.yml" />
+			value="mimoto/GetIssuerWellKnown/GetIssuerWellKnown.yml" />
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.GetWithParam" />
 		</classes>
