@@ -27,7 +27,7 @@ WORKDIR /home/${container_user}
 
 ENV work_dir=/home/${container_user}
 
-COPY ./apitest/target $work_dir/
+COPY ./api-test/target $work_dir/
 COPY application.properties $work_dir/
 COPY ["Biometric Devices", "$work_dir/Biometric Devices"]
 COPY ["resource", "$work_dir/resource"]
