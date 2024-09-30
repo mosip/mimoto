@@ -39,7 +39,7 @@ public class VerifiersControllerTest {
     public void getAllTrustedVerifiers() throws Exception {
         VerifierDTO verifierDTO = VerifierDTO.builder()
                 .clientId("test-clientId")
-                .redirectUri(Collections.singletonList("https://test-redirectUri"))
+                .redirectUris(Collections.singletonList("https://test-redirectUri"))
                 .responseUri(Collections.singletonList("https://test-responseUri")).build();
 
         VerifiersDTO trustedVerifiers = VerifiersDTO.builder()
@@ -54,7 +54,7 @@ public class VerifiersControllerTest {
                 .andExpect(jsonPath("$.response.verifiers", Matchers.everyItem(
                         Matchers.allOf(
                                 Matchers.hasKey("client_id"),
-                                Matchers.hasKey("redirect_uri"),
+                                Matchers.hasKey("redirect_uris"),
                                 Matchers.hasKey("response_uri")
                         )
                 )));

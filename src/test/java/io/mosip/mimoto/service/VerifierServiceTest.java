@@ -47,7 +47,7 @@ public class VerifierServiceTest {
     public void shouldReturnAllTrustedIssuers() throws ApiNotAccessibleException, JsonProcessingException {
         VerifierDTO verifierDTO = VerifierDTO.builder()
                 .clientId("test-clientId")
-                .redirectUri(Collections.singletonList("https://test-redirectUri"))
+                .redirectUris(Collections.singletonList("https://test-redirectUri"))
                 .responseUri(Collections.singletonList("https://test-responseUri")).build();
         VerifiersDTO expectedTrustedVerifiers = VerifiersDTO.builder()
                 .verifiers(Collections.singletonList(verifierDTO)).build();
