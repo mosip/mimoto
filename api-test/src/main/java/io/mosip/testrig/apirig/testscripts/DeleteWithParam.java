@@ -26,8 +26,8 @@ import io.mosip.testrig.apirig.testrunner.HealthChecker;
 import io.mosip.testrig.apirig.utils.AdminTestException;
 import io.mosip.testrig.apirig.utils.AdminTestUtil;
 import io.mosip.testrig.apirig.utils.AuthenticationTestException;
-import io.mosip.testrig.apirig.utils.ConfigManager;
 import io.mosip.testrig.apirig.utils.GlobalConstants;
+import io.mosip.testrig.apirig.utils.MimotoConfigManager;
 import io.mosip.testrig.apirig.utils.MimotoUtil;
 import io.mosip.testrig.apirig.utils.OutputValidationUtil;
 import io.mosip.testrig.apirig.utils.ReportUtil;
@@ -40,7 +40,7 @@ public class DeleteWithParam extends AdminTestUtil implements ITest {
 
 	@BeforeClass
 	public static void setLogLevel() {
-		if (ConfigManager.IsDebugEnabled())
+		if (MimotoConfigManager.IsDebugEnabled())
 			logger.setLevel(Level.ALL);
 		else
 			logger.setLevel(Level.ERROR);
@@ -109,7 +109,7 @@ public class DeleteWithParam extends AdminTestUtil implements ITest {
 		else {
 
 			if (testCaseName.contains("ESignet_")) {
-				if (ConfigManager.isInServiceNotDeployedList(GlobalConstants.ESIGNET)) {
+				if (MimotoConfigManager.isInServiceNotDeployedList(GlobalConstants.ESIGNET)) {
 					throw new SkipException("esignet is not deployed hence skipping the testcase");
 				}
 
@@ -117,13 +117,13 @@ public class DeleteWithParam extends AdminTestUtil implements ITest {
 
 				if (testCaseDTO.getEndPoint().startsWith("$SUNBIRDBASEURL$") && testCaseName.contains("SunBirdR")) {
 
-					if (ConfigManager.isInServiceNotDeployedList("sunbirdrc"))
+					if (MimotoConfigManager.isInServiceNotDeployedList("sunbirdrc"))
 						throw new SkipException(GlobalConstants.SERVICE_NOT_DEPLOYED_MESSAGE);
 
-					if (ConfigManager.getSunBirdBaseURL() != null && !ConfigManager.getSunBirdBaseURL().isBlank())
-						tempUrl = ConfigManager.getSunBirdBaseURL();
+					if (MimotoConfigManager.getSunBirdBaseURL() != null && !MimotoConfigManager.getSunBirdBaseURL().isBlank())
+						tempUrl = MimotoConfigManager.getSunBirdBaseURL();
 						//Once sunbird registry is pointing to specific env, remove the above line and uncomment below line
-						//tempUrl = ApplnURI.replace(GlobalConstants.API_INTERNAL, ConfigManager.getSunBirdBaseURL());
+						//tempUrl = ApplnURI.replace(GlobalConstants.API_INTERNAL, MimotoConfigManager.getSunBirdBaseURL());
 					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$SUNBIRDBASEURL$", ""));
 				}
 
