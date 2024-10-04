@@ -76,7 +76,6 @@ public class IdpController {
         } catch (Exception e) {
             log.error("Wallet binding otp error occurred.", e);
             List<ErrorDTO> errors = Utilities.getErrors(PlatformErrorMessages.MIMOTO_OTP_BINDING_EXCEPTION.getCode(), e.getMessage());
-            response.setResponse(null);
             response.setErrors(errors);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
@@ -136,7 +135,6 @@ public class IdpController {
             log.error("Exception Occurred while Invoking the Token Endpoint : ", ex);
             String[] errorObj = Utilities.handleExceptionWithErrorCode(ex);
             List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
-            responseWrapper.setResponse(null);
             responseWrapper.setErrors(errors);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
         }
