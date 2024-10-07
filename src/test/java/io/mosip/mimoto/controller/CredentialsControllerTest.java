@@ -32,7 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @EnableWebMvc
 public class CredentialsControllerTest {
 
-
     @Autowired
     private MockMvc mockMvc;
 
