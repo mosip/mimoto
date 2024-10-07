@@ -9,6 +9,7 @@ import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.util.RestApiClient;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,13 +26,14 @@ import org.springframework.util.PathMatcher;
 
 import java.net.URL;
 
+@Slf4j
 @Service
 public class DataShareServiceImpl {
 
     @Autowired
     RestApiClient restApiClient;
 
-    @Value("${mosip.data.share.host}")
+    @Value("${mosip.data.share.url}")
     String dataShareHostUrl;
 
     @Value("${mosip.data.share.create.url}")
@@ -42,8 +44,6 @@ public class DataShareServiceImpl {
 
     @Value("${mosip.data.share.create.retry.count}")
     Integer maxRetryCount;
-
-    private final Logger logger = LoggerFactory.getLogger(DataShareServiceImpl.class);
 
     @Autowired
     ObjectMapper objectMapper;
@@ -69,7 +69,7 @@ public class DataShareServiceImpl {
 
         HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
         DataShareResponseWrapperDTO dataShareResponseWrapperDTO = pushCredentialIntoDataShare(requestEntity);
-        logger.info("Data pushed into DataShare -> " + dataShareResponseWrapperDTO);
+        log.info("Data pushed into DataShare -> " + dataShareResponseWrapperDTO);
         return  dataShareResponseWrapperDTO.getDataShare().getUrl();
     }
 
@@ -80,7 +80,7 @@ public class DataShareServiceImpl {
             try {
                 dataShareResponseWrapperDTO = restApiClient.postApi(dataShareCreateUrl, MediaType.MULTIPART_FORM_DATA, requestEntity, DataShareResponseWrapperDTO.class);
             } catch (Exception e) {
-                logger.error(attempt + " attempt to push credential failed");
+                log.error(attempt + " attempt to push credential failed");
             }
         }
         if(dataShareResponseWrapperDTO == null){
@@ -92,7 +92,7 @@ public class DataShareServiceImpl {
     }
 
     public  VCCredentialResponse downloadCredentialFromDataShare(PresentationRequestDTO presentationRequestDTO) throws JsonProcessingException {
-        logger.info("Started the Credential Download From DataShare");
+        log.info("Started the Credential Download From DataShare");
         String credentialsResourceUri = presentationRequestDTO.getResource();
         if(!pathMatcher.match(dataShareGetUrlPattern, credentialsResourceUri)){
             throw new InvalidCredentialResourceException(
@@ -106,7 +106,7 @@ public class DataShareServiceImpl {
                     ErrorConstants.SERVER_UNAVAILABLE.getErrorMessage());
         }
         VCCredentialResponse vcCredentialResponse = objectMapper.readValue(vcCredentialResponseString, VCCredentialResponse.class);
-        logger.info("Completed Mapping the Credential to Oject => " + vcCredentialResponse );
+        log.info("Completed Mapping the Credential to Object => " + vcCredentialResponse );
         if(vcCredentialResponse.getCredential() == null){
             throw new InvalidCredentialResourceException(ErrorConstants.RESOURCE_EXPIRED.getErrorMessage());
         }

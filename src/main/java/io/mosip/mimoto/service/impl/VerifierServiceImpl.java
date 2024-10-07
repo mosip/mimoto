@@ -9,6 +9,7 @@ import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidVerifierException;
 import io.mosip.mimoto.service.VerifierService;
 import io.mosip.mimoto.util.Utilities;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,7 @@ import java.util.Optional;
 import static org.apache.commons.validator.routines.UrlValidator.ALLOW_ALL_SCHEMES;
 import static org.apache.commons.validator.routines.UrlValidator.ALLOW_LOCAL_URLS;
 
-
+@Slf4j
 @Service
 public class VerifierServiceImpl implements VerifierService {
 
@@ -42,6 +43,14 @@ public class VerifierServiceImpl implements VerifierService {
 
     private final Logger logger = LoggerFactory.getLogger(VerifierServiceImpl.class);
 
+    public VerifiersDTO getTrustedVerifiers() throws ApiNotAccessibleException, JsonProcessingException {
+        String trustedVerifiersJsonValue = utilities.getTrustedVerifiersJsonValue();
+        if (trustedVerifiersJsonValue == null) {
+            throw new ApiNotAccessibleException();
+        }
+        return objectMapper.readValue(trustedVerifiersJsonValue, VerifiersDTO.class);
+    }
+
     public Optional<VerifierDTO> getVerifierByClientId(String clientId) throws ApiNotAccessibleException, JsonProcessingException {
         String trustedVerifiersJsonValue = utilities.getTrustedVerifiersJsonValue();
         if (trustedVerifiersJsonValue == null) {
@@ -50,12 +59,13 @@ public class VerifierServiceImpl implements VerifierService {
         VerifiersDTO verifiersDTO = objectMapper.readValue(trustedVerifiersJsonValue, VerifiersDTO.class);
         return verifiersDTO.getVerifiers().stream().filter(verifier -> verifier.getClientId().equals(clientId)).findFirst();
     }
+
     @Override
     public void validateVerifier(String clientId, String redirectUri) throws ApiNotAccessibleException, JsonProcessingException {
-        logger.info("Started the presentation Validation");
+        log.info("Started the presentation Validation");
         getVerifierByClientId(clientId).ifPresentOrElse(
             (verifierDTO) -> {
-                boolean isValidVerifier = verifierDTO.getRedirectUri().stream().anyMatch(registeredRedirectUri ->
+                boolean isValidVerifier = verifierDTO.getRedirectUris().stream().anyMatch(registeredRedirectUri ->
                         urlValidator.isValid(registeredRedirectUri) &&
                         urlValidator.isValid(redirectUri) &&
                         pathMatcher.match(registeredRedirectUri, redirectUri));

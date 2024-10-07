@@ -6,6 +6,7 @@ import io.mosip.kernel.biometrics.spi.CbeffUtil;
 import io.mosip.kernel.cbeffutil.impl.CbeffImpl;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.util.LoggerUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -30,11 +31,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
         HibernateJpaAutoConfiguration.class,
         CacheAutoConfiguration.class
 })
+@Slf4j
 @EnableScheduling
 @EnableAsync
 public class MimotoServiceApplication {
-
-    private static Logger logger = LoggerUtil.getLogger(MimotoServiceApplication.class);
 
     @Bean
     @Primary
@@ -57,14 +57,14 @@ public class MimotoServiceApplication {
                 JSONObject.class
             );
         } catch (Exception e) {
-            logger.error("Error when trying to read build.json file: " + e);
+            log.error("Error when trying to read build.json file: " + e);
         }
         return new JSONObject();
     }
 
     public static void main(String[] args) {
         JSONObject gitProp = getGitProp();
-        logger.info(
+        log.info(
                 String.format(
                         "Mimoto Service version: %s - revision: %s @ branch: %s | build @ %s",
                         gitProp.get("git.build.version"),

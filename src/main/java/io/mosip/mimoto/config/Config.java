@@ -11,9 +11,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-
-import io.mosip.kernel.core.logger.spi.Logger;
-import io.mosip.mimoto.util.LoggerUtil;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
@@ -26,7 +23,6 @@ import java.util.Map;
 @EnableMethodSecurity
 @Order(1)
 public class Config {
-    private Logger logger = LoggerUtil.getLogger(Config.class);
 
     @Value("${mosipbox.public.url}")
     private String baseUrl;

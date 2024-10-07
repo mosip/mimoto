@@ -51,14 +51,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{HOST}}/issuers/StayProtected/.well-known",
+							"raw": "{{HOST}}/issuers/StayProtected/well-known-proxy",
 							"host": [
 								"{{HOST}}"
 							],
 							"path": [
 								"issuers",
 								"StayProtected",
-								".well-known"
+								"well-known-proxy"
 							]
 						}
 					},

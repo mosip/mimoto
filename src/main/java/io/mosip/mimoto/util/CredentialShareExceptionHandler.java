@@ -12,7 +12,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.controller.CredentialShareController;
 import io.mosip.mimoto.dto.CredentialShareResponse;
 import io.mosip.mimoto.dto.ErrorDTO;
@@ -23,7 +22,7 @@ import io.mosip.mimoto.exception.InvalidTokenException;
 
 /**
  * The Class CredentialShareExceptionHandler.
- * 
+ *
  * @author M1048358 Alok
  */
 @RestControllerAdvice(assignableTypes = CredentialShareController.class)
@@ -41,8 +40,6 @@ public class CredentialShareExceptionHandler {
     /** The env. */
     @Autowired
     private Environment env;
-
-    private Logger logger = LoggerUtil.getLogger(CredentialShareExceptionHandler.class);
 
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

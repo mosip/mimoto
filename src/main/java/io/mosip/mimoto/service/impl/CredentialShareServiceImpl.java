@@ -16,6 +16,7 @@ import io.mosip.mimoto.model.EventModel;
 import io.mosip.mimoto.service.CredentialShareService;
 import io.mosip.mimoto.service.RestClientService;
 import io.mosip.mimoto.util.*;
+import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -41,6 +42,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 
+@Slf4j
 @Service
 public class CredentialShareServiceImpl implements CredentialShareService {
     public static final String VC_REQUEST_FILE_NAME = "%s.json";
@@ -81,8 +83,6 @@ public class CredentialShareServiceImpl implements CredentialShareService {
     /** The Constant UIN_TEXT_FILE. */
     public static final String UIN_TEXT_FILE = "textFile";
 
-    private Logger logger = LoggerUtil.getLogger(CredentialShareServiceImpl.class);
-
     @Value("${vercred.type.vid:PCN}")
     private String vid;
 
@@ -121,7 +121,7 @@ public class CredentialShareServiceImpl implements CredentialShareService {
         Path eventFilePath = Path.of(utilities.getDataPath(),
                 String.format(EVENT_JSON_FILE_NAME, eventModel.getEvent().getTransactionId()));
         Files.write(eventFilePath, gson.toJson(eventModel).getBytes(), StandardOpenOption.CREATE);
-        logger.info("Event data saved:: " + eventFilePath.toFile().getAbsolutePath());
+        log.info("Event data saved:: " + eventFilePath.toFile().getAbsolutePath());
 
         Map<String, byte[]> byteMap = new HashMap<>();
         String decodedCredential = null;
@@ -158,9 +158,9 @@ public class CredentialShareServiceImpl implements CredentialShareService {
                     String.format(CARD_JSON_FILE_NAME, eventModel.getEvent().getTransactionId()));
             Files.deleteIfExists(textFilePath);
             Files.write(textFilePath, byteMap.get(UIN_TEXT_FILE), StandardOpenOption.CREATE);
-            logger.info("Generated files from event:: " + textFilePath.toFile().getAbsolutePath());
+            log.info("Generated files from event:: " + textFilePath.toFile().getAbsolutePath());
         } catch (Exception e){
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             return false;
         }
 
@@ -175,7 +175,7 @@ public class CredentialShareServiceImpl implements CredentialShareService {
         } catch (Exception e) {
             description.setMessage(PlatformErrorMessages.MIMOTO_VC_DECRYPTION_FAILED.getMessage());
             description.setCode(PlatformErrorMessages.MIMOTO_VC_DECRYPTION_FAILED.getCode());
-            logger.error(description.toString(), e);
+            log.error(description.toString(), e);
             throw new DocumentGeneratorException(DocumentGeneratorExceptionCodeConstant.VC_DECRYPTION_EXCEPTION.getErrorCode(),
                     e.getMessage() + ExceptionUtils.getStackTrace(e));
         }
@@ -188,7 +188,7 @@ public class CredentialShareServiceImpl implements CredentialShareService {
             String credentialType,
             String requestId,
             String sign) {
-        logger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+        log.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
                 "CredentialShareServiceImpl::getDocuments()::entry");
 
         Map<String, byte[]> byteMap = new HashMap<>();
@@ -214,7 +214,7 @@ public class CredentialShareServiceImpl implements CredentialShareService {
         } catch (Exception e) {
             description.setMessage(PlatformErrorMessages.MIMOTO_DOCUMENT_GENERATION_FAILED.getMessage());
             description.setCode(PlatformErrorMessages.MIMOTO_DOCUMENT_GENERATION_FAILED.getCode());
-            logger.error(description.toString(), e);
+            log.error(description.toString(), e);
             throw new DocumentGeneratorException(DocumentGeneratorExceptionCodeConstant.PDF_EXCEPTION.getErrorCode(),
                     e.getMessage() + ExceptionUtils.getStackTrace(e));
 
@@ -244,7 +244,7 @@ public class CredentialShareServiceImpl implements CredentialShareService {
             auditLogRequestBuilder.createAuditRequestBuilder(description.getMessage(), eventId, eventName, eventType,
                     moduleId, moduleName, id);
         }
-        logger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(), "",
+        log.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(), "",
                 "CredentialShareServiceImpl::getDocuments()::exit");
 
         return byteMap;
@@ -304,7 +304,7 @@ public class CredentialShareServiceImpl implements CredentialShareService {
                     }
                 }
             } catch (Exception e) {
-                logger.error("Something wrong when trying to get biometrics data", e);
+                log.error("Something wrong when trying to get biometrics data", e);
             }
         }
 
@@ -402,7 +402,7 @@ public class CredentialShareServiceImpl implements CredentialShareService {
                     cryptoWithPinResponseDto = cryptoUtil.decryptWithPin(cryptoWithPinRequestDto);
                 } catch (InvalidKeyException | NoSuchAlgorithmException | InvalidKeySpecException
                          | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
-                    logger.error("Error while decrypting the data", e);
+                    log.error("Error while decrypting the data", e);
                     throw new CryptoManagerException(PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getCode(),
                             PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getMessage(), e);
                 }

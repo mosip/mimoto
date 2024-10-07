@@ -10,6 +10,7 @@ import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.util.RestApiClient;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class PresentationServiceImpl implements PresentationService {
 
@@ -38,13 +40,11 @@ public class PresentationServiceImpl implements PresentationService {
     @Value("${mosip.inji.ovp.redirect.url.pattern}")
     String injiOvpRedirectURLPattern;
 
-    @Value("${mosip.data.share.host}")
+    @Value("${mosip.data.share.url}")
     String dataShareUrl;
 
     @Value("${server.tomcat.max-http-response-header-size:65536}")
     Integer maximumResponseHeaderSize;
-
-    private final Logger logger = LoggerFactory.getLogger(PresentationServiceImpl.class);
 
     @Override
     public String authorizePresentation(PresentationRequestDTO presentationRequestDTO) throws IOException {
@@ -55,7 +55,7 @@ public class PresentationServiceImpl implements PresentationService {
             throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
         }
 
-        logger.info("Started the Constructing VP Token");
+        log.info("Started the Constructing VP Token");
         String redirectionString = presentationDefinitionDTO.getInputDescriptors()
                 .stream()
                 .findFirst()
@@ -64,7 +64,7 @@ public class PresentationServiceImpl implements PresentationService {
                             .stream()
                             .anyMatch(proofType -> vcCredentialResponse.getCredential().getProof().getType().equals(proofType));
                     if (matchingProofTypes) {
-                        logger.info("Started the Construction of VP token");
+                        log.info("Started the Construction of VP token");
                         try {
                             VerifiablePresentationDTO verifiablePresentationDTO = constructVerifiablePresentationString(vcCredentialResponse.getCredential());
                             String presentationSubmission = constructPresentationSubmission(verifiablePresentationDTO, presentationDefinitionDTO, inputDescriptorDTO);
@@ -77,7 +77,7 @@ public class PresentationServiceImpl implements PresentationService {
                             throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
                         }
                     }
-                    logger.info("No Credentials Matched the VP request.");
+                    log.info("No Credentials Matched the VP request.");
                     throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
                 }).orElseThrow(() -> new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage()));
         if(redirectionString.length() > maximumResponseHeaderSize) {

@@ -32,6 +32,7 @@ import io.mosip.pixelpass.PixelPass;
 import io.mosip.vercred.CredentialsVerifier;
 import io.mosip.vercred.exception.*;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.jetbrains.annotations.NotNull;
@@ -54,10 +55,9 @@ import java.util.*;
 
 import static io.mosip.mimoto.exception.ErrorConstants.*;
 
+@Slf4j
 @Service
 public class CredentialServiceImpl implements CredentialService {
-
-    private final Logger logger = LoggerUtil.getLogger(CredentialServiceImpl.class);
 
     @Autowired
     private Utilities utilities;
@@ -126,7 +126,7 @@ public class CredentialServiceImpl implements CredentialService {
         VCCredentialResponse vcCredentialResponse = downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
         boolean verificationStatus = vcCredentialResponse.getCredential().getProof().getType().equals("RsaSignature2018") ? verifyCredential(vcCredentialResponse) : true;
         if(verificationStatus) {
-            String dataShareUrl = dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse));
+            String dataShareUrl =  QRCodeType.OnlineSharing.equals(issuerConfig.getQr_code_type()) ? dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse)) : "";
             return generatePdfForVerifiableCredentials(vcCredentialResponse, issuerConfig, credentialsSupportedResponse, dataShareUrl);
         }
         throw new VCVerificationException(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(),
@@ -136,7 +136,7 @@ public class CredentialServiceImpl implements CredentialService {
     public VCCredentialResponse downloadCredential(String credentialEndpoint, VCCredentialRequest vcCredentialRequest, String accessToken) throws InvalidCredentialResourceException {
         VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialEndpoint, MediaType.APPLICATION_JSON,
                 vcCredentialRequest, VCCredentialResponse.class, accessToken);
-        logger.debug("VC Credential Response is -> " + vcCredentialResponse);
+        log.debug("VC Credential Response is -> " + vcCredentialResponse);
         if (vcCredentialResponse == null) throw new RuntimeException("VC Credential Issue API not accessible");
         return vcCredentialResponse;
     }
@@ -243,7 +243,7 @@ public class CredentialServiceImpl implements CredentialService {
                     }
                 });
 
-        String qrCodeImage = QRCodeType.OVPRequest.equals(issuerDTO.getQr_code_type()) ? constructQRCodeWithAuthorizeRequest(vcCredentialResponse, dataShareUrl) :
+        String qrCodeImage = QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type()) ? constructQRCodeWithAuthorizeRequest(vcCredentialResponse, dataShareUrl) :
                 QRCodeType.EmbeddedVC.equals(issuerDTO.getQr_code_type()) ? constructQRCodeWithVCData(vcCredentialResponse) : "";
         data.put("qrCodeImage", qrCodeImage);
         data.put("logoUrl", issuerDTO.getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));

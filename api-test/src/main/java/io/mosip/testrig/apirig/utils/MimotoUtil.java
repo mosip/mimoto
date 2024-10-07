@@ -34,18 +34,33 @@ public class MimotoUtil extends AdminTestUtil {
 		return testCaseDTO;
 	}
 	
-	public static String isTestCaseValidForExecution(TestCaseDTO testCaseDTO) {
+	public static TestCaseDTO isTestCaseValidForTheExecution(TestCaseDTO testCaseDTO) {
 		String testCaseName = testCaseDTO.getTestCaseName();
-		if (isOTPEnabled().equals("false") && (testCaseDTO.getEndPoint().contains(GlobalConstants.SEND_OTP_ENDPOINT)
-				|| testCaseDTO.getInput().contains(GlobalConstants.SEND_OTP_ENDPOINT)
-				|| testCaseName.startsWith(GlobalConstants.MIMOTO_CREDENTIAL_STATUS) || testCaseName.contains("_vid"))) {
-			throw new SkipException(GlobalConstants.OTP_FEATURE_NOT_SUPPORTED);
+		String endpoint = testCaseDTO.getEndPoint();
+		String inputJson = testCaseDTO.getInput();
+		
+		
+		if (isOTPEnabled().equals("false")) {
+			if (testCaseDTO.getEndPoint().contains(GlobalConstants.SEND_OTP_ENDPOINT)
+					|| testCaseDTO.getInput().contains(GlobalConstants.SEND_OTP_ENDPOINT)
+					|| testCaseName.startsWith(GlobalConstants.MIMOTO_CREDENTIAL_STATUS)
+					|| (testCaseName.startsWith("Mimoto_Generate_") && endpoint.contains("/v1/mimoto/vid"))) {
+				throw new SkipException(GlobalConstants.OTP_FEATURE_NOT_SUPPORTED);
+			}
+			
+			if (inputJson.contains("_vid$")) {
+				inputJson = inputJson.replace("_vid$", "_VID$");
+				testCaseDTO.setInput(inputJson);
+			}
+		}
+		if (isOTPEnabled().equals("true") && endpoint.contains("/idrepository/v1/vid")) {
+			throw new SkipException(GlobalConstants.FEATURE_NOT_SUPPORTED_MESSAGE);
 		}
 		
 		if (SkipTestCaseHandler.isTestCaseInSkippedList(testCaseName)) {
 			throw new SkipException(GlobalConstants.KNOWN_ISSUES);
 		}
-		return testCaseName;
+		return testCaseDTO;
 	}
 	
 }

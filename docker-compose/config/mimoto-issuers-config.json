@@ -71,9 +71,9 @@
       "authorization_audience": "https://esignet-insurance.collab.mosip.net/v1/esignet/oauth/v2/token",
       "proxy_token_endpoint": "https://esignet-mosipid.collab.mosip.net/v1/esignet/oauth/v2/token",
       "client_alias": "mpartner-default-test-mosipid",
-      "qr_code_type": "OVPRequest",
+      "qr_code_type": "OnlineSharing",
       "enabled": "true",
-      ".well-known": "https://injicertify-mosipid.collab.mosip.net/v1/certify/issuance/.well-known/openid-credential-issuer"
+      "wellknown_endpoint": "https://injicertify-mosipid.collab.mosip.net/v1/certify/issuance/.well-known/openid-credential-issuer"
     },
     {
       "credential_issuer": "StayProtected",
@@ -96,9 +96,9 @@
       "authorization_audience": "https://esignet-insurance.collab.mosip.net/v1/esignet/oauth/v2/token",
       "proxy_token_endpoint": "https://esignet-insurance.collab.mosip.net/v1/esignet/oauth/v2/token",
       "client_alias": "esignet-sunbird-partner",
-      "qr_code_type": "OVPRequest",
+      "qr_code_type": "OnlineSharing",
       "enabled": "true",
-      ".well-known": "https://injicertify-insurance.collab.mosip.net/v1/certify/issuance/.well-known/openid-credential-issuer"
+      "wellknown_endpoint": "https://injicertify-insurance.collab.mosip.net/v1/certify/issuance/.well-known/openid-credential-issuer"
     },
     {
       "credential_issuer": "Mock",
@@ -121,9 +121,9 @@
       "authorization_audience": "https://esignet-insurance.collab.mosip.net/v1/esignet/oauth/v2/token",
       "proxy_token_endpoint": "https://esignet-mock.collab.mosip.net/v1/esignet/oauth/v2/token",
       "client_alias": "mpartner-mock-testing",
-      "qr_code_type": "OVPRequest",
+      "qr_code_type": "OnlineSharing",
       "enabled": "true",
-      ".well-known": "https://injicertify-mock.collab.mosip.net/v1/certify/issuance/.well-known/openid-credential-issuer"
+      "wellknown_endpoint": "https://injicertify-mock.collab.mosip.net/v1/certify/issuance/.well-known/openid-credential-issuer"
     }
   ]
 }

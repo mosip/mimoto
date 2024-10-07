@@ -5,6 +5,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.servers.Server;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.models.GroupedOpenApi;
@@ -12,10 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+@Slf4j
 @Configuration
 public class SwaggerConfig {
-
-    private static final Logger logger = LoggerFactory.getLogger(SwaggerConfig.class);
 
     @Autowired
     private OpenApiProperties openApiProperties;
@@ -35,7 +35,7 @@ public class SwaggerConfig {
         openApiProperties.getService().getServers().forEach(server -> {
             api.addServersItem(new Server().description(server.getDescription()).url(server.getUrl()));
         });
-        logger.info("swagger open api bean is ready");
+        log.info("swagger open api bean is ready");
         return api;
     }
 

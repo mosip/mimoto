@@ -5,6 +5,7 @@ import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.core.http.RequestWrapper;
 import io.mosip.mimoto.dto.SecretKeyRequest;
 import io.mosip.mimoto.exception.TokenGenerationFailedException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -36,15 +37,13 @@ import java.util.Objects;
  *
  * @author Rishabh Keshari
  */
+@Slf4j
 @Component
 public class RestApiClient {
 
     public static final String TOKEN = "token";
     public static final String CONTENT_TYPE = "Content-Type";
-    /**
-     * The logger.
-     */
-    private Logger logger = LoggerUtil.getLogger(RestApiClient.class);
+
     private static final String AUTHORIZATION = "Authorization=";
     /**
      * The builder.
@@ -98,11 +97,11 @@ public class RestApiClient {
             rt = plainRestTemplate;
         }
         try {
-            logger.info("RestApiClient::getApi()::entry uri: {}", uri);
+            log.info("RestApiClient::getApi()::entry uri: {}", uri);
             result = (T) rt.exchange(uri, HttpMethod.GET, setRequestHeader(null, null), responseType)
                     .getBody();
         } catch (Exception e) {
-            logger.error("RestApiClient::getApi()::error uri: {} {} {}", uri, e.getMessage(), e);
+            log.error("RestApiClient::getApi()::error uri: {} {} {}", uri, e.getMessage(), e);
         }
         return result;
     }
@@ -125,7 +124,7 @@ public class RestApiClient {
         try {
             result = (T) rt.getForObject(url, responseType);
         } catch (Exception e) {
-            logger.error("RestApiClient::getApi()::error uri:{} {} {}", url, e.getMessage(), e);
+            log.error("RestApiClient::getApi()::error uri:{} {} {}", url, e.getMessage(), e);
         }
         return result;
     }
@@ -149,10 +148,10 @@ public class RestApiClient {
             rt = plainRestTemplate;
         }
         try {
-            logger.info("RestApiClient::postApi()::entry uri: {}", uri);
+            log.info("RestApiClient::postApi()::entry uri: {}", uri);
             result = (T) rt.postForObject(uri, setRequestHeader(requestType, mediaType), responseClass);
         } catch (Exception e) {
-            logger.error("RestApiClient::postApi()::error uri: {} {} {}", uri, e.getMessage(), e);
+            log.error("RestApiClient::postApi()::error uri: {} {} {}", uri, e.getMessage(), e);
         }
         return result;
     }
@@ -160,10 +159,10 @@ public class RestApiClient {
     public <T> T postApi(String uri, MediaType mediaType, Object requestType, Class<?> responseClass, boolean useBearerToken) throws Exception {
         T result = null;
         try {
-            logger.info("RestApiClient::postApi()::entry uri: {}", uri);
+            log.info("RestApiClient::postApi()::entry uri: {}", uri);
             result = (T) plainRestTemplate.postForObject(uri, setRequestHeader(requestType, mediaType, useBearerToken), responseClass);
         } catch (Exception e) {
-            logger.error("RestApiClient::postApi()::error uri: {} {} {}", uri, e.getMessage(), e);
+            log.error("RestApiClient::postApi()::error uri: {} {} {}", uri, e.getMessage(), e);
             if (e instanceof HttpClientErrorException) {
                 HttpClientErrorException ex = (HttpClientErrorException)e;
                 if (ex.getStatusCode().value() == 401) {
@@ -181,10 +180,10 @@ public class RestApiClient {
     public <T> T postApi(String uri, MediaType mediaType, Object requestType, Class<?> responseClass, String bearerToken){
         T result = null;
         try {
-            logger.info("RestApiClient::postApi()::entry uri: {}", uri);
+            log.info("RestApiClient::postApi()::entry uri: {}", uri);
             result = (T) plainRestTemplate.postForObject(uri, setRequestHeader(requestType, mediaType, bearerToken), responseClass);
         } catch (Exception e) {
-            logger.error("RestApiClient::postApi()::error uri: {} {} {}", uri, e.getMessage(), e);
+            log.error("RestApiClient::postApi()::error uri: {} {} {}", uri, e.getMessage(), e);
         }
         return result;
     }

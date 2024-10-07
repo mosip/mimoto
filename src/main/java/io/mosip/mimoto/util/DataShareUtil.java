@@ -1,9 +1,13 @@
 package io.mosip.mimoto.util;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.constant.ApiName;
+import io.mosip.mimoto.dto.DataShare;
+import io.mosip.mimoto.dto.DataShareResponseDto;
+import io.mosip.mimoto.dto.ErrorDTO;
+import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.exception.DataShareException;
+import io.mosip.mimoto.service.RestClientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
@@ -14,16 +18,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 
-import io.mosip.kernel.core.logger.spi.Logger;
-import io.mosip.mimoto.constant.ApiName;
-import io.mosip.mimoto.dto.DataShare;
-import io.mosip.mimoto.dto.DataShareResponseDto;
-import io.mosip.mimoto.dto.ErrorDTO;
-import io.mosip.mimoto.exception.ApiNotAccessibleException;
-import io.mosip.mimoto.exception.DataShareException;
-import io.mosip.mimoto.service.RestClientService;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class DataShareUtil {
@@ -33,8 +30,6 @@ public class DataShareUtil {
 
     @Autowired
     private ObjectMapper mapper;
-
-    Logger logger = LoggerUtil.getLogger(DataShareUtil.class);
 
     private static final String GET_DATA = "getDataShare";
 

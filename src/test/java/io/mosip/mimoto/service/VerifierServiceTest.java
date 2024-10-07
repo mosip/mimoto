@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
@@ -40,6 +41,21 @@ public class VerifierServiceTest {
         String verifiersListString = TestUtilities.getObjectAsString(verifiersDTO);
         when(utilities.getTrustedVerifiersJsonValue()).thenReturn(verifiersListString);
         when(objectMapper.readValue(eq(verifiersListString), eq(VerifiersDTO.class))).thenReturn(verifiersDTO);
+    }
+
+    @Test
+    public void shouldReturnAllTrustedIssuers() throws ApiNotAccessibleException, JsonProcessingException {
+        VerifierDTO verifierDTO = VerifierDTO.builder()
+                .clientId("test-clientId")
+                .redirectUris(Collections.singletonList("https://test-redirectUri"))
+                .responseUris(Collections.singletonList("https://test-responseUri")).build();
+        VerifiersDTO expectedTrustedVerifiers = VerifiersDTO.builder()
+                .verifiers(Collections.singletonList(verifierDTO)).build();
+
+        VerifiersDTO actualTrustedVerifiers = verifiersService.getTrustedVerifiers();
+
+        assertNotNull(actualTrustedVerifiers);
+        assertEquals(actualTrustedVerifiers,expectedTrustedVerifiers);
     }
 
     @Test

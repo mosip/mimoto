@@ -28,15 +28,15 @@ import io.mosip.testrig.apirig.testrunner.HealthChecker;
 import io.mosip.testrig.apirig.utils.AdminTestException;
 import io.mosip.testrig.apirig.utils.AdminTestUtil;
 import io.mosip.testrig.apirig.utils.AuthenticationTestException;
-import io.mosip.testrig.apirig.utils.ConfigManager;
 import io.mosip.testrig.apirig.utils.GlobalConstants;
+import io.mosip.testrig.apirig.utils.MimotoConfigManager;
 import io.mosip.testrig.apirig.utils.MimotoUtil;
 import io.mosip.testrig.apirig.utils.OutputValidationUtil;
 import io.mosip.testrig.apirig.utils.ReportUtil;
 import io.restassured.response.Response;
 
-public class SimplePost extends AdminTestUtil implements ITest {
-	private static final Logger logger = Logger.getLogger(SimplePost.class);
+public class GetWithParam extends AdminTestUtil implements ITest {
+	private static final Logger logger = Logger.getLogger(GetWithParam.class);
 	protected String testCaseName = "";
 	public Response response = null;
 	public boolean sendEsignetToken = false;
@@ -44,7 +44,7 @@ public class SimplePost extends AdminTestUtil implements ITest {
 
 	@BeforeClass
 	public static void setLogLevel() {
-		if (ConfigManager.IsDebugEnabled())
+		if (MimotoConfigManager.IsDebugEnabled())
 			logger.setLevel(Level.ALL);
 		else
 			logger.setLevel(Level.ERROR);
@@ -83,10 +83,8 @@ public class SimplePost extends AdminTestUtil implements ITest {
 	@Test(dataProvider = "testcaselist")
 	public void test(TestCaseDTO testCaseDTO) throws AuthenticationTestException, AdminTestException {
 		testCaseName = testCaseDTO.getTestCaseName();
-		testCaseName = MimotoUtil.isTestCaseValidForExecution(testCaseDTO);
+		testCaseDTO = MimotoUtil.isTestCaseValidForTheExecution(testCaseDTO);
 		testCaseDTO = MimotoUtil.changeContextURLByFlag(testCaseDTO);
-		auditLogCheck = testCaseDTO.isAuditLogCheck();
-		String[] templateFields = testCaseDTO.getTemplateFields();
 		if (HealthChecker.signalTerminateExecution) {
 			throw new SkipException(
 					GlobalConstants.TARGET_ENV_HEALTH_CHECK_FAILED + HealthChecker.healthCheckFailureMapS);
@@ -98,14 +96,27 @@ public class SimplePost extends AdminTestUtil implements ITest {
 				throw new SkipException(GlobalConstants.VID_FEATURE_NOT_SUPPORTED);
 			}
 		}
+		auditLogCheck = testCaseDTO.isAuditLogCheck();
+		String[] templateFields = testCaseDTO.getTemplateFields();
 
-		String inputJson = getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate());
+		if (testCaseDTO.getInputTemplate().contains(GlobalConstants.$PRIMARYLANG$))
+			testCaseDTO.setInputTemplate(testCaseDTO.getInputTemplate().replace(GlobalConstants.$PRIMARYLANG$,
+					BaseTestCase.languageList.get(0)));
+		if (testCaseDTO.getOutputTemplate().contains(GlobalConstants.$PRIMARYLANG$))
+			testCaseDTO.setOutputTemplate(testCaseDTO.getOutputTemplate().replace(GlobalConstants.$PRIMARYLANG$,
+					BaseTestCase.languageList.get(0)));
+		if (testCaseDTO.getInput().contains(GlobalConstants.$PRIMARYLANG$))
+			testCaseDTO.setInput(
+					testCaseDTO.getInput().replace(GlobalConstants.$PRIMARYLANG$, BaseTestCase.languageList.get(0)));
+		if (testCaseDTO.getOutput().contains(GlobalConstants.$PRIMARYLANG$))
+			testCaseDTO.setOutput(
+					testCaseDTO.getOutput().replace(GlobalConstants.$PRIMARYLANG$, BaseTestCase.languageList.get(0)));
 
 		if (testCaseDTO.getTemplateFields() != null && templateFields.length > 0) {
 			ArrayList<JSONObject> inputtestCases = AdminTestUtil.getInputTestCase(testCaseDTO);
 			ArrayList<JSONObject> outputtestcase = AdminTestUtil.getOutputTestCase(testCaseDTO);
 			for (int i = 0; i < languageList.size(); i++) {
-				response = postWithBodyAndCookie(ApplnURI + testCaseDTO.getEndPoint(),
+				response = getWithPathParamAndCookie(ApplnURI + testCaseDTO.getEndPoint(),
 						getJsonFromTemplate(inputtestCases.get(i).toString(), testCaseDTO.getInputTemplate()),
 						COOKIENAME, testCaseDTO.getRole(), testCaseDTO.getTestCaseName());
 
@@ -121,44 +132,36 @@ public class SimplePost extends AdminTestUtil implements ITest {
 		}
 
 		else {
+			
 			if (testCaseName.contains("ESignet_")) {
-				if (ConfigManager.isInServiceNotDeployedList(GlobalConstants.ESIGNET)) {
+				if (MimotoConfigManager.isInServiceNotDeployedList(GlobalConstants.ESIGNET)) {
 					throw new SkipException("esignet is not deployed hence skipping the testcase");
 				}
 
 				String tempUrl = ApplnURI;
-				
+
 				if (testCaseDTO.getEndPoint().startsWith("$SUNBIRDBASEURL$") && testCaseName.contains("SunBirdR")) {
 
-					if (ConfigManager.isInServiceNotDeployedList("sunbirdrc"))
+					if (MimotoConfigManager.isInServiceNotDeployedList("sunbirdrc"))
 						throw new SkipException(GlobalConstants.SERVICE_NOT_DEPLOYED_MESSAGE);
 
-					if (ConfigManager.getSunBirdBaseURL() != null && !ConfigManager.getSunBirdBaseURL().isBlank())
-						tempUrl = ConfigManager.getSunBirdBaseURL();
+					if (MimotoConfigManager.getSunBirdBaseURL() != null && !MimotoConfigManager.getSunBirdBaseURL().isBlank())
+						tempUrl = MimotoConfigManager.getSunBirdBaseURL();
 						//Once sunbird registry is pointing to specific env, remove the above line and uncomment below line
-						//tempUrl = ApplnURI.replace(GlobalConstants.API_INTERNAL, ConfigManager.getSunBirdBaseURL());
+						//tempUrl = ApplnURI.replace(GlobalConstants.API_INTERNAL, MimotoConfigManager.getSunBirdBaseURL());
 					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$SUNBIRDBASEURL$", ""));
-					
-					response = postWithBodyAndCookie(tempUrl + testCaseDTO.getEndPoint(), inputJson, auditLogCheck,
-							COOKIENAME, testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
-					
-				} else if (testCaseDTO.getEndPoint().startsWith("$ESIGNETMOCKBASEURL$")
-						&& testCaseName.contains("SunBirdC")) {
-					if (ConfigManager.isInServiceNotDeployedList("sunbirdrc"))
-						throw new SkipException(GlobalConstants.SERVICE_NOT_DEPLOYED_MESSAGE);
-
-					if (ConfigManager.getEsignetMockBaseURL() != null
-							&& !ConfigManager.getEsignetMockBaseURL().isBlank())
-						tempUrl = ApplnURI.replace("api-internal.", ConfigManager.getEsignetMockBaseURL());
-					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$ESIGNETMOCKBASEURL$", ""));
-					
-					response = postRequestWithCookieAuthHeaderAndXsrfToken(tempUrl + testCaseDTO.getEndPoint(),
-							inputJson, COOKIENAME, testCaseDTO.getTestCaseName());
 				}
+
+				response = getWithPathParamAndCookie(tempUrl + testCaseDTO.getEndPoint(),
+						getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), auditLogCheck,
+						COOKIENAME, testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
+
 			} else {
-				response = postWithBodyAndCookie(ApplnURI + testCaseDTO.getEndPoint(), inputJson, auditLogCheck,
+				response = getWithPathParamAndCookie(ApplnURI + testCaseDTO.getEndPoint(),
+						getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), auditLogCheck,
 						COOKIENAME, testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
 			}
+				
 			Map<String, List<OutputValidationDto>> ouputValid = null;
 			if (testCaseName.contains("_StatusCode")) {
 
@@ -174,16 +177,9 @@ public class SimplePost extends AdminTestUtil implements ITest {
 			}
 
 			Reporter.log(ReportUtil.getOutputValidationReport(ouputValid));
-
-			if (!OutputValidationUtil.publishOutputResult(ouputValid)) {
-				if (response.asString().contains("IDA-OTA-001"))
-					throw new AdminTestException(
-							"Exceeded number of OTP requests in a given time, Increase otp.request.flooding.max-count");
-				else
-					throw new AdminTestException("Failed at otp output validation");
-			}
+			if (!OutputValidationUtil.publishOutputResult(ouputValid))
+				throw new AdminTestException("Failed at output validation");
 		}
-
 	}
 
 	/**

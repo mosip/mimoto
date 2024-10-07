@@ -2,7 +2,6 @@ package io.mosip.testrig.apirig.testscripts;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,28 +22,25 @@ import org.testng.internal.TestResult;
 
 import io.mosip.testrig.apirig.dto.OutputValidationDto;
 import io.mosip.testrig.apirig.dto.TestCaseDTO;
-import io.mosip.testrig.apirig.testrunner.BaseTestCase;
 import io.mosip.testrig.apirig.testrunner.HealthChecker;
 import io.mosip.testrig.apirig.utils.AdminTestException;
 import io.mosip.testrig.apirig.utils.AdminTestUtil;
 import io.mosip.testrig.apirig.utils.AuthenticationTestException;
-import io.mosip.testrig.apirig.utils.ConfigManager;
 import io.mosip.testrig.apirig.utils.GlobalConstants;
+import io.mosip.testrig.apirig.utils.MimotoConfigManager;
 import io.mosip.testrig.apirig.utils.MimotoUtil;
 import io.mosip.testrig.apirig.utils.OutputValidationUtil;
 import io.mosip.testrig.apirig.utils.ReportUtil;
 import io.restassured.response.Response;
 
-public class GetWithParam extends AdminTestUtil implements ITest {
-	private static final Logger logger = Logger.getLogger(GetWithParam.class);
+public class DeleteWithParam extends AdminTestUtil implements ITest {
+	private static final Logger logger = Logger.getLogger(DeleteWithParam.class);
 	protected String testCaseName = "";
 	public Response response = null;
-	public boolean sendEsignetToken = false;
-	public boolean auditLogCheck = false;
 
 	@BeforeClass
 	public static void setLogLevel() {
-		if (ConfigManager.IsDebugEnabled())
+		if (MimotoConfigManager.IsDebugEnabled())
 			logger.setLevel(Level.ALL);
 		else
 			logger.setLevel(Level.ERROR);
@@ -66,7 +62,6 @@ public class GetWithParam extends AdminTestUtil implements ITest {
 	@DataProvider(name = "testcaselist")
 	public Object[] getTestCaseList(ITestContext context) {
 		String ymlFile = context.getCurrentXmlTest().getLocalParameters().get("ymlFile");
-		sendEsignetToken = context.getCurrentXmlTest().getLocalParameters().containsKey("sendEsignetToken");
 		logger.info("Started executing yml: " + ymlFile);
 		return getYmlTestData(ymlFile);
 	}
@@ -83,40 +78,20 @@ public class GetWithParam extends AdminTestUtil implements ITest {
 	@Test(dataProvider = "testcaselist")
 	public void test(TestCaseDTO testCaseDTO) throws AuthenticationTestException, AdminTestException {
 		testCaseName = testCaseDTO.getTestCaseName();
-		testCaseName = MimotoUtil.isTestCaseValidForExecution(testCaseDTO);
+		testCaseDTO = MimotoUtil.isTestCaseValidForTheExecution(testCaseDTO);
 		testCaseDTO = MimotoUtil.changeContextURLByFlag(testCaseDTO);
 		if (HealthChecker.signalTerminateExecution) {
 			throw new SkipException(
 					GlobalConstants.TARGET_ENV_HEALTH_CHECK_FAILED + HealthChecker.healthCheckFailureMapS);
 		}
-
-		if (testCaseDTO.getTestCaseName().contains("VID") || testCaseDTO.getTestCaseName().contains("Vid")) {
-			if (!BaseTestCase.getSupportedIdTypesValueFromActuator().contains("VID")
-					&& !BaseTestCase.getSupportedIdTypesValueFromActuator().contains("vid")) {
-				throw new SkipException(GlobalConstants.VID_FEATURE_NOT_SUPPORTED);
-			}
-		}
-		auditLogCheck = testCaseDTO.isAuditLogCheck();
 		String[] templateFields = testCaseDTO.getTemplateFields();
-
-		if (testCaseDTO.getInputTemplate().contains(GlobalConstants.$PRIMARYLANG$))
-			testCaseDTO.setInputTemplate(testCaseDTO.getInputTemplate().replace(GlobalConstants.$PRIMARYLANG$,
-					BaseTestCase.languageList.get(0)));
-		if (testCaseDTO.getOutputTemplate().contains(GlobalConstants.$PRIMARYLANG$))
-			testCaseDTO.setOutputTemplate(testCaseDTO.getOutputTemplate().replace(GlobalConstants.$PRIMARYLANG$,
-					BaseTestCase.languageList.get(0)));
-		if (testCaseDTO.getInput().contains(GlobalConstants.$PRIMARYLANG$))
-			testCaseDTO.setInput(
-					testCaseDTO.getInput().replace(GlobalConstants.$PRIMARYLANG$, BaseTestCase.languageList.get(0)));
-		if (testCaseDTO.getOutput().contains(GlobalConstants.$PRIMARYLANG$))
-			testCaseDTO.setOutput(
-					testCaseDTO.getOutput().replace(GlobalConstants.$PRIMARYLANG$, BaseTestCase.languageList.get(0)));
 
 		if (testCaseDTO.getTemplateFields() != null && templateFields.length > 0) {
 			ArrayList<JSONObject> inputtestCases = AdminTestUtil.getInputTestCase(testCaseDTO);
 			ArrayList<JSONObject> outputtestcase = AdminTestUtil.getOutputTestCase(testCaseDTO);
+
 			for (int i = 0; i < languageList.size(); i++) {
-				response = getWithPathParamAndCookie(ApplnURI + testCaseDTO.getEndPoint(),
+				response = deleteWithPathParamAndCookie(ApplnURI + testCaseDTO.getEndPoint(),
 						getJsonFromTemplate(inputtestCases.get(i).toString(), testCaseDTO.getInputTemplate()),
 						COOKIENAME, testCaseDTO.getRole(), testCaseDTO.getTestCaseName());
 
@@ -132,9 +107,9 @@ public class GetWithParam extends AdminTestUtil implements ITest {
 		}
 
 		else {
-			
+
 			if (testCaseName.contains("ESignet_")) {
-				if (ConfigManager.isInServiceNotDeployedList(GlobalConstants.ESIGNET)) {
+				if (MimotoConfigManager.isInServiceNotDeployedList(GlobalConstants.ESIGNET)) {
 					throw new SkipException("esignet is not deployed hence skipping the testcase");
 				}
 
@@ -142,40 +117,28 @@ public class GetWithParam extends AdminTestUtil implements ITest {
 
 				if (testCaseDTO.getEndPoint().startsWith("$SUNBIRDBASEURL$") && testCaseName.contains("SunBirdR")) {
 
-					if (ConfigManager.isInServiceNotDeployedList("sunbirdrc"))
+					if (MimotoConfigManager.isInServiceNotDeployedList("sunbirdrc"))
 						throw new SkipException(GlobalConstants.SERVICE_NOT_DEPLOYED_MESSAGE);
 
-					if (ConfigManager.getSunBirdBaseURL() != null && !ConfigManager.getSunBirdBaseURL().isBlank())
-						tempUrl = ConfigManager.getSunBirdBaseURL();
+					if (MimotoConfigManager.getSunBirdBaseURL() != null && !MimotoConfigManager.getSunBirdBaseURL().isBlank())
+						tempUrl = MimotoConfigManager.getSunBirdBaseURL();
 						//Once sunbird registry is pointing to specific env, remove the above line and uncomment below line
-						//tempUrl = ApplnURI.replace(GlobalConstants.API_INTERNAL, ConfigManager.getSunBirdBaseURL());
+						//tempUrl = ApplnURI.replace(GlobalConstants.API_INTERNAL, MimotoConfigManager.getSunBirdBaseURL());
 					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$SUNBIRDBASEURL$", ""));
 				}
 
-				response = getWithPathParamAndCookie(tempUrl + testCaseDTO.getEndPoint(),
-						getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), auditLogCheck,
-						COOKIENAME, testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
+				response = deleteWithPathParamAndCookie(tempUrl + testCaseDTO.getEndPoint(),
+						getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), COOKIENAME,
+						testCaseDTO.getRole(), testCaseDTO.getTestCaseName());
 
 			} else {
-				response = getWithPathParamAndCookie(ApplnURI + testCaseDTO.getEndPoint(),
-						getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), auditLogCheck,
-						COOKIENAME, testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
+				response = deleteWithPathParamAndCookie(ApplnURI + testCaseDTO.getEndPoint(),
+						getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), COOKIENAME,
+						testCaseDTO.getRole(), testCaseDTO.getTestCaseName());
 			}
-				
-			Map<String, List<OutputValidationDto>> ouputValid = null;
-			if (testCaseName.contains("_StatusCode")) {
-
-				OutputValidationDto customResponse = customStatusCodeResponse(String.valueOf(response.getStatusCode()),
-						testCaseDTO.getOutput());
-
-				ouputValid = new HashMap<>();
-				ouputValid.put(GlobalConstants.EXPECTED_VS_ACTUAL, List.of(customResponse));
-			} else {
-				ouputValid = OutputValidationUtil.doJsonOutputValidation(response.asString(),
-						getJsonFromTemplate(testCaseDTO.getOutput(), testCaseDTO.getOutputTemplate()), testCaseDTO,
-						response.getStatusCode());
-			}
-
+			Map<String, List<OutputValidationDto>> ouputValid = OutputValidationUtil.doJsonOutputValidation(
+					response.asString(), getJsonFromTemplate(testCaseDTO.getOutput(), testCaseDTO.getOutputTemplate()),
+					testCaseDTO, response.getStatusCode());
 			Reporter.log(ReportUtil.getOutputValidationReport(ouputValid));
 			if (!OutputValidationUtil.publishOutputResult(ouputValid))
 				throw new AdminTestException("Failed at output validation");

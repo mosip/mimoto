@@ -1,8 +1,12 @@
 package io.mosip.mimoto.service.impl;
 
-import java.util.List;
-
+import io.mosip.mimoto.constant.ApiName;
 import io.mosip.mimoto.constant.LoggerFileConstant;
+import io.mosip.mimoto.exception.ApisResourceAccessException;
+import io.mosip.mimoto.exception.PlatformErrorMessages;
+import io.mosip.mimoto.service.RestClientService;
+import io.mosip.mimoto.util.RestApiClient;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
@@ -12,24 +16,16 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import io.mosip.kernel.core.logger.spi.Logger;
-import io.mosip.mimoto.constant.ApiName;
-import io.mosip.mimoto.exception.ApisResourceAccessException;
-import io.mosip.mimoto.exception.PlatformErrorMessages;
-import io.mosip.mimoto.service.RestClientService;
-import io.mosip.mimoto.util.LoggerUtil;
-import io.mosip.mimoto.util.RestApiClient;
+import java.util.List;
 
 /**
  * The Class RestClientServiceImpl.
- * 
+ *
  * @author Rishabh Keshari
  */
+@Slf4j
 @Service
 public class RestClientServiceImpl implements RestClientService<Object> {
-
-    /** The logger. */
-    Logger logger = LoggerUtil.getLogger(RestClientServiceImpl.class);
 
     /** The rest api client. */
     @Autowired
@@ -41,7 +37,7 @@ public class RestClientServiceImpl implements RestClientService<Object> {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see io.mosip.registration.processor.core.spi.restclient.
      * RestClientService#getApi(io.mosip.registration.
      * processor .core.code.ApiName,
@@ -51,7 +47,7 @@ public class RestClientServiceImpl implements RestClientService<Object> {
     @Override
     public Object getApi(ApiName apiName, List<String> pathsegments, String queryParamName, String queryParamValue,
             Class<?> responseType) throws ApisResourceAccessException {
-        logger.debug("RestClientServiceImpl::getApi()::entry");
+        log.debug("RestClientServiceImpl::getApi()::entry");
         Object obj = null;
         String apiHostIpPort = env.getProperty(apiName.name());
 
@@ -71,18 +67,18 @@ public class RestClientServiceImpl implements RestClientService<Object> {
             try {
 
                 uriComponents = builder.build(false).encode();
-                logger.debug(uriComponents.toUri().toString(), "URI");
+                log.debug(uriComponents.toUri().toString(), "URI");
                 obj = restApiClient.getApi(uriComponents.toUri(), responseType);
 
             } catch (Exception e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
 
                 throw new ApisResourceAccessException(
                         PlatformErrorMessages.MIMOTO_RCT_UNKNOWN_RESOURCE_EXCEPTION.getCode(), e);
 
             }
         }
-        logger.debug("RestClientServiceImpl::getApi()::exit");
+        log.debug("RestClientServiceImpl::getApi()::exit");
         return obj;
     }
 
@@ -90,7 +86,7 @@ public class RestClientServiceImpl implements RestClientService<Object> {
     public Object getApi(ApiName apiName, List<String> pathsegments, List<String> queryParamName,
             List<Object> queryParamValue,
             Class<?> responseType) throws ApisResourceAccessException {
-        logger.debug("RestClientServiceImpl::getApi()::entry");
+        log.debug("RestClientServiceImpl::getApi()::entry");
         Object obj = null;
         String apiHostIpPort = env.getProperty(apiName.name());
 
@@ -113,24 +109,24 @@ public class RestClientServiceImpl implements RestClientService<Object> {
             try {
 
                 uriComponents = builder.build(false).encode();
-                logger.debug(uriComponents.toUri().toString(), "URI");
+                log.debug(uriComponents.toUri().toString(), "URI");
                 obj = restApiClient.getApi(uriComponents.toUri(), responseType);
 
             } catch (Exception e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
 
                 throw new ApisResourceAccessException(
                         PlatformErrorMessages.MIMOTO_RCT_UNKNOWN_RESOURCE_EXCEPTION.getCode(), e);
 
             }
         }
-        logger.debug("RestClientServiceImpl::getApi()::exit");
+        log.debug("RestClientServiceImpl::getApi()::exit");
         return obj;
     }
 
     public Object postApi(ApiName apiName, String queryParamName, String queryParamValue, Object requestedData,
             Class<?> responseType, MediaType mediaType) throws ApisResourceAccessException {
-        logger.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_ENTRY);
+        log.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_ENTRY);
 
         Object obj = null;
         String apiHostIpPort = env.getProperty(apiName.name());
@@ -147,20 +143,20 @@ public class RestClientServiceImpl implements RestClientService<Object> {
                 obj = restApiClient.postApi(builder.toUriString(), mediaType, requestedData, responseType);
 
             } catch (Exception e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
 
                 throw new ApisResourceAccessException(
                         PlatformErrorMessages.MIMOTO_RCT_UNKNOWN_RESOURCE_EXCEPTION.getMessage(), e);
 
             }
         }
-        logger.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_EXIT);
+        log.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_EXIT);
         return obj;
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see io.mosip.registration.processor.core.spi.restclient.
      * RestClientService#postApi(io.mosip.registration.
      * processor.core.code.ApiName,
@@ -175,7 +171,7 @@ public class RestClientServiceImpl implements RestClientService<Object> {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see io.mosip.registration.processor.core.spi.restclient.
      * RestClientService#postApi(io.mosip.registration.
      * processor.core.code.ApiName, java.util.List, java.lang.String,
@@ -185,7 +181,7 @@ public class RestClientServiceImpl implements RestClientService<Object> {
     public Object postApi(ApiName apiName, List<String> pathsegments, String queryParamName, String queryParamValue,
             Object requestedData, Class<?> responseType) throws ApisResourceAccessException {
 
-        logger.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_ENTRY);
+        log.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_ENTRY);
         Object obj = null;
         String apiHostIpPort = env.getProperty(apiName.name());
         UriComponentsBuilder builder = null;
@@ -209,14 +205,14 @@ public class RestClientServiceImpl implements RestClientService<Object> {
                 obj = restApiClient.postApi(builder.toUriString(), null, requestedData, responseType);
 
             } catch (Exception e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
 
                 throw new ApisResourceAccessException(
                         PlatformErrorMessages.MIMOTO_RCT_UNKNOWN_RESOURCE_EXCEPTION.getMessage(), e);
 
             }
         }
-        logger.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_EXIT);
+        log.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_EXIT);
         return obj;
     }
 
@@ -225,7 +221,7 @@ public class RestClientServiceImpl implements RestClientService<Object> {
             List<Object> queryParamValue,
             Object requestedData, Class<?> responseType) throws ApisResourceAccessException {
 
-        logger.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_ENTRY);
+        log.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_ENTRY);
         Object obj = null;
         String apiHostIpPort = env.getProperty(apiName.name());
         UriComponentsBuilder builder = null;
@@ -247,14 +243,14 @@ public class RestClientServiceImpl implements RestClientService<Object> {
                 obj = restApiClient.postApi(builder.toUriString(), mediaType, requestedData, responseType);
 
             } catch (Exception e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
 
                 throw new ApisResourceAccessException(
                         PlatformErrorMessages.MIMOTO_RCT_UNKNOWN_RESOURCE_EXCEPTION.getMessage(), e);
 
             }
         }
-        logger.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_EXIT);
+        log.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_EXIT);
         return obj;
     }
 
@@ -262,19 +258,19 @@ public class RestClientServiceImpl implements RestClientService<Object> {
     public Object postApi(ApiName apiName,
                           Object requestedData, Class<?> responseType, boolean useBearerToken) throws ApisResourceAccessException {
 
-        logger.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_ENTRY);
+        log.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_ENTRY);
         Object obj = null;
         String apiHostIpPort = env.getProperty(apiName.name());
         if (apiHostIpPort != null) {
             try {
                 obj = restApiClient.postApi(apiHostIpPort, MediaType.APPLICATION_JSON, requestedData, responseType, useBearerToken);
             } catch (Exception e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
                 throw new ApisResourceAccessException(
                         PlatformErrorMessages.MIMOTO_RCT_UNKNOWN_RESOURCE_EXCEPTION.getMessage(), e);
             }
         }
-        logger.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_EXIT);
+        log.debug(LoggerFileConstant.REST_CLIENT_SERVICE_IMPL_POST_API_EXIT);
         return obj;
     }
 

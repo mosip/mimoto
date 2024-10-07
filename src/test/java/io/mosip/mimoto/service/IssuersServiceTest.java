@@ -98,7 +98,7 @@ public class IssuersServiceTest {
     @Test
     public void shouldReturnIssuerWellknownForTheIssuerIdIfExist() throws ApiNotAccessibleException, IOException {
         String issuerId = "Issuer1id";
-        String wellKnownUrl = "/.well-known";
+        String wellKnownUrl = "/well-known-proxy";
         CredentialIssuerWellKnownResponse expextedCredentialIssuerWellKnownResponse=getCredentialIssuerWellKnownResponseDto("Issuer1",
                Map.of("CredentialType1",getCredentialSupportedResponse("CredentialType1")));
 

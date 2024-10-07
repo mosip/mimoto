@@ -3,6 +3,7 @@ package io.mosip.mimoto.util;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,13 +15,13 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
 /**
- * 
+ *
  * @author Srinivasan
  *
  */
 
+@Slf4j
 public class TokenHandlerUtil {
-    private static Logger LOGGER = LoggerFactory.getLogger(TokenHandlerUtil.class);
 
     private TokenHandlerUtil() {
 
@@ -28,7 +29,7 @@ public class TokenHandlerUtil {
 
     /**
      * Validates the token offline based on the Oauth2 standards.
-     * 
+     *
      * @param accessToken
      *                    - Bearer token
      * @param issuerUrl
@@ -55,10 +56,10 @@ public class TokenHandlerUtil {
                 return true;
             }
         } catch (JWTDecodeException e) {
-            LOGGER.error("JWT DECODE EXCEPTION ::".concat(e.getMessage()).concat(ExceptionUtils.getStackTrace(e)));
+            log.error("JWT DECODE EXCEPTION ::".concat(e.getMessage()).concat(ExceptionUtils.getStackTrace(e)));
             return false;
         } catch (Exception e) {
-            LOGGER.error(e.getMessage().concat(ExceptionUtils.getStackTrace(e)));
+            log.error(e.getMessage().concat(ExceptionUtils.getStackTrace(e)));
             return false;
         }
 

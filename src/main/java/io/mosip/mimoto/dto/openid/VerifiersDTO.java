@@ -1,5 +1,6 @@
 package io.mosip.mimoto.dto.openid;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,5 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class VerifiersDTO {
+    @Schema(description = "Trusted Verifiers List")
     List<VerifierDTO> verifiers;
 }

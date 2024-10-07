@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
@@ -15,10 +14,8 @@ import io.mosip.mimoto.exception.InvalidIssuerIdException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.CredentialIssuerWellknownResponseValidator;
-import io.mosip.mimoto.util.LoggerUtil;
 import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.Utilities;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,14 +24,11 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 
 @Service
 public class IssuersServiceImpl implements IssuersService {
-    private final Logger logger = LoggerUtil.getLogger(IssuersServiceImpl.class);
 
     @Autowired
     private Utilities utilities;
@@ -113,7 +107,7 @@ public class IssuersServiceImpl implements IssuersService {
                 .filter(issuer -> issuer.getCredential_issuer().equals(issuerId))
                 .findFirst()
                 .map(issuerDTO -> {
-                    String wellknownResponse = restApiClient.getApi(issuerDTO.getWellKnownEndpoint(), String.class);
+                    String wellknownResponse = restApiClient.getApi(issuerDTO.getWellknown_endpoint(), String.class);
                     try {
                         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = objectMapper.readValue(wellknownResponse, CredentialIssuerWellKnownResponse.class);
                         new CredentialIssuerWellknownResponseValidator().validate(credentialIssuerWellKnownResponse, validator);

@@ -1,11 +1,5 @@
 package io.mosip.mimoto.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Component;
-
 import io.mosip.mimoto.constant.ApiName;
 import io.mosip.mimoto.constant.AuditLogConstant;
 import io.mosip.mimoto.constant.LoggerFileConstant;
@@ -15,17 +9,19 @@ import io.mosip.mimoto.dto.AuditRequestDto;
 import io.mosip.mimoto.dto.AuditResponseDto;
 import io.mosip.mimoto.exception.ApisResourceAccessException;
 import io.mosip.mimoto.service.RestClientService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
 
 /**
  * The Class AuditRequestBuilder.
- * 
+ *
  * @author Rishabh Keshari
  */
+@Slf4j
 @Component
 public class AuditLogRequestBuilder {
-
-    /** The logger. */
-    private final Logger logger = LoggerFactory.getLogger(AuditLogRequestBuilder.class);
 
     /** The registration processor rest service. */
     @Autowired
@@ -55,7 +51,7 @@ public class AuditLogRequestBuilder {
      */
     @SuppressWarnings("unchecked")
     public ResponseWrapper<AuditResponseDto> createAuditRequestBuilder(String description, String eventId, String eventName, String eventType, String registrationId, ApiName apiname) {
-        logger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+        log.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
                 registrationId,
                 "AuditLogRequestBuilder:: createAuditRequestBuilder(String description, String eventId, String eventName, String eventType,\r\n            String registrationId, ApiName apiname)::entry");
 
@@ -88,10 +84,10 @@ public class AuditLogRequestBuilder {
                     "", requestWrapper, ResponseWrapper.class);
         } catch (ApisResourceAccessException arae) {
 
-            logger.error(arae.getMessage());
+            log.error(arae.getMessage());
 
         }
-        logger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+        log.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
                 registrationId,
                 "AuditLogRequestBuilder:: createAuditRequestBuilder(String description, String eventId, String eventName, String eventType,\r\n"
                         + "            String registrationId, ApiName apiname)::exit");
@@ -102,7 +98,7 @@ public class AuditLogRequestBuilder {
     @SuppressWarnings("unchecked")
     public ResponseWrapper<AuditResponseDto> createAuditRequestBuilder(String description, String eventId,
             String eventName, String eventType, String moduleId, String moduleName, String registrationId) {
-        logger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+        log.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
                 registrationId,
                 "AuditLogRequestBuilder:: createAuditRequestBuilder(String description, String eventId, String eventName, String eventType,String moduleId,String moduleName,\r\n"
                         + "            String registrationId)::entry");
@@ -140,10 +136,10 @@ public class AuditLogRequestBuilder {
 
         } catch (ApisResourceAccessException arae) {
 
-            logger.error(arae.getMessage());
+            log.error(arae.getMessage());
 
         }
-        logger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
+        log.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
                 registrationId,
                 "AuditLogRequestBuilder:: createAuditRequestBuilder(String description, String eventId, String eventName, String eventType,String moduleId,String moduleName,\r\n"
                         + "            String registrationId)::exit");

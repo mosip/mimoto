@@ -1205,7 +1205,7 @@
                                                     "additionalProp2": "string",
                                                     "additionalProp3": "string"
                                                 },
-                                                ".well-known": "string"
+                                                "wellknown_endpoint": "string"
                                             }
                                         ]
                                     }
@@ -1395,7 +1395,7 @@
                                                     "additionalProp2": "string",
                                                     "additionalProp3": "string"
                                                 },
-                                                ".well-known": "string"
+                                                "wellknown_endpoint": "string"
                                             }
                                         ]
                                     }
@@ -2076,7 +2076,7 @@
                 }
             }
         },
-        "/issuers/{issuer-id}/.well-known": {
+        "/issuers/{issuer-id}/well-known-proxy": {
             "get": {
                 "operationId": "getCredentialWellknown",
                 "parameters": [

@@ -9,27 +9,24 @@ This repository contains source code for backend service of Inji Mobile and Inji
 
 ## Build & run (for developers)
 The project requires JDK 21
-### Build & install
+### without docker-compose Build & install
+1. Navigate to Utilities file, uncomment the constructor at Line# 81
+2. build the jar
 ```
     mvn clean install -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true
 ```
-
-### Run
-1. without docker-compose
+3. Run following command
 ```
     mvn spring-boot:run -Dspring.profiles.active=local
 ```
-
-2. with docker-compose
-    * To simplify running mimoto in local for developers we have added [Docker Compose Setup](docker-compose/README.md). This docker-compose includes mimoto service and nginx service to server static data.
-
-    *  Follow the below steps to use custom build image in docker-compose
-    *
-        * Build the mimoto.jar
-          ```mvn clean install -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true```
-        * Build docker image, use any image tag
-          ```docker build -t <image-with-tag> .```
-        * Use newly built docker image in docker-compose file
+### with docker-compose
+1. To simplify running mimoto in local for developers we have added [Docker Compose Setup](docker-compose/README.md). This docker-compose includes mimoto service and nginx service to server static data.
+2. Follow the below steps to use custom build image in docker-compose
+* Build the mimoto.jar
+  ```mvn clean install -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true```
+* Build docker image, use any image tag
+  ```docker build -t <image-with-tag> .```
+* Use newly built docker image in docker-compose file
 
 ## Deployment
 

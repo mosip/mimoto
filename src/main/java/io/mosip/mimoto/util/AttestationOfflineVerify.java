@@ -19,6 +19,7 @@ package io.mosip.mimoto.util;
 
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.json.webtoken.JsonWebSignature;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.springframework.stereotype.Component;
 
@@ -33,9 +34,9 @@ import java.security.cert.X509Certificate;
 /**
  * Verify the device attestation statement offline.
  */
+@Slf4j
 @Component
 public class AttestationOfflineVerify {
-    private final Logger logger = LoggerUtil.getLogger(AttestationOfflineVerify.class);
 
     private final DefaultHostnameVerifier HOSTNAME_VERIFIER = new DefaultHostnameVerifier();
 
@@ -64,8 +65,8 @@ public class AttestationOfflineVerify {
         if (!verifyHostname("attest.android.com", cert)) {
             throw new Exception("Certificate isn't issued for the hostname attest.android.com.");
         }
-        
-        logger.info("Sucessfully verified the signature of the attestation statement using offline method.");
+
+        log.info("Sucessfully verified the signature of the attestation statement using offline method.");
 
         // Extract and use the payload data.
         AttestationStatement stmt = (AttestationStatement) jws.getPayload();
@@ -88,7 +89,7 @@ public class AttestationOfflineVerify {
             HOSTNAME_VERIFIER.verify(hostname, leafCert);
             return true;
         } catch (SSLException e) {
-            logger.error("Error when verifying hostname", e);
+            log.error("Error when verifying hostname", e);
         }
 
         return false;

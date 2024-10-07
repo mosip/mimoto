@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.mosip.mimoto.dto.mimoto.CredentialDownloadRequestDTO;
 import io.mosip.mimoto.exception.InvalidInputException;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,9 +18,8 @@ import java.util.stream.Collectors;
 
 
 @Component
+@Slf4j
 public class RequestValidator {
-
-    private static Logger logger = LoggerFactory.getLogger(RequestValidator.class);
 
     @Value("${mosip.notificationtype:EMAIL|PHONE}")
     private String notificationType;
@@ -35,13 +35,13 @@ public class RequestValidator {
 
     public void validateNotificationChannel(List<String> otpChannelList) {
         List<String> incorrectNotificationChannel;
-        logger.info("\n Notification Types from application-default.properties in mosip-config - > {}", notificationType);
+        log.info("\n Notification Types from application-default.properties in mosip-config - > {}", notificationType);
         incorrectNotificationChannel = otpChannelList
                 .stream()
                 .filter(otpChannel -> !notificationType.contains(otpChannel))
                 .collect(Collectors.toList());
         if (incorrectNotificationChannel.size() > 0) {
-            logger.error("Invalid Input is received in otpChannels {}", String.join(",", incorrectNotificationChannel));
+            log.error("Invalid Input is received in otpChannels {}", String.join(",", incorrectNotificationChannel));
             throw new InvalidInputException(PlatformErrorMessages.MIMOTO_PGS_INVALID_INPUT_PARAMETER.getMessage() + " - " + "otpChannels");
         }
     }

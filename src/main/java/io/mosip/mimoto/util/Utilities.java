@@ -2,13 +2,16 @@ package io.mosip.mimoto.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.core.http.ResponseWrapper;
+import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.exception.ExceptionUtils;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.impl.CredentialShareServiceImpl;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +32,9 @@ import java.util.Base64;
 import java.util.List;
 
 import static io.mosip.mimoto.constant.LoggerFileConstant.DELIMITER;
-import static io.mosip.mimoto.controller.IdpController.getErrorResponse;
 
 @Component
+@Slf4j
 @Data
 public class Utilities {
     private ClassLoader classLoader = Utilities.class.getClassLoader();
@@ -49,9 +52,6 @@ public class Utilities {
 
     // Sample VC websub event
     private String SAMPLE_EVENT = "%s_EVENT.json";
-
-    private Logger logger = LoggerUtil.getLogger(Utilities.class);
-
 
     @Autowired
     private RestApiClient restApiClient;
@@ -151,7 +151,7 @@ public class Utilities {
                 try {
                     Files.delete(filePath);
                 } catch (Exception e) {
-                    logger.error("Cannot delete file: " + filePath, e);
+                    log.error("Cannot delete file: " + filePath, e);
                 }
             }
         }
@@ -171,7 +171,7 @@ public class Utilities {
                 json = restApiClient.getApi(URI.create(configServerFileStorageURL + resourcePath), String.class);
             }
         } catch (Exception e) {
-            logger.error(ExceptionUtils.getStackTrace(e));
+            log.error(ExceptionUtils.getStackTrace(e));
         }
         return json;
     }
@@ -185,7 +185,7 @@ public class Utilities {
     public String getCredentialSupportedTemplateString() {
         return getJson(credentialTemplateHtmlString, credentialTemplatePath);
     }
-    public static ResponseWrapper<Object> handleExceptionWithErrorCode(Exception exception) {
+    public static String[] handleExceptionWithErrorCode(Exception exception) {
         String errorMessage = exception.getMessage();
         String errorCode = PlatformErrorMessages.MIMOTO_IDP_GENERIC_EXCEPTION.getCode();
 
@@ -194,6 +194,11 @@ public class Utilities {
             errorCode = errorSections[0];
             errorMessage = errorSections[1];
         }
-        return getErrorResponse(errorCode, errorMessage);
+        return new String[]{errorCode, errorMessage};
+    }
+
+    public static List<ErrorDTO> getErrors(String errorCode, String errorMessage) {
+        ErrorDTO errorDTO = new ErrorDTO(errorCode, errorMessage);
+        return Lists.newArrayList(errorDTO);
     }
 }

@@ -1,5 +1,12 @@
 package io.mosip.mimoto.util;
 
+import io.mosip.kernel.core.websub.spi.PublisherClient;
+import io.mosip.kernel.core.websub.spi.SubscriptionClient;
+import io.mosip.kernel.websub.api.exception.WebSubClientException;
+import io.mosip.kernel.websub.api.model.SubscriptionChangeRequest;
+import io.mosip.kernel.websub.api.model.SubscriptionChangeResponse;
+import io.mosip.kernel.websub.api.model.UnsubscriptionRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
@@ -8,14 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import io.mosip.kernel.core.logger.spi.Logger;
-import io.mosip.kernel.core.websub.spi.PublisherClient;
-import io.mosip.kernel.core.websub.spi.SubscriptionClient;
-import io.mosip.kernel.websub.api.exception.WebSubClientException;
-import io.mosip.kernel.websub.api.model.SubscriptionChangeRequest;
-import io.mosip.kernel.websub.api.model.SubscriptionChangeResponse;
-import io.mosip.kernel.websub.api.model.UnsubscriptionRequest;
-
+@Slf4j
 @Component
 public class WebSubSubscriptionHelper {
 
@@ -40,14 +40,12 @@ public class WebSubSubscriptionHelper {
     @Autowired
     private PublisherClient<String, Object, HttpHeaders> pb;
 
-    private Logger logger = LoggerUtil.getLogger(WebSubSubscriptionHelper.class);
-
     @Scheduled(
         fixedDelayString    = "${websub-resubscription-delay-millisecs}",
         initialDelayString  = "${mosip.event.delay-millisecs}"
     )
     public void initSubscriptions() {
-        logger.info("Initializing subscriptions...");
+        log.info("Initializing subscriptions...");
         subscribeEvent(topic, callBackUrl, webSubSecret);
     }
 
@@ -57,10 +55,10 @@ public class WebSubSubscriptionHelper {
             unsubscriptionRequest.setCallbackURL(callBackUrl);
             unsubscriptionRequest.setHubURL(webSubHubSubUrl);
             unsubscriptionRequest.setTopic(topic);
-            logger.info("Unsubscription request : {}", unsubscriptionRequest);
+            log.info("Unsubscription request : {}", unsubscriptionRequest);
             return sb.unSubscribe(unsubscriptionRequest);
         } catch (WebSubClientException e) {
-            logger.info("Websub unsubscription error: {} ", e.getMessage());
+            log.info("Websub unsubscription error: {} ", e.getMessage());
         }
         return null;
     }
@@ -72,10 +70,10 @@ public class WebSubSubscriptionHelper {
             subscriptionRequest.setHubURL(webSubHubSubUrl);
             subscriptionRequest.setSecret(secret);
             subscriptionRequest.setTopic(topic);
-            logger.info("Subscription request : {}", subscriptionRequest);
+            log.info("Subscription request : {}", subscriptionRequest);
             return sb.subscribe(subscriptionRequest);
         } catch (WebSubClientException e) {
-            logger.info("Websub subscription error: {}", e.getMessage());
+            log.info("Websub subscription error: {}", e.getMessage());
         }
         return null;
     }
@@ -85,7 +83,7 @@ public class WebSubSubscriptionHelper {
             HttpHeaders headers = new HttpHeaders();
             pb.publishUpdate(topic, payload, MediaType.APPLICATION_JSON_UTF8_VALUE, headers, webSubHubPubUrl);
         } catch (WebSubClientException e) {
-            logger.info("Websub publish update error: {}", e.getMessage());
+            log.info("Websub publish update error: {}", e.getMessage());
         }
 
     }
@@ -95,7 +93,7 @@ public class WebSubSubscriptionHelper {
         try {
             pb.registerTopic(topic, webSubHubPubUrl);
         } catch (WebSubClientException e) {
-            logger.info("Topic already registered: {}", e.getMessage());
+            log.info("Topic already registered: {}", e.getMessage());
         }
 
     }
@@ -105,7 +103,7 @@ public class WebSubSubscriptionHelper {
         try {
             pb.unregisterTopic(topic, webSubHubPubUrl);
         } catch (WebSubClientException e) {
-            logger.info("Topic already unregistered: {}", e.getMessage());
+            log.info("Topic already unregistered: {}", e.getMessage());
         }
 
     }

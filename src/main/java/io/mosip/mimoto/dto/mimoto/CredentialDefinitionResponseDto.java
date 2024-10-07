@@ -2,6 +2,7 @@ package io.mosip.mimoto.dto.mimoto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
@@ -15,11 +16,13 @@ public class CredentialDefinitionResponseDto {
     @NotEmpty
     @SerializedName("type")
     @JsonProperty("type")
+    @Schema(description = "Type of the Credential Definition")
     private List<@NotEmpty String> type;
 
     @NotEmpty
     @Valid
     @SerializedName("credentialSubject")
     @JsonProperty("credentialSubject")
+    @Schema(description = "Credential Subject of the VC")
     private Map<@NotEmpty String, @Valid CredentialDisplayResponseDto> credentialSubject;
 }

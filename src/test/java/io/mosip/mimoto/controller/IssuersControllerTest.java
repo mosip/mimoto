@@ -71,7 +71,7 @@ public class IssuersControllerTest {
                                 Matchers.hasKey("credential_issuer"),
                                 Matchers.hasKey("display"),
                                 Matchers.hasKey("client_id"),
-                                Matchers.hasKey(".well-known"),
+                                Matchers.hasKey("wellknown_endpoint"),
                                 Matchers.not(Matchers.hasKey("redirect_url")),
                                 Matchers.not(Matchers.hasKey("authorization_endpoint")),
                                 Matchers.not(Matchers.hasKey("token_endpoint")),
@@ -89,7 +89,7 @@ public class IssuersControllerTest {
                                 Matchers.hasKey("credential_issuer"),
                                 Matchers.hasKey("display"),
                                 Matchers.hasKey("client_id"),
-                                Matchers.hasKey(".well-known"),
+                                Matchers.hasKey("wellknown_endpoint"),
                                 Matchers.not(Matchers.hasKey("redirect_url")),
                                 Matchers.not(Matchers.hasKey("authorization_endpoint")),
                                 Matchers.not(Matchers.hasKey("token_endpoint")),
@@ -142,7 +142,7 @@ public class IssuersControllerTest {
         Mockito.when(issuersService.getIssuerWellknown(issuerId)).thenReturn(credentialIssuerWellKnownResponse);
 
 
-        String actualResponse = mockMvc.perform(get("/issuers/" + issuerId + "/.well-known").accept(MediaType.APPLICATION_JSON_VALUE))
+        String actualResponse = mockMvc.perform(get("/issuers/" + issuerId + "/well-known-proxy").accept(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()

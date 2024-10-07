@@ -33,6 +33,7 @@ import javax.crypto.spec.OAEPParameterSpec;
 import javax.crypto.spec.PSource.PSpecified;
 import javax.crypto.spec.SecretKeySpec;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.digests.SHA256Digest;
@@ -47,9 +48,9 @@ import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.exception.CryptoManagerException;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
 
+@Slf4j
 @Component
 public class CryptoCoreUtil {
-    static Logger logger = LoggerUtil.getLogger(CryptoCoreUtil.class);
 
     private final static String RSA_ECB_OAEP_PADDING = "RSA/ECB/OAEPWITHSHA-256ANDMGF1PADDING";
 
@@ -78,7 +79,7 @@ public class CryptoCoreUtil {
             byte[] data1 = decryptData(dataBytes, privateKeyEntry);
             decryptedData = new String(data1);
         }catch (Exception e){
-            logger.error( "Not able to decrypt the data", e);
+            log.error( "Not able to decrypt the data", e);
         }
         return decryptedData;
     }
@@ -98,7 +99,7 @@ public class CryptoCoreUtil {
             ProtectionParameter password = new PasswordProtection(cyptoPassword.toCharArray());
             privateKeyEntry = (PrivateKeyEntry) mosipKeyStore.getEntry(alias, password);
         } catch (UnrecoverableEntryException | CertificateException | KeyStoreException | IOException|NoSuchAlgorithmException e) {
-            logger.error( "Not able to decrypt the data", e);
+            log.error( "Not able to decrypt the data", e);
         } finally {
             if (keystoreResourceStream != null) {
                 keystoreResourceStream.close();
@@ -147,7 +148,7 @@ public class CryptoCoreUtil {
                 return symmetricDecrypt(symmetricKey, encryptedData, null);
             }
         } catch (Exception e) {
-            logger.error( "Not able to decrypt the data {}", e);
+            log.error( "Not able to decrypt the data {}", e);
         }
         return null;
     }
@@ -201,7 +202,7 @@ public class CryptoCoreUtil {
             cipher.init(Cipher.DECRYPT_MODE, privateKey, oaepParams);
             return cipher.doFinal(data);
         } catch (java.security.NoSuchAlgorithmException e) {
-            logger.error("Not able to decrypt the data {}", e);
+            log.error("Not able to decrypt the data {}", e);
             throw new NoSuchAlgorithmException(e);
         } catch (NoSuchPaddingException e) {
             throw new NoSuchPaddingException(e.getMessage());
@@ -245,34 +246,34 @@ public class CryptoCoreUtil {
             }
             output = cipher.doFinal(data, 0, data.length);
         } catch (InvalidAlgorithmParameterException e) {
-            logger.error(PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getCode(),
+            log.error(PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getCode(),
                     PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getMessage(), e);
             throw new InvalidParamSpecException(PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getCode(),
                     PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getMessage(), e);
         } catch (IllegalBlockSizeException e) {
-            logger.error(PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getCode(),
+            log.error(PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getCode(),
                     PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getMessage(), e);
             throw new CryptoManagerException(PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getCode(),
                     PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getMessage(), e);
 
         } catch (BadPaddingException e) {
-            logger.error(PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getCode(),
+            log.error(PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getCode(),
                     PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getMessage(), e);
             throw new CryptoManagerException(PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getCode(),
                     PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getMessage(), e);
         } catch (NoSuchAlgorithmException e) {
-            logger.error(PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getCode(),
+            log.error(PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getCode(),
                     PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getMessage(), e);
 
             throw new CryptoManagerException(PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getCode(),
                     PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getMessage(), e);
         } catch (NoSuchPaddingException e) {
-            logger.error(PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getCode(),
+            log.error(PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getCode(),
                     PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getMessage(), e);
             throw new CryptoManagerException(PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getCode(),
                     PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getMessage(), e);
         } catch (InvalidKeyException e) {
-            logger.error(PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getCode(),
+            log.error(PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getCode(),
                     PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getMessage(), e);
             throw new CryptoManagerException(PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getCode(),
                     PlatformErrorMessages.MIMOTO_INVALID_KEY_EXCEPTION.getMessage(), e);
@@ -284,7 +285,7 @@ public class CryptoCoreUtil {
         try {
             return DigestUtils.sha256(cert.getEncoded());
         } catch (java.security.cert.CertificateEncodingException e) {
-            logger.error(PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getCode(),
+            log.error(PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getCode(),
                     PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getMessage(), e);
             throw new CryptoManagerException(PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getCode(),
                     PlatformErrorMessages.CERTIFICATE_THUMBPRINT_ERROR.getMessage(), e);

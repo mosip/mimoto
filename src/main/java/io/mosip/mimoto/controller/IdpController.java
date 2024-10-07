@@ -1,9 +1,9 @@
 package io.mosip.mimoto.controller;
 
-import com.google.common.collect.Lists;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.kernel.core.util.JsonUtils;
 import io.mosip.mimoto.constant.ApiName;
+import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.IssuerDTO;
@@ -14,9 +14,22 @@ import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.RestClientService;
-import io.mosip.mimoto.util.*;
+import io.mosip.mimoto.util.JoseUtil;
+import io.mosip.mimoto.util.LoggerUtil;
+import io.mosip.mimoto.util.RequestValidator;
+import io.mosip.mimoto.util.Utilities;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -26,14 +39,11 @@ import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
-import static io.mosip.mimoto.util.Utilities.handleExceptionWithErrorCode;
-
 @RestController
+@Slf4j
+@Tag(name = SwaggerLiteralConstants.IDP_NAME, description = SwaggerLiteralConstants.IDP_DESCRIPTION)
 public class IdpController {
-
-    private final Logger logger = LoggerUtil.getLogger(IdpController.class);
     private static final boolean USE_BEARER_TOKEN = true;
-    private static final String ID = "mosip.mimoto.idp";
 
     @Autowired
     private RestClientService<Object> restClientService;
@@ -49,37 +59,37 @@ public class IdpController {
 
     @Autowired
     RequestValidator requestValidator;
+
+    @Operation(summary = SwaggerLiteralConstants.IDP_BINDING_OTP_SUMMARY, description = SwaggerLiteralConstants.IDP_BINDING_OTP_DESCRIPTION)
     @PostMapping(value = "/binding-otp", produces = MediaType.APPLICATION_JSON_VALUE)
     @SuppressWarnings("unchecked")
-    public ResponseEntity<Object> otpRequest(@Valid @RequestBody BindingOtpRequestDto requestDTO, BindingResult result) throws Exception {
-        logger.debug("Received binding-otp request : " + JsonUtils.javaObjectToJsonString(requestDTO));
+    public ResponseEntity<ResponseWrapper<BindingOtpResponseDto>> otpRequest(@Valid @RequestBody BindingOtpRequestDto requestDTO, BindingResult result) throws Exception {
+        log.debug("Received binding-otp request : " + JsonUtils.javaObjectToJsonString(requestDTO));
         requestValidator.validateInputRequest(result);
         requestValidator.validateNotificationChannel(requestDTO.getRequest().getOtpChannels());
-
+        ResponseWrapper<BindingOtpResponseDto> response = new ResponseWrapper<>();
         try {
-            ResponseWrapper<BindingOtpResponseDto> response = null;
-            response = (ResponseWrapper<BindingOtpResponseDto>) restClientService
-                    .postApi(ApiName.BINDING_OTP,
-                            requestDTO, ResponseWrapper.class, USE_BEARER_TOKEN);
+            response = (ResponseWrapper<BindingOtpResponseDto>) restClientService.postApi(ApiName.BINDING_OTP, requestDTO, ResponseWrapper.class, USE_BEARER_TOKEN);
             if (response == null)
                 throw new IdpException();
-
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
-            logger.error("Wallet binding otp error occurred.", e);
-            ResponseWrapper<Object> response = getErrorResponse(PlatformErrorMessages.MIMOTO_OTP_BINDING_EXCEPTION.getCode(), e.getMessage());
+            log.error("Wallet binding otp error occurred.", e);
+            List<ErrorDTO> errors = Utilities.getErrors(PlatformErrorMessages.MIMOTO_OTP_BINDING_EXCEPTION.getCode(), e.getMessage());
+            response.setErrors(errors);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
     }
 
+    @Operation(summary = SwaggerLiteralConstants.IDP_WALLET_BINDING_SUMMARY, description = SwaggerLiteralConstants.IDP_WALLET_BINDING_DESCRIPTION)
     @PostMapping(path = "/wallet-binding", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> request(@RequestBody WalletBindingRequestDTO requestDTO)
+    public ResponseEntity<ResponseWrapper<WalletBindingResponseDto>> request(@RequestBody WalletBindingRequestDTO requestDTO)
             throws Exception {
 
-        logger.debug("Received wallet-binding request : " + JsonUtils.javaObjectToJsonString(requestDTO));
+        log.debug("Received wallet-binding request : " + JsonUtils.javaObjectToJsonString(requestDTO));
+        ResponseWrapper<WalletBindingResponseDto> responseWrapper = new ResponseWrapper<WalletBindingResponseDto>();
         try {
-            ResponseWrapper<WalletBindingResponseDto> response = null;
             WalletBindingInnerRequestDto innerRequestDto = new WalletBindingInnerRequestDto();
             innerRequestDto.setChallengeList(requestDTO.getRequest().getChallengeList());
             innerRequestDto.setIndividualId(requestDTO.getRequest().getIndividualId());
@@ -96,45 +106,37 @@ public class IdpController {
             if (internalResponse == null)
                 throw new IdpException();
 
-            response = joseUtil.addThumbprintAndKeyId(internalResponse);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            responseWrapper = joseUtil.addThumbprintAndKeyId(internalResponse);
+            return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception e) {
-            logger.error("Wallet binding error occured for tranaction id " + requestDTO.getRequest().getIndividualId(), e);
-            ResponseWrapper<Object> response = getErrorResponse(PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode(), e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            log.error("Wallet binding error occured for tranaction id " + requestDTO.getRequest().getIndividualId(), e);
+            String[] errorObj = Utilities.handleExceptionWithErrorCode(e);
+            List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
+            responseWrapper.setResponse(null);
+            responseWrapper.setErrors(errors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
         }
     }
 
+    @Operation(summary = SwaggerLiteralConstants.IDP_GET_TOKEN_SUMMARY, description = SwaggerLiteralConstants.IDP_GET_TOKEN_DESCRIPTION)
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", content = { @Content(schema = @Schema(implementation = TokenResponseDTO.class), mediaType = "application/json") }),
+            @ApiResponse(responseCode = "400", content = { @Content(schema = @Schema(implementation = ResponseWrapper.class), mediaType = "application/json") }) })
     @PostMapping(value = {"/get-token/{issuer}"}, consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE}, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity getToken(@RequestParam Map<String, String> params, @PathVariable(required = true, name= "issuer") String issuer) {
-
-        logger.info("Reached the getToken Controller for Issuer " + issuer);
+    public ResponseEntity<Object> getToken(@RequestParam Map<String, String> params, @PathVariable(required = true, name= "issuer") String issuer) {
+        log.info("Reached the getToken Controller for Issuer " + issuer);
+        ResponseWrapper<TokenResponseDTO> responseWrapper = new ResponseWrapper<>();
         try {
             IssuerDTO issuerDTO = issuersService.getIssuerConfig(issuer);
             HttpEntity<MultiValueMap<String, String>> request = idpService.constructGetTokenRequest(params, issuerDTO);
             TokenResponseDTO response = new RestTemplate().postForObject(idpService.getTokenEndpoint(issuerDTO), request, TokenResponseDTO.class);
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception ex){
-            logger.error("Exception Occurred while Invoking the Token Endpoint : ", ex);
-            ResponseWrapper<Object> response = handleExceptionWithErrorCode(ex);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            log.error("Exception Occurred while Invoking the Token Endpoint : ", ex);
+            String[] errorObj = Utilities.handleExceptionWithErrorCode(ex);
+            List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
+            responseWrapper.setErrors(errors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
         }
-    }
-
-    public static ResponseWrapper<Object> getErrorResponse(String errorCode, String errorMessage) {
-
-        List<ErrorDTO> errors = getErrors(errorCode, errorMessage);
-        ResponseWrapper<Object> responseWrapper = new ResponseWrapper<>();
-        responseWrapper.setResponse(null);
-        responseWrapper.setResponsetime(DateUtils.getRequestTimeString());
-        responseWrapper.setId(ID);
-        responseWrapper.setErrors(errors);
-
-        return responseWrapper;
-    }
-
-    public static List<ErrorDTO> getErrors(String errorCode, String errorMessage) {
-        ErrorDTO errorDTO = new ErrorDTO(errorCode, errorMessage);
-        return Lists.newArrayList(errorDTO);
     }
 }

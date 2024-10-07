@@ -1,9 +1,9 @@
 package io.mosip.mimoto.config;
-import io.mosip.kernel.core.logger.spi.Logger;
+
 import io.mosip.mimoto.dto.IssuersDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.service.IssuersService;
-import io.mosip.mimoto.util.LoggerUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Slf4j
 @Component
 public class IssuersValidationConfig implements ApplicationRunner {
     @Autowired
@@ -27,11 +28,9 @@ public class IssuersValidationConfig implements ApplicationRunner {
 
     private final String VALIDATION_ERROR_MSG = "\n\nValidation failed in Mimoto-issuers-config.json:";
 
-    private final Logger logger = LoggerUtil.getLogger(IssuersValidationConfig.class);
-
     @Override
     public void run(ApplicationArguments args) throws ApiNotAccessibleException, IOException {
-        logger.info("Validation for mimoto-issuers-config.json STARTED");
+        log.info("Validation for mimoto-issuers-config.json STARTED");
         IssuersDTO issuerDTOList = issuersService.getAllIssuersWithAllFields();
 
         AtomicReference<Errors> errors = new AtomicReference<>();
@@ -47,11 +46,11 @@ public class IssuersValidationConfig implements ApplicationRunner {
                     String[] tokenEndpointArray = issuerDTO.getToken_endpoint().split("/");
                     Set<String> currentIssuers = credentialIssuers.get();
                     if (!currentIssuers.add(credentialIssuer)) {
-                        logger.error(VALIDATION_ERROR_MSG + "duplicate value found " + credentialIssuer);
+                        log.error(VALIDATION_ERROR_MSG + "duplicate value found " + credentialIssuer);
                         throw new RuntimeException(VALIDATION_ERROR_MSG);
                     }
                     if (!tokenEndpointArray[tokenEndpointArray.length - 1].equals(credentialIssuer)) {
-                        logger.error(VALIDATION_ERROR_MSG + "TokenEndpoint does not match with the credential issuer " + credentialIssuer);
+                        log.error(VALIDATION_ERROR_MSG + "TokenEndpoint does not match with the credential issuer " + credentialIssuer);
                         throw new RuntimeException(VALIDATION_ERROR_MSG);
                     }
                     credentialIssuers.set(currentIssuers);
@@ -64,10 +63,10 @@ public class IssuersValidationConfig implements ApplicationRunner {
             errors.get().getFieldErrors().forEach(error -> {
                 fieldErrors.set(fieldErrors.get() + error.getField() + " " + error.getDefaultMessage() + "\n");
             });
-            logger.error(VALIDATION_ERROR_MSG + fieldErrors.get());
+            log.error(VALIDATION_ERROR_MSG + fieldErrors.get());
             throw new RuntimeException(VALIDATION_ERROR_MSG);
         }
 
-        logger.info("Validation for mimoto-issuers-config.json COMPLETED");
+        log.info("Validation for mimoto-issuers-config.json COMPLETED");
     }
 }

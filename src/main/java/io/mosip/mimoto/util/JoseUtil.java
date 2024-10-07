@@ -12,13 +12,13 @@ import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.kernel.core.util.CryptoUtil;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.mimoto.JwkDto;
 import io.mosip.mimoto.dto.mimoto.WalletBindingInternalResponseDto;
 import io.mosip.mimoto.dto.mimoto.WalletBindingResponseDto;
 import io.mosip.mimoto.exception.IssuerOnboardingException;
+import lombok.extern.slf4j.Slf4j;
 import org.jose4j.jws.JsonWebSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -38,10 +38,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class JoseUtil {
-
-    private final Logger logger = LoggerUtil.getLogger(JoseUtil.class);
     private static final String BEGIN_KEY = "-----BEGIN PUBLIC KEY-----";
     private static final String END_KEY = "-----END PUBLIC KEY-----";
     private static final String ALG_RS256 = "RS256";
@@ -98,12 +97,9 @@ public class JoseUtil {
 
     public ResponseWrapper<WalletBindingResponseDto> addThumbprintAndKeyId(ResponseWrapper<WalletBindingInternalResponseDto> responseDto) {
 
-        logger.debug("Inside addThumbprintAndKeyId ");
+        log.debug("Inside addThumbprintAndKeyId ");
 
         ResponseWrapper<WalletBindingResponseDto> responseWrapper = new ResponseWrapper<>();
-        responseWrapper.setId(responseDto.getId());
-        responseWrapper.setResponsetime(responseDto.getResponsetime());
-        responseWrapper.setVersion(responseDto.getVersion());
         responseWrapper.setErrors(responseDto.getErrors());
 
         try {
@@ -128,7 +124,7 @@ public class JoseUtil {
                 responseWrapper.setResponse(response);
             }
         } catch (Exception e) {
-            logger.error("Exception occured while setting thumbprint ", e);
+            log.error("Exception occured while setting thumbprint ", e);
         }
 
         return responseWrapper;
@@ -150,7 +146,7 @@ public class JoseUtil {
             }
             privateKey = (RSAPrivateKey) privateKeyEntry.getPrivateKey();
         } catch (IOException e) {
-           logger.error("Exception happened while loading the p12 file for invoking token call.");
+           log.error("Exception happened while loading the p12 file for invoking token call.");
            throw e;
         }
         return JWT.create()

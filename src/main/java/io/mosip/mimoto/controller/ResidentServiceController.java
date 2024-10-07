@@ -1,8 +1,16 @@
 package io.mosip.mimoto.controller;
 
+import io.mosip.mimoto.constant.ApiName;
+import io.mosip.mimoto.constant.SwaggerLiteralConstants;
+import io.mosip.mimoto.core.http.RequestWrapper;
+import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.resident.*;
+import io.mosip.mimoto.service.RestClientService;
+import io.mosip.mimoto.util.DateUtils;
 import io.mosip.mimoto.util.RequestValidator;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -13,20 +21,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import io.mosip.kernel.core.logger.spi.Logger;
-import io.mosip.mimoto.constant.ApiName;
-import io.mosip.mimoto.core.http.RequestWrapper;
-import io.mosip.mimoto.core.http.ResponseWrapper;
-import io.mosip.mimoto.service.RestClientService;
-import io.mosip.mimoto.util.DateUtils;
-import io.mosip.mimoto.util.LoggerUtil;
-
 import javax.validation.Valid;
 
 @RestController
+@Tag(name = SwaggerLiteralConstants.RESIDENT_NAME, description = SwaggerLiteralConstants.RESIDENT_DESCRIPTION)
 public class ResidentServiceController {
-
-    private final Logger logger = LoggerUtil.getLogger(ResidentServiceController.class);
 
     @Autowired
     public RestClientService<Object> restClientService;
@@ -45,8 +44,9 @@ public class ResidentServiceController {
      * @throws Exception
      */
     @PostMapping("/req/otp")
+    @Operation(summary = SwaggerLiteralConstants.RESIDENT_REQUEST_OTP_SUMMARY, description = SwaggerLiteralConstants.RESIDENT_REQUEST_OTP_DESCRIPTION)
     @SuppressWarnings("unchecked")
-    public ResponseEntity<Object> otpRequest(@Valid @RequestBody AppOTPRequestDTO requestDTO, BindingResult result) throws Exception {
+    public ResponseEntity<ResponseWrapper<CredentialRequestResponseDTO>> otpRequest(@Valid @RequestBody AppOTPRequestDTO requestDTO, BindingResult result) throws Exception {
         requestValidator.validateInputRequest(result);
         requestValidator.validateNotificationChannel(requestDTO.getOtpChannel());
         OTPRequestDTO mosipOTPRequestPayload = new OTPRequestDTO();
@@ -72,6 +72,7 @@ public class ResidentServiceController {
      * @throws Exception
      */
     @PostMapping("/vid")
+    @Operation(hidden = true)
     @SuppressWarnings("unchecked")
     public ResponseEntity<Object> vidGenerate(@RequestBody AppVIDGenerateRequestDTO requestDTO) throws Exception {
         VIDGenerateRequestDTO vidRequestDTO = new VIDGenerateRequestDTO();
@@ -100,6 +101,7 @@ public class ResidentServiceController {
      * @throws Exception
      */
     @PostMapping("/req/auth/lock")
+    @Operation(hidden = true)
     @SuppressWarnings("unchecked")
     public ResponseEntity<Object> authLock(@RequestBody AuthLockRequestDTO requestDTO) throws Exception {
         RequestWrapper<AuthLockRequestDTO> mosipAuthLockRequestPayload = new RequestWrapper<>();
@@ -121,6 +123,7 @@ public class ResidentServiceController {
      * @throws Exception
      */
     @PostMapping("/req/auth/unlock")
+    @Operation(hidden = true)
     @SuppressWarnings("unchecked")
     public ResponseEntity<Object> authUnlock(@RequestBody AuthUnlockRequestDTO requestDTO) throws Exception {
         RequestWrapper<AuthUnlockRequestDTO> mosipAuthUnlockRequestPayload = new RequestWrapper<>();
@@ -136,8 +139,9 @@ public class ResidentServiceController {
     }
 
     @PostMapping("/req/individualId/otp")
+    @Operation(summary = SwaggerLiteralConstants.RESIDENT_REQUEST_INDIVIDUALID_OTP_SUMMARY, description = SwaggerLiteralConstants.RESIDENT_REQUEST_INDIVIDUALID_OTP_DESCRIPTION)
     @SuppressWarnings("unchecked")
-    public ResponseEntity<Object> individualIdOtpRequest(@RequestBody IndividualIdOtpRequestDTO requestDTO) throws Exception {
+    public ResponseEntity<OTPResponseDTO> individualIdOtpRequest(@RequestBody IndividualIdOtpRequestDTO requestDTO) throws Exception {
         IndividualIdOTPRequestDTO mosipOTPRequestPayload = new IndividualIdOTPRequestDTO();
         mosipOTPRequestPayload.setId("mosip.identity.otp.internal");
         mosipOTPRequestPayload.setVersion("1.0");
@@ -153,8 +157,9 @@ public class ResidentServiceController {
     }
 
     @PostMapping("/aid/get-individual-id")
+    @Operation(summary = SwaggerLiteralConstants.RESIDENT_GET_INDIVIDUALID_SUMMARY, description = SwaggerLiteralConstants.RESIDENT_GET_INDIVIDUALID_DESCRIPTION)
     @SuppressWarnings("unchecked")
-    public ResponseEntity<Object> aidGetIndividualId(@RequestBody AidStatusRequestDTO requestDTO) throws Exception {
+    public ResponseEntity<ResponseWrapper<AidStatusResponseDTO>> aidGetIndividualId(@RequestBody AidStatusRequestDTO requestDTO) throws Exception {
         InternalAidStatusDTO req = new InternalAidStatusDTO(requestDTO.getAid(), requestDTO.getOtp(), requestDTO.getTransactionID());
         RequestWrapper<InternalAidStatusDTO> mosipAuthLockRequestPayload = new RequestWrapper<>();
         mosipAuthLockRequestPayload.setId("mosip.resident.checkstatus");

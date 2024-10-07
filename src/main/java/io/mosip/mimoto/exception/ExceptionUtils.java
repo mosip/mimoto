@@ -1,23 +1,20 @@
 package io.mosip.mimoto.exception;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * This utils contains exception utilities.
- * 
+ *
  * @author Shashank Agrawal
  * @author Ritesh Sinha
  * @since 1.0.0
  *
  */
+@Slf4j
 public final class ExceptionUtils {
-
-    private static final Logger logger = LoggerFactory.getLogger(ExceptionUtils.class);
 
     private ExceptionUtils() {
 
@@ -26,7 +23,7 @@ public final class ExceptionUtils {
     /**
      * Returns an String object that can be used after building the exception stack
      * trace.
-     * 
+     *
      * @param message the exception message
      * @param cause   the cause
      * @return the exception stack
@@ -47,7 +44,7 @@ public final class ExceptionUtils {
 
     /**
      * This method returns the stack trace
-     * 
+     *
      * @param throwable the exception to be added to the list of exception
      * @return the stack trace
      */
@@ -59,7 +56,7 @@ public final class ExceptionUtils {
     }
 
     public static void logRootCause(Throwable exception) {
-        logger.error("Exception Root Cause: {} ", exception.getMessage());
-        logger.debug("Exception Root Cause:", exception);
+        log.error("Exception Root Cause: {} ", exception.getMessage());
+        log.debug("Exception Root Cause:", exception);
     }
 }

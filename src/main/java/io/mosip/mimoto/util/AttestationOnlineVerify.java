@@ -29,6 +29,7 @@ import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.Base64;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -47,8 +48,8 @@ import java.io.IOException;
  * otherwise all requests will fail.
  */
 @Component
+@Slf4j
 public class AttestationOnlineVerify {
-    private final Logger logger = LoggerUtil.getLogger(AttestationOnlineVerify.class);
 
     private final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
@@ -118,7 +119,7 @@ public class AttestationOnlineVerify {
             throw new Exception("The cryptographic signature of the attestation statement couldn't be " + "verified.");
         }
 
-        logger.info("Sucessfully verified the signature of the attestation statement using online method.");
+        log.info("Sucessfully verified the signature of the attestation statement using online method.");
 
         // The signature is valid, extract the data JSON from the JWS signature.
         byte[] data = extractJwsData(signedAttestationStatment);

@@ -3,7 +3,6 @@ package io.mosip.mimoto.util;
 import io.mosip.kernel.biometrics.constant.BiometricType;
 import io.mosip.kernel.biometrics.entities.BIR;
 import io.mosip.kernel.biometrics.spi.CbeffUtil;
-import io.mosip.kernel.core.logger.spi.Logger;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,13 +11,11 @@ import java.util.List;
 
 /**
  * The Class CbeffToBiometricUtil.
- * 
+ *
  * @author Monobikash Das
  */
 @Component
 public class CbeffToBiometricUtil {
-
-    Logger logger = LoggerUtil.getLogger(CbeffToBiometricUtil.class);
 
     /** The cbeffutil. */
     @Autowired
