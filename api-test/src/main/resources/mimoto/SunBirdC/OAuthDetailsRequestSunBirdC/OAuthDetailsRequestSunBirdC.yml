@@ -8,7 +8,7 @@ OAuthDetailsRequestSunBirdC:
       outputTemplate: mimoto/SunBirdC/OAuthDetailsRequestSunBirdC/OAuthDetailsRequestSunBirdCResult
       input: '{
       	"requestTime": "$TIMESTAMP$",
-      	"clientId": "esignet-sunbird-partner",
+      	"clientId": "$GETCLIENTIDFROMMIMOTOACTUATOR$",
       	"scope": "sunbird_rc_insurance_vc_ldp",
       	"responseType": "code",
       	"redirectUri": "$INJIREDIRECTURI$",

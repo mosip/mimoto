@@ -27,11 +27,24 @@ public class MimotoUtil extends AdminTestUtil {
 	
 	public static String isTestCaseValidForExecution(TestCaseDTO testCaseDTO) {
 		String testCaseName = testCaseDTO.getTestCaseName();
-		if (isOTPEnabled().equals("false") && (testCaseDTO.getEndPoint().contains(SEND_OTP_ENDPOINT)
-				|| testCaseDTO.getInput().contains(SEND_OTP_ENDPOINT)
-				|| testCaseName.startsWith(MIMOTO_CREDENTIAL_STATUS) || testCaseName.contains("_vid")
-				|| testCaseName.contains("_VID"))) {
-			throw new SkipException(OTP_FEATURE_NOT_SUPPORTED);
+		String endpoint = testCaseDTO.getEndPoint();
+		String inputJson = testCaseDTO.getInput();
+		
+		if (isOTPEnabled().equals("false")) {
+			if (testCaseDTO.getEndPoint().contains(SEND_OTP_ENDPOINT)
+					|| testCaseDTO.getInput().contains(SEND_OTP_ENDPOINT)
+					|| testCaseName.startsWith(MIMOTO_CREDENTIAL_STATUS)
+					|| (testCaseName.startsWith("Mimoto_Generate_") && endpoint.contains("/v1/mimoto/vid"))) {
+				throw new SkipException(OTP_FEATURE_NOT_SUPPORTED);
+			}
+
+			if (inputJson.contains("_vid$")) {
+				inputJson = inputJson.replace("_vid$", "_VID$");
+				testCaseDTO.setInput(inputJson);
+			}
+		}
+		if (isOTPEnabled().equals("true") && endpoint.contains("/idrepository/v1/vid")) {
+			throw new SkipException(GlobalConstants.FEATURE_NOT_SUPPORTED_MESSAGE);
 		}
 		return testCaseName;
 	}
@@ -76,6 +89,17 @@ public class MimotoUtil extends AdminTestUtil {
 		}
 		
 		return inputJson;
+	}
+	
+	public static String getClientIdSection(String baseURL) {
+		if (baseURL.contains("esignet-mosipid")) {
+			return "mimoto.oidc.mosipid.partner.clientid";
+		}
+		if (baseURL.contains("esignet-insurance")) {
+			return "mimoto.oidc.sunbird.partner.clientid";
+		}
+
+		return "mimoto.oidc.partner.clientid";
 	}
 	
 }

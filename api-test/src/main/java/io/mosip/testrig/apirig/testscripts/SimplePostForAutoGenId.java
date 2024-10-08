@@ -156,8 +156,9 @@ public class SimplePostForAutoGenId extends AdminTestUtil implements ITest {
 				}
 				
 				if (inputJson.contains("$GETCLIENTIDFROMMIMOTOACTUATOR$")) {
+					String clientIdSection = MimotoUtil.getClientIdSection(tempUrl);
 					inputJson = replaceKeywordWithValue(inputJson, "$GETCLIENTIDFROMMIMOTOACTUATOR$",
-							getValueFromMimotoActuator("overrides", "mimoto.oidc.partner.clientid"));
+							getValueFromMimotoActuator("overrides", clientIdSection));
 				}
 				if (testCaseName.contains("_AuthorizationCode_")) {
 					response = postRequestWithCookieAuthHeaderAndXsrfTokenForAutoGenId(
