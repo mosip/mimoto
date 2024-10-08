@@ -56,7 +56,7 @@ public class CredentialsControllerTest {
                                 new BasicNameValuePair("redirect_uri", "test-redirect_uri"),
                                 new BasicNameValuePair("code_verifier", "test-code_verifier"),
                                 new BasicNameValuePair("issuer", issuer),
-                                new BasicNameValuePair("vcExpiryTimes", "3"),
+                                new BasicNameValuePair("vcStorageExpiryLimitInTimes", "3"),
                                 new BasicNameValuePair("credential", credential)
                         )))))
                 .andExpect(status().isOk())
@@ -82,7 +82,7 @@ public class CredentialsControllerTest {
                                 new BasicNameValuePair("redirect_uri", "test-redirect_uri"),
                                 new BasicNameValuePair("code_verifier", "test-code_verifier"),
                                 new BasicNameValuePair("issuer", issuer),
-                                new BasicNameValuePair("vcExpiryTimes", "3"),
+                                new BasicNameValuePair("vcStorageExpiryLimitInTimes", "3"),
                                 new BasicNameValuePair("credential", credential)
                         )))))
                 .andExpect(status().isBadRequest())
@@ -108,7 +108,7 @@ public class CredentialsControllerTest {
                                 new BasicNameValuePair("redirect_uri", "test-redirect_uri"),
                                 new BasicNameValuePair("code_verifier", "test-code_verifier"),
                                 new BasicNameValuePair("issuer", issuer),
-                                new BasicNameValuePair("vcExpiryTimes", "3"),
+                                new BasicNameValuePair("vcStorageExpiryLimitInTimes", "3"),
                                 new BasicNameValuePair("credential", credential)
                         )))))
                 .andExpect(status().isBadRequest())
