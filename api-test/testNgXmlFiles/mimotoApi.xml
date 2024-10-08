@@ -15,7 +15,7 @@
 			<class name="io.mosip.testrig.apirig.testscripts.AddIdentity" />
 		</classes>
 	</test>
-	<!--<test name="GenerateVID">
+	<test name="GenerateVID">
 		<parameter name="ymlFile" value="mimoto/GenerateVID/createGenerateVID.yml" />
 		<parameter name="idKeyName" value="vid" />
 		<parameter name="prerequisite" value="Yes" />
@@ -53,7 +53,7 @@
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.SimplePost" />
 		</classes>
-	</test>-->
+	</test>
 	<test name="OAuthDetailsRequest">
 		<parameter name="ymlFile"
 			value="mimoto/OAuthDetailsRequest/OAuthDetailsRequest.yml" />
@@ -77,7 +77,7 @@
 			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
 		</classes>
 	</test>
-	<!--<test name="OAuthDetailsRequestSunBirdC">
+	<test name="OAuthDetailsRequestSunBirdC">
 		<parameter name="ymlFile"
 			value="mimoto/SunBirdC/OAuthDetailsRequestSunBirdC/OAuthDetailsRequestSunBirdC.yml" />
 			<parameter name="idKeyName"	value="transactionId,encodedResp" />
@@ -98,6 +98,13 @@
 			<parameter name="idKeyName"	value="code" />
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="DownloadIssuerCredential">
+		<parameter name="ymlFile"
+			value="mimoto/DownloadIssuerCredential/DownloadIssuerCredential.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.testscripts.PostWithFormDataBodyForPdfDownload" />
 		</classes>
 	</test>
 
@@ -179,22 +186,15 @@
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.GetWithParam" />
 		</classes>
-	</test>-->
-	<test name="DownloadIssuerCredential">
-		<parameter name="ymlFile"
-			value="mimoto/DownloadIssuerCredential/DownloadIssuerCredential.yml" />
-		<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.PostWithFormDataBodyForPdfDownload" />
-		</classes>
 	</test>
 	
-	<!--<test name="DeletePolicySunBirdR">
+	<test name="DeletePolicySunBirdR">
 		<parameter name="ymlFile"
 			value="mimoto/SunBirdR/DeletePolicySunBirdR/DeletePolicySunBirdR.yml" />
 		<parameter name="pathParams" value="insuranceid" />
 		<classes>
 			<class name="io.mosip.testrig.apirig.testscripts.DeleteWithParam" />
 		</classes>
-	</test>-->
+	</test>
 
 </suite>
