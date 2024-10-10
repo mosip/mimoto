@@ -55,7 +55,7 @@ public class DataShareServiceImpl {
         pathMatcher = new AntPathMatcher();
     }
 
-    public String storeDataInDataShare(String data) throws Exception {
+    public String storeDataInDataShare(String data, String credentialValidity) throws Exception {
         ByteArrayResource contentsAsResource = new ByteArrayResource(data.getBytes()) {
             @Override
             public String getFilename() {
@@ -68,17 +68,17 @@ public class DataShareServiceImpl {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
-        DataShareResponseWrapperDTO dataShareResponseWrapperDTO = pushCredentialIntoDataShare(requestEntity);
+        DataShareResponseWrapperDTO dataShareResponseWrapperDTO = pushCredentialIntoDataShare(requestEntity, credentialValidity);
         log.info("Data pushed into DataShare -> " + dataShareResponseWrapperDTO);
         return  dataShareResponseWrapperDTO.getDataShare().getUrl();
     }
 
-    private DataShareResponseWrapperDTO pushCredentialIntoDataShare(HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity) throws Exception {
+    private DataShareResponseWrapperDTO pushCredentialIntoDataShare(HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity, String credentialValidity) throws Exception {
         int attempt =0 ;
         DataShareResponseWrapperDTO dataShareResponseWrapperDTO = null;
         while(attempt++ < maxRetryCount ){
             try {
-                dataShareResponseWrapperDTO = restApiClient.postApi(dataShareCreateUrl, MediaType.MULTIPART_FORM_DATA, requestEntity, DataShareResponseWrapperDTO.class);
+                dataShareResponseWrapperDTO = restApiClient.postApi(dataShareCreateUrl + "?usageCountForStandaloneMode=" + credentialValidity, MediaType.MULTIPART_FORM_DATA, requestEntity, DataShareResponseWrapperDTO.class);
             } catch (Exception e) {
                 log.error(attempt + " attempt to push credential failed");
             }

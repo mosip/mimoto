@@ -46,7 +46,7 @@ public class DataShareServiceTest {
         DataShareResponseWrapperDTO dataShareResponseWrapperDTO = TestUtilities.getDataShareResponseWrapperDTO();
         Mockito.when(restApiClient.postApi(Mockito.anyString(), Mockito.eq(MediaType.MULTIPART_FORM_DATA), Mockito.any(), Mockito.eq(DataShareResponseWrapperDTO.class)))
                 .thenReturn(dataShareResponseWrapperDTO);
-        String actualDataShareLink = dataShareService.storeDataInDataShare("SampleData");
+        String actualDataShareLink = dataShareService.storeDataInDataShare("SampleData", "3");
         String expectedDataShareLink = dataShareResponseWrapperDTO.getDataShare().getUrl();
         Assert.assertEquals(expectedDataShareLink, actualDataShareLink);
     }
@@ -54,7 +54,7 @@ public class DataShareServiceTest {
     @Test(expected = InvalidCredentialResourceException.class)
     public void throwRequestTimedOutExceptionWhenMaxCountIsReached() throws Exception {
         ReflectionTestUtils.setField(dataShareService, "maxRetryCount", 0);
-        dataShareService.storeDataInDataShare("SampleData");
+        dataShareService.storeDataInDataShare("SampleData", "3");
     }
 
     @Test(expected = InvalidCredentialResourceException.class)
@@ -62,7 +62,7 @@ public class DataShareServiceTest {
         ReflectionTestUtils.setField(dataShareService, "maxRetryCount", 1);
         Mockito.when(restApiClient.postApi(Mockito.anyString(), Mockito.eq(MediaType.MULTIPART_FORM_DATA), Mockito.any(), Mockito.eq(DataShareResponseWrapperDTO.class)))
                 .thenThrow(InvalidCredentialResourceException.class);
-        dataShareService.storeDataInDataShare("SampleData");
+        dataShareService.storeDataInDataShare("SampleData", "3");
     }
 
     @Test
