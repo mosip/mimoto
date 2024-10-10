@@ -72,7 +72,7 @@ BindingOtp:
       output: '{
   "errors": [
     {
-      "errorCode": "RESIDENT-APP-011"
+      "errorCode": "invalid_identifier"
     }
   ]
 }'
@@ -429,7 +429,7 @@ BindingOtp:
       output: '{
   "errors": [
     {
-      "errorCode": "RESIDENT-APP-011"
+      "errorCode": "invalid_identifier"
     }
   ]
 }'
