@@ -44,8 +44,8 @@ modules:
   mimoto:
     enabled: true
     image:
-      repository: mosipqa/apitest-mimoto
-      tag: release-0.14.x
+      repository: mosipid/apitest-mimoto
+      tag: 0.14.0
       pullPolicy: Always
   pms:
     enabled: false
