@@ -2,6 +2,7 @@ package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.dto.DataShareResponseDto;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseWrapperDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
@@ -108,7 +109,9 @@ public class DataShareServiceImpl {
         VCCredentialResponse vcCredentialResponse = objectMapper.readValue(vcCredentialResponseString, VCCredentialResponse.class);
         log.info("Completed Mapping the Credential to Object => " + vcCredentialResponse );
         if(vcCredentialResponse.getCredential() == null){
-            throw new InvalidCredentialResourceException(ErrorConstants.RESOURCE_EXPIRED.getErrorMessage());
+            DataShareResponseDto dataShareResponse = objectMapper.readValue(vcCredentialResponseString, DataShareResponseDto.class);
+            String errorCode = dataShareResponse.getErrors().get(0).getErrorCode();
+            throw new InvalidCredentialResourceException(errorCode.equals("DAT-SER-008") ? ErrorConstants.RESOURCE_NOT_FOUND.getErrorMessage() : ErrorConstants.RESOURCE_EXPIRED.getErrorMessage());
         }
         return vcCredentialResponse;
     }

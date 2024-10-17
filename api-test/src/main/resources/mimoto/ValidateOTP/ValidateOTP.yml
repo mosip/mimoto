@@ -2,6 +2,7 @@ SendOTP:
    Resident_SendOTP_Valid_UIN_All_Smoke:
       endPoint: /resident/v1/req/otp
       description: Generating OTP with valid UIN
+      uniqueIdentifier: TC_Mimoto_SendOTP_05
       role: resident
       restMethod: post
       inputTemplate: resident/SendOTP/createSendOTP
@@ -18,6 +19,7 @@ SendOTP:
    Resident_SendOTP_Valid_UIN_Phone_Smoke:
       endPoint: /resident/v1/req/otp
       description: Generating OTP with OTP channel as phone
+      uniqueIdentifier: TC_Mimoto_SendOTP_06
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -36,6 +38,7 @@ SendOTP:
    Resident_SendOTP_Valid_UIN_Email_Smoke:
       endPoint: /resident/v1/req/otp
       description: Generating OTP with OTP channel as email
+      uniqueIdentifier: TC_Mimoto_SendOTP_07
       role: resident
       restMethod: post
       inputTemplate: resident/SendOTP/createSendOTP2
@@ -53,6 +56,7 @@ SendOTP:
    Resident_SendOTP_RevokedVID_Invalid:
       endPoint: /resident/v1/req/otp
       description: Generating OTP with revoked VID
+      uniqueIdentifier: TC_Mimoto_SendOTP_08
       role: resident
       restMethod: post
       inputTemplate: resident/SendOTP/createSendOTP
@@ -69,6 +73,7 @@ SendOTP:
    Resident_SendOTP_Valid_UIN_Invalid_empty_otpChannel:
       endPoint: /resident/v1/req/otp
       description: Generating OTP with empty OTP channel
+      uniqueIdentifier: TC_Mimoto_SendOTP_09
       role: resident
       restMethod: post
       inputTemplate: resident/SendOTP/createSendOTP2
@@ -86,6 +91,7 @@ SendOTP:
    Resident_SendOTP_InValid_individualId:
       endPoint: /resident/v1/req/otp
       description: Generating OTP with invalid individualID
+      uniqueIdentifier: TC_Mimoto_SendOTP_10
       role: resident
       restMethod: post
       inputTemplate: resident/SendOTP/createSendOTP
@@ -102,6 +108,7 @@ SendOTP:
    Resident_SendOTP_InValid_Missing_individualId:
       endPoint: /resident/v1/req/otp
       description: Generating OTP with missing individualID
+      uniqueIdentifier: TC_Mimoto_SendOTP_11
       role: resident
       restMethod: post
       inputTemplate: resident/SendOTP/createSendOTP
@@ -118,6 +125,7 @@ SendOTP:
    Resident_SendOTP_InValid_Empty_transactionID:
       endPoint: /resident/v1/req/otp
       description: Generating OTP with empty transactionID
+      uniqueIdentifier: TC_Mimoto_SendOTP_12
       role: resident
       restMethod: post
       inputTemplate: resident/SendOTP/createSendOTP
@@ -134,6 +142,7 @@ SendOTP:
    Resident_SendOTP_InValid_transactionID:
       endPoint: /resident/v1/req/otp
       description: Generating OTP with invalid transactionID
+      uniqueIdentifier: TC_Mimoto_SendOTP_13
       role: resident
       restMethod: post
       inputTemplate: resident/SendOTP/createSendOTP
@@ -150,6 +159,7 @@ SendOTP:
    Resident_SendOTP_InValid_Missing_transactionID:
       endPoint: /resident/v1/req/otp
       description: Generating OTP with missing transactionID
+      uniqueIdentifier: TC_Mimoto_SendOTP_14
       role: resident
       restMethod: post
       inputTemplate: resident/SendOTP/createSendOTP
@@ -166,6 +176,7 @@ SendOTP:
    Resident_SendOTP_InValid_Empty_requestTime:
       endPoint: /resident/v1/req/otp
       description: Generating OTP with empty request time
+      uniqueIdentifier: TC_Mimoto_SendOTP_15
       role: resident
       restMethod: post
       inputTemplate: resident/SendOTP/createSendOTP
@@ -182,6 +193,7 @@ SendOTP:
    Resident_SendOTP_InValid_requestTime:
       endPoint: /resident/v1/req/otp
       description: Generating OTP with invalid request time
+      uniqueIdentifier: TC_Mimoto_SendOTP_16
       role: resident
       restMethod: post
       inputTemplate: resident/SendOTP/createSendOTP

@@ -2,6 +2,7 @@ OAuthDetailsRequest:
    Mimoto_ESignet_OAuthDetailsRequest_all_Valid_Smoke_sid:
       endPoint: /v1/esignet/authorization/v2/oauth-details
       description: Creating Oauth's details with all valid parameters
+      uniqueIdentifier: TC_Mimoto_OAuthDetailsRequest_01
       role: resident
       restMethod: post
       checkErrorsOnlyInResponse: true

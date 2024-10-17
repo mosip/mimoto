@@ -2,6 +2,7 @@ AuthLock:
    Mimoto_AuthLock_Valid_UIN_All:
       endPoint: /v1/mimoto/req/auth/lock
       description: Auth lock a particular UIN with valid parameters
+      uniqueIdentifier: TC_Mimoto_AuthLock_01
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -30,6 +31,7 @@ AuthLock:
    Mimoto_AuthLock_InValid_Otp_All:
       endPoint: /v1/mimoto/req/auth/lock
       description: Auth Lock a particular UIN with invalid OTP
+      uniqueIdentifier: TC_Mimoto_AuthLock_02
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -63,6 +65,7 @@ AuthLock:
    Mimoto_AuthLock_with_invalidUIN_Valid_Otp_sid:
       endPoint: /v1/mimoto/req/auth/lock
       description: Auth Lock a particular UIN with valid OTP
+      uniqueIdentifier: TC_Mimoto_AuthLock_03
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -96,6 +99,7 @@ AuthLock:
    Mimoto_AuthLock_Valid_VID_All:
       endPoint: /v1/mimoto/req/auth/lock
       description: Auth lock a particular VID with valid VID
+      uniqueIdentifier: TC_Mimoto_AuthLock_04
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -124,6 +128,7 @@ AuthLock:
    Mimoto_AuthLock_with_invalidVID_Valid_Otp:
       endPoint: /v1/mimoto/req/auth/lock
       description: Auth lock a particular VID with invalid OTP
+      uniqueIdentifier: TC_Mimoto_AuthLock_05
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -157,6 +162,7 @@ AuthLock:
    Mimoto_AuthLock_invalidVID_Valid_Otp:
       endPoint: /v1/mimoto/req/auth/lock
       description: Auth lock a particular VID with invalid VID
+      uniqueIdentifier: TC_Mimoto_AuthLock_06
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post

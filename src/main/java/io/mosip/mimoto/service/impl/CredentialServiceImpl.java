@@ -127,7 +127,7 @@ public class CredentialServiceImpl implements CredentialService {
         boolean verificationStatus = vcCredentialResponse.getCredential().getProof().getType().equals("RsaSignature2018") ? verifyCredential(vcCredentialResponse) : true;
         if(verificationStatus) {
             String dataShareUrl =  QRCodeType.OnlineSharing.equals(issuerConfig.getQr_code_type()) ? dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse), credentialValidity) : "";
-            return generatePdfForVerifiableCredentials(vcCredentialResponse, issuerConfig, credentialsSupportedResponse, dataShareUrl);
+            return generatePdfForVerifiableCredentials(vcCredentialResponse, issuerConfig, credentialsSupportedResponse, dataShareUrl, credentialValidity);
         }
         throw new VCVerificationException(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(),
                 SIGNATURE_VERIFICATION_EXCEPTION.getErrorMessage());
@@ -156,16 +156,19 @@ public class CredentialServiceImpl implements CredentialService {
                 .build();
     }
 
-    public ByteArrayInputStream generatePdfForVerifiableCredentials(VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl) throws Exception {
+    public ByteArrayInputStream generatePdfForVerifiableCredentials(VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity) throws Exception {
         LinkedHashMap<String, Object> displayProperties = loadDisplayPropertiesFromWellknown(vcCredentialResponse, credentialsSupportedResponse);
-        Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse,  vcCredentialResponse, issuerDTO, dataShareUrl);
+        Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse,  vcCredentialResponse, issuerDTO, dataShareUrl, credentialValidity);
         return renderVCInCredentialTemplate(data);
     }
 
     public Boolean verifyCredential(VCCredentialResponse vcCredentialResponse) throws VCVerificationException {
         try {
+            log.info("Initiated the VC Verification : Started");
             String credentialString = objectMapper.writeValueAsString(vcCredentialResponse.getCredential());
-            return credentialsVerifier.verifyCredentials(credentialString);
+            boolean isCredentialVerified = credentialsVerifier.verifyCredentials(credentialString);
+            log.info("Completed the VC Verification : Completed -> status : " + isCredentialVerified);
+            return isCredentialVerified;
         } catch (ProofDocumentNotFoundException | ProofTypeNotSupportedException | SignatureVerificationException | UnknownException | JsonProcessingException |
                  PublicKeyNotFoundException exception ) {
             String errorCode = UNKNOWN_EXCEPTION.getErrorCode();
@@ -217,7 +220,7 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
 
-    private Map<String, Object> getPdfResourceFromVcProperties(LinkedHashMap<String, Object> displayProperties, CredentialsSupportedResponse credentialsSupportedResponse, VCCredentialResponse  vcCredentialResponse, IssuerDTO issuerDTO, String dataShareUrl) throws IOException, WriterException {
+    private Map<String, Object> getPdfResourceFromVcProperties(LinkedHashMap<String, Object> displayProperties, CredentialsSupportedResponse credentialsSupportedResponse, VCCredentialResponse  vcCredentialResponse, IssuerDTO issuerDTO, String dataShareUrl, String credentialValidity) throws IOException, WriterException {
         Map<String, Object> data = new HashMap<>();
         LinkedHashMap<String, Object> rowProperties = new LinkedHashMap<>();
         String backgroundColor = credentialsSupportedResponse.getDisplay().get(0).getBackgroundColor();
@@ -246,6 +249,7 @@ public class CredentialServiceImpl implements CredentialService {
         String qrCodeImage = QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type()) ? constructQRCodeWithAuthorizeRequest(vcCredentialResponse, dataShareUrl) :
                 QRCodeType.EmbeddedVC.equals(issuerDTO.getQr_code_type()) ? constructQRCodeWithVCData(vcCredentialResponse) : "";
         data.put("qrCodeImage", qrCodeImage);
+        data.put("credentialValidity", credentialValidity);
         data.put("logoUrl", issuerDTO.getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));
         data.put("rowProperties", rowProperties);
         data.put("textColor", textColor);

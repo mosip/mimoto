@@ -2,6 +2,7 @@ DownloadCredential:
    Mimoto_CredentialsStatus_All_Valid_Smoke_euin:
       endPoint: /v1/mimoto/credentialshare/download
       description: Checking credential status with all valid parameters
+      uniqueIdentifier: TC_Mimoto_DownloadCredential_01
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: get
@@ -17,6 +18,7 @@ DownloadCredential:
    Mimoto_CredentialsStatus_StatusCode_InValid_Smoke_euin:
       endPoint: /v1/mimoto/credentialshare/download
       description: Checking credential status with invalid StatusCode
+      uniqueIdentifier: TC_Mimoto_DownloadCredential_02
       role: resident
       restMethod: get
       inputTemplate: mimoto/CredentialIssuance/DownloadWithReqid/downloadwithreqid

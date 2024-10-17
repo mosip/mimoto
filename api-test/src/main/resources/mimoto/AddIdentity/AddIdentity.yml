@@ -2,6 +2,7 @@ AddIdentity:
    Mimoto_AddIdentity_withValidParameters_smoke_Pos:
       endPoint: /idrepository/v1/identity/
       description: Creating a new identity with all valid parameters
+      uniqueIdentifier: TC_Mimoto_AddIdentity_01
       role: idrepo
       restMethod: post
       inputTemplate: mimoto/AddIdentity/addIdentity_$LANGNUMBER$
@@ -30,6 +31,7 @@ AddIdentity:
    Mimoto_AddIdentity_Binding_smoke_Pos:
       endPoint: /idrepository/v1/identity/
       description: Creating a new identity with all valid parameters for Binding APIs
+      uniqueIdentifier: TC_Mimoto_AddIdentity_02
       role: idrepo
       restMethod: post
       inputTemplate: mimoto/AddIdentity/addIdentity_$LANGNUMBER$
@@ -58,6 +60,7 @@ AddIdentity:
    Mimoto_AddIdentity_without_FaceDate_CBEFF_smoke_Pos:
       endPoint: /idrepository/v1/identity/
       description: Creating a new identity UIN with out face data
+      uniqueIdentifier: TC_Mimoto_AddIdentity_03
       role: idrepo
       restMethod: post
       inputTemplate: mimoto/AddIdentity/addIdentity_$LANGNUMBER$
@@ -90,6 +93,7 @@ AddIdentity:
    Mimoto_AddIdentity_downloadIssuerCredential_smoke_Pos:
       endPoint: /idrepository/v1/identity/
       description: Creating a new identity for downloading issuer credential
+      uniqueIdentifier: TC_Mimoto_AddIdentity_04
       role: idrepo
       restMethod: post
       inputTemplate: mimoto/AddIdentity/addIdentity_$LANGNUMBER$

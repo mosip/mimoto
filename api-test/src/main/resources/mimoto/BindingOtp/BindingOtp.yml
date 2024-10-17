@@ -3,6 +3,7 @@ BindingOtp:
       endPoint: /v1/mimoto/binding-otp
       role: resident
       description: Creating OTP for binding a individualID with valid UIN
+      uniqueIdentifier: TC_Mimoto_BindingOtp_01
       checkErrorsOnlyInResponse: true
       restMethod: post
       validityCheckRequired: true
@@ -20,6 +21,7 @@ BindingOtp:
    Mimoto_BindingOtp_Valid_vid_All_Smoke:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with valid VID
+      uniqueIdentifier: TC_Mimoto_BindingOtp_02
       role: resident
       checkErrorsOnlyInResponse: true
       restMethod: post
@@ -38,6 +40,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Invalid_individualId_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with invalid UIN
+      uniqueIdentifier: TC_Mimoto_BindingOtp_03
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -59,6 +62,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Missing_individualId_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID without individualId attribute
+      uniqueIdentifier: TC_Mimoto_BindingOtp_04
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -80,6 +84,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Empty_individualId_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with individualId missing
+      uniqueIdentifier: TC_Mimoto_BindingOtp_05
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -101,6 +106,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Null_individualId_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with individualId value as null
+      uniqueIdentifier: TC_Mimoto_BindingOtp_06
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -122,6 +128,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_SpaceSeparated_otpChannels_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with OTP channel value been spaced in between
+      uniqueIdentifier: TC_Mimoto_BindingOtp_07
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -143,6 +150,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Invalid_OtpChannels_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with invalid OTP channel
+      uniqueIdentifier: TC_Mimoto_BindingOtp_08
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -164,6 +172,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Missing_OtpChannels_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with OTP channel missing
+      uniqueIdentifier: TC_Mimoto_BindingOtp_09
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -185,6 +194,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Empty_OtpChannels_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with OTP channel being empty
+      uniqueIdentifier: TC_Mimoto_BindingOtp_10
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -206,6 +216,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Null_OtpChannels_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with OTP channel value being null
+      uniqueIdentifier: TC_Mimoto_BindingOtp_11
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -227,6 +238,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Missing_OtpChannel_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with OTP channel missing
+      uniqueIdentifier: TC_Mimoto_BindingOtp_12
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -248,6 +260,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Empty_OtpChannel_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with OTP channel being empty
+      uniqueIdentifier: TC_Mimoto_BindingOtp_13
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -269,6 +282,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Null_OtpChannel_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with OTP channel being empty
+      uniqueIdentifier: TC_Mimoto_BindingOtp_14
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -290,6 +304,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Invalid_RequestTime_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with invalid request time
+      uniqueIdentifier: TC_Mimoto_AuthLock_07
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -311,6 +326,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Past_RequestTime_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with past request time
+      uniqueIdentifier: TC_Mimoto_BindingOtp_16
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -332,6 +348,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Future_RequestTime_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with future request time
+      uniqueIdentifier: TC_Mimoto_BindingOtp_17
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -353,6 +370,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Missing_RequestTime_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with missing request time
+      uniqueIdentifier: TC_Mimoto_BindingOtp_18
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -374,6 +392,7 @@ BindingOtp:
    Mimoto_BindingOtp_UIN_Empty_RequestTime_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with empty request time
+      uniqueIdentifier: TC_Mimoto_BindingOtp_19
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -395,6 +414,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Invalid_individualId_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with invalid VID
+      uniqueIdentifier: TC_Mimoto_BindingOtp_20
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -416,6 +436,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Missing_individualId_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with missing VID
+      uniqueIdentifier: TC_Mimoto_BindingOtp_21
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -437,6 +458,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Empty_individualId_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with empty VID
+      uniqueIdentifier: TC_Mimoto_BindingOtp_22
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -458,6 +480,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Null_individualId_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a individualID with invalid VID
+      uniqueIdentifier: TC_Mimoto_BindingOtp_23
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -479,6 +502,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_SpaceSeparated_otpChannels_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a VID with OTP channel value been spaced in between
+      uniqueIdentifier: TC_Mimoto_BindingOtp_24
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -500,6 +524,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Invalid_OtpChannels_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a VID with invalid OTP channel
+      uniqueIdentifier: TC_Mimoto_BindingOtp_25
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -521,6 +546,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Missing_OtpChannels_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a VID with missing OTP channel values
+      uniqueIdentifier: TC_Mimoto_BindingOtp_26
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -542,6 +568,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Empty_OtpChannels_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a VID with empty OTP channel values
+      uniqueIdentifier: TC_Mimoto_BindingOtp_27
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -563,6 +590,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Null_OtpChannels_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a VID with OTP channel values as null
+      uniqueIdentifier: TC_Mimoto_BindingOtp_28
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -584,6 +612,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Missing_OtpChannel_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a VID with OTP channel values missing
+      uniqueIdentifier: TC_Mimoto_BindingOtp_29
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -605,6 +634,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Empty_OtpChannel_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a VID with OTP channel values empty
+      uniqueIdentifier: TC_Mimoto_BindingOtp_30
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -626,6 +656,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Null_OtpChannel_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a VID with OTP channel values as null
+      uniqueIdentifier: TC_Mimoto_BindingOtp_31
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -647,6 +678,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Invalid_RequestTime_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a VID with invalid request time
+      uniqueIdentifier: TC_Mimoto_BindingOtp_32
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -668,6 +700,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Past_RequestTime_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a VID with past request time
+      uniqueIdentifier: TC_Mimoto_BindingOtp_33
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -689,6 +722,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Future_RequestTime_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a VID with future request time
+      uniqueIdentifier: TC_Mimoto_BindingOtp_34
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -710,6 +744,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Missing_RequestTime_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a VID with request time missing
+      uniqueIdentifier: TC_Mimoto_BindingOtp_35
       role: resident
       restMethod: post
       validityCheckRequired: true
@@ -731,6 +766,7 @@ BindingOtp:
    Mimoto_BindingOtp_vid_Empty_RequestTime_Neg:
       endPoint: /v1/mimoto/binding-otp
       description: Creating OTP for binding a VID with request time empty
+      uniqueIdentifier: TC_Mimoto_BindingOtp_36
       role: resident
       restMethod: post
       validityCheckRequired: true
