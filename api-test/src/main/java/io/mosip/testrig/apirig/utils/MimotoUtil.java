@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import org.testng.SkipException;
 
 import io.mosip.testrig.apirig.dto.TestCaseDTO;
+import io.mosip.testrig.apirig.testrunner.MosipTestRunner;
 import io.mosip.testrig.apirig.testrunner.OTPListener;
 
 public class MimotoUtil extends AdminTestUtil {
@@ -40,6 +41,10 @@ public class MimotoUtil extends AdminTestUtil {
 		String testCaseName = testCaseDTO.getTestCaseName();
 		String endpoint = testCaseDTO.getEndPoint();
 		String inputJson = testCaseDTO.getInput();
+		
+		if (MosipTestRunner.skipAll == true) {
+			throw new SkipException(GlobalConstants.PRE_REQUISITE_FAILED_MESSAGE);
+		}
 		
 		if (isOTPEnabled().equals("false")) {
 			if (testCaseDTO.getEndPoint().contains(GlobalConstants.SEND_OTP_ENDPOINT)

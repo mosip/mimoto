@@ -24,6 +24,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 
 import io.mosip.testrig.apirig.dataprovider.BiometricDataProvider;
 import io.mosip.testrig.apirig.dbaccess.DBManager;
+import io.mosip.testrig.apirig.report.EmailableReport;
 import io.mosip.testrig.apirig.utils.AdminTestUtil;
 import io.mosip.testrig.apirig.utils.AuthTestsUtil;
 import io.mosip.testrig.apirig.utils.CertsUtil;
@@ -49,6 +50,7 @@ public class MosipTestRunner {
 
 	public static String jarUrl = MosipTestRunner.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 	public static List<String> languageList = new ArrayList<>();
+	public static boolean skipAll = false;
 
 	/**
 	 * C Main method to start mosip test execution
@@ -133,7 +135,6 @@ public class MosipTestRunner {
 		DBManager.executeDBQueries(MimotoConfigManager.getMASTERDbUrl(), MimotoConfigManager.getMasterDbUser(),
 				MimotoConfigManager.getMasterDbPass(), MimotoConfigManager.getMasterDbSchema(),
 				getGlobalResourcePath() + "/" + "config/masterDataDeleteQueriesForEsignet.txt");
-		BaseTestCase.setReportName(GlobalConstants.MIMOTO);
 		AdminTestUtil.initiateMimotoTest();
 		BaseTestCase.otpListener = new OTPListener();
 		BaseTestCase.otpListener.run();
@@ -156,8 +157,6 @@ public class MosipTestRunner {
 	 */
 	public static void startTestRunner() {
 		File homeDir = null;
-		TestNG runner = new TestNG();
-		List<String> suitefiles = new ArrayList<>();
 		String os = System.getProperty("os.name");
 		LOGGER.info(os);
 		if (getRunType().contains("IDE") || os.toLowerCase().contains("windows")) {
@@ -169,14 +168,26 @@ public class MosipTestRunner {
 			LOGGER.info("ELSE :" + homeDir);
 		}
 		for (File file : homeDir.listFiles()) {
+			TestNG runner = new TestNG();
+			List<String> suitefiles = new ArrayList<>();
 			if (file.getName().toLowerCase().contains(GlobalConstants.MIMOTO)) {
+				if (file.getName().toLowerCase().contains("prerequisite")) {
+					BaseTestCase.setReportName(GlobalConstants.MIMOTO + "-prerequisite");
+				} else {
+					// if the prerequisite total skipped/failed count is greater than zero
+					if (EmailableReport.getFailedCount() > 0 || EmailableReport.getSkippedCount() > 0) {
+//						skipAll = true;
+					}
+
+					BaseTestCase.setReportName(GlobalConstants.MIMOTO);
+				}
 				suitefiles.add(file.getAbsolutePath());
+				runner.setTestSuites(suitefiles);
+				System.getProperties().setProperty("testng.outpur.dir", "testng-report");
+				runner.setOutputDirectory("testng-report");
+				runner.run();
 			}
 		}
-		runner.setTestSuites(suitefiles);
-		System.getProperties().setProperty("testng.outpur.dir", "testng-report");
-		runner.setOutputDirectory("testng-report");
-		runner.run();
 	}
 
 	public static String getGlobalResourcePath() {
