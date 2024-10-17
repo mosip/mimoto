@@ -60,7 +60,7 @@ AddIdentity:
    Mimoto_AddIdentity_downloadIssuerCredential_smoke_Pos:
       endPoint: /idrepository/v1/identity/
       description: Creating a new identity for downloading issuer credential
-      uniqueIdentifier: TC_Mimoto_AddIdentity_04
+      uniqueIdentifier: TC_Mimoto_AddIdentity_03
       role: idrepo
       restMethod: post
       inputTemplate: mimoto/AddIdentity/addIdentity_$LANGNUMBER$
