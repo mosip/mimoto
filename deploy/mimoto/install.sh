@@ -7,7 +7,7 @@ if [ $# -ge 1 ] ; then
 fi
 
 NS=mimoto
-MIMOTO_CHART_VERSION=0.14.0
+MIMOTO_CHART_VERSION=0.14.0-develop
 
 echo Create $NS namespace
 kubectl create ns $NS
