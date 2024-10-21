@@ -42,6 +42,9 @@ public class IssuersServiceImpl implements IssuersService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private CredentialIssuerWellknownResponseValidator credentialIssuerWellknownResponseValidator;
+
 
     @Override
     public IssuersDTO getAllIssuers(String search) throws ApiNotAccessibleException{
@@ -110,7 +113,7 @@ public class IssuersServiceImpl implements IssuersService {
                     String wellknownResponse = restApiClient.getApi(issuerDTO.getWellknown_endpoint(), String.class);
                     try {
                         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = objectMapper.readValue(wellknownResponse, CredentialIssuerWellKnownResponse.class);
-                        new CredentialIssuerWellknownResponseValidator().validate(credentialIssuerWellKnownResponse, validator);
+                        credentialIssuerWellknownResponseValidator.validate(credentialIssuerWellKnownResponse, validator);
                         return credentialIssuerWellKnownResponse;
                     } catch (JsonProcessingException | ApiNotAccessibleException | InvalidWellknownResponseException e) {
                         throw new RuntimeException(e);
