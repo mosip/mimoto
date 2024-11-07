@@ -72,19 +72,31 @@ public class CredentialsController {
         } catch (ApiNotAccessibleException | IOException exception) {
             log.error("Exception occurred while fetching credential types ", exception);
             responseWrapper.setErrors(List.of(new ErrorDTO(API_NOT_ACCESSIBLE_EXCEPTION.getCode(), API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(responseWrapper);
         } catch (InvalidCredentialResourceException invalidCredentialResourceException) {
             log.error("Exception occurred while pushing the data to data share ", invalidCredentialResourceException);
             responseWrapper.setErrors(List.of(new ErrorDTO(invalidCredentialResourceException.getErrorCode(), invalidCredentialResourceException.getMessage())));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(responseWrapper);
         } catch (VCVerificationException exception) {
             log.error("Exception occurred while verification of the verifiable Credential", exception);
             responseWrapper.setErrors(List.of(new ErrorDTO(exception.getErrorCode(), exception.getMessage())));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(responseWrapper);
         } catch (Exception exception) {
             log.error("Exception occurred while generating pdf ", exception);
             responseWrapper.setErrors(List.of(new ErrorDTO(MIMOTO_PDF_SIGN_EXCEPTION.getCode(), exception.getMessage())));
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseWrapper);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(responseWrapper);
         }
     }
 }
