@@ -163,9 +163,9 @@ public class CredentialServiceImpl implements CredentialService {
 
     public Boolean verifyCredential(VCCredentialResponse vcCredentialResponse) throws VCVerificationException, JsonProcessingException {
         log.info("Initiated the VC Verification : Started");
-//        VCCredentialProperties vcCredentialProperties = vcCredentialResponse.getCredential();
-//        vcCredentialProperties.setId("123");
-//        vcCredentialResponse.setCredential(vcCredentialProperties);
+        VCCredentialProperties vcCredentialProperties = vcCredentialResponse.getCredential();
+        vcCredentialProperties.setId("123");
+        vcCredentialResponse.setCredential(vcCredentialProperties);
         String credentialString = objectMapper.writeValueAsString(vcCredentialResponse.getCredential());
         VerificationResult verificationResult = credentialsVerifier.verify(credentialString, CredentialFormat.LDP_VC);
         if(!verificationResult.getVerificationStatus()){
