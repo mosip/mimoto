@@ -1,4 +1,4 @@
-package io.mosip.testrig.apirig.testscripts;
+package io.mosip.testrig.apirig.mimoto.testscripts;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -22,6 +22,8 @@ import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 
 import io.mosip.testrig.apirig.dto.TestCaseDTO;
+import io.mosip.testrig.apirig.mimoto.utils.MimotoConfigManager;
+import io.mosip.testrig.apirig.mimoto.utils.MimotoUtil;
 import io.mosip.testrig.apirig.testrunner.BaseTestCase;
 import io.mosip.testrig.apirig.testrunner.HealthChecker;
 import io.mosip.testrig.apirig.utils.AdminTestException;
@@ -29,8 +31,6 @@ import io.mosip.testrig.apirig.utils.AdminTestUtil;
 import io.mosip.testrig.apirig.utils.AuthenticationTestException;
 import io.mosip.testrig.apirig.utils.GlobalConstants;
 import io.mosip.testrig.apirig.utils.GlobalMethods;
-import io.mosip.testrig.apirig.utils.MimotoConfigManager;
-import io.mosip.testrig.apirig.utils.MimotoUtil;
 import io.restassured.response.Response;
 
 public class PostWithFormDataBodyForPdfDownload extends AdminTestUtil implements ITest {

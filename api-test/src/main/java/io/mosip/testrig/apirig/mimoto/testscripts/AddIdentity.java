@@ -1,4 +1,4 @@
-package io.mosip.testrig.apirig.testscripts;
+package io.mosip.testrig.apirig.mimoto.testscripts;
 
 import java.lang.reflect.Field;
 import java.text.DateFormat;
@@ -26,6 +26,8 @@ import org.testng.internal.TestResult;
 
 import io.mosip.testrig.apirig.dto.OutputValidationDto;
 import io.mosip.testrig.apirig.dto.TestCaseDTO;
+import io.mosip.testrig.apirig.mimoto.utils.MimotoConfigManager;
+import io.mosip.testrig.apirig.mimoto.utils.MimotoUtil;
 import io.mosip.testrig.apirig.testrunner.HealthChecker;
 import io.mosip.testrig.apirig.testrunner.JsonPrecondtion;
 import io.mosip.testrig.apirig.utils.AdminTestException;
@@ -33,8 +35,6 @@ import io.mosip.testrig.apirig.utils.AdminTestUtil;
 import io.mosip.testrig.apirig.utils.AuthenticationTestException;
 import io.mosip.testrig.apirig.utils.GlobalConstants;
 import io.mosip.testrig.apirig.utils.KernelAuthentication;
-import io.mosip.testrig.apirig.utils.MimotoConfigManager;
-import io.mosip.testrig.apirig.utils.MimotoUtil;
 import io.mosip.testrig.apirig.utils.OutputValidationUtil;
 import io.mosip.testrig.apirig.utils.ReportUtil;
 import io.mosip.testrig.apirig.utils.RestClient;

@@ -11,7 +11,6 @@ import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
 import com.itextpdf.kernel.pdf.PdfWriter;
-import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
@@ -25,12 +24,12 @@ import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.JoseUtil;
-import io.mosip.mimoto.util.LoggerUtil;
 import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
-import io.mosip.vercred.CredentialsVerifier;
-import io.mosip.vercred.exception.*;
+import io.mosip.vercred.vcverifier.CredentialsVerifier;
+import io.mosip.vercred.vcverifier.constants.CredentialFormat;
+import io.mosip.vercred.vcverifier.data.VerificationResult;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.VelocityContext;
@@ -124,7 +123,7 @@ public class CredentialServiceImpl implements CredentialService {
         CredentialsSupportedResponse credentialsSupportedResponse = issuerService.getIssuerWellknownForCredentialType(issuerId, credentialType);
         VCCredentialRequest vcCredentialRequest = generateVCCredentialRequest(issuerConfig, credentialIssuerWellKnownResponse,  credentialsSupportedResponse, response.getAccess_token());
         VCCredentialResponse vcCredentialResponse = downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
-        boolean verificationStatus = vcCredentialResponse.getCredential().getProof().getType().equals("RsaSignature2018") ? verifyCredential(vcCredentialResponse) : true;
+        boolean verificationStatus = issuerId.toLowerCase().contains("mock") || verifyCredential(vcCredentialResponse);
         if(verificationStatus) {
             String dataShareUrl =  QRCodeType.OnlineSharing.equals(issuerConfig.getQr_code_type()) ? dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse), credentialValidity) : "";
             return generatePdfForVerifiableCredentials(vcCredentialResponse, issuerConfig, credentialsSupportedResponse, dataShareUrl, credentialValidity);
@@ -162,41 +161,15 @@ public class CredentialServiceImpl implements CredentialService {
         return renderVCInCredentialTemplate(data);
     }
 
-    public Boolean verifyCredential(VCCredentialResponse vcCredentialResponse) throws VCVerificationException {
-        try {
-            log.info("Initiated the VC Verification : Started");
-            String credentialString = objectMapper.writeValueAsString(vcCredentialResponse.getCredential());
-            boolean isCredentialVerified = credentialsVerifier.verifyCredentials(credentialString);
-            log.info("Completed the VC Verification : Completed -> status : " + isCredentialVerified);
-            return isCredentialVerified;
-        } catch (ProofDocumentNotFoundException | ProofTypeNotSupportedException | SignatureVerificationException | UnknownException | JsonProcessingException |
-                 PublicKeyNotFoundException exception ) {
-            String errorCode = UNKNOWN_EXCEPTION.getErrorCode();
-            String errorMessage = UNKNOWN_EXCEPTION.getErrorMessage();
-            switch (exception.getClass().getSimpleName()) {
-                case "ProofDocumentNotFoundException" -> {
-                    errorCode = PROOF_DOCUMENT_NOT_FOUND_EXCEPTION.getErrorCode();
-                    errorMessage = PROOF_DOCUMENT_NOT_FOUND_EXCEPTION.getErrorMessage();
-                }
-                case "ProofTypeNotSupportedException" -> {
-                    errorCode = PROOF_TYPE_NOT_SUPPORTED_EXCEPTION.getErrorCode();
-                    errorMessage = PROOF_TYPE_NOT_SUPPORTED_EXCEPTION.getErrorMessage();
-                }
-                case "SignatureVerificationException" -> {
-                    errorCode = SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode();
-                    errorMessage = SIGNATURE_VERIFICATION_EXCEPTION.getErrorMessage();
-                }
-                case "JsonProcessingException" -> {
-                    errorCode = JSON_PARSING_EXCEPTION.getErrorCode();
-                    errorMessage = JSON_PARSING_EXCEPTION.getErrorMessage();
-                }
-                case "PublicKeyNotFoundException" -> {
-                    errorCode = PUBLIC_KEY_NOT_FOUND_EXCEPTION.getErrorCode();
-                    errorMessage = PUBLIC_KEY_NOT_FOUND_EXCEPTION.getErrorMessage();
-                }
-            }
-            throw new VCVerificationException(errorCode, errorMessage);
+    public Boolean verifyCredential(VCCredentialResponse vcCredentialResponse) throws VCVerificationException, JsonProcessingException {
+        log.info("Initiated the VC Verification : Started");
+        String credentialString = objectMapper.writeValueAsString(vcCredentialResponse.getCredential());
+        VerificationResult verificationResult = credentialsVerifier.verify(credentialString, CredentialFormat.LDP_VC);
+        if(!verificationResult.getVerificationStatus()){
+            throw new VCVerificationException(verificationResult.getVerificationErrorCode().toLowerCase(), verificationResult.getVerificationMessage());
         }
+        log.info("Completed the VC Verification : Completed -> result : " + verificationResult);
+        return true;
     }
 
     @NotNull

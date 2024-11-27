@@ -187,7 +187,7 @@ public class Utilities {
     }
     public static String[] handleExceptionWithErrorCode(Exception exception) {
         String errorMessage = exception.getMessage();
-        String errorCode = PlatformErrorMessages.MIMOTO_IDP_GENERIC_EXCEPTION.getCode();
+        String errorCode = PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode();
 
         if(errorMessage.contains(DELIMITER)){
             String[] errorSections = errorMessage.split(DELIMITER);

@@ -9,6 +9,7 @@ import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
 import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
+import io.mosip.mimoto.util.CredentialIssuerWellknownResponseValidator;
 import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.Utilities;
 import jakarta.validation.Validator;
@@ -31,6 +32,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.lenient;
 
 @RunWith(MockitoJUnitRunner.class)
 public class IssuersServiceTest {
@@ -49,6 +51,9 @@ public class IssuersServiceTest {
 
     @Mock
     Utilities utilities;
+
+    @Mock
+    CredentialIssuerWellknownResponseValidator credentialIssuerWellknownResponseValidator;
 
     @Mock
     ObjectMapper objectMapper;
@@ -105,7 +110,7 @@ public class IssuersServiceTest {
         Mockito.when(restApiClient.getApi(wellKnownUrl , String.class))
                 .thenReturn(getExpectedWellKnownJson());
         Mockito.when(objectMapper.readValue(getExpectedWellKnownJson(), CredentialIssuerWellKnownResponse.class)).thenReturn(expextedCredentialIssuerWellKnownResponse);
-        Mockito.when(validator.validate(any())).thenReturn(Collections.emptySet());
+        lenient().when(validator.validate(expextedCredentialIssuerWellKnownResponse)).thenReturn(Collections.emptySet());
 
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse=issuersService.getIssuerWellknown(issuerId);
         assertEquals(expextedCredentialIssuerWellKnownResponse,credentialIssuerWellKnownResponse);

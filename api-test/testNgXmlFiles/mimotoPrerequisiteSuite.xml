@@ -12,7 +12,7 @@
 		<parameter name="ymlFile" value="mimoto/AddIdentity/AddIdentity.yml" />
 		<parameter name="prerequisite" value="Yes" />
 		<classes>
-			<class name="io.mosip.testrig.apirig.testscripts.AddIdentity" />
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.AddIdentity" />
 		</classes>
 	</test>
 	<test name="GenerateVID">
@@ -21,7 +21,7 @@
 		<parameter name="idKeyName" value="vid" />
 		<classes>
 			<class
-				name="io.mosip.testrig.apirig.testscripts.PostWithAutogenIdWithOtpGenerate" />
+				name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithAutogenIdWithOtpGenerate" />
 		</classes>
 	</test>
 	<test name="CreateVID">
@@ -30,7 +30,7 @@
 		<parameter name="prerequisite" value="Yes" />
 		<classes>
 			<class
-				name="io.mosip.testrig.apirig.testscripts.SimplePostForAutoGenId" />
+				name="io.mosip.testrig.apirig.mimoto.testscripts.SimplePostForAutoGenId" />
 		</classes>
 	</test>
 

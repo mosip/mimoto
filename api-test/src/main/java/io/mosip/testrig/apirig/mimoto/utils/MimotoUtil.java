@@ -1,12 +1,15 @@
-package io.mosip.testrig.apirig.utils;
+package io.mosip.testrig.apirig.mimoto.utils;
 
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.testng.SkipException;
 
 import io.mosip.testrig.apirig.dto.TestCaseDTO;
-import io.mosip.testrig.apirig.testrunner.MosipTestRunner;
+import io.mosip.testrig.apirig.mimoto.testrunner.MosipTestRunner;
 import io.mosip.testrig.apirig.testrunner.OTPListener;
+import io.mosip.testrig.apirig.utils.AdminTestUtil;
+import io.mosip.testrig.apirig.utils.GlobalConstants;
+import io.mosip.testrig.apirig.utils.SkipTestCaseHandler;
 
 public class MimotoUtil extends AdminTestUtil {
 
@@ -39,6 +42,13 @@ public class MimotoUtil extends AdminTestUtil {
 	
 	public static TestCaseDTO isTestCaseValidForTheExecution(TestCaseDTO testCaseDTO) {
 		String testCaseName = testCaseDTO.getTestCaseName();
+		
+		int indexof = testCaseName.indexOf("_");
+		String modifiedTestCaseName = testCaseName.substring(indexof + 1);
+		
+		addTestCaseDetailsToMap(modifiedTestCaseName, testCaseDTO.getUniqueIdentifier());
+		
+		
 		String endpoint = testCaseDTO.getEndPoint();
 		String inputJson = testCaseDTO.getInput();
 		

@@ -8,5 +8,5 @@
         "vcDownloadPoolInterval": "6000",
         "issuer": "residentapp"
     },
-    "errors": null
+    "errors": []
 }
