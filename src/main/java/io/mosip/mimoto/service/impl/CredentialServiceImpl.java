@@ -31,7 +31,6 @@ import io.mosip.vercred.vcverifier.CredentialsVerifier;
 import io.mosip.vercred.vcverifier.constants.CredentialFormat;
 import io.mosip.vercred.vcverifier.data.VerificationResult;
 import jakarta.annotation.PostConstruct;
-import jakarta.validation.valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -182,7 +181,7 @@ public class CredentialServiceImpl implements CredentialService {
         Map<String, CredentialDisplayResponseDto> credentialSubject = credentialsSupportedResponse.getCredentialDefinition().getCredentialSubject();
             // credentialSubject.keySet().forEach(VCProperty -> vcPropertiesFromWellKnown.put(VCProperty, credentialSubject.get(VCProperty).getDisplay().get(0).getName()));
         credentialSubject.keySet().forEach(VCProperty -> {
-            Optional<@Valid CredentialIssuerDisplayResponse> filteredResponse = credentialSubject.get(VCProperty).getDisplay().stream().filter(obj -> obj.getLocale().equals(locale)).findFirst();
+            Optional<CredentialIssuerDisplayResponse> filteredResponse = credentialSubject.get(VCProperty).getDisplay().stream().filter(obj -> obj.getLocale().equals(locale)).findFirst();
             String filteredValue = filteredResponse.isPresent() ? filteredResponse.get().getName() : "" ;
             vcPropertiesFromWellKnown.put(VCProperty, filteredValue);
         });
