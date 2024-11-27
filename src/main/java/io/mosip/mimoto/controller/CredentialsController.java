@@ -57,12 +57,13 @@ public class CredentialsController {
             String issuerId = params.get("issuer");
             String credentialType = params.get("credential");
             String credentialValidity = params.get("vcStorageExpiryLimitInTimes");
+            String locale = params.get("locale");
 
             log.info("Initiated Token Call");
             TokenResponseDTO response = credentialService.getTokenResponse(params, issuerId);
 
             log.info("Initiated Download Credential Call");
-            ByteArrayInputStream inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response, credentialValidity);
+            ByteArrayInputStream inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response, credentialValidity,locale);
 
             return ResponseEntity
                     .ok()
