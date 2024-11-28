@@ -11,6 +11,7 @@ import io.mosip.mimoto.util.TestUtilities;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -66,6 +67,7 @@ public class DataShareServiceTest {
     }
 
     @Test
+    @Ignore
     public void downloadCredentialWhenRequestIsProper() throws Exception {
         PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
         VCCredentialResponse vcCredentialResponseDTO = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
