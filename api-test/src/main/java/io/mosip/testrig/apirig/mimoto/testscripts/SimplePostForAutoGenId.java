@@ -140,9 +140,9 @@ public class SimplePostForAutoGenId extends AdminTestUtil implements ITest {
 					if (MimotoConfigManager.isInServiceNotDeployedList("sunbirdrc"))
 						throw new SkipException(GlobalConstants.SERVICE_NOT_DEPLOYED_MESSAGE);
 
-					if (MimotoConfigManager.getEsignetMockBaseURL() != null
-							&& !MimotoConfigManager.getEsignetMockBaseURL().isBlank())
-						tempUrl = ApplnURI.replace("api-internal.", MimotoConfigManager.getEsignetMockBaseURL());
+					if (MimotoConfigManager.getproperty("esignetSunBirdBaseURL") != null
+							&& !MimotoConfigManager.getproperty("esignetSunBirdBaseURL").isBlank())
+						tempUrl = MimotoConfigManager.getproperty("esignetSunBirdBaseURL");
 					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$ESIGNETMOCKBASEURL$", ""));
 				} else if (testCaseDTO.getEndPoint().startsWith("$SUNBIRDBASEURL$") && testCaseName.contains("SunBirdR")) {
 
