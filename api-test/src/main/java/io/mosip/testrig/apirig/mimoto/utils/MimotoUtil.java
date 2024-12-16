@@ -122,12 +122,12 @@ public class MimotoUtil extends AdminTestUtil {
 	
 	public static String getClientIdSection(String baseURL) {
 		if (baseURL.contains("esignet-mosipid")) {
-			return "mimoto.oidc.mosipid.partner.clientid";
+			return MimotoConfigManager.getproperty("mimoto-oidc-mosipid-partner-clientid");
 		}
 		if (baseURL.contains("esignet-insurance")) {
-			return "mimoto.oidc.sunbird.partner.clientid";
+			return MimotoConfigManager.getproperty("mimoto-oidc-sunbird-partner-clientid");
 		}
 
-		return "mimoto.oidc.partner.clientid";
+		return MimotoConfigManager.getproperty("mimoto-oidc-partner-clientid");
 	}
 }

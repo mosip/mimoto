@@ -21,6 +21,7 @@ import java.util.Map;
 public class VCCredentialProperties {
     private String issuer;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String id;
 
     private String issuanceDate;

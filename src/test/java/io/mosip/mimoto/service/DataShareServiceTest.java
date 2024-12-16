@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.PathMatcher;
@@ -70,7 +71,7 @@ public class DataShareServiceTest {
         PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
         VCCredentialResponse vcCredentialResponseDTO = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
         String credentialString = TestUtilities.getObjectAsString(vcCredentialResponseDTO);
-        Mockito.when(restApiClient.getApi(Mockito.eq("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/test"), Mockito.eq(String.class)))
+        Mockito.when(restApiClient.getApiWithCustomHeaders(Mockito.eq("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/test"), Mockito.eq(String.class), Mockito.any(HttpHeaders.class)))
                 .thenReturn(credentialString);
         Mockito.when(objectMapper.readValue(Mockito.eq(credentialString), Mockito.eq(VCCredentialResponse.class)))
                         .thenReturn(vcCredentialResponseDTO);

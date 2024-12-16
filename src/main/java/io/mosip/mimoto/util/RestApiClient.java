@@ -282,4 +282,21 @@ public class RestApiClient {
         System.setProperty(TOKEN, token);
         return token;
     }
+
+    public <T> T getApiWithCustomHeaders(String url, Class<?> responseType, HttpHeaders customHeaders) {
+        T result = null;
+        RestTemplate rt = restTemplate;
+        if (disableSelfTokenRestTemplate) {
+            rt = plainRestTemplate;
+        }
+        try {
+            log.info("RestApiClient::getApiWithCustomHeaders()::entry url: {}", url);
+            // Add custom headers to the request
+            HttpEntity<Object> requestEntity = new HttpEntity<>(customHeaders);
+            result = (T) rt.exchange(url, HttpMethod.GET, requestEntity, responseType).getBody();
+        } catch (Exception e) {
+            log.error("RestApiClient::getApiWithCustomHeaders()::error url:{} {} {}", url, e.getMessage(), e);
+        }
+        return result;
+    }
 }
