@@ -65,7 +65,7 @@ jobs:
           find ../${{ env.SERVICE_LOCATION }} -path '*/target/*' -name '*.jar'  -type f  -executable -exec zip ${{ env.NEW_BUILD_ARTIFACT }}.zip {} +
 
       - name: Upload the springboot jars
-        if: ${{ !contains(github.ref, 'master') || !contains(github.ref, 'main') }}
+        if: ${{ !contains(github.ref, 'master') }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.NEW_BUILD_ARTIFACT }}
@@ -176,12 +176,12 @@ jobs:
           cp -r ${{ env.SERVICE_LOCATION}}/target/classes/config ${{ env.SERVICE_LOCATION}}/target/config
           cp -r ${{ env.SERVICE_LOCATION}}/testNgXmlFiles ${{ env.SERVICE_LOCATION}}/target/testNgXmlFiles
       - name: Ready the springboot artifacts
-        if: ${{ !contains(github.ref, 'master') || !contains(github.ref, 'main') }}
+        if: ${{ !contains(github.ref, 'master') }}
         run: |
           ## FIND JARS & COPY ONLY EXECUTABLE JARs STORED UNDER TARGET DIRECTORY 
           find ${{ env.SERVICE_LOCATION }} -path '*/target/*' -exec zip ${{ env.BUILD_ARTIFACT }}.zip {} +
       - name: Upload the springboot jars
-        if: ${{ !contains(github.ref, 'master') || !contains(github.ref, 'main') }}
+        if: ${{ !contains(github.ref, 'master') }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.BUILD_ARTIFACT }}
