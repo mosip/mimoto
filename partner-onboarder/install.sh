@@ -83,7 +83,7 @@ fi
     ENABLE_INSECURE='--set onboarding.configmaps.onboarding.ENABLE_INSECURE=true';
   fi
 
-  NS=mimoto
+  NS=injiweb
   CHART_VERSION=0.0.1-develop
 
   echo Create $NS namespace

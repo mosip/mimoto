@@ -1,7 +1,7 @@
 #!/bin/bash
 # Uninstalls mimoto
 function deleting_mimoto() {
-  NS=mimoto
+  NS=injiweb
   while true; do
       read -p "Are you sure you want to delete mimoto helm chart?(Y/n) " yn
       if [ $yn = "Y" ]
