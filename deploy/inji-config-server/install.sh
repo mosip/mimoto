@@ -32,5 +32,5 @@ CHART_VERSION=0.0.2-develop
     $COPY_UTIL secret conf-secrets-various conf-secrets $NS
 
     echo Installing config-server
-    helm -n $NS install config-server mosip/config-server -f values.yaml --wait --version $CHART_VERSION
+    helm -n $NS install config-server mosip/config-server --set image.repository=mosipqa/kernel-config-server --set image.tag=develop -f values.yaml --wait --version $CHART_VERSION
     echo Installed config-server.
