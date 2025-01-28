@@ -1,5 +1,5 @@
 #!/bin/bash
-# Restart the inji-config-server service
+# Restart the config-server service
 ## Usage: ./restart.sh [kubeconfig]
 
 if [ $# -ge 1 ] ; then
@@ -12,7 +12,7 @@ function inji_config_server() {
 
   kubectl -n $NS  get deploy -o name |  xargs -n1 -t  kubectl -n $NS rollout status
 
-  echo Restarted inji-config-server services
+  echo Restarted config-server services
   return 0
 }
 

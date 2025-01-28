@@ -31,14 +31,7 @@ The project requires JDK 21
 
 ### Install
 
-1. Execute inji-config-server install script
-```
-cd helm/inji-config-server
-./install.sh
-```
-* Review values.yaml and make sure git repository parameters are as per your installation.
-
-2. Execute Onboarder install script
+1. Execute Onboarder install script
 
 ```
 cd partner-onboarder
