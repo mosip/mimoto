@@ -6,7 +6,7 @@ if [ $# -ge 1 ] ; then
   export KUBECONFIG=$1
 fi
 
-NS=mimoto
+NS=injiweb
 CHART_VERSION=12.0.1
 
 echo Create $NS namespace
