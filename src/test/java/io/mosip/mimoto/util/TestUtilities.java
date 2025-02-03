@@ -9,7 +9,9 @@ import io.mosip.mimoto.dto.openid.VerifiersDTO;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseDTO;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseWrapperDTO;
 import io.mosip.mimoto.dto.openid.presentation.*;
-
+import org.springframework.util.ResourceUtils;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,7 +20,7 @@ import java.util.Map;
 
 public class TestUtilities {
 
-    public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName){
+    public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName) {
         LogoDTO logo = new LogoDTO();
         logo.setUrl("https://logo");
         logo.setAlt_text("logo-url");
@@ -39,18 +41,18 @@ public class TestUtilities {
         credentialDefinitionResponseDto.setCredentialSubject(Map.of("name", credentialDisplayResponseDto));
         CredentialsSupportedResponse credentialsSupportedResponse = new CredentialsSupportedResponse();
         credentialsSupportedResponse.setFormat("ldp_vc");
-        credentialsSupportedResponse.setScope(credentialSupportedName+"_vc_ldp");
+        credentialsSupportedResponse.setScope(credentialSupportedName + "_vc_ldp");
         credentialsSupportedResponse.setDisplay(Collections.singletonList(credentialSupportedDisplay));
-        HashMap<String,ProofTypesSupported> proofTypesSupportedHashMap=new HashMap<>();
+        HashMap<String, ProofTypesSupported> proofTypesSupportedHashMap = new HashMap<>();
         ProofTypesSupported proofTypesSupported = new ProofTypesSupported();
         proofTypesSupported.setProofSigningAlgValuesSupported(List.of("RS256"));
-        proofTypesSupportedHashMap.put("jwt",proofTypesSupported);
+        proofTypesSupportedHashMap.put("jwt", proofTypesSupported);
         credentialsSupportedResponse.setProofTypesSupported(proofTypesSupportedHashMap);
         credentialsSupportedResponse.setCredentialDefinition(credentialDefinitionResponseDto);
         return credentialsSupportedResponse;
     }
 
-    public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName, String format){
+    public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName, String format) {
         LogoDTO logo = new LogoDTO();
         logo.setUrl("https://logo");
         logo.setAlt_text("logo-url");
@@ -68,25 +70,45 @@ public class TestUtilities {
         credentialDisplayResponseDto.setDisplay(Collections.singletonList(credentialIssuerDisplayResponse));
         CredentialsSupportedResponse credentialsSupportedResponse = new CredentialsSupportedResponse();
         credentialsSupportedResponse.setFormat(format);
-        credentialsSupportedResponse.setScope(credentialSupportedName+"_vc_"+format);
+        credentialsSupportedResponse.setScope(credentialSupportedName + "_vc_" + format);
         credentialsSupportedResponse.setDisplay(Collections.singletonList(credentialSupportedDisplay));
-        HashMap<String,ProofTypesSupported> proofTypesSupportedHashMap=new HashMap<>();
+        HashMap<String, ProofTypesSupported> proofTypesSupportedHashMap = new HashMap<>();
         ProofTypesSupported proofTypesSupported = new ProofTypesSupported();
         proofTypesSupported.setProofSigningAlgValuesSupported(List.of("RS256"));
         proofTypesSupportedHashMap.put("jwt", proofTypesSupported);
         credentialsSupportedResponse.setProofTypesSupported(proofTypesSupportedHashMap);
         credentialsSupportedResponse.setDoctype("org.iso.18018");
-        credentialsSupportedResponse.setClaims(Map.of("org.iso.18018", Map.of("given_name",Map.of("display", List.of(Map.of("name","Given Name","locale","en"))))));
+        credentialsSupportedResponse.setClaims(Map.of("org.iso.18018", Map.of("given_name", Map.of("display", List.of(Map.of("name", "Given Name", "locale", "en"))))));
         return credentialsSupportedResponse;
     }
 
-    public static CredentialIssuerWellKnownResponse getCredentialIssuerWellKnownResponseDto(String issuerName, Map<String,CredentialsSupportedResponse> credentialsSupportedResponses){
-        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
-        credentialIssuerWellKnownResponse.setCredentialIssuer("https://dev/"+issuerName);
-        credentialIssuerWellKnownResponse.setCredentialEndPoint("https://dev/issuance/credential");
-        credentialIssuerWellKnownResponse.setAuthorizationServers(List.of("https://dev.net"));
-        credentialIssuerWellKnownResponse.setCredentialConfigurationsSupported(credentialsSupportedResponses);
+    public static CredentialIssuerWellKnownResponse getCredentialIssuerWellKnownResponseDto(String issuerName, Map<String, CredentialsSupportedResponse> credentialsSupportedResponses) {
+        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse(
+                "https://dev/" + issuerName,
+                List.of("https://auth-server.env.net"),
+                "https://dev/issuance/credential",
+                credentialsSupportedResponses);
         return credentialIssuerWellKnownResponse;
+    }
+
+    public static CredentialIssuerConfigurationResponse getCredentialIssuerConfigurationResponseDto(String issuerName, Map<String, CredentialsSupportedResponse> credentialsSupportedResponses, List<String> nullFields) {
+        AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = getAuthServerWellknownResponseDto(nullFields);
+        CredentialIssuerConfigurationResponse credentialIssuerConfigurationResponse = new CredentialIssuerConfigurationResponse("https://dev/" + issuerName, List.of("https://auth-server.env.net"), "https://dev/issuance/credential", credentialsSupportedResponses, authorizationServerWellKnownResponse);
+        return credentialIssuerConfigurationResponse;
+    }
+
+    public static AuthorizationServerWellKnownResponse getAuthServerWellknownResponseDto(List<String> nullFields) {
+        AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = new AuthorizationServerWellKnownResponse();
+        if (!nullFields.contains("authorization_endpoint")) {
+            authorizationServerWellKnownResponse.setAuthorizationEndpoint("https://dev/authorize");
+        }
+        if (!nullFields.contains("token_endpoint")) {
+            authorizationServerWellKnownResponse.setTokenEndpoint("https://dev/token");
+        }
+        if (!nullFields.contains("grant_types_supported")) {
+            authorizationServerWellKnownResponse.setGrantTypesSupported(List.of("authorization_code"));
+        }
+        return authorizationServerWellKnownResponse;
     }
 
     public static IssuerDTO getIssuerDTO(String issuerName) {
@@ -102,17 +124,18 @@ public class TestUtilities {
         IssuerDTO issuer = new IssuerDTO();
         issuer.setIssuer_id(issuerName + "id");
         issuer.setCredential_issuer(issuerName + "id");
-        issuer.setCredential_issuer_host("https://injicertify-mock.dev1.mosip.net");
+        issuer.setCredential_issuer_host("https://issuer.env.net");
         issuer.setDisplay(Collections.singletonList(display));
         issuer.setClient_id("123");
-        if (issuerName.equals("Issuer1")) issuer.setWellknown_endpoint("/well-known-proxy");
-        else {
-            issuer.setRedirect_uri(null);
-            issuer.setToken_endpoint(null);
+        issuer.setWellknown_endpoint("/well-known-proxy");
+        issuer.setProxy_token_endpoint("/well-known-proxy");
+        if (!(issuerName.equals("Issuer2") || issuerName.equals("Issuer4"))) { //use it for testing /issuers or /issuers?search=issuer2 endpoints
+            issuer.setAuthorization_audience("/well-known-proxy");
         }
         return issuer;
     }
-    public static IssuerDTO getIssuerConfigDTO(String issuerName, List<String> nullFields) {
+
+    public static IssuerDTO getIssuerConfigDTO(String issuerName) {
         LogoDTO logo = new LogoDTO();
         logo.setUrl("/logo");
         logo.setAlt_text("logo-url");
@@ -125,62 +148,25 @@ public class TestUtilities {
         IssuerDTO issuer = new IssuerDTO();
         issuer.setIssuer_id(issuerName + "id");
         issuer.setCredential_issuer(issuerName + "id");
-        issuer.setCredential_issuer_host("https://injicertify-mock.dev1.mosip.net");
         issuer.setDisplay(Collections.singletonList(display));
         issuer.setClient_id("123");
         issuer.setEnabled("true");
-        if (issuerName.equals("Issuer1")) issuer.setWellknown_endpoint("/well-known-proxy");
-        else {
-            if (!nullFields.contains("redirect_uri"))
-                issuer.setRedirect_uri("/redirection");
-            if (!nullFields.contains("authorization_audience"))
-                issuer.setAuthorization_audience("/authorization_audience");
-            if (!nullFields.contains("redirect_uri"))
-                issuer.setRedirect_uri("/redirection");
-            if (!nullFields.contains("token_endpoint"))
-                issuer.setToken_endpoint("/token_endpoint");
-            if (!nullFields.contains("proxy_token_endpoint"))
-                issuer.setProxy_token_endpoint("/proxy_token_endpoint");
-        }
+        issuer.setWellknown_endpoint("https://issuer.env.net/.well-known/openid-credential-issuer");
+        issuer.setCredential_issuer_host("https://issuer.env.net");
+        issuer.setAuthorization_audience("https://dev/token");
+        issuer.setProxy_token_endpoint("https://dev/token");
         return issuer;
     }
 
-    public static String getExpectedWellKnownJson() {
-        return "{"
-                + "\"credential_issuer\": \"Issuer1\","
-                + "\"credential_endpoint\": \"/credential_endpoint\","
-                + "\"credential_configurations_supported\": {"
-                + "\"CredentialType1\": {"
-                + "\"format\": \"ldp_vc\","
-                + "\"scope\": \"CredentialType1_vc_ldp\","
-                + "\"display\": [{"
-                + "\"logo\": {"
-                + "\"url\": \"/logo\","
-                + "\"alt_text\": \"logo-url\""
-                + "},"
-                + "\"name\": \"CredentialType1\","
-                + "\"locale\": \"en\","
-                + "\"text_color\": \"#FFFFFF\","
-                + "\"background_color\": \"#B34622\""
-                + "}],"
-                + "\"proof_types_supported\": {},"
-                + "\"credential_definition\": {"
-                + "\"type\": [\"VerifiableCredential\", \"CredentialType1\"],"
-                + "\"credentialSubject\": {"
-                + "\"name\": {"
-                + "\"display\": [{"
-                + "\"name\": \"Given Name\","
-                + "\"locale\": \"en\""
-                + "}]"
-                + "}"
-                + "}"
-                + "}"
-                + "}"
-                + "}"
-                + "}";
+    public static String getExpectedWellKnownJson() throws IOException {
+        return new String(Files.readAllBytes(ResourceUtils.getFile(ResourceUtils.CLASSPATH_URL_PREFIX + "responses/expectedWellknown.json").toPath())).trim();
     }
 
-    public static PresentationRequestDTO getPresentationRequestDTO(){
+    public static String getExpectedIssuersConfigJson() throws IOException {
+        return new String(Files.readAllBytes(ResourceUtils.getFile(ResourceUtils.CLASSPATH_URL_PREFIX + "responses/expectedIssuerConfig.json").toPath())).trim();
+    }
+
+    public static PresentationRequestDTO getPresentationRequestDTO() {
         return PresentationRequestDTO.builder()
                 .presentationDefinition(getPresentationDefinitionDTO())
                 .clientId("test_client_id")
@@ -189,7 +175,7 @@ public class TestUtilities {
                 .redirectUri("test_redirect_uri").build();
     }
 
-    public static VCCredentialProperties getVCCredentialPropertiesDTO(String type){
+    public static VCCredentialProperties getVCCredentialPropertiesDTO(String type) {
 
         ArrayList<String> contextList = new ArrayList<>();
         contextList.add("context-1");
@@ -203,7 +189,7 @@ public class TestUtilities {
         credentialSubject.put("key1", "value1");
         credentialSubject.put("key2", "value2");
 
-        VCCredentialResponseProof  vcCredentialResponseProof = VCCredentialResponseProof.builder()
+        VCCredentialResponseProof vcCredentialResponseProof = VCCredentialResponseProof.builder()
                 .type(type)
                 .proofPurpose("test-proofPurpose")
                 .proofValue("test-proofValue")
@@ -221,13 +207,13 @@ public class TestUtilities {
                 .credentialSubject(credentialSubject).build();
     }
 
-    public static VCCredentialResponse getVCCredentialResponseDTO(String type){
+    public static VCCredentialResponse getVCCredentialResponseDTO(String type) {
         return VCCredentialResponse.builder()
                 .credential(getVCCredentialPropertiesDTO(type))
                 .format("ldp_vc").build();
     }
 
-    public static io.mosip.mimoto.dto.idp.TokenResponseDTO getTokenResponseDTO(){
+    public static io.mosip.mimoto.dto.idp.TokenResponseDTO getTokenResponseDTO() {
         return io.mosip.mimoto.dto.idp.TokenResponseDTO.builder()
                 .id_token("test-id-token")
                 .access_token("test-accesstoken")
@@ -237,12 +223,12 @@ public class TestUtilities {
                 .build();
     }
 
-    public static PresentationDefinitionDTO getPresentationDefinitionDTO(){
+    public static PresentationDefinitionDTO getPresentationDefinitionDTO() {
         FilterDTO filterDTO = FilterDTO.builder().type("String").pattern("test-credential").build();
         FieldDTO fieldDTO = FieldDTO.builder().path(new String[]{"$.type"}).filter(filterDTO).build();
         ConstraintsDTO constraintsDTO = ConstraintsDTO.builder().fields(new FieldDTO[]{fieldDTO}).build();
         Map<String, List<String>> proofTypes = Map.of("proofTypes", Collections.singletonList("Ed25519Signature2020"));
-        Map<String, Map<String, List<String>>> format = Map.of("ldpVc", proofTypes );
+        Map<String, Map<String, List<String>>> format = Map.of("ldpVc", proofTypes);
         InputDescriptorDTO inputDescriptorDTO = InputDescriptorDTO.builder().id("test-input-id").format(format).constraints(constraintsDTO).build();
 
         return PresentationDefinitionDTO.builder()
@@ -250,7 +236,7 @@ public class TestUtilities {
                 .id("test-id").build();
     }
 
-    public static VerifiablePresentationDTO getVerifiablePresentationDTO(){
+    public static VerifiablePresentationDTO getVerifiablePresentationDTO() {
         List<String> contextList = new ArrayList<>();
         contextList.add("https://www.w3.org/2018/credentials/v1");
 
@@ -278,7 +264,7 @@ public class TestUtilities {
         return objectMapper.writeValueAsString(object);
     }
 
-    public static DataShareResponseWrapperDTO getDataShareResponseWrapperDTO(){
+    public static DataShareResponseWrapperDTO getDataShareResponseWrapperDTO() {
         ErrorDTO errorDTO = ErrorDTO.builder().errorCode("test-errorCode").errorMessage("test-errorMessage").build();
         DataShareResponseDTO dataShareResponseDTO = DataShareResponseDTO.builder()
                 .url("https://test-url")

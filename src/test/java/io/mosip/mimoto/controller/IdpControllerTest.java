@@ -6,6 +6,7 @@ import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.BaseUncheckedException;
 import io.mosip.mimoto.service.RestClientService;
+import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.DateUtils;
@@ -54,6 +55,9 @@ public class IdpControllerTest {
 
     @MockBean
     private IdpServiceImpl idpService;
+
+    @MockBean
+    private CredentialServiceImpl credentialService;
 
     @Test
     public void otpRequestTest() throws Exception {

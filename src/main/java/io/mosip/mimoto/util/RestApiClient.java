@@ -122,6 +122,7 @@ public class RestApiClient {
             rt = plainRestTemplate;
         }
         try {
+            log.info("RestApiClient::getApi()::entry uri: {}", url);
             result = (T) rt.getForObject(url, responseType);
         } catch (Exception e) {
             log.error("RestApiClient::getApi()::error uri:{} {} {}", url, e.getMessage(), e);

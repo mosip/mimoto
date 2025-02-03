@@ -9,7 +9,6 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;
 
 import java.util.List;
@@ -17,8 +16,7 @@ import java.util.Map;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
-public class CredentialIssuerWellKnownResponse {
+public class CredentialIssuerConfigurationResponse {
     @NotBlank
     @URL
     @SerializedName("credential_issuer")
@@ -45,4 +43,12 @@ public class CredentialIssuerWellKnownResponse {
     @JsonProperty("credential_configurations_supported")
     @Schema(description = "List of Credential Configurations Supported")
     private Map<@NotBlank String, @Valid CredentialsSupportedResponse> credentialConfigurationsSupported;
+
+    @Valid
+    @SerializedName("authorization")
+    @JsonProperty("authorization")
+    @Schema(description = "Authorization Server Configurations")
+    private AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse;
 }
+
+

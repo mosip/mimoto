@@ -1,10 +1,17 @@
 #!/bin/bash
-# Copy configmaps from other namespaces
-
-function copying_cm() {
-  COPY_UTIL=./copy_cm_func.sh
-  DST_NS=config-server # DST_NS: Destination namespace
-  $COPY_UTIL configmap global default $DST_NS
+# Uninstalls mimoto
+function deleting_mimoto() {
+  NS=injiweb
+  while true; do
+      read -p "Are you sure you want to delete mimoto helm chart?(Y/n) " yn
+      if [ $yn = "Y" ]
+        then
+          helm -n $NS delete mimoto
+          break
+        else
+          break
+      fi
+  done
   return 0
 }
 
@@ -14,4 +21,4 @@ set -o errexit   ## set -e : exit the script if any statement returns a non-true
 set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable
 set -o errtrace  # trace ERR through 'time command' and other functions
 set -o pipefail  # trace ERR through pipes
-copying_cm   # calling function
+deleting_mimoto   # calling function

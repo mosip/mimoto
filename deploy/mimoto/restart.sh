@@ -7,7 +7,7 @@ if [ $# -ge 1 ] ; then
 fi
 
 function Restarting_mimoto() {
-  NS=mimoto
+  NS=injiweb
   kubectl -n $NS rollout restart deploy mimoto
 
   kubectl -n $NS  get deploy -o name |  xargs -n1 -t  kubectl -n $NS rollout status
