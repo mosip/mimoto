@@ -151,6 +151,7 @@ public class TestUtilities {
         issuer.setDisplay(Collections.singletonList(display));
         issuer.setClient_id("123");
         issuer.setEnabled("true");
+        issuer.setProtocol("OpenId4VCI");
         issuer.setWellknown_endpoint("https://issuer.env.net/.well-known/openid-credential-issuer");
         issuer.setCredential_issuer_host("https://issuer.env.net");
         issuer.setAuthorization_audience("https://dev/token");

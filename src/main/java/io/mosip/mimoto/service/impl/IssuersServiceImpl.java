@@ -93,7 +93,9 @@ public class IssuersServiceImpl implements IssuersService {
             throw e;
         }
         for (IssuerDTO issuerDTO : issuersDTO.getIssuers()) {
-            updateIssuerWithAuthServerConfig(issuerDTO);
+            if (!issuerDTO.getProtocol().equals("OTP")) {
+                updateIssuerWithAuthServerConfig(issuerDTO);
+            }
         }
 
         return issuersDTO;
