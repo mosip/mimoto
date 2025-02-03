@@ -22,7 +22,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -45,8 +44,8 @@ public class IssuersServiceImpl implements IssuersService {
     @Override
     public IssuersDTO getIssuers(String search) throws ApiNotAccessibleException, AuthorizationServerWellknownResponseException, IOException, InvalidWellknownResponseException {
         IssuersDTO issuersDTO = getAllIssuers();
-        getAllEnabledIssuers(issuersDTO);
-        getFilteredIssuers(issuersDTO, search);
+        issuersDTO = getAllEnabledIssuers(issuersDTO);
+        issuersDTO = getFilteredIssuers(issuersDTO, search);
 
         return issuersDTO;
     }
@@ -54,36 +53,29 @@ public class IssuersServiceImpl implements IssuersService {
     @Override
     public IssuerDTO getIssuerDetails(String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
         IssuersDTO issuersDTO = getAllIssuers();
-        getAllEnabledIssuers(issuersDTO);
+        issuersDTO = getAllEnabledIssuers(issuersDTO);
 
-        Optional<IssuerDTO> issuerConfigResp = issuersDTO.getIssuers().stream()
+        return issuersDTO.getIssuers().stream()
                 .filter(issuer -> issuer.getIssuer_id().equals(issuerId))
-                .findFirst();
-
-        IssuerDTO issuerDTO;
-        if (issuerConfigResp.isPresent()) {
-            issuerDTO = issuerConfigResp.get();
-        } else {
-            throw new InvalidIssuerIdException();
-        }
-        return issuerDTO;
+                .findFirst()
+                .orElseThrow(InvalidIssuerIdException::new);
     }
 
-    private void getAllEnabledIssuers(IssuersDTO issuersDTO) {
-        List<IssuerDTO> enabledIssuers = issuersDTO.getIssuers().stream()
+    private IssuersDTO getAllEnabledIssuers(IssuersDTO issuersDTO) {
+        return new IssuersDTO(issuersDTO.getIssuers().stream()
                 .filter(issuer -> "true".equals(issuer.getEnabled()))
-                .collect(Collectors.toList());
-        issuersDTO.setIssuers(enabledIssuers);
+                .collect(Collectors.toList()));
     }
 
-     private void getFilteredIssuers(IssuersDTO issuersDTO, String search) {
-        if (!StringUtils.isEmpty(search)) {
-            List<IssuerDTO> filteredIssuers = issuersDTO.getIssuers().stream()
-                    .filter(issuer -> issuer.getDisplay().stream()
-                            .anyMatch(displayDTO -> displayDTO.getTitle().toLowerCase().contains(search.toLowerCase())))
-                    .collect(Collectors.toList());
-            issuersDTO.setIssuers(filteredIssuers);
+    private IssuersDTO getFilteredIssuers(IssuersDTO issuersDTO, String search) {
+        if (StringUtils.isEmpty(search)) {
+            return issuersDTO;
         }
+
+        return new IssuersDTO(issuersDTO.getIssuers().stream()
+                .filter(issuer -> issuer.getDisplay().stream()
+                        .anyMatch(displayDTO -> displayDTO.getTitle().toLowerCase().contains(search.toLowerCase())))
+                .collect(Collectors.toList()));
     }
 
     @Override
@@ -122,7 +114,7 @@ public class IssuersServiceImpl implements IssuersService {
         );
     }
 
-    public void updateIssuerWithAuthServerConfig(IssuerDTO issuerDTO) throws AuthorizationServerWellknownResponseException, ApiNotAccessibleException, IOException, InvalidWellknownResponseException {
+    private void updateIssuerWithAuthServerConfig(IssuerDTO issuerDTO) throws AuthorizationServerWellknownResponseException, ApiNotAccessibleException, IOException, InvalidWellknownResponseException {
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = issuerWellknownService.getWellknown(issuerDTO.getCredential_issuer_host());
         AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = authorizationServerService.getWellknown(credentialIssuerWellKnownResponse.getAuthorizationServers().get(0));
         String tokenEndpoint = authorizationServerWellKnownResponse.getTokenEndpoint();
