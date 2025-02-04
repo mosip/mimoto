@@ -116,11 +116,20 @@ public class IssuersServiceImpl implements IssuersService {
         );
     }
 
-    private void updateIssuerWithAuthServerConfig(IssuerDTO issuerDTO) throws AuthorizationServerWellknownResponseException, ApiNotAccessibleException, IOException, InvalidWellknownResponseException {
-        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = issuerWellknownService.getWellknown(issuerDTO.getCredential_issuer_host());
-        AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = authorizationServerService.getWellknown(credentialIssuerWellKnownResponse.getAuthorizationServers().get(0));
-        String tokenEndpoint = authorizationServerWellKnownResponse.getTokenEndpoint();
-        issuerDTO.setAuthorization_audience(tokenEndpoint);
-        issuerDTO.setProxy_token_endpoint(tokenEndpoint);
+    private void updateIssuerWithAuthServerConfig(IssuerDTO issuerDTO)  {
+        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = null;
+        try {
+            credentialIssuerWellKnownResponse = issuerWellknownService.getWellknown(issuerDTO.getCredential_issuer_host());
+            AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = authorizationServerService.getWellknown(credentialIssuerWellKnownResponse.getAuthorizationServers().get(0));
+            String tokenEndpoint = authorizationServerWellKnownResponse.getTokenEndpoint();
+            issuerDTO.setAuthorization_audience(tokenEndpoint);
+            issuerDTO.setProxy_token_endpoint(tokenEndpoint);
+        } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
+                 InvalidWellknownResponseException e) {
+            log.error("Exception occurred while fetching issuer wellknown ", e);
+            issuerDTO.setAuthorization_audience("");
+            issuerDTO.setProxy_token_endpoint("");
+        }
+
     }
 }
