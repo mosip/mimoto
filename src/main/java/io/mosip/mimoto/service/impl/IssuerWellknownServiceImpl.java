@@ -32,7 +32,7 @@ public class IssuerWellknownServiceImpl implements IssuerWellknownService {
 
 
     @Override
-    @Cacheable(value = "issuerWellknown", key = "{#credentialIssuerHost}")
+    @Cacheable(value = "issuerWellknown", key = "#p0")
     public CredentialIssuerWellKnownResponse getWellknown(String credentialIssuerHost) throws ApiNotAccessibleException, IOException, InvalidWellknownResponseException {
         try {
             String wellknownEndpoint = credentialIssuerHost + "/.well-known/openid-credential-issuer";
