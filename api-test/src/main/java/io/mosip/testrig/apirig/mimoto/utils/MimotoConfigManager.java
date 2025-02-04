@@ -31,7 +31,7 @@ public class MimotoConfigManager extends ConfigManager{
 	}
 	
 	public static String getSunBirdBaseURL() {
-			return MimotoUtil.getValueFromMimotoActuator("overrides", "mosip.sunbird.url");
+		return MimotoUtil.getValueFromMimotoActuator("overrides", "mosip.sunbird.url");
 	}
 
 }
