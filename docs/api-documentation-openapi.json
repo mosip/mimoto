@@ -125,6 +125,256 @@
                 "summary": "Generate Credential - Request Otp"
             }
         },
+        "/verifiers": {
+            "get": {
+                "operationId": "getAllTrustedVerifiers",
+                "tags": [
+                    "Verifiers"
+                ],
+                "description": "This API retrieves all trusted verifiers for Inji Wallet.",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "verifiers": [
+                                            {
+                                                "client_id": "string",
+                                                "redirect_uris": [
+                                                    "string"
+                                                ],
+                                                "response_uris": [
+                                                    "string"
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "verifiers": [
+                                                {
+                                                    "client_id": "https://injiverify.collab.mosip.net",
+                                                    "redirect_uris": [
+                                                        "https://injiverify.collab.mosip.net/redirect"
+                                                    ],
+                                                    "response_uris": [
+                                                        "https://injiverify.collab.mosip.net/redirect"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "Failure response": {
+                                        "value": {
+                                            "id": null,
+                                            "version": "v1",
+                                            "responsetime": "2022-10-31T05:07:34.789Z",
+                                            "metadata": null,
+                                            "response": null,
+                                            "errors": [
+                                                {
+                                                    "errorCode": "VERIFIER-API-26",
+                                                    "errorMessage": "API not accessible failure"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/get-token/{issuer}": {
+            "post": {
+                "tags": [
+                    "Credentials Download"
+                ],
+                "summary": "Retrieve accessToken for OIDC flow",
+                "description": "This endpoint allows you to retrieve the access token in exchange for the authorization code.",
+                "operationId": "getToken",
+                "parameters": [
+                    {
+                        "name": "arg0",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    {
+                        "name": "issuer",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "string"
+                                        },
+                                        "str": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "responsetime": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "metadata": {
+                                            "type": "object",
+                                            "nullable": true
+                                        },
+                                        "response": {
+                                            "type": "object",
+                                            "properties": {
+                                                "access_token": {
+                                                    "type": "string"
+                                                },
+                                                "token_type": {
+                                                    "type": "string"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer"
+                                                },
+                                                "scope": {
+                                                    "type": "string"
+                                                },
+                                                "refresh_token": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            }
+                                        },
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "errorCode": {
+                                                        "type": "string"
+                                                    },
+                                                    "errorMessage": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "nullable": true
+                                        }
+                                    }
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "id": "mosip.mimoto.issuers",
+                                            "version": "v1",
+                                            "str": null,
+                                            "responsetime": "2024-04-25T05:56:55.890Z",
+                                            "metadata": null,
+                                            "response": {
+                                                "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                                                "token_type": "bearer",
+                                                "expires_in": 3600,
+                                                "scope": "mosip_identity_vc_ldp",
+                                                "refresh_token": "xyz123"
+                                            },
+                                            "errors": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "string"
+                                        },
+                                        "str": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "responsetime": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "metadata": {
+                                            "type": "object",
+                                            "nullable": true
+                                        },
+                                        "response": {
+                                            "type": "object",
+                                            "nullable": true
+                                        },
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "errorCode": {
+                                                        "type": "string"
+                                                    },
+                                                    "errorMessage": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "examples": {
+                                    "Failure response": {
+                                        "value": {
+                                            "id": null,
+                                            "version": "v1",
+                                            "str": null,
+                                            "responsetime": "2022-10-31T05:07:34.789Z",
+                                            "metadata": null,
+                                            "response": null,
+                                            "errors": [
+                                                {
+                                                    "errorCode": "RESIDENT-APP-26",
+                                                    "errorMessage": "Api not accessible failure"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/credentialshare/request": {
             "post": {
                 "operationId": "request",
@@ -1171,7 +1421,7 @@
                                     "properties": {
                                         "issuers": [
                                             {
-                                                "credential_issuer": "string",
+                                                "issuer_id": "string",
                                                 "protocol": "string",
                                                 "display": [
                                                     {
@@ -1191,7 +1441,6 @@
                                                     "string"
                                                 ],
                                                 "authorization_endpoint": "string",
-                                                "authorization_audience": "string",
                                                 "token_endpoint": "string",
                                                 "proxy_token_endpoint": "string",
                                                 "credential_endpoint": "string",
@@ -1205,7 +1454,8 @@
                                                     "additionalProp2": "string",
                                                     "additionalProp3": "string"
                                                 },
-                                                "wellknown_endpoint": "string"
+                                                "wellknown_endpoint": "string",
+                                                "credential_issuer": "string"
                                             }
                                         ]
                                     }
@@ -1220,7 +1470,7 @@
                                         "response": {
                                             "issuers": [
                                                 {
-                                                    "credential_issuer": "MOSIPInsurance",
+                                                    "issuer_id": "MOSIPInsurance",
                                                     "protocol": "OpenId4VCI",
                                                     "display": [
                                                         {
@@ -1235,10 +1485,11 @@
                                                         }
                                                     ],
                                                     "client_id": "3yz7-j3xRzU3SODdoNgSGvO_cD8UijH3AIWRDAg1x-M",
-                                                    ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer"
+                                                    ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer",
+                                                    "credential_issuer": "http://localhost:8088"
                                                 },
                                                 {
-                                                    "credential_issuer": "MOSIPNationalID",
+                                                    "issuer_id": "MOSIPNationalID",
                                                     "protocol": "OpenId4VCI",
                                                     "display": [
                                                         {
@@ -1253,7 +1504,8 @@
                                                         }
                                                     ],
                                                     "client_id": "3yz7-j3xRzU3SODdoNgSGvO_cD8UijH3AIWRDAg1x-M",
-                                                    ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer"
+                                                    ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer",
+                                                    "credential_issuer": "http://localhost:8088"
                                                 }
                                             ]
                                         }
@@ -1271,7 +1523,7 @@
                                             "response": {
                                                 "issuers": [
                                                     {
-                                                        "credential_issuer": "MOSIPInsurance",
+                                                        "issuer_id": "MOSIPInsurance",
                                                         "protocol": "OpenId4VCI",
                                                         "display": [
                                                             {
@@ -1286,10 +1538,11 @@
                                                             }
                                                         ],
                                                         "client_id": "3yz7-j3xRzU3SODdoNgSGvO_cD8UijH3AIWRDAg1x-M",
-                                                        ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer"
+                                                        ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer",
+                                                        "credential_issuer": "http://localhost:8088"
                                                     },
                                                     {
-                                                        "credential_issuer": "MOSIPNationalID",
+                                                        "issuer_id": "MOSIPNationalID",
                                                         "protocol": "OpenId4VCI",
                                                         "display": [
                                                             {
@@ -1304,7 +1557,8 @@
                                                             }
                                                         ],
                                                         "client_id": "3yz7-j3xRzU3SODdoNgSGvO_cD8UijH3AIWRDAg1x-M",
-                                                        ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer"
+                                                        ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer",
+                                                        "credential_issuer": "http://localhost:8088"
                                                     }
                                                 ]
                                             }
@@ -1350,7 +1604,7 @@
                 "tags": [
                     "Trusted Issuers"
                 ],
-                "description": "This API provides the complete configuration details for the specific issuers passed in the path variable",
+                "description": "This API provides the complete configuration details for the specific issuers passed in the path variable. Since version 0.16.0, this endpoint is deprecated and will be removed in a future release.",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1408,7 +1662,7 @@
                                         "responsetime": "2024-04-25T05:56:55.890Z",
                                         "metadata": null,
                                         "response": {
-                                            "credential_issuer": "ESignet",
+                                            "issuer_id": "ESignet",
                                             "protocol": "OpenId4VCI",
                                             "display": [
                                                 {
@@ -1491,7 +1745,8 @@
                                             "additional_headers": {
                                                 "Accept": "application/json"
                                             },
-                                            ".well-known": "https://esignet.collab.mosip.net/.well-known/openid-credential-issuer"
+                                            ".well-known": "https://esignet.collab.mosip.net/.well-known/openid-credential-issuer",
+                                            "credential_issuer": "https://esignet.collab.mosip.net"
                                         },
                                         "errors": []
                                     },
@@ -1506,7 +1761,7 @@
                                             "responsetime": "2024-04-25T05:56:55.890Z",
                                             "metadata": null,
                                             "response": {
-                                                "credential_issuer": "ESignet",
+                                                "issuer_id": "ESignet",
                                                 "protocol": "OpenId4VCI",
                                                 "display": [
                                                     {
@@ -1589,7 +1844,8 @@
                                                 "additional_headers": {
                                                     "Accept": "application/json"
                                                 },
-                                                ".well-known": "https://esignet.collab.mosip.net/.well-known/openid-credential-issuer"
+                                                ".well-known": "https://esignet.collab.mosip.net/.well-known/openid-credential-issuer",
+                                                "credential_issuer": "https://esignet.collab.mosip.net"
                                             },
                                             "errors": []
                                         },
@@ -1618,464 +1874,6 @@
                 }
             }
         },
-        "/issuers/{issuer-id}/credentialTypes": {
-            "get": {
-                "operationId": "getCredentialTypes",
-                "parameters": [
-                    {
-                        "name": "issuer-id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "search",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "tags": [
-                    "Trusted Issuers"
-                ],
-                "description": "This API fetches and allows searching for Credential Types offered by the issuer, all sourced from the issuer's well-known configuration.",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "supportedCredentials": [
-                                            {
-                                                "format": "string",
-                                                "id": "string",
-                                                "scope": "string",
-                                                "display": [
-                                                    {
-                                                        "name": "string",
-                                                        "logo": {
-                                                            "url": "string",
-                                                            "alt_text": "string"
-                                                        },
-                                                        "locale": "string",
-                                                        "background_color": "string",
-                                                        "text_color": "string"
-                                                    }
-                                                ],
-                                                "proof_types_supported": [
-                                                    "string"
-                                                ],
-                                                "credential_definition": {
-                                                    "type": [
-                                                        "string"
-                                                    ],
-                                                    "credentialSubject": {
-                                                        "additionalProp1": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "string",
-                                                                    "locale": "string"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "additionalProp2": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "string",
-                                                                    "locale": "string"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "additionalProp3": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "string",
-                                                                    "locale": "string"
-                                                                }
-                                                            ]
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        ],
-                                        "authorization_endpoint": "string"
-                                    },
-                                    "errors": {
-                                        "type": "null"
-                                    }
-                                },
-                                "x-examples": {
-                                    "Example 1": {
-                                        "supportedCredentials": [
-                                            {
-                                                "format": "ldp_vc",
-                                                "id": "InsuranceCredential",
-                                                "scope": "sunbird_rc_insurance_vc_ldp",
-                                                "display": [
-                                                    {
-                                                        "name": "MOSIP Insurance",
-                                                        "logo": {
-                                                            "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
-                                                            "alt_text": "insurance logo"
-                                                        },
-                                                        "locale": "en",
-                                                        "background_color": "#fafcff",
-                                                        "text_color": "#00284d"
-                                                    }
-                                                ],
-                                                "proof_types_supported": [
-                                                    "jwt"
-                                                ],
-                                                "credential_definition": {
-                                                    "type": [
-                                                        "VerifiableCredential",
-                                                        "InsuranceCredential"
-                                                    ],
-                                                    "credentialSubject": {
-                                                        "fullName": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "Full Name",
-                                                                    "locale": "en"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "policyName": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "Policy Name",
-                                                                    "locale": "en"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "policyNumber": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "Policy Number",
-                                                                    "locale": "en"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "gender": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "Gender",
-                                                                    "locale": "en"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "expiresOn": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "Expiry Date",
-                                                                    "locale": "en"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "dob": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "Date Of Birth",
-                                                                    "locale": "en"
-                                                                }
-                                                            ]
-                                                        }
-                                                    }
-                                                }
-                                            },
-                                            {
-                                                "format": "ldp_vc",
-                                                "id": "LifeInsuranceCredential_ldp",
-                                                "scope": "life_insurance_vc_ldp",
-                                                "display": [
-                                                    {
-                                                        "name": "Sunbird Life Insurance",
-                                                        "logo": {
-                                                            "url": "https://sunbird.org/images/sunbird-logo-new.png",
-                                                            "alt_text": "Sunbird life insurance logo"
-                                                        },
-                                                        "locale": "en",
-                                                        "background_color": "#fefcfa",
-                                                        "text_color": "#7C4616"
-                                                    }
-                                                ],
-                                                "proof_types_supported": [
-                                                    "jwt"
-                                                ],
-                                                "credential_definition": {
-                                                    "type": [
-                                                        "VerifiableCredential",
-                                                        "LifeInsuranceCredential"
-                                                    ],
-                                                    "credentialSubject": {
-                                                        "fullName": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "Full Name",
-                                                                    "locale": "en"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "policyName": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "Policy Name",
-                                                                    "locale": "en"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "policyNumber": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "Policy Number",
-                                                                    "locale": "en"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "gender": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "Gender",
-                                                                    "locale": "en"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "policyExpiresOn": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "Expiry Date",
-                                                                    "locale": "en"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "dob": {
-                                                            "display": [
-                                                                {
-                                                                    "name": "Date Of Birth",
-                                                                    "locale": "en"
-                                                                }
-                                                            ]
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        ],
-                                        "authorization_endpoint": "http://localhost:8088/authorize"
-                                    }
-                                },
-                                "examples": {
-                                    "Success response": {
-                                        "value": {
-                                            "id": "mosip.resident.vid",
-                                            "version": "v1",
-                                            "str": null,
-                                            "responsetime": "2022-10-31T05:08:14.846Z",
-                                            "metadata": null,
-                                            "response": {
-                                                "supportedCredentials": [
-                                                    {
-                                                        "format": "ldp_vc",
-                                                        "id": "InsuranceCredential",
-                                                        "scope": "sunbird_rc_insurance_vc_ldp",
-                                                        "display": [
-                                                            {
-                                                                "name": "MOSIP Insurance",
-                                                                "logo": {
-                                                                    "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
-                                                                    "alt_text": "insurance logo"
-                                                                },
-                                                                "locale": "en",
-                                                                "background_color": "#fafcff",
-                                                                "text_color": "#00284d"
-                                                            }
-                                                        ],
-                                                        "proof_types_supported": [
-                                                            "jwt"
-                                                        ],
-                                                        "credential_definition": {
-                                                            "type": [
-                                                                "VerifiableCredential",
-                                                                "InsuranceCredential"
-                                                            ],
-                                                            "credentialSubject": {
-                                                                "fullName": {
-                                                                    "display": [
-                                                                        {
-                                                                            "name": "Full Name",
-                                                                            "locale": "en"
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                "policyName": {
-                                                                    "display": [
-                                                                        {
-                                                                            "name": "Policy Name",
-                                                                            "locale": "en"
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                "policyNumber": {
-                                                                    "display": [
-                                                                        {
-                                                                            "name": "Policy Number",
-                                                                            "locale": "en"
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                "gender": {
-                                                                    "display": [
-                                                                        {
-                                                                            "name": "Gender",
-                                                                            "locale": "en"
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                "expiresOn": {
-                                                                    "display": [
-                                                                        {
-                                                                            "name": "Expiry Date",
-                                                                            "locale": "en"
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                "dob": {
-                                                                    "display": [
-                                                                        {
-                                                                            "name": "Date Of Birth",
-                                                                            "locale": "en"
-                                                                        }
-                                                                    ]
-                                                                }
-                                                            }
-                                                        }
-                                                    },
-                                                    {
-                                                        "format": "ldp_vc",
-                                                        "id": "LifeInsuranceCredential_ldp",
-                                                        "scope": "life_insurance_vc_ldp",
-                                                        "display": [
-                                                            {
-                                                                "name": "Sunbird Life Insurance",
-                                                                "logo": {
-                                                                    "url": "https://sunbird.org/images/sunbird-logo-new.png",
-                                                                    "alt_text": "Sunbird life insurance logo"
-                                                                },
-                                                                "locale": "en",
-                                                                "background_color": "#fefcfa",
-                                                                "text_color": "#7C4616"
-                                                            }
-                                                        ],
-                                                        "proof_types_supported": [
-                                                            "jwt"
-                                                        ],
-                                                        "credential_definition": {
-                                                            "type": [
-                                                                "VerifiableCredential",
-                                                                "LifeInsuranceCredential"
-                                                            ],
-                                                            "credentialSubject": {
-                                                                "fullName": {
-                                                                    "display": [
-                                                                        {
-                                                                            "name": "Full Name",
-                                                                            "locale": "en"
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                "policyName": {
-                                                                    "display": [
-                                                                        {
-                                                                            "name": "Policy Name",
-                                                                            "locale": "en"
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                "policyNumber": {
-                                                                    "display": [
-                                                                        {
-                                                                            "name": "Policy Number",
-                                                                            "locale": "en"
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                "gender": {
-                                                                    "display": [
-                                                                        {
-                                                                            "name": "Gender",
-                                                                            "locale": "en"
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                "policyExpiresOn": {
-                                                                    "display": [
-                                                                        {
-                                                                            "name": "Expiry Date",
-                                                                            "locale": "en"
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                "dob": {
-                                                                    "display": [
-                                                                        {
-                                                                            "name": "Date Of Birth",
-                                                                            "locale": "en"
-                                                                        }
-                                                                    ]
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                ],
-                                                "authorization_endpoint": "http://localhost:8088/authorize"
-                                            },
-                                            "errors": null
-                                        }
-                                    },
-                                    "Failure response": {
-                                        "value": {
-                                            "id": null,
-                                            "version": "v1",
-                                            "str": null,
-                                            "responsetime": "2022-10-31T05:07:34.789Z",
-                                            "metadata": null,
-                                            "response": null,
-                                            "errors": [
-                                                {
-                                                    "errorCode": "RESIDENT-APP-026",
-                                                    "errorMessage": "Api not accessible failure"
-                                                }
-                                            ]
-                                        }
-                                    },
-                                    "Failure response 2": {
-                                        "value": {
-                                            "id": null,
-                                            "version": "v1",
-                                            "str": null,
-                                            "responsetime": "2022-10-31T05:07:34.789Z",
-                                            "metadata": null,
-                                            "response": null,
-                                            "errors": [
-                                                {
-                                                    "errorCode": "RESIDENT-APP-035",
-                                                    "errorMessage": "Invalid issuer ID"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/issuers/{issuer-id}/well-known-proxy": {
             "get": {
                 "operationId": "getCredentialWellknown",
@@ -2092,7 +1890,7 @@
                 "tags": [
                     "Trusted Issuers"
                 ],
-                "description": "This API fetches and allows searching for Credential Types offered by the issuer, all sourced from the issuer's well-known configuration.",
+                "description": "This API fetches and allows searching for Credential Types offered by the issuer, all sourced from the issuer's well-known configuration. Since version 0.16.0, this endpoint is deprecated and will be removed in a future release. Use issuers new endpoint issuers/{issuer-id}/configuration instead.",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2410,6 +2208,416 @@
                 "summary": "Get Issuers Wellknown"
             }
         },
+        "/issuers/{issuer-id}/configuration": {
+            "get": {
+                "operationId": "getCredentialIssuerConfiguration",
+                "parameters": [
+                    {
+                        "name": "issuer-id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Trusted Issuers"
+                ],
+                "description": "This endpoint allows you to retrieve the well-known configuration of a specific issuer and its corresponding authorization server.",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "x-examples": {
+                                        "Example 1": {
+                                            "id": null,
+                                            "version": null,
+                                            "str": null,
+                                            "responsetime": null,
+                                            "metadata": null,
+                                            "response": {
+                                                "credential_issuer": "https://injicertify-insurance.dev1.mosip.net",
+                                                "authorization_servers": [
+                                                    "https://esignet-insurance.dev1.mosip.net"
+                                                ],
+                                                "credential_endpoint": "https://injicertify-insurance.dev1.mosip.net/v1/certify/issuance/credential",
+                                                "credential_configurations_supported": {
+                                                    "InsuranceCredential": {
+                                                        "format": "ldp_vc",
+                                                        "scope": "sunbird_rc_insurance_vc_ldp",
+                                                        "order": [
+                                                            "fullName",
+                                                            "dob"
+                                                        ],
+                                                        "proof_types_supported": {
+                                                            "jwt": {
+                                                                "proof_signing_alg_values_supported": [
+                                                                    "RS256",
+                                                                    "PS256"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "credential_definition": {
+                                                            "type": [
+                                                                "VerifiableCredential",
+                                                                "InsuranceCredential"
+                                                            ],
+                                                            "credentialSubject": {
+                                                                "fullName": {
+                                                                    "display": [
+                                                                        {
+                                                                            "name": "Name",
+                                                                            "locale": "en"
+                                                                        }
+                                                                    ]
+                                                                },
+                                                                "dob": {
+                                                                    "display": [
+                                                                        {
+                                                                            "name": "Date of Birth",
+                                                                            "locale": "en"
+                                                                        }
+                                                                    ]
+                                                                }
+                                                            }
+                                                        },
+                                                        "display": [
+                                                            {
+                                                                "name": "Health Insurance",
+                                                                "locale": "en",
+                                                                "logo": {
+                                                                    "url": "https://raw.githubusercontent.com/tw-mosip/file-server/master/StayProtectedInsurance.png",
+                                                                    "alt_text": "a square logo of a Veridonia"
+                                                                },
+                                                                "background_image": {
+                                                                    "uri": "https://api.dev1.mosip.net/inji/veridonia-logo.png"
+                                                                },
+                                                                "background_color": "#FDFAF9",
+                                                                "text_color": "#7C4616"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                "authorization": {
+                                                    "authorization_endpoint": "https://esignet-insurance.dev1.mosip.net/authorize",
+                                                    "grant_types_supported": [
+                                                        "authorization_code"
+                                                    ]
+                                                }
+                                            },
+                                            "errors": []
+                                        }
+                                    },
+                                    "properties": {
+                                        "version": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "id": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "responsetime": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "metadata": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "response": {
+                                            "type": "object",
+                                            "properties": {
+                                                "credential_issuer": {
+                                                    "type": "string",
+                                                    "format": "uri"
+                                                },
+                                                "authorization_servers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "format": "uri"
+                                                    }
+                                                },
+                                                "credential_endpoint": {
+                                                    "type": "string",
+                                                    "format": "uri"
+                                                },
+                                                "credential_configurations_supported": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "InsuranceCredential": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "format": {
+                                                                    "type": "string"
+                                                                },
+                                                                "scope": {
+                                                                    "type": "string"
+                                                                },
+                                                                "order": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "proof_types_supported": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "jwt": {
+                                                                            "type": "object",
+                                                                            "properties": {
+                                                                                "proof_signing_alg_values_supported": {
+                                                                                    "type": "array",
+                                                                                    "items": {
+                                                                                        "type": "string"
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "credential_definition": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "type": {
+                                                                            "type": "array",
+                                                                            "items": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "credentialSubject": {
+                                                                            "type": "object",
+                                                                            "properties": {
+                                                                                "fullName": {
+                                                                                    "$ref": "#/components/schemas/StringNode"
+                                                                                },
+                                                                                "dob": {
+                                                                                    "$ref": "#/components/schemas/StringNode"
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "display": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "object",
+                                                                        "properties": {
+                                                                            "name": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "locale": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "logo": {
+                                                                                "type": "object",
+                                                                                "properties": {
+                                                                                    "url": {
+                                                                                        "type": "string",
+                                                                                        "format": "uri"
+                                                                                    },
+                                                                                    "alt_text": {
+                                                                                        "type": "string"
+                                                                                    }
+                                                                                }
+                                                                            },
+                                                                            "background_image": {
+                                                                                "type": "object",
+                                                                                "properties": {
+                                                                                    "uri": {
+                                                                                        "type": "string",
+                                                                                        "format": "uri"
+                                                                                    }
+                                                                                }
+                                                                            },
+                                                                            "background_color": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "text_color": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "authorization": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "authorization_endpoint": {
+                                                            "type": "string",
+                                                            "format": "uri"
+                                                        },
+                                                        "grant_types_supported": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    }
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "credential_issuer": "https://injicertify-insurance.dev1.mosip.net",
+                                            "authorization_servers": [
+                                                "https://esignet-insurance.dev1.mosip.net"
+                                            ],
+                                            "credential_endpoint": "https://injicertify-insurance.dev1.mosip.net/v1/certify/issuance/credential",
+                                            "credential_configurations_supported": {
+                                                "InsuranceCredential": {
+                                                    "format": "ldp_vc",
+                                                    "scope": "sunbird_rc_insurance_vc_ldp",
+                                                    "order": [
+                                                        "fullName",
+                                                        "dob"
+                                                    ],
+                                                    "proof_types_supported": {
+                                                        "jwt": {
+                                                            "proof_signing_alg_values_supported": [
+                                                                "RS256",
+                                                                "PS256"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "credential_definition": {
+                                                        "type": [
+                                                            "VerifiableCredential",
+                                                            "InsuranceCredential"
+                                                        ],
+                                                        "credentialSubject": {
+                                                            "fullName": {
+                                                                "display": [
+                                                                    {
+                                                                        "name": "Name",
+                                                                        "locale": "en"
+                                                                    }
+                                                                ]
+                                                            },
+                                                            "dob": {
+                                                                "display": [
+                                                                    {
+                                                                        "name": "Date of Birth",
+                                                                        "locale": "en"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "display": [
+                                                        {
+                                                            "name": "Health Insurance",
+                                                            "locale": "en",
+                                                            "logo": {
+                                                                "url": "https://raw.githubusercontent.com/tw-mosip/file-server/master/StayProtectedInsurance.png",
+                                                                "alt_text": "a square logo of a Veridonia"
+                                                            },
+                                                            "background_image": {
+                                                                "uri": "https://api.dev1.mosip.net/inji/veridonia-logo.png"
+                                                            },
+                                                            "background_color": "#FDFAF9",
+                                                            "text_color": "#7C4616"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            "authorization": {
+                                                "authorization_endpoint": "https://esignet-insurance.dev1.mosip.net/authorize",
+                                                "grant_types_supported": [
+                                                    "authorization_code"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "errorCode": {
+                                                        "type": "string"
+                                                    },
+                                                    "errorMessage": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "examples": {
+                                    "FailureResponse1": {
+                                        "summary": "Api not accessible failure",
+                                        "value": {
+                                            "errors": [
+                                                {
+                                                    "errorCode": "RESIDENT-APP-026",
+                                                    "errorMessage": "Api not accessible failure"
+                                                }
+                                            ],
+                                            "response": null
+                                        }
+                                    },
+                                    "FailureResponse2": {
+                                        "summary": "Invalid issuer ID",
+                                        "value": {
+                                            "errors": [
+                                                {
+                                                    "errorCode": "RESIDENT-APP-035",
+                                                    "errorMessage": "Invalid issuer ID"
+                                                }
+                                            ],
+                                            "response": null
+                                        }
+                                    },
+                                    "FailureResponse3": {
+                                        "summary": "Invalid Authorization Server well-known endpoint",
+                                        "value": {
+                                            "errors": [
+                                                {
+                                                    "errorCode": "RESIDENT-APP-042",
+                                                    "errorMessage": "Invalid Authorization Server well-known from server:\nAuthorization Server host url cannot be null"
+                                                }
+                                            ],
+                                            "response": null
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "summary": "Get specific Issuer's and its corresponding Authorization Server well-known config"
+        },
         "/credentials/download": {
             "post": {
                 "requestBody": {
@@ -2449,7 +2657,7 @@
                     "required": true
                 },
                 "tags": [
-                    "Trusted Issuers"
+                    "Credentials Download"
                 ],
                 "description": "This API is responsible for generating PDFs for the received VC content. It fetches display properties from the well-known configuration of the issuer and incorporates them into the predefined template of the PDF file.",
                 "responses": {
@@ -2682,6 +2890,9 @@
             },
             "JsonNode": {
                 "type": "object"
+            },
+            "StringNode": {
+                "type": "string"
             },
             "Event": {
                 "type": "object",

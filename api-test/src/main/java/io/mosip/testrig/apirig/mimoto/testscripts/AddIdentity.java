@@ -124,6 +124,7 @@ public class AddIdentity extends AdminTestUtil implements ITest {
 			inputJson = replaceKeywordWithValue(inputJson, "$PHONENUMBERFORIDENTITY$", phoneNumber);
 			inputJson = replaceKeywordWithValue(inputJson, "$EMAILVALUE$", email);
 		}
+		inputJson = MimotoUtil.inputstringKeyWordHandeler(inputJson, testCaseName);
 
 		response = postWithBodyAndCookie(ApplnURI + testCaseDTO.getEndPoint(), inputJson, COOKIENAME,
 				testCaseDTO.getRole(), testCaseDTO.getTestCaseName());

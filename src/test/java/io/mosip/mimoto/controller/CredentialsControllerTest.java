@@ -40,13 +40,13 @@ public class CredentialsControllerTest {
 
     @Test
     public void downloadPDFSuccessfully() throws Exception {
-
+        String locale="test-local";
         String issuer = "test-issuer";
         String credential = "test-credential";
         TokenResponseDTO tokenResponseDTO = TestUtilities.getTokenResponseDTO();
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream("test-data".getBytes());
         Mockito.when(credentialService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer))).thenReturn(tokenResponseDTO);
-        Mockito.when(credentialService.downloadCredentialAsPDF(Mockito.eq(issuer), Mockito.eq(credential), Mockito.eq(tokenResponseDTO), Mockito.eq("3"))).thenReturn(byteArrayInputStream);
+        Mockito.when(credentialService.downloadCredentialAsPDF(Mockito.eq(issuer), Mockito.eq(credential), Mockito.eq(tokenResponseDTO), Mockito.eq("3"), Mockito.eq(locale))).thenReturn(byteArrayInputStream);
 
         mockMvc.perform(post("/credentials/download")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -57,7 +57,8 @@ public class CredentialsControllerTest {
                                 new BasicNameValuePair("code_verifier", "test-code_verifier"),
                                 new BasicNameValuePair("issuer", issuer),
                                 new BasicNameValuePair("vcStorageExpiryLimitInTimes", "3"),
-                                new BasicNameValuePair("credential", credential)
+                                new BasicNameValuePair("credential", credential),
+                                new BasicNameValuePair("locale", locale)
                         )))))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_PDF))
@@ -69,7 +70,7 @@ public class CredentialsControllerTest {
 
     @Test
     public void throwExceptionWhenTokenIsNotFetched() throws Exception {
-
+        String locale="test-locale";
         String issuer = "test-issuer";
         String credential = "test-credential";
         Mockito.when(credentialService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer))).thenThrow(ApiNotAccessibleException.class);
@@ -83,7 +84,8 @@ public class CredentialsControllerTest {
                                 new BasicNameValuePair("code_verifier", "test-code_verifier"),
                                 new BasicNameValuePair("issuer", issuer),
                                 new BasicNameValuePair("vcStorageExpiryLimitInTimes", "3"),
-                                new BasicNameValuePair("credential", credential)
+                                new BasicNameValuePair("credential", credential),
+                                new BasicNameValuePair("locale", locale)
                         )))))
                 .andExpect(status().isBadRequest())
                 .andReturn()
@@ -93,12 +95,12 @@ public class CredentialsControllerTest {
 
     @Test
     public void throwExceptionWhenPDFGenerationFailed() throws Exception {
-
+        String locale="test-locale";
         String issuer = "test-issuer";
         String credential = "test-credential";
         TokenResponseDTO tokenResponseDTO = TestUtilities.getTokenResponseDTO();
         Mockito.when(credentialService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer))).thenReturn(tokenResponseDTO);
-        Mockito.when(credentialService.downloadCredentialAsPDF(Mockito.eq(issuer), Mockito.eq(credential), Mockito.eq(tokenResponseDTO), Mockito.eq("3") )).thenThrow(ApiNotAccessibleException.class);
+        Mockito.when(credentialService.downloadCredentialAsPDF(Mockito.eq(issuer), Mockito.eq(credential), Mockito.eq(tokenResponseDTO), Mockito.eq("3"), Mockito.eq(locale))).thenThrow(ApiNotAccessibleException.class);
 
         mockMvc.perform(post("/credentials/download")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -109,12 +111,12 @@ public class CredentialsControllerTest {
                                 new BasicNameValuePair("code_verifier", "test-code_verifier"),
                                 new BasicNameValuePair("issuer", issuer),
                                 new BasicNameValuePair("vcStorageExpiryLimitInTimes", "3"),
-                                new BasicNameValuePair("credential", credential)
+                                new BasicNameValuePair("credential", credential),
+                                new BasicNameValuePair("locale", locale)
                         )))))
                 .andExpect(status().isBadRequest())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
     }
-
 }

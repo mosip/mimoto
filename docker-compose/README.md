@@ -13,7 +13,7 @@ This is the docker-compose setup to run mimoto which act as BFF for Inji mobile 
 
 1. Add Id providers as an issuer in mimoto-issuers-config.json
 
-2. Add verifiers clientId and redirect Uri in mimoto-trusted-verifiers.json for Online Sharing
+2. Add verifiers clientId and redirect Uris in mimoto-trusted-verifiers.json for Online Sharing
 
 3. Start esignet services and update esignet host references in mimoto-default.properties and mimoto-issuers-config.json
 

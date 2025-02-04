@@ -49,7 +49,9 @@ public class SwaggerLiteralConstants {
     public static final String ISSUERS_GET_SPECIFIC_ISSUER_SUMMARY = "Retrieve specific issuer's config" ;
     public static final String ISSUERS_GET_SPECIFIC_ISSUER_DESCRIPTION = "This endpoint allow you to retrieve the complete configuration of the specific issuer" ;
     public static final String ISSUERS_GET_ISSUER_WELLKNOWN_SUMMARY = "Retrieve specific issuer's well known" ;
-    public static final String ISSUERS_GET_ISSUER_WELLKNOWN_DESCRIPTION = "This endpoint allow you to retrieve the well known of the specific issuer" ;
+    public static final String ISSUERS_GET_ISSUER_WELLKNOWN_DESCRIPTION = "This endpoint allow you to retrieve the well known of the specific issuer. Since version 0.16.0, this endpoint is deprecated and will be removed in a future release. Use issuers new endpoint issuers/{issuer-id}/configuration instead.";
+    public static final String ISSUERS_GET_ISSUER_CONFIGURATION_SUMMARY = "Retrieve specific issuer's and its corresponding authorization server well-known config";
+    public static final String ISSUERS_GET_ISSUER_CONFIGURATION_DESCRIPTION = "This endpoint allows you to retrieve the well-known configuration of a specific issuer and its corresponding authorization server";
 
     /*  Prensentation Controller */
     public static final String PRESENTATION_NAME = "Presentation" ;

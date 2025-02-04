@@ -107,7 +107,7 @@ public class Utilities {
             imageString = encoder.encodeToString(imageBytes);
             bos.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(ExceptionUtils.getStackTrace(e));
         }
         return imageString;
     }
@@ -183,7 +183,10 @@ public class Utilities {
         return getJson(trustedVerifiersJsonString, trustedVerifiersPath);
     }
     public String getCredentialSupportedTemplateString() {
-        return getJson(credentialTemplateHtmlString, credentialTemplatePath);
+        if(activeProfile.equals("local")) {
+            return credentialTemplateHtmlString;
+        }
+        return getJson(credentialTemplateHtmlString,credentialTemplatePath );
     }
     public static String[] handleExceptionWithErrorCode(Exception exception) {
         String errorMessage = exception.getMessage();

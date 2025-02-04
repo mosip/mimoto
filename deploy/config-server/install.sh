@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installs inji-config-server
+# Installs config-server
 ## Usage: ./install.sh [kubeconfig]
 
 if [ $# -ge 1 ] ; then
@@ -24,13 +24,13 @@ CHART_VERSION=0.0.1-develop
     helm repo update
 
     echo Copy configmaps
-    sed -i 's/\r$//' copy_cm.sh
-    ./copy_cm.sh
+    COPY_UTIL=../copy_cm_func.sh
+    $COPY_UTIL configmap global default $NS
 
     echo Copy secrets
-    sed -i 's/\r$//' copy_secrets.sh
-    ./copy_secrets.sh
+    $COPY_UTIL secret db-common-secrets postgres $NS
+    $COPY_UTIL secret conf-secrets-various conf-secrets $NS
 
-    echo Installing inji-config-server
-    helm -n $NS install inji-config-server mosip/config-server -f values.yaml --wait --version $CHART_VERSION
-    echo Installed inji-Config-server.
+    echo Installing config-server
+    helm -n $NS install config-server mosip/config-server -f values.yaml --wait --version $CHART_VERSION
+    echo Installed config-server.

@@ -46,7 +46,7 @@ jobs:
       SERVICE_LOCATION: mimoto
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         if: ${{ ( env.BUILD_ARTIFACT != 'false' ) }}
         with:
           name: ${{ env.BUILD_ARTIFACT }}
@@ -65,8 +65,8 @@ jobs:
           find ../${{ env.SERVICE_LOCATION }} -path '*/target/*' -name '*.jar'  -type f  -executable -exec zip ${{ env.NEW_BUILD_ARTIFACT }}.zip {} +
 
       - name: Upload the springboot jars
-        if: ${{ !contains(github.ref, 'master') || !contains(github.ref, 'main') }}
-        uses: actions/upload-artifact@v3
+        if: ${{ !contains(github.ref, 'master') }}
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.NEW_BUILD_ARTIFACT }}
           path: ${{ env.NEW_BUILD_ARTIFACT }}.zip
@@ -176,13 +176,13 @@ jobs:
           cp -r ${{ env.SERVICE_LOCATION}}/target/classes/config ${{ env.SERVICE_LOCATION}}/target/config
           cp -r ${{ env.SERVICE_LOCATION}}/testNgXmlFiles ${{ env.SERVICE_LOCATION}}/target/testNgXmlFiles
       - name: Ready the springboot artifacts
-        if: ${{ !contains(github.ref, 'master') || !contains(github.ref, 'main') }}
+        if: ${{ !contains(github.ref, 'master') }}
         run: |
           ## FIND JARS & COPY ONLY EXECUTABLE JARs STORED UNDER TARGET DIRECTORY 
           find ${{ env.SERVICE_LOCATION }} -path '*/target/*' -exec zip ${{ env.BUILD_ARTIFACT }}.zip {} +
       - name: Upload the springboot jars
-        if: ${{ !contains(github.ref, 'master') || !contains(github.ref, 'main') }}
-        uses: actions/upload-artifact@v3
+        if: ${{ !contains(github.ref, 'master') }}
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.BUILD_ARTIFACT }}
           path: ${{ env.BUILD_ARTIFACT }}.zip
@@ -216,18 +216,3 @@ jobs:
       ACTOR_DOCKER_HUB: ${{ secrets.ACTOR_DOCKER_HUB }}
       RELEASE_DOCKER_HUB: ${{ secrets.RELEASE_DOCKER_HUB }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
-
-#  sonar_analysis_apitest_mimoto:
-#    needs: build-maven-apitest-mimoto
-#    if: "${{  github.event_name != 'pull_request' }}"
-#    uses: mosip/kattu/.github/workflows/maven-sonar-analysis.yml@master-java21
-#    with:
-#      SERVICE_LOCATION: ./api-test
-#    secrets:
-#      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-#      ORG_KEY: ${{ secrets.ORG_KEY }}
-#      OSSRH_USER: ${{ secrets.OSSRH_USER }}
-#      OSSRH_SECRET: ${{ secrets.OSSRH_SECRET }}
-#      OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
-#      GPG_SECRET: ${{ secrets.GPG_SECRET }}
-#      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
