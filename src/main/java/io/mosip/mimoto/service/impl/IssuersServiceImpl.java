@@ -95,7 +95,7 @@ public class IssuersServiceImpl implements IssuersService {
         }
         IssuersDTO issuers = new Gson().fromJson(issuersConfigJsonValue, IssuersDTO.class);
         Optional<IssuerDTO> issuerConfigResp = issuers.getIssuers().stream()
-                .filter(issuer -> issuer.getCredential_issuer().equals(issuerId))
+                .filter(issuer -> issuer.getIssuer_id().equals(issuerId))
                 .findFirst();
         if (issuerConfigResp.isPresent())
             issuerDTO = issuerConfigResp.get();
@@ -107,7 +107,7 @@ public class IssuersServiceImpl implements IssuersService {
     @Override
     public CredentialIssuerWellKnownResponse getIssuerWellknown(String issuerId) throws ApiNotAccessibleException, IOException {
         return getAllIssuersWithAllFields().getIssuers().stream()
-                .filter(issuer -> issuer.getCredential_issuer().equals(issuerId))
+                .filter(issuer -> issuer.getIssuer_id().equals(issuerId))
                 .findFirst()
                 .map(issuerDTO -> {
                     String wellknownResponse = restApiClient.getApi(issuerDTO.getWellknown_endpoint(), String.class);

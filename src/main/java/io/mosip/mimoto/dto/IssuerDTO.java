@@ -24,6 +24,14 @@ public class IssuerDTO {
     String credential_issuer;
     @Expose
     @NotBlank
+    @Schema(description = "Unique Identifier of the Issuer")
+    String issuer_id;
+    @Expose
+    @NotBlank
+    @Schema(description = "Credential Issuer Host")
+    String credential_issuer_host;
+    @Expose
+    @NotBlank
     @Schema(description = "protocol of the download flow", allowableValues = {"OTP", "OpenId4VCI"})
     String protocol;
     @Expose

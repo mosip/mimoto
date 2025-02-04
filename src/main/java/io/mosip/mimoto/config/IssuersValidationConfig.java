@@ -42,15 +42,15 @@ public class IssuersValidationConfig implements ApplicationRunner {
                 if (!issuerDTO.getProtocol().equals("OTP")) {
                     errors.set(new BeanPropertyBindingResult(issuerDTO, "issuerDTO"));
                     validator.validate(issuerDTO, errors.get());
-                    String credentialIssuer = issuerDTO.getCredential_issuer();
+                    String issuerId = issuerDTO.getIssuer_id();
                     String[] tokenEndpointArray = issuerDTO.getToken_endpoint().split("/");
                     Set<String> currentIssuers = credentialIssuers.get();
-                    if (!currentIssuers.add(credentialIssuer)) {
-                        log.error(VALIDATION_ERROR_MSG + "duplicate value found " + credentialIssuer);
+                    if (!currentIssuers.add(issuerId)) {
+                        log.error(VALIDATION_ERROR_MSG + "duplicate value found " + issuerId);
                         throw new RuntimeException(VALIDATION_ERROR_MSG);
                     }
-                    if (!tokenEndpointArray[tokenEndpointArray.length - 1].equals(credentialIssuer)) {
-                        log.error(VALIDATION_ERROR_MSG + "TokenEndpoint does not match with the credential issuer " + credentialIssuer);
+                    if (!tokenEndpointArray[tokenEndpointArray.length - 1].equals(issuerId)) {
+                        log.error(VALIDATION_ERROR_MSG + "TokenEndpoint does not match with the credential issuer " + issuerId);
                         throw new RuntimeException(VALIDATION_ERROR_MSG);
                     }
                     credentialIssuers.set(currentIssuers);

@@ -2,6 +2,8 @@
   "issuers": [
     {
       "credential_issuer": "StayProtected",
+      "issuer_id": "StayProtected",
+      "credential_issuer_host": "https://injicertify-insurance.collab.mosip.net",
       "display": [
         {
           "name": "StayProtected Insurance",

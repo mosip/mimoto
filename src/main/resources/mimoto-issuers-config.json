@@ -2,6 +2,8 @@
   "issuers": [
     {
       "credential_issuer": "Mosip",
+      "issuer_id": "Mosip",
+      "credential_issuer_host": "https://injicertify-mosipid.dev1.mosip.net",
       "protocol": "OpenId4VCI",
       "display": [
         {
@@ -77,6 +79,8 @@
     },
     {
       "credential_issuer": "StayProtected",
+      "issuer_id": "StayProtected",
+      "credential_issuer_host": "https://injicertify-insurance.dev1.mosip.net",
       "protocol": "OpenId4VCI",
       "display": [
         {
@@ -102,6 +106,8 @@
     },
     {
       "credential_issuer": "Mock",
+      "issuer_id": "StayProtected",
+      "credential_issuer_host": "https://injicertify-mock.dev1.mosip.net",
       "protocol": "OpenId4VCI",
       "display": [
         {

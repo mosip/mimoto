@@ -1422,6 +1422,8 @@
                                         "issuers": [
                                             {
                                                 "credential_issuer": "string",
+                                                "issuer_id": "string",
+                                                "credential_issuer_host": "string",
                                                 "protocol": "string",
                                                 "display": [
                                                     {
@@ -1471,6 +1473,8 @@
                                             "issuers": [
                                                 {
                                                     "credential_issuer": "MOSIPInsurance",
+                                                    "issuer_id": "MOSIPInsurance",
+                                                    "credential_issuer_host": "http://localhost:8088",
                                                     "protocol": "OpenId4VCI",
                                                     "display": [
                                                         {
@@ -1489,6 +1493,8 @@
                                                 },
                                                 {
                                                     "credential_issuer": "MOSIPNationalID",
+                                                    "issuer_id": "MOSIPNationalID",
+                                                    "credential_issuer_host": "http://localhost:8088",
                                                     "protocol": "OpenId4VCI",
                                                     "display": [
                                                         {
@@ -1522,6 +1528,8 @@
                                                 "issuers": [
                                                     {
                                                         "credential_issuer": "MOSIPInsurance",
+                                                        "issuer_id": "MOSIPInsurance",
+                                                        "credential_issuer_host": "http://localhost:8088",
                                                         "protocol": "OpenId4VCI",
                                                         "display": [
                                                             {
@@ -1540,6 +1548,9 @@
                                                     },
                                                     {
                                                         "credential_issuer": "MOSIPNationalID",
+                                                        "issuer_id": "MOSIPNationalID",
+                                                        "credential_issuer_host": "http://localhost:8088",
+
                                                         "protocol": "OpenId4VCI",
                                                         "display": [
                                                             {
@@ -1611,7 +1622,9 @@
                                     "properties": {
                                         "issuers": [
                                             {
+                                                "issuer_id": "string",
                                                 "credential_issuer": "string",
+                                                "credential_issuer_host": "string",
                                                 "protocol": "string",
                                                 "display": [
                                                     {
@@ -1659,6 +1672,8 @@
                                         "metadata": null,
                                         "response": {
                                             "credential_issuer": "ESignet",
+                                            "issuer_id": "ESignet",
+                                            "credential_issuer_host": "https://esignet.collab.mosip.net",
                                             "protocol": "OpenId4VCI",
                                             "display": [
                                                 {
@@ -1757,6 +1772,8 @@
                                             "metadata": null,
                                             "response": {
                                                 "credential_issuer": "ESignet",
+                                                "issuer_id": "ESignet",
+                                                "credential_issuer_host": "https://esignet.collab.mosip.net",
                                                 "protocol": "OpenId4VCI",
                                                 "display": [
                                                     {
