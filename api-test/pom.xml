@@ -8,7 +8,7 @@
 	<name>apitest-mimoto</name>
 	<description>Parent project of apitest-mimoto</description>
 	<url>https://github.com/mosip/mimoto</url>
-	<version>0.15.1-SNAPSHOT</version>
+	<version>0.15.1-RC</version>
 
 	<licenses>
 		<license>
@@ -50,6 +50,8 @@
 
 		<git.commit.id.plugin.version>3.0.1</git.commit.id.plugin.version>
 		<fileName>apitest-mimoto-0.15.1-SNAPSHOT-jar-with-dependencies</fileName>
+		<maven.deploy.plugin.version>3.1.1</maven.deploy.plugin.version>
+		<nexus.staging.maven.plugin.version>1.6.14</nexus.staging.maven.plugin.version>
 	</properties>
 
 	<dependencies>
@@ -262,6 +264,45 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<version>${maven.deploy.plugin.version}</version>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+				<executions>
+					<execution>
+						<id>default-deploy</id>
+						<phase>none</phase>
+						<goals>
+							<goal>deploy</goal>
+						</goals>
+						<configuration>
+							<skip>true</skip>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>${nexus.staging.maven.plugin.version}</version>
+				<extensions>true</extensions>
+				<executions>
+					<execution>
+						<id>default-deploy</id>
+						<phase>none</phase>
+						<goals>
+							<goal>deploy</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>false</autoReleaseAfterClose>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
