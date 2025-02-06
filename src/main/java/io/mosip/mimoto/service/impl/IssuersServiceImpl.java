@@ -80,18 +80,13 @@ public class IssuersServiceImpl implements IssuersService {
 
     @Override
     public IssuersDTO getAllIssuers() throws ApiNotAccessibleException, IOException {
-
         IssuersDTO issuersDTO;
         String issuersConfigJsonValue = utilities.getIssuersConfigJsonValue();
         if (issuersConfigJsonValue == null) {
             throw new ApiNotAccessibleException();
         }
 
-        try {
-            issuersDTO = objectMapper.readValue(issuersConfigJsonValue, IssuersDTO.class);
-        } catch (Exception e) {
-            throw e;
-        }
+        issuersDTO = objectMapper.readValue(issuersConfigJsonValue, IssuersDTO.class);
 
         return issuersDTO;
     }

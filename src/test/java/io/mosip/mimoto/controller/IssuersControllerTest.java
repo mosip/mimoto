@@ -92,13 +92,13 @@ public class IssuersControllerTest {
                                 Matchers.hasKey("proxy_token_endpoint"),
                                 Matchers.hasKey("token_endpoint"),
                                 Matchers.hasKey("credential_issuer_host"),
+                                Matchers.hasKey("authorization_audience"),
                                 Matchers.not(Matchers.hasKey("redirect_url")),
                                 Matchers.not(Matchers.hasKey("authorization_endpoint")),
                                 Matchers.not(Matchers.hasKey("credential_endpoint")),
                                 Matchers.not(Matchers.hasKey("credential_audience")),
                                 Matchers.not(Matchers.hasKey("additional_headers")),
-                                Matchers.not(Matchers.hasKey("scopes_supported")),
-                                Matchers.not(Matchers.hasKey("authorization_audience"))
+                                Matchers.not(Matchers.hasKey("scopes_supported"))
                         )
                 )));
 
@@ -134,14 +134,14 @@ public class IssuersControllerTest {
                                 Matchers.hasKey("wellknown_endpoint"),
                                 Matchers.hasKey("proxy_token_endpoint"),
                                 Matchers.hasKey("token_endpoint"),
+                                Matchers.hasKey("authorization_audience"),
                                 Matchers.hasKey("credential_issuer_host"),
                                 Matchers.not(Matchers.hasKey("redirect_url")),
                                 Matchers.not(Matchers.hasKey("authorization_endpoint")),
                                 Matchers.not(Matchers.hasKey("credential_endpoint")),
                                 Matchers.not(Matchers.hasKey("credential_audience")),
                                 Matchers.not(Matchers.hasKey("additional_headers")),
-                                Matchers.not(Matchers.hasKey("scopes_supported")),
-                                Matchers.not(Matchers.hasKey("authorization_audience"))
+                                Matchers.not(Matchers.hasKey("scopes_supported"))
                         )
                 )));
 
