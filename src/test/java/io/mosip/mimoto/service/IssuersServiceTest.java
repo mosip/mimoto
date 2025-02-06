@@ -202,6 +202,6 @@ public class IssuersServiceTest {
 
         assertEquals("RESIDENT-APP-042 --> Invalid Authorization Server well-known from server:\n" +
                 "well-known api is not accessible", actualException.getMessage());
-        verify(authorizationServerService, times(3)).getWellknown(authServerWellknownUrl);
+        verify(authorizationServerService, times(1)).getWellknown(authServerWellknownUrl);
     }
 }
