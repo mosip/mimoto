@@ -29,5 +29,9 @@ public class MimotoConfigManager extends ConfigManager{
 		// Add module specific properties as well.
 		init(moduleSpecificPropertiesMap);
 	}
+	
+	public static String getSunbirdBaseURL() {
+		return MimotoUtil.getValueFromMimotoActuator("overrides", "mosip.sunbird.url");
+	}
 
 }

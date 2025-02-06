@@ -102,7 +102,7 @@ public class IssuersServiceImpl implements IssuersService {
     }
 
     @Override
-    @Cacheable(value = "credentialIssuerConfig", key = "{#issuerId}")
+    @Cacheable(value = "credentialIssuerConfig", key = "#p0")
     public CredentialIssuerConfigurationResponse getIssuerConfiguration(String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = issuerWellknownService.getWellknown(getIssuerDetails(issuerId).getCredential_issuer_host());
         AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = authorizationServerService.getWellknown(credentialIssuerWellKnownResponse.getAuthorizationServers().get(0));
