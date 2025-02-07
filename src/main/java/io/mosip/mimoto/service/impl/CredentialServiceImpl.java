@@ -21,6 +21,7 @@ import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.JoseUtil;
+import io.mosip.mimoto.util.LocaleUtils;
 import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
@@ -48,6 +49,7 @@ import java.io.StringWriter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.mosip.mimoto.exception.ErrorConstants.*;
 
@@ -131,7 +133,7 @@ public class CredentialServiceImpl implements CredentialService {
         boolean verificationStatus = issuerId.toLowerCase().contains("mock") || verifyCredential(vcCredentialResponse);
         if (verificationStatus) {
             String dataShareUrl = QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type()) ? dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse), credentialValidity) : "";
-            return generatePdfForVerifiableCredentials(vcCredentialResponse, issuerDTO, credentialsSupportedResponse, dataShareUrl, credentialValidity, locale);
+            return generatePdfForVerifiableCredentials(credentialType, vcCredentialResponse, issuerDTO, credentialsSupportedResponse, dataShareUrl, credentialValidity, locale);
         }
         throw new VCVerificationException(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(),
                 SIGNATURE_VERIFICATION_EXCEPTION.getErrorMessage());
@@ -160,10 +162,10 @@ public class CredentialServiceImpl implements CredentialService {
                 .build();
     }
 
-    public ByteArrayInputStream generatePdfForVerifiableCredentials(VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
+    public ByteArrayInputStream generatePdfForVerifiableCredentials(String credentialType, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
         LinkedHashMap<String, Object> displayProperties = loadDisplayPropertiesFromWellknown(vcCredentialResponse, credentialsSupportedResponse, locale);
         Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse,  vcCredentialResponse, issuerDTO, dataShareUrl, credentialValidity, locale);
-        return renderVCInCredentialTemplate(data);
+        return renderVCInCredentialTemplate(data, issuerDTO.getIssuer_id(), credentialType);
     }
 
     public Boolean verifyCredential(VCCredentialResponse vcCredentialResponse) throws VCVerificationException, JsonProcessingException {
@@ -185,7 +187,12 @@ public class CredentialServiceImpl implements CredentialService {
         LinkedHashMap<String, String> vcPropertiesFromWellKnown = new LinkedHashMap<>();
         Map<String, CredentialDisplayResponseDto> credentialSubject = credentialsSupportedResponse.getCredentialDefinition().getCredentialSubject();
         credentialSubject.keySet().forEach(VCProperty -> {
-            Optional<CredentialIssuerDisplayResponse> filteredResponse = credentialSubject.get(VCProperty).getDisplay().stream().filter(obj -> obj.getLocale().equals(locale)).findFirst();
+            Optional<CredentialIssuerDisplayResponse> filteredResponse = credentialSubject.get(VCProperty)
+                    .getDisplay().stream()
+                    .filter(obj ->
+                        LocaleUtils.matchesLocale(obj.getLocale(), locale)
+                    )
+                    .findFirst();
             String filteredValue = filteredResponse.isPresent() ? filteredResponse.get().getName() : "" ;
             vcPropertiesFromWellKnown.put(VCProperty, filteredValue);
         });
@@ -195,7 +202,7 @@ public class CredentialServiceImpl implements CredentialService {
         List<String> fieldProperties = orderProperty == null ? new ArrayList<>(vcPropertiesFromWellKnown.keySet()) : orderProperty;
         fieldProperties.forEach(vcProperty -> {
             if(credentialProperties.get(vcProperty) != null) {
-                displayProperties.put(vcPropertiesFromWellKnown.get(vcProperty), credentialProperties.get(vcProperty));
+                displayProperties.put(vcProperty,Map.of(vcPropertiesFromWellKnown.get(vcProperty), credentialProperties.get(vcProperty)));
             }
         });
         return displayProperties;
@@ -213,22 +220,32 @@ public class CredentialServiceImpl implements CredentialService {
 
         displayProperties.entrySet().stream()
                 .forEachOrdered(entry -> {
-                    if(entry.getValue() instanceof Map) {
-                        rowProperties.put(entry.getKey(), ((Map<?, ?>) entry.getValue()).get("value"));
-                    } else if(entry.getValue() instanceof List) {
-                        String value = "";
-                        if( ((List<?>) entry.getValue()).get(0) instanceof String) {
-                            value = ((List<String>) entry.getValue()).stream().reduce((field1, field2) -> field1 + ", " + field2 ).get();
-                        } else {
-                            Optional<Map<?, ?>> valueMap = ((List<Map<?, ?>>) entry.getValue()).stream().filter(obj -> obj.get("language").equals(locale)).findFirst();
-                            value = valueMap.isPresent() ? valueMap.get().get("value").toString() : "" ;
-                        }
-                        rowProperties.put(entry.getKey(), value);
-                    } else {
-                        rowProperties.put(entry.getKey(), entry.getValue());
-                    }
-                });
+                    String originalKey = entry.getKey();
+                    Object entryValue = entry.getValue();
 
+                    // Process the inner map
+                    ((Map<?, ?>) entryValue).entrySet().stream()
+                            .forEachOrdered(innerEntry -> {
+                                String propertyKey = innerEntry.getKey().toString();
+                                Object currentValue = innerEntry.getValue();
+                                String value = "";
+
+                                if (currentValue instanceof Map) {
+                                    // If the value is a Map, handle it as a Map
+                                    value = handleMap(currentValue);
+                                } else if (currentValue instanceof List) {
+                                    // If the value is a List, handle it as a List
+                                    value = handleList(currentValue);
+                                } else {
+                                    // Otherwise, just convert to string
+                                    value = currentValue.toString();
+                                }
+
+                                // Put the result into the rowProperties map
+                                rowProperties.put(originalKey, Map.of(propertyKey, value));
+                            });
+
+                });
         String qrCodeImage = QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type()) ? constructQRCodeWithAuthorizeRequest(vcCredentialResponse, dataShareUrl) :
                 QRCodeType.EmbeddedVC.equals(issuerDTO.getQr_code_type()) ? constructQRCodeWithVCData(vcCredentialResponse) : "";
         data.put("qrCodeImage", qrCodeImage);
@@ -243,9 +260,35 @@ public class CredentialServiceImpl implements CredentialService {
         return data;
     }
 
+    private String handleList(Object list) {
+        if (list instanceof List) {
+            List<?> castedList = (List<?>) list;
+            if (castedList.isEmpty()) return "";
+            if (castedList.get(0) instanceof String) {
+                return castedList.stream().map(String.class::cast).collect(Collectors.joining(", "));
+            } else if (castedList.get(0) instanceof Map) {
+                return ((List<Map<?, ?>>) castedList).stream()
+                        .filter(obj -> obj.containsKey("language"))
+                        .map(obj -> obj.get("value").toString())
+                        .findFirst()
+                        .orElse("");
+            }
+        }
+        return "";
+    }
+
+    private String handleMap(Object map) {
+        if (map instanceof Map) {
+            return Optional.ofNullable(((Map<?, ?>) map).get("value"))
+                    .map(Object::toString)
+                    .orElse("");
+        }
+        return "";
+    }
+
     @NotNull
-    private ByteArrayInputStream renderVCInCredentialTemplate(Map<String, Object> data) throws IOException {
-        String credentialTemplate = utilities.getCredentialSupportedTemplateString();
+    private ByteArrayInputStream renderVCInCredentialTemplate(Map<String, Object> data, String issuerId, String credentialType) throws IOException {
+        String  credentialTemplate = utilities.getCredentialSupportedTemplateString(issuerId, credentialType);
         Properties props = new Properties();
         props.setProperty("resource.loader", "class");
         props.setProperty("class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
