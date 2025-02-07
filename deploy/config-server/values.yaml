@@ -1,6 +1,6 @@
 gitRepo:
   uri: https://github.com/mosip/inji-config
-  version: v0.4.0
+  version: develop
   ## Folders within the base repo where properties may be found.
   searchFolders: ""
   private: false
