@@ -10,12 +10,11 @@ This repository contains source code for backend service of Inji Mobile and Inji
 ## Build & run (for developers)
 The project requires JDK 21
 ### without docker-compose Build & install
-1. Navigate to Utilities file, uncomment the constructor at Line# 81
-2. build the jar
+1. build the jar
 ```
     mvn clean install -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true
 ```
-3. Run following command
+2. Run following command
 ```
     mvn spring-boot:run -Dspring.profiles.active=local
 ```
@@ -32,15 +31,14 @@ The project requires JDK 21
 
 ### Install
 
-1. Execute inji-config-server install script
+1. Execute config-server install script
 ```
-cd helm/inji-config-server
+cd deploy/config-server
 ./install.sh
 ```
 * Review values.yaml and make sure git repository parameters are as per your installation.
 
 2. Execute Onboarder install script
-
 ```
 cd partner-onboarder
 ./install.sh
