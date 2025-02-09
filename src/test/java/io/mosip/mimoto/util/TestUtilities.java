@@ -2,6 +2,12 @@ package io.mosip.mimoto.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itextpdf.html2pdf.ConverterProperties;
+import com.itextpdf.html2pdf.HtmlConverter;
+import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfReader;
 import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.openid.VerifierDTO;
@@ -10,6 +16,9 @@ import io.mosip.mimoto.dto.openid.datashare.DataShareResponseDTO;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseWrapperDTO;
 import io.mosip.mimoto.dto.openid.presentation.*;
 import org.springframework.util.ResourceUtils;
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
@@ -17,6 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor;
 
 public class TestUtilities {
 
@@ -91,8 +101,9 @@ public class TestUtilities {
         return credentialIssuerWellKnownResponse;
     }
 
-    public static CredentialIssuerConfigurationResponse getCredentialIssuerConfigurationResponseDto(String issuerName, Map<String, CredentialsSupportedResponse> credentialsSupportedResponses, List<String> nullFields) {
+    public static CredentialIssuerConfigurationResponse getCredentialIssuerConfigurationResponseDto(String issuerName, String credentialType, List<String> nullFields) {
         AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = getAuthServerWellknownResponseDto(nullFields);
+        Map<String, CredentialsSupportedResponse> credentialsSupportedResponses = Map.of(credentialType, getCredentialSupportedResponse(credentialType));
         CredentialIssuerConfigurationResponse credentialIssuerConfigurationResponse = new CredentialIssuerConfigurationResponse("https://dev/" + issuerName, List.of("https://auth-server.env.net"), "https://dev/issuance/credential", credentialsSupportedResponses, authorizationServerWellKnownResponse);
         return credentialIssuerConfigurationResponse;
     }
@@ -167,6 +178,30 @@ public class TestUtilities {
         return new String(Files.readAllBytes(ResourceUtils.getFile(ResourceUtils.CLASSPATH_URL_PREFIX + "responses/expectedIssuerConfig.json").toPath())).trim();
     }
 
+    public static ByteArrayInputStream generatePdfFromHTML() {
+        String htmlContent = "<html><body><h1>PDF</h1></body></html>";
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PdfWriter pdfwriter = new PdfWriter(outputStream);
+        DefaultFontProvider defaultFont = new DefaultFontProvider(true, false, false);
+        ConverterProperties converterProperties = new ConverterProperties();
+        converterProperties.setFontProvider(defaultFont);
+        HtmlConverter.convertToPdf(htmlContent, pdfwriter, converterProperties);
+
+        return new ByteArrayInputStream(outputStream.toByteArray());
+    }
+
+    public static String extractTextFromPdf(InputStream pdfStream) throws IOException {
+        PdfDocument pdfDocument = new PdfDocument(new PdfReader(pdfStream));
+        StringBuilder text = new StringBuilder();
+
+        for (int i = 1; i <= pdfDocument.getNumberOfPages(); i++) {
+            text.append(PdfTextExtractor.getTextFromPage(pdfDocument.getPage(i)));
+        }
+
+        pdfDocument.close();
+        return text.toString().trim();
+    }
+
     public static PresentationRequestDTO getPresentationRequestDTO() {
         return PresentationRequestDTO.builder()
                 .presentationDefinition(getPresentationDefinitionDTO())
@@ -187,7 +222,7 @@ public class TestUtilities {
         typeList.add("VCTypeCredential");
 
         Map<String, Object> credentialSubject = new HashMap<>();
-        credentialSubject.put("key1", "value1");
+        credentialSubject.put("name", "Name1");
         credentialSubject.put("key2", "value2");
 
         VCCredentialResponseProof vcCredentialResponseProof = VCCredentialResponseProof.builder()
@@ -206,6 +241,21 @@ public class TestUtilities {
                 .type(typeList)
                 .proof(vcCredentialResponseProof)
                 .credentialSubject(credentialSubject).build();
+    }
+
+    public static VCCredentialRequest getVCCredentialRequestDTO() {
+        CredentialsSupportedResponse credentialsSupportedResponse = getCredentialSupportedResponse("CredentialType1");
+        return VCCredentialRequest.builder()
+                .format(credentialsSupportedResponse.getFormat())
+                .proof(VCCredentialRequestProof.builder()
+                        .proofType(credentialsSupportedResponse.getProofTypesSupported().keySet().stream().findFirst().get())
+                        .jwt("jwt")
+                        .build())
+                .credentialDefinition(VCCredentialDefinition.builder()
+                        .type(credentialsSupportedResponse.getCredentialDefinition().getType())
+                        .context(List.of("https://www.w3.org/2018/credentials/v1"))
+                        .build())
+                .build();
     }
 
     public static VCCredentialResponse getVCCredentialResponseDTO(String type) {
