@@ -41,14 +41,22 @@ public class TestUtilities {
         credentialSupportedDisplay.setLocale("en");
         credentialSupportedDisplay.setTextColor("#FFFFFF");
         credentialSupportedDisplay.setBackgroundColor("#B34622");
-        CredentialIssuerDisplayResponse credentialIssuerDisplayResponse = new CredentialIssuerDisplayResponse();
-        credentialIssuerDisplayResponse.setName("Given Name");
-        credentialIssuerDisplayResponse.setLocale("en");
-        CredentialDisplayResponseDto credentialDisplayResponseDto = new CredentialDisplayResponseDto();
-        credentialDisplayResponseDto.setDisplay(Collections.singletonList(credentialIssuerDisplayResponse));
+
+        CredentialIssuerDisplayResponse credentialIssuerDisplayResponseForName = new CredentialIssuerDisplayResponse();
+        credentialIssuerDisplayResponseForName.setName("Given Name");
+        credentialIssuerDisplayResponseForName.setLocale("en");
+        CredentialDisplayResponseDto credentialDisplayResponseDtoForName = new CredentialDisplayResponseDto();
+        credentialDisplayResponseDtoForName.setDisplay(List.of(credentialIssuerDisplayResponseForName));
+
+        CredentialIssuerDisplayResponse credentialIssuerDisplayResponseForEmail = new CredentialIssuerDisplayResponse();
+        credentialIssuerDisplayResponseForEmail.setName("Given Email");
+        credentialIssuerDisplayResponseForEmail.setLocale("pt");
+        CredentialDisplayResponseDto credentialDisplayResponseDtoForEmail = new CredentialDisplayResponseDto();
+        credentialDisplayResponseDtoForEmail.setDisplay(List.of(credentialIssuerDisplayResponseForEmail));
+
         CredentialDefinitionResponseDto credentialDefinitionResponseDto = new CredentialDefinitionResponseDto();
         credentialDefinitionResponseDto.setType(List.of("VerifiableCredential", credentialSupportedName));
-        credentialDefinitionResponseDto.setCredentialSubject(Map.of("name", credentialDisplayResponseDto));
+        credentialDefinitionResponseDto.setCredentialSubject(Map.of("name", credentialDisplayResponseDtoForName,"email", credentialDisplayResponseDtoForEmail));
         CredentialsSupportedResponse credentialsSupportedResponse = new CredentialsSupportedResponse();
         credentialsSupportedResponse.setFormat("ldp_vc");
         credentialsSupportedResponse.setScope(credentialSupportedName + "_vc_ldp");
@@ -222,8 +230,9 @@ public class TestUtilities {
         typeList.add("VCTypeCredential");
 
         Map<String, Object> credentialSubject = new HashMap<>();
-        credentialSubject.put("name", "Name1");
-        credentialSubject.put("key2", "value2");
+
+        credentialSubject.put("name", Map.of("name", "full name", "locale", "en"));
+        credentialSubject.put("email", Map.of("locale", "en"));
 
         VCCredentialResponseProof vcCredentialResponseProof = VCCredentialResponseProof.builder()
                 .type(type)

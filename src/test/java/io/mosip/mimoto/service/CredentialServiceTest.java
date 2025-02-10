@@ -136,6 +136,21 @@ public class CredentialServiceTest {
     }
 
     @Test
+    public void shouldThrowExceptionIfInvalidCredentialIsPassedForVerification() throws VCVerificationException, JsonProcessingException {
+        VCCredentialResponse vc = TestUtilities.getVCCredentialResponseDTO("ed25519Signature2020");
+        VerificationResult verificationResult = new VerificationResult(false, "Verification failed for the provided credentials", "Verification Failed!");
+        Mockito.when(credentialsVerifier.verify(any(String.class), eq(CredentialFormat.LDP_VC))).thenReturn(verificationResult);
+        Mockito.when(objectMapper.writeValueAsString(vc.getCredential())).thenReturn("vc");
+        String expetcedExceptionMsg = "verification failed! --> Verification failed for the provided credentials";
+
+        VCVerificationException actualException = assertThrows(VCVerificationException.class, () ->
+                credentialService.verifyCredential(vc)
+        );
+
+        assertEquals(expetcedExceptionMsg,actualException.getMessage());
+    }
+
+    @Test
     public void shouldReturnTokenResponseForValidTokenEndpoint() throws Exception {
 
         TokenResponseDTO actualTokenResponse = credentialService.getTokenResponse(tokenRequestParams, "issuer1");
