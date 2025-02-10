@@ -62,6 +62,9 @@ public class IssuersValidationConfig implements ApplicationRunner {
                     errors.set(new BeanPropertyBindingResult(issuerDTO, "issuerDTO"));
                     validator.validate(issuerDTO, errors.get());
                     String issuerId = issuerDTO.getIssuer_id();
+                    if (errors.get() != null && errors.get().hasErrors()) {
+                        log.error("{} for issuer {}: {}", VALIDATION_ERROR_MSG, issuerId, errors.get());
+                    }
                     String[] tokenEndpointArray = issuerDTO.getToken_endpoint().split("/");
                     Set<String> currentIssuers = credentialIssuers.get();
                     if (!currentIssuers.add(issuerId)) {
