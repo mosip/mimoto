@@ -71,7 +71,7 @@ fi
 
   echo "Do you have public domain & valid SSL? (Y/n) "
   echo "Y: if you have public domain & valid ssl certificate"
-  echo "n: if you don't have a public domain and a valid SSL certificate. It will add an ssl certificate in onboarder docker. Only recommended in testing env.
+  echo "n: if you don't have a public domain and a valid SSL certificate. It will add an ssl certificate in onboarder docker. Only recommended in testing env."
   read -p "" flag
 
   if [ -z "$flag" ]; then
