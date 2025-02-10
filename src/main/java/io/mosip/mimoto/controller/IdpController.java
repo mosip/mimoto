@@ -67,8 +67,8 @@ public class IdpController {
         requestValidator.validateNotificationChannel(requestDTO.getRequest().getOtpChannels());
         ResponseWrapper<BindingOtpResponseDto> response = new ResponseWrapper<>();
         try {
-            response = (ResponseWrapper<BindingOtpResponseDto>) restClientService.postApi(ApiName.BINDING_OTP, requestDTO, ResponseWrapper.class, USE_BEARER_TOKEN);
-            if (response == null)
+            ResponseWrapper<BindingOtpResponseDto> internalResponse = (ResponseWrapper<BindingOtpResponseDto>) restClientService.postApi(ApiName.BINDING_OTP, requestDTO, ResponseWrapper.class, USE_BEARER_TOKEN);
+            if (internalResponse == null)
                 throw new IdpException();
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
