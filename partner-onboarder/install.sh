@@ -71,7 +71,7 @@ fi
 
   echo "Do you have public domain & valid SSL? (Y/n) "
   echo "Y: if you have public domain & valid ssl certificate"
-  echo "n: if you don't have a public domain and a valid SSL certificate. It will add an ssl certificate in onboarder docker. Only recommended in testing env.
+  echo "n: if you don't have a public domain and a valid SSL certificate. It will add an ssl certificate in onboarder docker. Only recommended in testing env."
   read -p "" flag
 
   if [ -z "$flag" ]; then
@@ -116,11 +116,11 @@ fi
 
     echo Updating mimoto-oidc-keystore-password value
     kubectl -n $NS create secret generic mimoto-oidc-keystore-password --from-literal=mimoto-oidc-keystore-password='mosip123' --dry-run=client -o yaml | kubectl apply -f -
-    ./copy_cm_func.sh secret mimoto-oidc-keystore-password mimoto config-server
+    ./copy_cm_func.sh secret mimoto-oidc-keystore-password injiweb config-server
 
     echo Updating Mimoto wallet binding partner api key and Mimoto OIDC Partner Client ID
-    ./copy_cm_func.sh secret mimoto-wallet-binding-partner-api-key mimoto config-server
-    ./copy_cm_func.sh secret mimoto-oidc-partner-clientid mimoto config-server
+    ./copy_cm_func.sh secret mimoto-wallet-binding-partner-api-key injiweb config-server
+    ./copy_cm_func.sh secret mimoto-oidc-partner-clientid injiweb config-server
     kubectl -n config-server set env --keys=mimoto-wallet-binding-partner-api-key --from secret/mimoto-wallet-binding-partner-api-key deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
     kubectl -n config-server set env --keys=mimoto-oidc-partner-clientid --from secret/mimoto-oidc-partner-clientid deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
     kubectl -n config-server set env --keys=mimoto-oidc-keystore-password --from secret/mimoto-oidc-keystore-password deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
