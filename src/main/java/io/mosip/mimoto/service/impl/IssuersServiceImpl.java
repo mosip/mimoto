@@ -1,138 +1,108 @@
 package io.mosip.mimoto.service.impl;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
+import io.mosip.mimoto.dto.mimoto.AuthorizationServerWellKnownResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfigurationResponse;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
-import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
+import io.mosip.mimoto.service.AuthorizationServerService;
+import io.mosip.mimoto.service.IssuerWellknownService;
 import io.mosip.mimoto.service.IssuersService;
-import io.mosip.mimoto.util.CredentialIssuerWellknownResponseValidator;
-import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.Utilities;
-import jakarta.validation.Validator;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 
 @Service
+@Slf4j
 public class IssuersServiceImpl implements IssuersService {
 
     @Autowired
     private Utilities utilities;
 
     @Autowired
-    private Validator validator;
-
-    @Autowired
-    private RestApiClient restApiClient;
+    private AuthorizationServerService authorizationServerService;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
-    private CredentialIssuerWellknownResponseValidator credentialIssuerWellknownResponseValidator;
-
+    private IssuerWellknownService issuerWellknownService;
 
     @Override
-    public IssuersDTO getAllIssuers(String search) throws ApiNotAccessibleException{
-        IssuersDTO issuers;
-        String issuersConfigJsonValue = utilities.getIssuersConfigJsonValue();
-        if (issuersConfigJsonValue == null) {
-            throw new ApiNotAccessibleException();
-        }
-        Gson gsonWithIssuerDataOnlyFilter = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-        issuers = gsonWithIssuerDataOnlyFilter.fromJson(issuersConfigJsonValue, IssuersDTO.class);
-        List<IssuerDTO> enabledIssuers = issuers.getIssuers().stream()
-                .filter(issuer -> "true".equals(issuer.getEnabled()))
-                .collect(Collectors.toList());
-        issuers.setIssuers(enabledIssuers);
+    public IssuersDTO getIssuers(String search) throws ApiNotAccessibleException, AuthorizationServerWellknownResponseException, IOException, InvalidWellknownResponseException {
+        IssuersDTO issuersDTO = getAllIssuers();
+        issuersDTO = getAllEnabledIssuers(issuersDTO);
+        issuersDTO = getFilteredIssuers(issuersDTO, search);
 
-        // Filter issuers list with search string
-        if (!StringUtils.isEmpty(search)) {
-            List<IssuerDTO> filteredIssuers = issuers.getIssuers().stream()
-                    .filter(issuer -> issuer.getDisplay().stream()
-                            .anyMatch(displayDTO -> displayDTO.getTitle().toLowerCase().contains(search.toLowerCase())))
-                    .collect(Collectors.toList());
-            issuers.setIssuers(filteredIssuers);
-            return issuers;
-        }
-        return issuers;
+        return issuersDTO;
     }
 
     @Override
-    public IssuersDTO getAllIssuersWithAllFields() throws ApiNotAccessibleException, IOException {
-        IssuersDTO issuers;
-        String issuersConfigJsonValue = utilities.getIssuersConfigJsonValue();
-        if (issuersConfigJsonValue == null) {
-            throw new ApiNotAccessibleException();
-        }
-        Gson gsonWithIssuerDataOnlyFilter = new GsonBuilder().create();
-        issuers = gsonWithIssuerDataOnlyFilter.fromJson(issuersConfigJsonValue, IssuersDTO.class);
+    public IssuerDTO getIssuerDetails(String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+        IssuersDTO issuersDTO = getAllIssuers();
+        issuersDTO = getAllEnabledIssuers(issuersDTO);
 
-        return issuers;
-    }
-
-
-    @Override
-    public IssuerDTO getIssuerConfig(String issuerId) throws ApiNotAccessibleException, IOException {
-        IssuerDTO issuerDTO = null;
-        String issuersConfigJsonValue = utilities.getIssuersConfigJsonValue();
-        if (issuersConfigJsonValue == null) {
-            throw new ApiNotAccessibleException();
-        }
-        IssuersDTO issuers = new Gson().fromJson(issuersConfigJsonValue, IssuersDTO.class);
-        Optional<IssuerDTO> issuerConfigResp = issuers.getIssuers().stream()
-                .filter(issuer -> issuer.getIssuer_id().equals(issuerId))
-                .findFirst();
-        if (issuerConfigResp.isPresent())
-            issuerDTO = issuerConfigResp.get();
-        else
-            throw new InvalidIssuerIdException();
-        return issuerDTO;
-    }
-
-    @Override
-    public CredentialIssuerWellKnownResponse getIssuerWellknown(String issuerId) throws ApiNotAccessibleException, IOException {
-        return getAllIssuersWithAllFields().getIssuers().stream()
+        return issuersDTO.getIssuers().stream()
                 .filter(issuer -> issuer.getIssuer_id().equals(issuerId))
                 .findFirst()
-                .map(issuerDTO -> {
-                    String wellknownResponse = restApiClient.getApi(issuerDTO.getWellknown_endpoint(), String.class);
-                    try {
-                        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = objectMapper.readValue(wellknownResponse, CredentialIssuerWellKnownResponse.class);
-                        credentialIssuerWellknownResponseValidator.validate(credentialIssuerWellKnownResponse, validator);
-                        return credentialIssuerWellKnownResponse;
-                    } catch (JsonProcessingException | ApiNotAccessibleException | InvalidWellknownResponseException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .orElseThrow(ApiNotAccessibleException::new);
+                .orElseThrow(InvalidIssuerIdException::new);
+    }
+
+    private IssuersDTO getAllEnabledIssuers(IssuersDTO issuersDTO) {
+        return new IssuersDTO(issuersDTO.getIssuers().stream()
+                .filter(issuer -> "true".equals(issuer.getEnabled()))
+                .collect(Collectors.toList()));
+    }
+
+    private IssuersDTO getFilteredIssuers(IssuersDTO issuersDTO, String search) {
+        if (StringUtils.isEmpty(search)) {
+            return issuersDTO;
+        }
+
+        return new IssuersDTO(issuersDTO.getIssuers().stream()
+                .filter(issuer -> issuer.getDisplay().stream()
+                        .anyMatch(displayDTO -> displayDTO.getTitle().toLowerCase().contains(search.toLowerCase())))
+                .collect(Collectors.toList()));
     }
 
     @Override
-    public CredentialsSupportedResponse getIssuerWellknownForCredentialType(String issuerId, String credentialId) throws ApiNotAccessibleException, IOException {
-        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = getIssuerWellknown(issuerId);
-        CredentialsSupportedResponse credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported().get(credentialId);
-        if(credentialsSupportedResponse == null){
+    public IssuersDTO getAllIssuers() throws ApiNotAccessibleException, IOException {
+        IssuersDTO issuersDTO;
+        String issuersConfigJsonValue = utilities.getIssuersConfigJsonValue();
+        if (issuersConfigJsonValue == null) {
             throw new ApiNotAccessibleException();
         }
-        return credentialsSupportedResponse;
+
+        issuersDTO = objectMapper.readValue(issuersConfigJsonValue, IssuersDTO.class);
+
+        return issuersDTO;
     }
 
+    @Override
+    @Cacheable(value = "credentialIssuerConfig", key = "#p0")
+    public CredentialIssuerConfigurationResponse getIssuerConfiguration(String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = issuerWellknownService.getWellknown(getIssuerDetails(issuerId).getCredential_issuer_host());
+        AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = authorizationServerService.getWellknown(credentialIssuerWellKnownResponse.getAuthorizationServers().get(0));
 
+        return new CredentialIssuerConfigurationResponse(
+                credentialIssuerWellKnownResponse.getCredentialIssuer(),
+                credentialIssuerWellKnownResponse.getAuthorizationServers(),
+                credentialIssuerWellKnownResponse.getCredentialEndPoint(),
+                credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported(),
+                authorizationServerWellKnownResponse
+        );
+    }
 }
-
-

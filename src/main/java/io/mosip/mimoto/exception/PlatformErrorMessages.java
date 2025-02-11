@@ -82,13 +82,15 @@ public enum PlatformErrorMessages {
     MIMOTO_IDP_OTP_EXCEPTION(PlatformConstants.PREFIX + "033", "IDP Otp error occured"),
     MIMOTO_IDP_GENERIC_EXCEPTION(PlatformConstants.PREFIX + "034", "Could not get response from server"),
     INVALID_ISSUER_ID_EXCEPTION(PlatformConstants.PREFIX + "035", "Invalid issuer ID"),
+    INVALID_ISSUER_ID_CONFIGURATION(PlatformConstants.PREFIX + "035", "Exception occurred while fetching issuer configuration"),
     INVALID_CREDENTIAL_TYPE_EXCEPTION(PlatformConstants.PREFIX + "036", "Invalid Credential Type Id"),
     MIMOTO_ISSUER_ONBOARDING_EXCEPTION(PlatformConstants.PREFIX + "037", "Issuers Onboarding exception occurred "),
     INVALID_VERIFIER_ID_EXCEPTION(PlatformConstants.PREFIX + "038", "Invalid Verifier ClientId"),
     INVALID_VERIFIER_REDIRECT_URI_EXCEPTION(PlatformConstants.PREFIX + "039", "Invalid Redirect Uri"),
     INVALID_CREDENTIAL_RESOURCE_URI_EXCEPTION(PlatformConstants.PREFIX + "040", "The Credential Resource is Invalid"),
-    INVALID_CREDENTIAL_ISSUER_WELLKNOWN_RESPONSE_EXCEPTION(PlatformConstants.PREFIX + "041", "Invalid Wellknown from Issuer");
-
+    INVALID_CREDENTIAL_ISSUER_WELLKNOWN_RESPONSE_EXCEPTION(PlatformConstants.PREFIX + "041", "Invalid Wellknown from Issuer"),
+    INVALID_AUTHORIZATION_SERVER_WELLKNOWN_RESPONSE_EXCEPTION(PlatformConstants.PREFIX + "042", "Invalid Authorization Server well-known from server:"),
+    MIMOTO_FETCHING_TOKEN_EXCEPTION(PlatformConstants.PREFIX + "043", "Exception occurred when fetching the Token");
 
     /** The error message. */
     private final String errorMessage;

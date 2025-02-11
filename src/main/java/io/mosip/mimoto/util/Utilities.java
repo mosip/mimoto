@@ -107,7 +107,7 @@ public class Utilities {
             imageString = encoder.encodeToString(imageBytes);
             bos.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(ExceptionUtils.getStackTrace(e));
         }
         return imageString;
     }
@@ -182,12 +182,23 @@ public class Utilities {
     public String getTrustedVerifiersJsonValue() {
         return getJson(trustedVerifiersJsonString, trustedVerifiersPath);
     }
-    public String getCredentialSupportedTemplateString() {
-        return getJson(credentialTemplateHtmlString, credentialTemplatePath);
+    public String getCredentialSupportedTemplateString(String issuerId, String credentialType) {
+        String templateFileName = String.format("%s-%s-template.html", issuerId.toLowerCase(), credentialType.toLowerCase());
+        if(activeProfile.equals("local")) {
+            Resource credentialTemplateResource = new ClassPathResource("templates/"+ templateFileName);
+            try {
+                return Files.readString(credentialTemplateResource.getFile().toPath());
+            } catch (IOException e) {
+                log.error(ExceptionUtils.getStackTrace(e));
+            }
+            return credentialTemplateHtmlString;
+        }
+        String specificCredentialPDFTemplate = getJson(configServerFileStorageURL, templateFileName);
+        return !StringUtils.isEmpty(specificCredentialPDFTemplate)? specificCredentialPDFTemplate : getJson(configServerFileStorageURL, credentialTemplatePath);
     }
-    public static String[] handleExceptionWithErrorCode(Exception exception) {
+    public static String[] handleExceptionWithErrorCode(Exception exception, String flowErrorCode) {
         String errorMessage = exception.getMessage();
-        String errorCode = PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode();
+        String errorCode = flowErrorCode;
 
         if(errorMessage.contains(DELIMITER)){
             String[] errorSections = errorMessage.split(DELIMITER);

@@ -173,33 +173,13 @@ public class MosipTestRunner {
 			homeDir = new File(dir.getParent() + "/mosip/testNgXmlFiles");
 			LOGGER.info("ELSE :" + homeDir);
 		}
-		// List and sort the files
 		File[] files = homeDir.listFiles();
 		if (files != null) {
-			Arrays.sort(files, (f1, f2) -> {
-				// Customize the comparison based on file names
-				if (f1.getName().toLowerCase().contains("prerequisite")) {
-					return -1; // f1 should come before f2
-				} else if (f2.getName().toLowerCase().contains("prerequisite")) {
-					return 1; // f2 comes before f1
-				}
-				return f1.getName().compareTo(f2.getName()); // default alphabetical order
-			});
-
 			for (File file : files) {
 				TestNG runner = new TestNG();
 				List<String> suitefiles = new ArrayList<>();
-				if (file.getName().toLowerCase().contains(GlobalConstants.MIMOTO)) {
-					if (file.getName().toLowerCase().contains("prerequisite")) {
-						BaseTestCase.setReportName(GlobalConstants.MIMOTO + "-prerequisite");
-					} else {
-						// if the prerequisite total skipped/failed count is greater than zero
-						if (EmailableReport.getFailedCount() > 0 || EmailableReport.getSkippedCount() > 0) {
-							// skipAll = true;
-						}
-
-						BaseTestCase.setReportName(GlobalConstants.MIMOTO);
-					}
+				if (file.getName().toLowerCase().contains("mastertestsuite")) {
+					BaseTestCase.setReportName(GlobalConstants.MIMOTO);
 					suitefiles.add(file.getAbsolutePath());
 					runner.setTestSuites(suitefiles);
 					System.getProperties().setProperty("testng.outpur.dir", "testng-report");

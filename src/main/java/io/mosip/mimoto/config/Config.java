@@ -1,7 +1,5 @@
 package io.mosip.mimoto.config;
 
-import io.mosip.kernel.auth.defaultadapter.filter.AuthFilter;
-import io.mosip.kernel.auth.defaultadapter.filter.CorsFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +12,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +50,8 @@ public class Config {
         }
 
         if (isCORSEnable) {
-            http.addFilterBefore(new CorsFilter(origins), AuthFilter.class);
+            http.cors(corsCustomizer -> corsCustomizer
+                    .configurationSource(corsConfigurationSource()));
         }
         http.headers(headersEntry -> {
             headersEntry.cacheControl(Customizer.withDefaults());
@@ -58,6 +60,18 @@ public class Config {
 
         return http.build();
 
+    }
+
+    // Define CORS configuration
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        corsConfiguration.addAllowedOrigin(origins);  // Allow all origins
+        corsConfiguration.addAllowedHeader("*");  // Allow all headers
+        corsConfiguration.addAllowedMethod("*");  // Allow all HTTP methods
+        source.registerCorsConfiguration("/**", corsConfiguration);
+        return source;
     }
 
 }

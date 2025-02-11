@@ -2,6 +2,7 @@ package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.dto.openid.VerifierDTO;
 import io.mosip.mimoto.dto.openid.VerifiersDTO;
+import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.service.impl.VerifierServiceImpl;
 import org.hamcrest.Matchers;
 import org.junit.Test;
@@ -58,5 +59,16 @@ public class VerifiersControllerTest {
                                 Matchers.hasKey("response_uris")
                         )
                 )));
+    }
+
+    @Test
+    public void shouldReturnEmptyResponseIfAnyErrorOccurredWhileFetchingVerifiersList() throws Exception {
+        Mockito.when(verifierService.getTrustedVerifiers())
+                .thenThrow(new ApiNotAccessibleException());
+
+        mockMvc.perform(get("/verifiers").accept(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.response.verifiers").isArray())
+                .andExpect(jsonPath("$.response.verifiers").isEmpty());
     }
 }

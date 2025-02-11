@@ -52,6 +52,8 @@ public class CredentialsController {
     @PostMapping("/download")
     public ResponseEntity<?> downloadCredentialAsPDF(@RequestParam Map<String, String> params ) {
         ResponseWrapper<Object> responseWrapper = new ResponseWrapper<>();
+        //TODO: remove this default value after the apitest is updated
+        params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
 
         //TODO: remove this default value after the apitest is updated
         params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
@@ -60,13 +62,12 @@ public class CredentialsController {
             String issuerId = params.get("issuer");
             String credentialType = params.get("credential");
             String credentialValidity = params.get("vcStorageExpiryLimitInTimes");
-
+            String locale = params.get("locale");
             log.info("Initiated Token Call");
             TokenResponseDTO response = credentialService.getTokenResponse(params, issuerId);
 
             log.info("Initiated Download Credential Call");
-            ByteArrayInputStream inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response, credentialValidity);
-
+            ByteArrayInputStream inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response, credentialValidity, locale);
             return ResponseEntity
                     .ok()
                     .contentType(MediaType.APPLICATION_PDF)

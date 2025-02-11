@@ -1,7 +1,6 @@
 package io.mosip.mimoto.service;
 
 import com.google.common.collect.Lists;
-import io.mosip.biometrics.util.CommonUtil;
 import io.mosip.kernel.biometrics.constant.BiometricType;
 import io.mosip.kernel.biometrics.entities.BDBInfo;
 import io.mosip.kernel.biometrics.entities.BIR;

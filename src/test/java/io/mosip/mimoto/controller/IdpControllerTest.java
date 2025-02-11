@@ -4,14 +4,18 @@ import com.google.common.collect.Lists;
 import io.mosip.kernel.core.util.JsonUtils;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.mimoto.*;
-import io.mosip.mimoto.exception.BaseUncheckedException;
+import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.service.RestClientService;
+import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.DateUtils;
 import io.mosip.mimoto.util.JoseUtil;
 import io.mosip.mimoto.util.RequestValidator;
 import io.mosip.mimoto.util.RestApiClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -24,7 +28,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
+import static io.mosip.mimoto.util.TestUtilities.*;
+
+import java.util.Arrays;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -55,6 +64,9 @@ public class IdpControllerTest {
     @MockBean
     private IdpServiceImpl idpService;
 
+    @MockBean
+    private CredentialServiceImpl credentialService;
+
     @Test
     public void otpRequestTest() throws Exception {
         BindingOtpInnerReqDto innerReqDto = new BindingOtpInnerReqDto();
@@ -66,11 +78,18 @@ public class IdpControllerTest {
         ResponseWrapper<BindingOtpResponseDto> response = new ResponseWrapper<>();
 
         Mockito.when(restClientService.postApi(Mockito.any(),
-                Mockito.any(), Mockito.any(), Mockito.anyBoolean())).thenReturn(response).thenThrow(new BaseUncheckedException("Exception"));
+                Mockito.any(), Mockito.any(), Mockito.anyBoolean())).thenReturn(response).thenReturn(null).thenThrow(new BaseUncheckedException("Exception"));
 
         this.mockMvc.perform(post("/binding-otp").contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(JsonUtils.javaObjectToJsonString(requestDTO)))
                 .andExpect(status().isOk());
+
+
+        this.mockMvc.perform(post("/binding-otp").contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(JsonUtils.javaObjectToJsonString(requestDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-034"))
+                .andExpect(jsonPath("$.errors[0].errorMessage").value("Could not get response from server"));
 
         this.mockMvc.perform(post("/binding-otp").contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(JsonUtils.javaObjectToJsonString(requestDTO)))
@@ -89,7 +108,7 @@ public class IdpControllerTest {
         ResponseWrapper<WalletBindingResponseDto> response = new ResponseWrapper<>();
 
         Mockito.when(restClientService.postApi(Mockito.any(),
-                Mockito.any(), Mockito.any(), Mockito.anyBoolean())).thenReturn(response).thenThrow(new BaseUncheckedException("Exception"));
+                Mockito.any(), Mockito.any(), Mockito.anyBoolean())).thenReturn(response).thenReturn(null).thenThrow(new BaseUncheckedException("Exception"));
 
         this.mockMvc.perform(post("/wallet-binding").contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(JsonUtils.javaObjectToJsonString(requestDTO)))
@@ -97,7 +116,58 @@ public class IdpControllerTest {
 
         this.mockMvc.perform(post("/wallet-binding").contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(JsonUtils.javaObjectToJsonString(requestDTO)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-034"))
+                .andExpect(jsonPath("$.errors[0].errorMessage").value("Could not get response from server"));
+
+        this.mockMvc.perform(post("/wallet-binding").contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(JsonUtils.javaObjectToJsonString(requestDTO)))
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    public void shouldReturnTokenResponseForValidIssuerAndParams() throws Exception {
+        String issuer = "test-issuer";
+        Mockito.when(credentialService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer))).thenReturn(getTokenResponseDTO());
+
+        mockMvc.perform(post("/get-token/{issuer}", issuer)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .content(EntityUtils.toString(new UrlEncodedFormEntity(Arrays.asList(
+                                new BasicNameValuePair("grant_type", "authorization_code"),
+                                new BasicNameValuePair("code", "test-code"),
+                                new BasicNameValuePair("redirect_uri", "test-redirect_uri"),
+                                new BasicNameValuePair("code_verifier", "test-code_verifier"),
+                                new BasicNameValuePair("issuer", issuer),
+                                new BasicNameValuePair("vcStorageExpiryLimitInTimes", "3"),
+                                new BasicNameValuePair("credential", "test-credential"),
+                                new BasicNameValuePair("locale", "test-locale")
+                        )))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id_token").value("test-id-token"))
+                .andExpect(jsonPath("$.access_token").value("test-accesstoken"))
+                .andExpect(jsonPath("$.expires_in").value(12345))
+                .andExpect(jsonPath("$.scope").value("test-scope"))
+                .andExpect(jsonPath("$.token_type").value("test-token-type"));
+    }
+
+    @Test
+    public void shouldReturnBadRequestWithErrorIfTokenResponseIsNull() throws Exception {
+        String issuer = "test-issuer";
+        Mockito.when(credentialService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer)))
+                .thenThrow(new IdpException("Exception occurred while performing the authorization"));
+
+        mockMvc.perform(post("/get-token/{issuer}", issuer)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("grant_type", "authorization_code")
+                        .param("code", "test-code")
+                        .param("redirect_uri", "test-redirect_uri")
+                        .param("code_verifier", "test-code_verifier")
+                        .param("issuer", issuer)
+                        .param("vcStorageExpiryLimitInTimes", "3")
+                        .param("credential", "test-credential")
+                        .param("locale", "test-locale"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-034"))
+                .andExpect(jsonPath("$.errors[0].errorMessage").value("Exception occurred while performing the authorization"));
+    }
 }

@@ -2,7 +2,6 @@ package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.core.http.ResponseWrapper;
-import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.openid.VerifiersDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.service.VerifierService;
@@ -18,9 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Collections;
 
-import static io.mosip.mimoto.exception.PlatformErrorMessages.API_NOT_ACCESSIBLE_EXCEPTION;
 
 @RestController
 @RequestMapping(value = "/verifiers")
@@ -37,12 +35,11 @@ public class VerifiersController {
         ResponseWrapper<VerifiersDTO> responseWrapper = new ResponseWrapper<>();
         try {
             responseWrapper.setResponse(verifierService.getTrustedVerifiers());
+            return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (ApiNotAccessibleException | IOException e) {
             log.error("Exception occurred while fetching trusted verifiers ", e);
-            responseWrapper.setErrors(List.of(new ErrorDTO(API_NOT_ACCESSIBLE_EXCEPTION.getCode(), API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
+            responseWrapper.setResponse(new VerifiersDTO(Collections.emptyList()));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
         }
-
-        return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
     }
 }
