@@ -7,12 +7,12 @@
   "credential_configurations_supported": {
     "CredentialType1": {
       "format": "ldp_vc",
-      "scope": "Credential1_vc_ldp",
+      "scope": "CredentialType1_vc_ldp",
       "proof_types_supported": {},
       "credential_definition": {
         "type": [
           "VerifiableCredential",
-          "Credential1"
+          "CredentialType1"
         ],
         "credentialSubject": {
           "name": {
@@ -27,7 +27,7 @@
       },
       "display": [
         {
-          "name": "Credential1",
+          "name": "CredentialType1",
           "locale": "en",
           "logo": {
             "url": "https://logo",

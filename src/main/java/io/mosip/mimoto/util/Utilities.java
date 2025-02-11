@@ -196,9 +196,9 @@ public class Utilities {
         String specificCredentialPDFTemplate = getJson(configServerFileStorageURL, templateFileName);
         return !StringUtils.isEmpty(specificCredentialPDFTemplate)? specificCredentialPDFTemplate : getJson(configServerFileStorageURL, credentialTemplatePath);
     }
-    public static String[] handleExceptionWithErrorCode(Exception exception) {
+    public static String[] handleExceptionWithErrorCode(Exception exception, String flowErrorCode) {
         String errorMessage = exception.getMessage();
-        String errorCode = PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode();
+        String errorCode = flowErrorCode;
 
         if(errorMessage.contains(DELIMITER)){
             String[] errorSections = errorMessage.split(DELIMITER);
