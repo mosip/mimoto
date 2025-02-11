@@ -193,8 +193,8 @@ public class Utilities {
             }
             return credentialTemplateHtmlString;
         }
-        String specificCredentialPDFTemplate = getJson(configServerFileStorageURL, templateFileName);
-        return !StringUtils.isEmpty(specificCredentialPDFTemplate)? specificCredentialPDFTemplate : getJson(configServerFileStorageURL, credentialTemplatePath);
+        String specificCredentialPDFTemplate = getJson("", templateFileName);
+        return !StringUtils.isEmpty(specificCredentialPDFTemplate)? specificCredentialPDFTemplate : getJson("", credentialTemplatePath);
     }
     public static String[] handleExceptionWithErrorCode(Exception exception, String flowErrorCode) {
         String errorMessage = exception.getMessage();
