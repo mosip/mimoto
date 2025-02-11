@@ -88,8 +88,8 @@ public class IdpControllerTest {
         this.mockMvc.perform(post("/binding-otp").contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(JsonUtils.javaObjectToJsonString(requestDTO)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-029"))
-                .andExpect(jsonPath("$.errors[0].errorMessage").value("RESIDENT-APP-034 --> Could not get response from server"));
+                .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-034"))
+                .andExpect(jsonPath("$.errors[0].errorMessage").value("Could not get response from server"));
 
         this.mockMvc.perform(post("/binding-otp").contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(JsonUtils.javaObjectToJsonString(requestDTO)))
