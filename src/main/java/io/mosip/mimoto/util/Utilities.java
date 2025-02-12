@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -185,7 +186,14 @@ public class Utilities {
     public String getCredentialSupportedTemplateString(String issuerId, String credentialType) {
         String templateFileName = String.format("%s-%s-template.html", issuerId.toLowerCase(), credentialType.toLowerCase());
         if(activeProfile.equals("local")) {
-            Resource credentialTemplateResource = new ClassPathResource("templates/"+ templateFileName);
+            Path basePath = Paths.get("templates").toAbsolutePath().normalize();
+            Path resolvedPath = basePath.resolve(templateFileName).normalize();
+
+            if (!resolvedPath.startsWith(basePath)) {
+                throw new SecurityException("Attempted path traversal attack: " + resolvedPath);
+            }
+
+            Resource credentialTemplateResource = new ClassPathResource(resolvedPath.toString());
             try {
                 return Files.readString(credentialTemplateResource.getFile().toPath());
             } catch (IOException e) {
