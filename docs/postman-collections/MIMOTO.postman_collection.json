@@ -65,6 +65,25 @@
 					"response": []
 				},
 				{
+					"name": "get Issuers Configuration",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{HOST}}/issuers/StayProtected/configuration",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"issuers",
+								"StayProtected",
+								"configuration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Search Issuers List",
 					"request": {
 						"method": "GET",
@@ -123,6 +142,16 @@
 								{
 									"key": "credential",
 									"value": "InsuranceCredential",
+									"type": "text"
+								},
+								{
+									"key": "vcStorageExpiryLimitInTimes",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "locale",
+									"value": "en",
 									"type": "text"
 								}
 							]
