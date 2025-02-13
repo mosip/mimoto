@@ -1,12 +1,14 @@
 package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
-import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.util.TestUtilities;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.hamcrest.Matchers;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -20,11 +22,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.io.ByteArrayInputStream;
-import java.util.Arrays;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = CredentialsController.class)
@@ -38,85 +39,103 @@ public class CredentialsControllerTest {
     @MockBean
     private CredentialServiceImpl credentialService;
 
+    private String locale = "test-local", issuer = "test-issuer", credential = "test-credential", requestContent;
+    private TokenResponseDTO tokenResponseDTO;
+
+    @Before
+    public void setUp() throws Exception {
+        tokenResponseDTO = TestUtilities.getTokenResponseDTO();
+        Mockito.when(credentialService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer))).thenReturn(tokenResponseDTO);
+        requestContent = EntityUtils.toString(new UrlEncodedFormEntity(List.of(
+                new BasicNameValuePair("grant_type", "authorization_code"),
+                new BasicNameValuePair("code", "test-code"),
+                new BasicNameValuePair("redirect_uri", "test-redirect_uri"),
+                new BasicNameValuePair("code_verifier", "test-code_verifier"),
+                new BasicNameValuePair("issuer", issuer),
+                new BasicNameValuePair("vcStorageExpiryLimitInTimes", "3"),
+                new BasicNameValuePair("credential", credential),
+                new BasicNameValuePair("locale", locale)
+        )));
+    }
+
     @Test
     public void downloadPDFSuccessfully() throws Exception {
-        String locale="test-local";
-        String issuer = "test-issuer";
-        String credential = "test-credential";
-        TokenResponseDTO tokenResponseDTO = TestUtilities.getTokenResponseDTO();
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream("test-data".getBytes());
-        Mockito.when(credentialService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer))).thenReturn(tokenResponseDTO);
-        Mockito.when(credentialService.downloadCredentialAsPDF(Mockito.eq(issuer), Mockito.eq(credential), Mockito.eq(tokenResponseDTO), Mockito.eq("3"), Mockito.eq(locale))).thenReturn(byteArrayInputStream);
+        Mockito.when(credentialService.downloadCredentialAsPDF(issuer, credential, tokenResponseDTO, "3", locale))
+                .thenReturn(new ByteArrayInputStream("test-data".getBytes()));
 
         mockMvc.perform(post("/credentials/download")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content(EntityUtils.toString(new UrlEncodedFormEntity(Arrays.asList(
-                                new BasicNameValuePair("grant_type", "authorization_code"),
-                                new BasicNameValuePair("code", "test-code"),
-                                new BasicNameValuePair("redirect_uri", "test-redirect_uri"),
-                                new BasicNameValuePair("code_verifier", "test-code_verifier"),
-                                new BasicNameValuePair("issuer", issuer),
-                                new BasicNameValuePair("vcStorageExpiryLimitInTimes", "3"),
-                                new BasicNameValuePair("credential", credential),
-                                new BasicNameValuePair("locale", locale)
-                        )))))
+                        .content(requestContent))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF));
     }
-
 
     @Test
-    public void throwExceptionWhenTokenIsNotFetched() throws Exception {
-        String locale="test-locale";
-        String issuer = "test-issuer";
-        String credential = "test-credential";
-        Mockito.when(credentialService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer))).thenThrow(ApiNotAccessibleException.class);
+    public void throwExceptionOnFetchingTokenResponseFailure() throws Exception {
+        Mockito.when(credentialService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer)))
+                .thenThrow(new IdpException("Exception occurred while performing the authorization"));
 
         mockMvc.perform(post("/credentials/download")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content(EntityUtils.toString(new UrlEncodedFormEntity(Arrays.asList(
-                                new BasicNameValuePair("grant_type", "authorization_code"),
-                                new BasicNameValuePair("code", "test-code"),
-                                new BasicNameValuePair("redirect_uri", "test-redirect_uri"),
-                                new BasicNameValuePair("code_verifier", "test-code_verifier"),
-                                new BasicNameValuePair("issuer", issuer),
-                                new BasicNameValuePair("vcStorageExpiryLimitInTimes", "3"),
-                                new BasicNameValuePair("credential", credential),
-                                new BasicNameValuePair("locale", locale)
-                        )))))
-                .andExpect(status().isBadRequest())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                        .content(requestContent))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is("RESIDENT-APP-034")))
+                .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is("Exception occurred while performing the authorization")));
+
     }
+
+    @Test
+    public void throwExceptionOnFetchingIssuerOrAuthServerWellknownFailureDuringTokenGeneration() throws Exception {
+        Mockito.when(credentialService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer)))
+                .thenThrow(new ApiNotAccessibleException());
+
+        mockMvc.perform(post("/credentials/download")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .content(requestContent))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is("RESIDENT-APP-026")))
+                .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is("Api not accessible failure")));
+    }
+
 
     @Test
     public void throwExceptionWhenPDFGenerationFailed() throws Exception {
-        String locale="test-locale";
-        String issuer = "test-issuer";
-        String credential = "test-credential";
-        TokenResponseDTO tokenResponseDTO = TestUtilities.getTokenResponseDTO();
-        Mockito.when(credentialService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer))).thenReturn(tokenResponseDTO);
-        Mockito.when(credentialService.downloadCredentialAsPDF(Mockito.eq(issuer), Mockito.eq(credential), Mockito.eq(tokenResponseDTO), Mockito.eq("3"), Mockito.eq(locale))).thenThrow(ApiNotAccessibleException.class);
+        Mockito.when(credentialService.downloadCredentialAsPDF(issuer, credential, tokenResponseDTO, "3", locale))
+                .thenThrow(new ApiNotAccessibleException());
 
         mockMvc.perform(post("/credentials/download")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .content(EntityUtils.toString(new UrlEncodedFormEntity(Arrays.asList(
-                                new BasicNameValuePair("grant_type", "authorization_code"),
-                                new BasicNameValuePair("code", "test-code"),
-                                new BasicNameValuePair("redirect_uri", "test-redirect_uri"),
-                                new BasicNameValuePair("code_verifier", "test-code_verifier"),
-                                new BasicNameValuePair("issuer", issuer),
-                                new BasicNameValuePair("vcStorageExpiryLimitInTimes", "3"),
-                                new BasicNameValuePair("credential", credential),
-                                new BasicNameValuePair("locale", locale)
-                        )))))
+                        .content(requestContent))
                 .andExpect(status().isBadRequest())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is("RESIDENT-APP-026")))
+                .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is("Api not accessible failure")));
+    }
+
+    @Test
+    public void throwExceptionOnInvalidCredentialResource() throws Exception {
+        Mockito.when(credentialService.downloadCredentialAsPDF(issuer, credential, tokenResponseDTO, "3", locale))
+                .thenThrow(new InvalidCredentialResourceException(
+                        ErrorConstants.REQUEST_TIMED_OUT.getErrorCode(),
+                        ErrorConstants.REQUEST_TIMED_OUT.getErrorMessage()));
+
+        mockMvc.perform(post("/credentials/download")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .content(requestContent))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is("request_timed_out")))
+                .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is("We are unable to process your request right now")));
+    }
+
+    @Test
+    public void throwExceptionOnVCVerificationFailure() throws Exception {
+        Mockito.when(credentialService.downloadCredentialAsPDF(issuer, credential, tokenResponseDTO, "3", locale))
+                .thenThrow(new VCVerificationException("Verification Failed!", "Error occurred when verifying the downloaded credential"));
+
+        mockMvc.perform(post("/credentials/download")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .content(requestContent))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is("Verification Failed!")))
+                .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is("Error occurred when verifying the downloaded credential")));
     }
 }
