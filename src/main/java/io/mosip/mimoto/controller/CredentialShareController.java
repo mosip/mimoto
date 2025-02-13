@@ -93,7 +93,7 @@ public class CredentialShareController {
             utilities.getDataPath(),
             String.format(CredentialShareServiceImpl.VC_REQUEST_FILE_NAME, eventModel.getEvent().getTransactionId())
         );
-        // Only process event if request id file exists in the storange.
+        // Only process event if request id file exists in the storage.
         if (vcRequestIdPath.toFile().exists()) {
             boolean documentGenerated = credentialShareService.generateDocuments(eventModel);
             log.info("Credential share process status: {} for event id: {}", documentGenerated, eventModel.getEvent().getId());
