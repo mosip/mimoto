@@ -109,6 +109,7 @@ jobs:
           - SERVICE_LOCATION: '../mimoto'
             SERVICE_NAME: 'mimoto'
             BUILD_ARTIFACT: 'mimoto-recreated'
+            SQUASH_LAYERS: '8'
       fail-fast: false
     uses: mosip/kattu/.github/workflows/docker-build.yml@master-java21
     name: ${{ matrix.SERVICE_NAME }}
@@ -116,6 +117,7 @@ jobs:
       SERVICE_LOCATION: ${{ matrix.SERVICE_LOCATION }}
       SERVICE_NAME: ${{ matrix.SERVICE_NAME }}
       BUILD_ARTIFACT: ${{ matrix.BUILD_ARTIFACT }}
+      SQUASH_LAYERS: ${{ matrix.SQUASH_LAYERS }}
     secrets:
       DEV_NAMESPACE_DOCKER_HUB: ${{ secrets.DEV_NAMESPACE_DOCKER_HUB }}
       ACTOR_DOCKER_HUB: ${{ secrets.ACTOR_DOCKER_HUB }}
