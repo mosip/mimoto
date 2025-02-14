@@ -2649,6 +2649,14 @@
                                     "credential": {
                                         "type": "string",
                                         "example": "MosipVerifiableCredential"
+                                    },
+                                    "vcStorageExpiryLimitInTimes": {
+                                        "type": "string",
+                                        "example": "1"
+                                    },
+                                    "locale": {
+                                        "type": "string",
+                                        "example": "en"
                                     }
                                 }
                             }

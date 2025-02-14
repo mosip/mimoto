@@ -29,17 +29,19 @@ public class IssuerDTO {
     @Schema(description = "Client Id of the Onboarded Mimoto OIDC Client")
     String client_id;
     @URL
+    @NotBlank
     @Schema(description = "Wellknown endpoint of the credential issuer")
     String wellknown_endpoint;
     @NotBlank
     @Schema(description = "Redirect URI configured while creating the OIDC Client")
     String redirect_uri;
-    @JsonInclude(NON_NULL)
+    @NotBlank
     @Schema(description = "Authorization Audience for retrieving Token from token endpoint")
     String authorization_audience;
     @Schema(description = "Mimoto Token Endpoint Fetching the Token From Authorization Server with Client Assertion")
     String token_endpoint;
     @URL
+    @NotBlank
     @Schema(description = "Token Endpoint for Fetching the Token From Authorization Server")
     String proxy_token_endpoint;
     @NotBlank

@@ -65,17 +65,19 @@ public class IdpController {
         log.debug("Received binding-otp request : " + JsonUtils.javaObjectToJsonString(requestDTO));
         requestValidator.validateInputRequest(result);
         requestValidator.validateNotificationChannel(requestDTO.getRequest().getOtpChannels());
-        ResponseWrapper<BindingOtpResponseDto> response = new ResponseWrapper<>();
+        ResponseWrapper<BindingOtpResponseDto> responseWrapper = new ResponseWrapper<>();
         try {
-            response = (ResponseWrapper<BindingOtpResponseDto>) restClientService.postApi(ApiName.BINDING_OTP, requestDTO, ResponseWrapper.class, USE_BEARER_TOKEN);
-            if (response == null)
+            ResponseWrapper<BindingOtpResponseDto> internalResponse = (ResponseWrapper<BindingOtpResponseDto>) restClientService.postApi(ApiName.BINDING_OTP, requestDTO, ResponseWrapper.class, USE_BEARER_TOKEN);
+            if (internalResponse == null)
                 throw new IdpException();
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            return ResponseEntity.status(HttpStatus.OK).body(internalResponse);
         } catch (Exception e) {
-            log.error("Wallet binding otp error occurred.", e);
-            List<ErrorDTO> errors = Utilities.getErrors(PlatformErrorMessages.MIMOTO_OTP_BINDING_EXCEPTION.getCode(), e.getMessage());
-            response.setErrors(errors);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            log.error("Wallet binding otp error occurred." + e);
+            String[] errorObj = Utilities.handleExceptionWithErrorCode(e, PlatformErrorMessages.MIMOTO_OTP_BINDING_EXCEPTION.getCode());
+            List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
+            responseWrapper.setResponse(null);
+            responseWrapper.setErrors(errors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
         }
 
     }
@@ -108,7 +110,7 @@ public class IdpController {
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception e) {
             log.error("Wallet binding error occured for tranaction id " + requestDTO.getRequest().getIndividualId(), e);
-            String[] errorObj = Utilities.handleExceptionWithErrorCode(e);
+            String[] errorObj = Utilities.handleExceptionWithErrorCode(e, PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode());
             List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
             responseWrapper.setResponse(null);
             responseWrapper.setErrors(errors);
@@ -129,7 +131,7 @@ public class IdpController {
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception ex) {
             log.error("Exception Occurred while Invoking the Token Endpoint : ", ex);
-            String[] errorObj = Utilities.handleExceptionWithErrorCode(ex);
+            String[] errorObj = Utilities.handleExceptionWithErrorCode(ex, PlatformErrorMessages.MIMOTO_FETCHING_TOKEN_EXCEPTION.getCode());
             List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
             responseWrapper.setErrors(errors);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);

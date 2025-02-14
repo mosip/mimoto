@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -182,15 +183,30 @@ public class Utilities {
     public String getTrustedVerifiersJsonValue() {
         return getJson(trustedVerifiersJsonString, trustedVerifiersPath);
     }
-    public String getCredentialSupportedTemplateString() {
+    public String getCredentialSupportedTemplateString(String issuerId, String credentialType) {
+        String templateFileName = String.format("%s-%s-template.html", issuerId.toLowerCase(), credentialType.toLowerCase());
         if(activeProfile.equals("local")) {
+            Path basePath = Paths.get("templates").toAbsolutePath().normalize();
+            Path resolvedPath = basePath.resolve(templateFileName).normalize();
+
+            if (!resolvedPath.startsWith(basePath)) {
+                throw new SecurityException("Attempted path traversal attack: " + resolvedPath);
+            }
+
+            Resource credentialTemplateResource = new ClassPathResource(resolvedPath.toString());
+            try {
+                return Files.readString(credentialTemplateResource.getFile().toPath());
+            } catch (IOException e) {
+                log.error(ExceptionUtils.getStackTrace(e));
+            }
             return credentialTemplateHtmlString;
         }
-        return getJson(credentialTemplateHtmlString,credentialTemplatePath );
+        String specificCredentialPDFTemplate = getJson("", templateFileName);
+        return !StringUtils.isEmpty(specificCredentialPDFTemplate)? specificCredentialPDFTemplate : getJson("", credentialTemplatePath);
     }
-    public static String[] handleExceptionWithErrorCode(Exception exception) {
+    public static String[] handleExceptionWithErrorCode(Exception exception, String flowErrorCode) {
         String errorMessage = exception.getMessage();
-        String errorCode = PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode();
+        String errorCode = flowErrorCode;
 
         if(errorMessage.contains(DELIMITER)){
             String[] errorSections = errorMessage.split(DELIMITER);

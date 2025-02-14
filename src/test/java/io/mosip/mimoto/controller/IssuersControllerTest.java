@@ -92,13 +92,13 @@ public class IssuersControllerTest {
                                 Matchers.hasKey("proxy_token_endpoint"),
                                 Matchers.hasKey("token_endpoint"),
                                 Matchers.hasKey("credential_issuer_host"),
+                                Matchers.hasKey("authorization_audience"),
                                 Matchers.not(Matchers.hasKey("redirect_url")),
                                 Matchers.not(Matchers.hasKey("authorization_endpoint")),
                                 Matchers.not(Matchers.hasKey("credential_endpoint")),
                                 Matchers.not(Matchers.hasKey("credential_audience")),
                                 Matchers.not(Matchers.hasKey("additional_headers")),
-                                Matchers.not(Matchers.hasKey("scopes_supported")),
-                                Matchers.not(Matchers.hasKey("authorization_audience"))
+                                Matchers.not(Matchers.hasKey("scopes_supported"))
                         )
                 )));
 
@@ -134,14 +134,14 @@ public class IssuersControllerTest {
                                 Matchers.hasKey("wellknown_endpoint"),
                                 Matchers.hasKey("proxy_token_endpoint"),
                                 Matchers.hasKey("token_endpoint"),
+                                Matchers.hasKey("authorization_audience"),
                                 Matchers.hasKey("credential_issuer_host"),
                                 Matchers.not(Matchers.hasKey("redirect_url")),
                                 Matchers.not(Matchers.hasKey("authorization_endpoint")),
                                 Matchers.not(Matchers.hasKey("credential_endpoint")),
                                 Matchers.not(Matchers.hasKey("credential_audience")),
                                 Matchers.not(Matchers.hasKey("additional_headers")),
-                                Matchers.not(Matchers.hasKey("scopes_supported")),
-                                Matchers.not(Matchers.hasKey("authorization_audience"))
+                                Matchers.not(Matchers.hasKey("scopes_supported"))
                         )
                 )));
 
@@ -180,7 +180,7 @@ public class IssuersControllerTest {
     public void getIssuerWellknownTest() throws Exception {
         String issuerId = "issuer1";
         String expectedCredentialIssuerWellknownResponse = getExpectedWellKnownJson();
-        CredentialIssuerConfigurationResponse expectedCredentialIssuerConfigurationResponse = getCredentialIssuerConfigurationResponseDto(issuerId, Map.of("CredentialType1", getCredentialSupportedResponse("CredentialType1")), List.of());
+        CredentialIssuerConfigurationResponse expectedCredentialIssuerConfigurationResponse = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
         Mockito.when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(expectedCredentialIssuerConfigurationResponse);
 
         String actualResponse = mockMvc.perform(get("/issuers/" + issuerId + "/well-known-proxy").accept(MediaType.APPLICATION_JSON_VALUE))
@@ -206,11 +206,7 @@ public class IssuersControllerTest {
             expectedJsonString = expectedJsonString.substring(1);
         }
         String finalExpectedJsonString = expectedJsonString;
-        CredentialIssuerConfigurationResponse expectedResponse = getCredentialIssuerConfigurationResponseDto(
-                issuerId,
-                Map.of("CredentialType1", getCredentialSupportedResponse("Credential1")),
-                List.of()
-        );
+        CredentialIssuerConfigurationResponse expectedResponse = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
         Mockito.when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(expectedResponse);
 
         mockMvc.perform(get("/issuers/" + issuerId + "/configuration")

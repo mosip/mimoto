@@ -25,8 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.List;
 
-import static io.mosip.mimoto.exception.PlatformErrorMessages.API_NOT_ACCESSIBLE_EXCEPTION;
-import static io.mosip.mimoto.exception.PlatformErrorMessages.INVALID_ISSUER_ID_EXCEPTION;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 
 @RestController
 @Slf4j
@@ -96,7 +95,7 @@ public class IssuersController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseWrapper);
         } catch (Exception exception) {
             log.error("Exception occurred while fetching issuers ", exception);
-            String[] errorObj = Utilities.handleExceptionWithErrorCode(exception);
+            String[] errorObj = Utilities.handleExceptionWithErrorCode(exception, INVALID_ISSUER_ID_EXCEPTION.getCode());
             List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
             responseWrapper.setResponse(null);
             responseWrapper.setErrors(errors);
@@ -114,7 +113,7 @@ public class IssuersController {
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception exception) {
             log.error("Exception occurred while fetching issuers configurations - " + exception);
-            String[] errorObj = Utilities.handleExceptionWithErrorCode(exception);
+            String[] errorObj = Utilities.handleExceptionWithErrorCode(exception, INVALID_ISSUER_ID_CONFIGURATION.getCode());
             List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
             responseWrapper.setResponse(null);
             responseWrapper.setErrors(errors);

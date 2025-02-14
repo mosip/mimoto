@@ -79,30 +79,20 @@ public class IssuersServiceImpl implements IssuersService {
     }
 
     @Override
-    public IssuersDTO getAllIssuers() throws ApiNotAccessibleException, AuthorizationServerWellknownResponseException, IOException, InvalidWellknownResponseException {
-
+    public IssuersDTO getAllIssuers() throws ApiNotAccessibleException, IOException {
         IssuersDTO issuersDTO;
         String issuersConfigJsonValue = utilities.getIssuersConfigJsonValue();
         if (issuersConfigJsonValue == null) {
             throw new ApiNotAccessibleException();
         }
 
-        try {
-            issuersDTO = objectMapper.readValue(issuersConfigJsonValue, IssuersDTO.class);
-        } catch (Exception e) {
-            throw e;
-        }
-        for (IssuerDTO issuerDTO : issuersDTO.getIssuers()) {
-            if (!issuerDTO.getProtocol().equals("OTP")) {
-                updateIssuerWithAuthServerConfig(issuerDTO);
-            }
-        }
+        issuersDTO = objectMapper.readValue(issuersConfigJsonValue, IssuersDTO.class);
 
         return issuersDTO;
     }
 
     @Override
-    @Cacheable(value = "credentialIssuerConfig", key = "{#issuerId}")
+    @Cacheable(value = "credentialIssuerConfig", key = "#p0")
     public CredentialIssuerConfigurationResponse getIssuerConfiguration(String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = issuerWellknownService.getWellknown(getIssuerDetails(issuerId).getCredential_issuer_host());
         AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = authorizationServerService.getWellknown(credentialIssuerWellKnownResponse.getAuthorizationServers().get(0));
@@ -114,22 +104,5 @@ public class IssuersServiceImpl implements IssuersService {
                 credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported(),
                 authorizationServerWellKnownResponse
         );
-    }
-
-    private void updateIssuerWithAuthServerConfig(IssuerDTO issuerDTO)  {
-        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = null;
-        try {
-            credentialIssuerWellKnownResponse = issuerWellknownService.getWellknown(issuerDTO.getCredential_issuer_host());
-            AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = authorizationServerService.getWellknown(credentialIssuerWellKnownResponse.getAuthorizationServers().get(0));
-            String tokenEndpoint = authorizationServerWellKnownResponse.getTokenEndpoint();
-            issuerDTO.setAuthorization_audience(tokenEndpoint);
-            issuerDTO.setProxy_token_endpoint(tokenEndpoint);
-        } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
-                 InvalidWellknownResponseException e) {
-            log.error("Exception occurred while fetching issuer wellknown ", e);
-            issuerDTO.setAuthorization_audience("");
-            issuerDTO.setProxy_token_endpoint("");
-        }
-
     }
 }

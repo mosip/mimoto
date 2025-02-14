@@ -81,7 +81,7 @@ public class IssuersServiceTest {
         Mockito.when(issuerWellknownService.getWellknown(credentialIssuerHostUrl))
                 .thenReturn(expectedCredentialIssuerWellKnownResponse);
 
-        expectedCredentialIssuerConfigurationResponse = getCredentialIssuerConfigurationResponseDto(issuerId, Map.of("CredentialType1", getCredentialSupportedResponse("CredentialType1")), List.of());
+        expectedCredentialIssuerConfigurationResponse = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
         Mockito.when(authorizationServerService.getWellknown(authServerWellknownUrl)).thenReturn(expectedCredentialIssuerConfigurationResponse.getAuthorizationServerWellKnownResponse());
     }
 
@@ -202,6 +202,6 @@ public class IssuersServiceTest {
 
         assertEquals("RESIDENT-APP-042 --> Invalid Authorization Server well-known from server:\n" +
                 "well-known api is not accessible", actualException.getMessage());
-        verify(authorizationServerService, times(3)).getWellknown(authServerWellknownUrl);
+        verify(authorizationServerService, times(1)).getWellknown(authServerWellknownUrl);
     }
 }
