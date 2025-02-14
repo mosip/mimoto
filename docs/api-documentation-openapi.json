@@ -1604,7 +1604,7 @@
                 "tags": [
                     "Trusted Issuers"
                 ],
-                "description": "This API provides the complete configuration details for the specific issuers passed in the path variable. Since version 0.16.0, this endpoint is deprecated and will be removed in a future release.",
+                "description": "This API provides the complete configuration details for the specific issuers passed in the path variable.",
                 "responses": {
                     "200": {
                         "description": "OK",
