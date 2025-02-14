@@ -91,6 +91,7 @@
         <swagger.version>2.9.2</swagger.version>
         <springdoc.version>1.5.10</springdoc.version>
         <jjwt-version>0.9.1</jjwt-version>
+        <postgresql.version>42.7.2</postgresql.version>
         <sonar.coverage.exclusions>
             **/constant/**,**/config/**,**/httpfilter/**,**/cache/**,**/dto/**,**/entity/**,**/model/**,**/exception/**,**/repository/**,**/security/**,**/*Config.java,**/*BootApplication.java,**/*VertxApplication.java,**/cbeffutil/**,**/core.http/**,**/util/**
         </sonar.coverage.exclusions>
@@ -204,6 +205,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <version>${spring.boot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
             <version>${spring.boot.version}</version>
         </dependency>
         <dependency>
@@ -462,7 +468,12 @@
             <artifactId>jakarta.validation-api</artifactId>
             <version>3.0.2</version>
         </dependency>
-
+        <!-- Postgres -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+        </dependency>
     </dependencies>
 
     <repositories>

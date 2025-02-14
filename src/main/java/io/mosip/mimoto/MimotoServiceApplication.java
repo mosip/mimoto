@@ -9,11 +9,13 @@ import org.json.simple.JSONObject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -21,14 +23,14 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 @SpringBootApplication(scanBasePackages = {
         "io.mosip.mimoto.*",
+        "io.mosip.mimoto.dbentity",
         "io.mosip.kernel.websub.*",
         "${mosip.auth.adapter.impl.basepackage}"
 }, exclude = {
-        SecurityAutoConfiguration.class,
-        DataSourceAutoConfiguration.class,
-        HibernateJpaAutoConfiguration.class,
-        CacheAutoConfiguration.class
+        SecurityAutoConfiguration.class
 })
+//@EntityScan(basePackages = "io.mosip.mimoto.dbentity")
+//@EnableJpaRepositories(basePackages = "io.mosip.mimoto.repository")
 @Slf4j
 @EnableScheduling
 @EnableAsync

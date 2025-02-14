@@ -1,5 +1,7 @@
 package io.mosip.mimoto.config;
 
+import io.mosip.mimoto.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +18,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,12 +40,18 @@ public class Config {
     @Value("${mosip.security.origins:localhost:8088}")
     private String origins;
 
+
+    @Value("${mosip.inji.web.url}")
+    private String injiWebUrl;
+
     @Bean
     @ConfigurationProperties(prefix = "mosip.inji")
     public Map<String, String> injiConfig() {
         return new HashMap<>();
     }
 
+    @Autowired
+    private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         if (!isCSRFEnable) {
@@ -58,8 +67,30 @@ public class Config {
             headersEntry.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin);
         });
 
+        setupOauth2Config(http);
+
         return http.build();
 
+    }
+
+    private void setupOauth2Config(HttpSecurity http) throws Exception {
+        http.oauth2Login((oauth2Login) -> oauth2Login.loginPage(injiWebUrl + "/login")
+                        .authorizationEndpoint(authorization -> authorization.baseUri("/oauth2/authorize")
+                        )
+                        .redirectionEndpoint(redirect -> redirect.baseUri("/oauth2/callback/*"))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl(injiWebUrl+"/login?logout")  // Custom logout success URL
+                        .clearAuthentication(true)          // Clear the authentication after logout
+                        .invalidateHttpSession(true)        // Invalidate the session
+                        .deleteCookies("JSESSIONID")        // Optionally, delete cookies
+                ).authorizeHttpRequests(authz -> authz
+                        // Define secured endpoints
+                        .requestMatchers("/secure/**").authenticated() // Secure endpoints that require login
+                        // Default authorization rule for all other requests
+                        .anyRequest().permitAll());;
     }
 
     // Define CORS configuration
@@ -67,9 +98,10 @@ public class Config {
     public CorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.addAllowedOrigin(origins);  // Allow all origins
+        corsConfiguration.setAllowedOrigins(Arrays.asList(origins.split(",")));  // Allow all origins
         corsConfiguration.addAllowedHeader("*");  // Allow all headers
         corsConfiguration.addAllowedMethod("*");  // Allow all HTTP methods
+        corsConfiguration.setAllowCredentials(true);// Allow cookies to be sent
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;
     }
