@@ -1,6 +1,8 @@
 package io.mosip.mimoto.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.dto.DataShareResponseDto;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseWrapperDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
@@ -20,6 +22,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.PathMatcher;
+import static io.mosip.mimoto.util.TestUtilities.getDataShareResponseDTO;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
@@ -38,7 +41,7 @@ public class DataShareServiceTest {
     PresentationRequestDTO presentationRequestDTO;
 
     @Before
-    public void setUp(){
+    public void setUp() {
         ReflectionTestUtils.setField(dataShareService, "dataShareHostUrl", "https://test-url");
         ReflectionTestUtils.setField(dataShareService, "dataShareCreateUrl", "https://test-url");
         ReflectionTestUtils.setField(dataShareService, "dataShareGetUrlPattern", "http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/*");
@@ -106,4 +109,35 @@ public class DataShareServiceTest {
         assertEquals(expectedExceptionMsg, actualException.getMessage());
     }
 
+    @Test
+    public void throwResourceExpiredExceptionWhenCredentialIsExpired() throws JsonProcessingException {
+        VCCredentialResponse vcCredentialResponseDTO = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
+        vcCredentialResponseDTO.setCredential(null);
+        String credentialString = TestUtilities.getObjectAsString(vcCredentialResponseDTO);
+        Mockito.when(restApiClient.getApiWithCustomHeaders(Mockito.eq("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/test"), Mockito.eq(String.class), Mockito.any(HttpHeaders.class)))
+                .thenReturn(credentialString);
+        Mockito.when(objectMapper.readValue(credentialString, VCCredentialResponse.class)).thenReturn(vcCredentialResponseDTO);
+        Mockito.when(objectMapper.readValue(credentialString, DataShareResponseDto.class)).thenReturn(getDataShareResponseDTO(""));
+        String expectedExceptionMsg = "resource_not_found --> The requested resource expired.";
+
+        InvalidCredentialResourceException actualException = assertThrows(InvalidCredentialResourceException.class, () -> dataShareService.downloadCredentialFromDataShare(presentationRequestDTO));
+
+        assertEquals(expectedExceptionMsg, actualException.getMessage());
+    }
+
+    @Test
+    public void throwResourceNotFoundExceptionWhenCredentialIsNotFoundInDataShare() throws JsonProcessingException {
+        VCCredentialResponse vcCredentialResponseDTO = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
+        vcCredentialResponseDTO.setCredential(null);
+        String credentialString = TestUtilities.getObjectAsString(vcCredentialResponseDTO);
+        Mockito.when(restApiClient.getApiWithCustomHeaders(Mockito.eq("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/test"), Mockito.eq(String.class), Mockito.any(HttpHeaders.class)))
+                .thenReturn(credentialString);
+        Mockito.when(objectMapper.readValue(credentialString, VCCredentialResponse.class)).thenReturn(vcCredentialResponseDTO);
+        Mockito.when(objectMapper.readValue(credentialString, DataShareResponseDto.class)).thenReturn(getDataShareResponseDTO("DAT-SER-008"));
+        String expectedExceptionMsg = "resource_not_found --> The requested resource doesn’t exist.";
+
+        InvalidCredentialResourceException actualException = assertThrows(InvalidCredentialResourceException.class, () -> dataShareService.downloadCredentialFromDataShare(presentationRequestDTO));
+
+        assertEquals(expectedExceptionMsg, actualException.getMessage());
+    }
 }
