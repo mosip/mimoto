@@ -8,6 +8,7 @@ import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.exception.VCVerificationException;
 import io.mosip.mimoto.service.CredentialService;
+import io.mosip.mimoto.util.Utilities;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -15,8 +16,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -33,28 +32,24 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import static io.mosip.mimoto.exception.PlatformErrorMessages.API_NOT_ACCESSIBLE_EXCEPTION;
-import static io.mosip.mimoto.exception.PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 
 @RestController
-@RequestMapping(value="/credentials")
+@RequestMapping(value = "/credentials")
 @Slf4j
-@Tag( name = SwaggerLiteralConstants.CREDENTIALS_NAME, description = SwaggerLiteralConstants.CREDENTIALS_DESCRIPTION)
+@Tag(name = SwaggerLiteralConstants.CREDENTIALS_NAME, description = SwaggerLiteralConstants.CREDENTIALS_DESCRIPTION)
 public class CredentialsController {
 
     @Autowired
     CredentialService credentialService;
 
-    @Operation( summary = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_SUMMARY, description = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_DESCRIPTION)
+    @Operation(summary = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_SUMMARY, description = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_DESCRIPTION)
     @ApiResponses({
-            @ApiResponse(responseCode = "200", content = { @Content(mediaType = "application/pdf") }),
-            @ApiResponse(responseCode = "400",content = { @Content(schema = @Schema(implementation = ResponseWrapper.class), mediaType = "application/json") }) })
+            @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/pdf")}),
+            @ApiResponse(responseCode = "400", content = {@Content(schema = @Schema(implementation = ResponseWrapper.class), mediaType = "application/json")})})
     @PostMapping("/download")
-    public ResponseEntity<?> downloadCredentialAsPDF(@RequestParam Map<String, String> params ) {
+    public ResponseEntity<?> downloadCredentialAsPDF(@RequestParam Map<String, String> params) {
         ResponseWrapper<Object> responseWrapper = new ResponseWrapper<>();
-        //TODO: remove this default value after the apitest is updated
-        params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
-
         //TODO: remove this default value after the apitest is updated
         params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
 
@@ -75,32 +70,31 @@ public class CredentialsController {
                     .body(new InputStreamResource(inputStream));
         } catch (ApiNotAccessibleException | IOException exception) {
             log.error("Exception occurred while fetching credential types ", exception);
-            responseWrapper.setErrors(List.of(new ErrorDTO(API_NOT_ACCESSIBLE_EXCEPTION.getCode(), API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(responseWrapper);
+            return handleException(exception, responseWrapper);
         } catch (InvalidCredentialResourceException invalidCredentialResourceException) {
             log.error("Exception occurred while pushing the data to data share ", invalidCredentialResourceException);
-            responseWrapper.setErrors(List.of(new ErrorDTO(invalidCredentialResourceException.getErrorCode(), invalidCredentialResourceException.getMessage())));
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(responseWrapper);
+            return handleException(invalidCredentialResourceException, responseWrapper);
         } catch (VCVerificationException exception) {
-            log.error("Exception occurred while verification of the verifiable Credential", exception);
-            responseWrapper.setErrors(List.of(new ErrorDTO(exception.getErrorCode(), exception.getMessage())));
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(responseWrapper);
+            log.error("Exception occurred while verification of the verifiable Credential" + exception);
+            return handleException(exception, responseWrapper);
         } catch (Exception exception) {
             log.error("Exception occurred while generating pdf ", exception);
-            responseWrapper.setErrors(List.of(new ErrorDTO(MIMOTO_PDF_SIGN_EXCEPTION.getCode(), exception.getMessage())));
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(responseWrapper);
+            return handleException(exception, responseWrapper);
         }
+    }
+
+    private ResponseEntity<ResponseWrapper<Object>> handleException(Exception exception, ResponseWrapper<Object> responseWrapper) {
+        String errorCode = MIMOTO_PDF_SIGN_EXCEPTION.getCode();
+        String[] errorObj = Utilities.handleExceptionWithErrorCode(exception, errorCode);
+        List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
+        responseWrapper.setErrors(errors);
+
+        HttpStatus status = exception instanceof ApiNotAccessibleException || exception instanceof IOException || exception instanceof InvalidCredentialResourceException || exception instanceof VCVerificationException
+                ? HttpStatus.BAD_REQUEST
+                : HttpStatus.INTERNAL_SERVER_ERROR;
+
+        return ResponseEntity.status(status)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(responseWrapper);
     }
 }

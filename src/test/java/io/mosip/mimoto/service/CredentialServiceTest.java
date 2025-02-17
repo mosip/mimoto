@@ -132,6 +132,7 @@ public class CredentialServiceTest {
         Mockito.when(credentialsVerifier.verify(any(String.class), eq(CredentialFormat.LDP_VC))).thenReturn(verificationResult);
         Mockito.when(objectMapper.writeValueAsString(vc.getCredential())).thenReturn("vc");
         Boolean verificationStatus = credentialService.verifyCredential(vc);
+
         assertTrue(verificationStatus);
     }
 
@@ -141,13 +142,13 @@ public class CredentialServiceTest {
         VerificationResult verificationResult = new VerificationResult(false, "Verification failed for the provided credentials", "Verification Failed!");
         Mockito.when(credentialsVerifier.verify(any(String.class), eq(CredentialFormat.LDP_VC))).thenReturn(verificationResult);
         Mockito.when(objectMapper.writeValueAsString(vc.getCredential())).thenReturn("vc");
-        String expetcedExceptionMsg = "verification failed! --> Verification failed for the provided credentials";
+        String expectedExceptionMsg = "verification failed! --> Verification failed for the provided credentials";
 
         VCVerificationException actualException = assertThrows(VCVerificationException.class, () ->
                 credentialService.verifyCredential(vc)
         );
 
-        assertEquals(expetcedExceptionMsg,actualException.getMessage());
+        assertEquals(expectedExceptionMsg, actualException.getMessage());
     }
 
     @Test
