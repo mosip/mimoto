@@ -264,20 +264,19 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     private String handleList(Object list, String locale) {
-        if (list instanceof List) {
-            List<?> castedList = (List<?>) list;
-            if (castedList.isEmpty()) return "";
-            if (castedList.get(0) instanceof String) {
-                return castedList.stream().map(String.class::cast).collect(Collectors.joining(", "));
-            } else if (castedList.get(0) instanceof Map) {
-                return ((List<Map<?, ?>>) castedList).stream()
-                        .filter(obj -> LocaleUtils.matchesLocale(obj.get("language").toString(), locale))
-                        .map(obj -> obj.get("value").toString())
-                        .findFirst()
-                        .orElse("");
-            }
+        List<?> castedList = (List<?>) list;
+        String response = "";
+        if (castedList.isEmpty()) return "";
+        if (castedList.get(0) instanceof String) {
+            response = castedList.stream().map(String.class::cast).collect(Collectors.joining(", "));
+        } else if (castedList.get(0) instanceof Map) {
+            response = ((List<Map<?, ?>>) castedList).stream()
+                    .filter(obj -> LocaleUtils.matchesLocale(obj.get("language").toString(), locale))
+                    .map(obj -> obj.get("value").toString())
+                    .findFirst()
+                    .orElse("");
         }
-        return "";
+        return response;
     }
 
     private String handleMap(Object map) {
