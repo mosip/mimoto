@@ -30,7 +30,7 @@ function installing_mimoto() {
   echo "Do you have public domain & valid SSL? (Y/n) "
   echo "Y: if you have public domain & valid ssl certificate"
   echo "n: If you don't have a public domain and a valid SSL certificate. Note: It is recommended to use this option only in development environments."
-  read -p -r "" flag
+  read -p "" flag
 
   if [ -z "$flag" ]; then
     echo "'flag' was not provided; EXITING;"
@@ -55,15 +55,15 @@ function installing_mimoto() {
   kubectl -n config-server rollout restart deployment config-server
   kubectl -n config-server rollout status deployment config-server
 
-  echo "Please share relevant google client id ">
-  read -p -r "" clientId
+  echo "Please share relevant google client id "
+  read -p "" clientId
 
   if [ -z "$clientId" ]; then
     echo "'clientId' was not provided; EXITING;"
     exit 1;
   fi
   echo "Please share relevant google secret key"
-  read -p -r "" secretKey
+  read -p "" secretKey
 
   if [ -z "$secretKey" ]; then
     echo "'secretKey' was not provided; EXITING;"
@@ -73,8 +73,8 @@ function installing_mimoto() {
 
   echo Installing mimoto
   helm -n $NS install mimoto mosip/mimoto --version $MIMOTO_CHART_VERSION $ENABLE_INSECURE \
-    --set mimoto.secrets.googleClient.MOSIP_INJIWEB_GOOGLE_CLIENT_ID="$clientId" \
-    --set mimoto.secrets.googleClient.MOSIP_INJIWEB_GOOGLE_CLIENT_SECRET="$secretKey"
+    --set mimoto.secrets.google-client.MOSIP_INJIWEB_GOOGLE_CLIENT_ID="$clientId" \
+    --set mimoto.secrets.google-client.MOSIP_INJIWEB_GOOGLE_CLIENT_SECRET="$secretKey"
 
   kubectl -n $NS  get deploy -o name |  xargs -n1 -t  kubectl -n $NS rollout status
 
