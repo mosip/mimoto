@@ -2,16 +2,13 @@ package io.mosip.mimoto.core.http;
 
 import io.mosip.mimoto.dto.ErrorDTO;
 import jakarta.validation.Validator;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
 import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -28,7 +25,6 @@ class TestDTO {
 
 @RunWith(MockitoJUnitRunner.class)
 @SpringBootTest
-@Slf4j
 public class ResponseWrapperTest {
 
     @Autowired
