@@ -56,7 +56,7 @@ public class TestUtilities {
 
         CredentialDefinitionResponseDto credentialDefinitionResponseDto = new CredentialDefinitionResponseDto();
         credentialDefinitionResponseDto.setType(List.of("VerifiableCredential", credentialSupportedName));
-        credentialDefinitionResponseDto.setCredentialSubject(Map.of("name", credentialDisplayResponseDtoForName,"email", credentialDisplayResponseDtoForEmail));
+        credentialDefinitionResponseDto.setCredentialSubject(Map.of("name", credentialDisplayResponseDtoForName, "email", credentialDisplayResponseDtoForEmail));
         CredentialsSupportedResponse credentialsSupportedResponse = new CredentialsSupportedResponse();
         credentialsSupportedResponse.setFormat("ldp_vc");
         credentialsSupportedResponse.setScope(credentialSupportedName + "_vc_ldp");
@@ -272,6 +272,14 @@ public class TestUtilities {
                 .credential(getVCCredentialPropertiesDTO(type))
                 .format("ldp_vc").build();
     }
+
+    public static DataShareResponseDto getDataShareResponseDTO(String errorCode) {
+        return DataShareResponseDto.builder()
+                .dataShare(new DataShare())
+                .errors(List.of(new ErrorDTO(errorCode == "" ? "Expired!" : errorCode, "Download is failed as credential is expired")))
+                .build();
+    }
+
 
     public static io.mosip.mimoto.dto.idp.TokenResponseDTO getTokenResponseDTO() {
         return io.mosip.mimoto.dto.idp.TokenResponseDTO.builder()
