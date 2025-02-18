@@ -6,6 +6,7 @@ import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.util.HashMap;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.json.JSONObject;
@@ -23,6 +24,13 @@ public class MimotoUtil extends AdminTestUtil {
 
 	private static final Logger logger = Logger.getLogger(MimotoUtil.class);
 	private static String otpEnabled = "true";
+	
+	public static void setLogLevel() {
+		if (MimotoConfigManager.IsDebugEnabled())
+			logger.setLevel(Level.ALL);
+		else
+			logger.setLevel(Level.ERROR);
+	}
 
 	public static String isOTPEnabled() {
 		String value = getValueFromMimotoActuator("/mimoto-default.properties", "mosip.otp.download.enable").isBlank()
