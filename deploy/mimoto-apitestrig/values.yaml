@@ -3,7 +3,7 @@ modules:
     enabled: true
     image:
       repository: mosipid/apitest-mimoto
-      tag: 0.15.1
+      tag: 0.15.2
       pullPolicy: Always
   prereg:
     enabled: false
