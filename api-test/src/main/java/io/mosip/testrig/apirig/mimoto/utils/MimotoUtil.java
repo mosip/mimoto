@@ -4,12 +4,16 @@ import java.io.StringWriter;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PublicKey;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.json.JSONObject;
 import org.testng.SkipException;
+
+import com.github.javafaker.Faker;
 
 import io.mosip.testrig.apirig.dataprovider.BiometricDataProvider;
 import io.mosip.testrig.apirig.dto.TestCaseDTO;
@@ -23,6 +27,10 @@ public class MimotoUtil extends AdminTestUtil {
 
 	private static final Logger logger = Logger.getLogger(MimotoUtil.class);
 	private static String otpEnabled = "true";
+	private static Faker faker = new Faker();
+	private static String fullNameForSunBirdR = generateFullNameForSunBirdR();
+	private static String dobForSunBirdR = generateDobForSunBirdR();
+	private static String policyNumberForSunBirdR = generateRandomNumberString(9);
 
 	public static String isOTPEnabled() {
 		String value = getValueFromMimotoActuator("/mimoto-default.properties", "mosip.otp.download.enable").isBlank()
@@ -150,23 +158,22 @@ public class MimotoUtil extends AdminTestUtil {
 		}
 		
 		if (jsonString.contains("$POLICYNUMBERFORSUNBIRDRC$")) {
-			jsonString = replaceKeywordValue(jsonString, "$POLICYNUMBERFORSUNBIRDRC$",
-					properties.getProperty("policyNumberForSunBirdRC"));
+			jsonString = replaceKeywordValue(jsonString, "$POLICYNUMBERFORSUNBIRDRC$", policyNumberForSunBirdR);
 		}
 		
 		if (jsonString.contains("$FULLNAMEFORSUNBIRDRC$")) {
-			jsonString = replaceKeywordValue(jsonString, "$FULLNAMEFORSUNBIRDRC$", fullNameForSunBirdRC);
+			jsonString = replaceKeywordValue(jsonString, "$FULLNAMEFORSUNBIRDRC$", fullNameForSunBirdR);
 		}
 		
 		if (jsonString.contains("$DOBFORSUNBIRDRC$")) {
-			jsonString = replaceKeywordValue(jsonString, "$DOBFORSUNBIRDRC$", dobForSunBirdRC);
+			jsonString = replaceKeywordValue(jsonString, "$DOBFORSUNBIRDRC$", dobForSunBirdR);
 		}
 		
 		if (jsonString.contains("$CHALLENGEVALUEFORSUNBIRDC$")) {
 
 			HashMap<String, String> mapForChallenge = new HashMap<String, String>();
-			mapForChallenge.put(GlobalConstants.FULLNAME, fullNameForSunBirdRC);
-			mapForChallenge.put(GlobalConstants.DOB, dobForSunBirdRC);
+			mapForChallenge.put(GlobalConstants.FULLNAME, fullNameForSunBirdR);
+			mapForChallenge.put(GlobalConstants.DOB, dobForSunBirdR);
 
 			String challenge = gson.toJson(mapForChallenge);
 
@@ -227,5 +234,16 @@ public class MimotoUtil extends AdminTestUtil {
 			logger.error(e.getMessage());
 		}
 		return vcString;
+	}
+
+	public static String generateFullNameForSunBirdR() {
+		return faker.name().fullName();
+	}
+
+	public static String generateDobForSunBirdR() {
+		Faker faker = new Faker();
+		LocalDate dob = faker.date().birthday().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		return dob.format(formatter);
 	}
 }
