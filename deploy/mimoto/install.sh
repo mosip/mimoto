@@ -7,7 +7,7 @@ if [ $# -ge 1 ] ; then
 fi
 
 NS=injiweb
-MIMOTO_CHART_VERSION=0.15.0-develop
+MIMOTO_CHART_VERSION=0.15.1-develop
 
 echo Create $NS namespace
 kubectl create ns $NS
