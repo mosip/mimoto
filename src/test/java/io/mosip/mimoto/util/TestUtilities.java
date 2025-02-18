@@ -16,6 +16,7 @@ import io.mosip.mimoto.dto.openid.datashare.DataShareResponseDTO;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseWrapperDTO;
 import io.mosip.mimoto.dto.openid.presentation.*;
 import org.springframework.util.ResourceUtils;
+
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -26,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor;
 
 public class TestUtilities {
@@ -54,9 +56,26 @@ public class TestUtilities {
         CredentialDisplayResponseDto credentialDisplayResponseDtoForEmail = new CredentialDisplayResponseDto();
         credentialDisplayResponseDtoForEmail.setDisplay(List.of(credentialIssuerDisplayResponseForEmail));
 
+        CredentialIssuerDisplayResponse credentialIssuerDisplayResponseForUIN = new CredentialIssuerDisplayResponse();
+        credentialIssuerDisplayResponseForUIN.setName("UIN");
+        credentialIssuerDisplayResponseForUIN.setLocale("en");
+        CredentialDisplayResponseDto credentialDisplayResponseDtoForUIN = new CredentialDisplayResponseDto();
+        credentialDisplayResponseDtoForUIN.setDisplay(List.of(credentialIssuerDisplayResponseForUIN));
+
+        CredentialIssuerDisplayResponse credentialIssuerDisplayResponseForDOB = new CredentialIssuerDisplayResponse();
+        credentialIssuerDisplayResponseForDOB.setName("dob");
+        credentialIssuerDisplayResponseForDOB.setLocale("en");
+        CredentialDisplayResponseDto credentialDisplayResponseDtoForDOB = new CredentialDisplayResponseDto();
+        credentialDisplayResponseDtoForDOB.setDisplay(List.of(credentialIssuerDisplayResponseForDOB));
+
+
         CredentialDefinitionResponseDto credentialDefinitionResponseDto = new CredentialDefinitionResponseDto();
         credentialDefinitionResponseDto.setType(List.of("VerifiableCredential", credentialSupportedName));
-        credentialDefinitionResponseDto.setCredentialSubject(Map.of("name", credentialDisplayResponseDtoForName, "email", credentialDisplayResponseDtoForEmail));
+        credentialDefinitionResponseDto.setCredentialSubject(Map.of(
+                "name", createCredentialDisplayResponse("Given Name", "en"),
+                "email", createCredentialDisplayResponse("Given Email", "pt"),
+                "uin", createCredentialDisplayResponse("UIN", "en"),
+                "dob", createCredentialDisplayResponse("dob", "en")));
         CredentialsSupportedResponse credentialsSupportedResponse = new CredentialsSupportedResponse();
         credentialsSupportedResponse.setFormat("ldp_vc");
         credentialsSupportedResponse.setScope(credentialSupportedName + "_vc_ldp");
@@ -68,6 +87,17 @@ public class TestUtilities {
         credentialsSupportedResponse.setProofTypesSupported(proofTypesSupportedHashMap);
         credentialsSupportedResponse.setCredentialDefinition(credentialDefinitionResponseDto);
         return credentialsSupportedResponse;
+    }
+
+    private static CredentialDisplayResponseDto createCredentialDisplayResponse(String name, String locale) {
+        CredentialIssuerDisplayResponse issuerDisplayResponse = new CredentialIssuerDisplayResponse();
+        issuerDisplayResponse.setName(name);
+        issuerDisplayResponse.setLocale(locale);
+
+        CredentialDisplayResponseDto displayResponseDto = new CredentialDisplayResponseDto();
+        displayResponseDto.setDisplay(List.of(issuerDisplayResponse));
+
+        return displayResponseDto;
     }
 
     public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName, String format) {
@@ -230,9 +260,10 @@ public class TestUtilities {
         typeList.add("VCTypeCredential");
 
         Map<String, Object> credentialSubject = new HashMap<>();
-
-        credentialSubject.put("name", Map.of("name", "full name", "locale", "en"));
-        credentialSubject.put("email", Map.of("locale", "en"));
+        credentialSubject.put("name", List.of(Map.of("value", "full name", "language", "en")));
+        credentialSubject.put("email", "@gmail.com");
+        credentialSubject.put("uin", "2144641120");
+        credentialSubject.put("dob", "");
 
         VCCredentialResponseProof vcCredentialResponseProof = VCCredentialResponseProof.builder()
                 .type(type)
