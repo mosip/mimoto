@@ -33,7 +33,7 @@ function installing_mimoto() {
   read -p "" flag
 
   if [ -z "$flag" ]; then
-    echo "'flag' was provided; EXITING;"
+    echo "'flag' was not provided; EXITING;"
     exit 1;
   fi
   ENABLE_INSECURE=''
@@ -55,8 +55,26 @@ function installing_mimoto() {
   kubectl -n config-server rollout restart deployment config-server
   kubectl -n config-server rollout status deployment config-server
 
+  echo "Please share relevant google client id "
+  read -p "" clientId
+
+  if [ -z "$clientId" ]; then
+    echo "'clientId' was not provided; EXITING;"
+    exit 1;
+  fi
+  echo "Please share relevant google secret key"
+  read -p "" secretKey
+
+  if [ -z "$secretKey" ]; then
+    echo "'secretKey' was not provided; EXITING;"
+    exit 1;
+  fi
+
+
   echo Installing mimoto
-  helm -n $NS install mimoto mosip/mimoto --version $MIMOTO_CHART_VERSION $ENABLE_INSECURE
+  helm -n $NS install mimoto mosip/mimoto --version $MIMOTO_CHART_VERSION $ENABLE_INSECURE \
+    --set mimoto.secrets.google-client.MOSIP_INJIWEB_GOOGLE_CLIENT_ID="$clientId" \
+    --set mimoto.secrets.google-client.MOSIP_INJIWEB_GOOGLE_CLIENT_SECRET="$secretKey"
 
   kubectl -n $NS  get deploy -o name |  xargs -n1 -t  kubectl -n $NS rollout status
 

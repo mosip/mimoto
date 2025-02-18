@@ -100,7 +100,7 @@ public class CredentialServiceImpl implements CredentialService {
     CredentialsVerifier credentialsVerifier;
 
     @PostConstruct
-    public void init(){
+    public void init() {
         pixelPass = new PixelPass();
         credentialsVerifier = new CredentialsVerifier();
     }
@@ -163,8 +163,8 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     public ByteArrayInputStream generatePdfForVerifiableCredentials(String credentialType, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
-        LinkedHashMap<String, Object> displayProperties = loadDisplayPropertiesFromWellknown(vcCredentialResponse, credentialsSupportedResponse, locale);
-        Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse,  vcCredentialResponse, issuerDTO, dataShareUrl, credentialValidity, locale);
+        LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties = loadDisplayPropertiesFromWellknown(vcCredentialResponse, credentialsSupportedResponse, locale);
+        Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse, vcCredentialResponse, issuerDTO, dataShareUrl, credentialValidity, locale);
         return renderVCInCredentialTemplate(data, issuerDTO.getIssuer_id(), credentialType);
     }
 
@@ -172,7 +172,7 @@ public class CredentialServiceImpl implements CredentialService {
         log.info("Initiated the VC Verification : Started");
         String credentialString = objectMapper.writeValueAsString(vcCredentialResponse.getCredential());
         VerificationResult verificationResult = credentialsVerifier.verify(credentialString, CredentialFormat.LDP_VC);
-        if(!verificationResult.getVerificationStatus()){
+        if (!verificationResult.getVerificationStatus()) {
             throw new VCVerificationException(verificationResult.getVerificationErrorCode().toLowerCase(), verificationResult.getVerificationMessage());
         }
         log.info("Completed the VC Verification : Completed -> result : " + verificationResult);
@@ -180,36 +180,36 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @NotNull
-    private static LinkedHashMap<String, Object> loadDisplayPropertiesFromWellknown(VCCredentialResponse vcCredentialResponse, CredentialsSupportedResponse credentialsSupportedResponse, String locale) {
-        LinkedHashMap<String,Object> displayProperties = new LinkedHashMap<>();
+    private static LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> loadDisplayPropertiesFromWellknown(VCCredentialResponse vcCredentialResponse, CredentialsSupportedResponse credentialsSupportedResponse, String locale) {
+        LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties = new LinkedHashMap<>();
         Map<String, Object> credentialProperties = vcCredentialResponse.getCredential().getCredentialSubject();
-
-        LinkedHashMap<String, String> vcPropertiesFromWellKnown = new LinkedHashMap<>();
+        LinkedHashMap<String, CredentialIssuerDisplayResponse> vcPropertiesFromWellKnown = new LinkedHashMap<>();
         Map<String, CredentialDisplayResponseDto> credentialSubject = credentialsSupportedResponse.getCredentialDefinition().getCredentialSubject();
         credentialSubject.keySet().forEach(VCProperty -> {
             Optional<CredentialIssuerDisplayResponse> filteredResponse = credentialSubject.get(VCProperty)
                     .getDisplay().stream()
-                    .filter(obj ->
-                        LocaleUtils.matchesLocale(obj.getLocale(), locale)
-                    )
+                    .filter(obj -> "undefined".equals(locale) || LocaleUtils.matchesLocale(obj.getLocale(), locale))// if locale is not undefined use it to fetch the wellknown properties otherwise return the properties of the first display object which has language field
                     .findFirst();
-            String filteredValue = filteredResponse.isPresent() ? filteredResponse.get().getName() : "" ;
-            vcPropertiesFromWellKnown.put(VCProperty, filteredValue);
+
+            if (filteredResponse.isPresent()) {
+                CredentialIssuerDisplayResponse filteredValue = filteredResponse.get();
+                vcPropertiesFromWellKnown.put(VCProperty, filteredValue);
+            }
         });
 
         List<String> orderProperty = credentialsSupportedResponse.getOrder();
 
         List<String> fieldProperties = orderProperty == null ? new ArrayList<>(vcPropertiesFromWellKnown.keySet()) : orderProperty;
         fieldProperties.forEach(vcProperty -> {
-            if(credentialProperties.get(vcProperty) != null) {
-                displayProperties.put(vcProperty,Map.of(vcPropertiesFromWellKnown.get(vcProperty), credentialProperties.get(vcProperty)));
+            if (vcPropertiesFromWellKnown.get(vcProperty) != null && credentialProperties.get(vcProperty) != null) {
+                displayProperties.put(vcProperty, Map.of(vcPropertiesFromWellKnown.get(vcProperty), credentialProperties.get(vcProperty)));
             }
         });
         return displayProperties;
     }
 
 
-    private Map<String, Object> getPdfResourceFromVcProperties(LinkedHashMap<String, Object> displayProperties, CredentialsSupportedResponse credentialsSupportedResponse, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, String dataShareUrl, String credentialValidity, String locale) throws IOException, WriterException {
+    private Map<String, Object> getPdfResourceFromVcProperties(LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties, CredentialsSupportedResponse credentialsSupportedResponse, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, String dataShareUrl, String credentialValidity, String locale) throws IOException, WriterException {
         Map<String, Object> data = new HashMap<>();
         LinkedHashMap<String, Object> rowProperties = new LinkedHashMap<>();
         String backgroundColor = credentialsSupportedResponse.getDisplay().get(0).getBackgroundColor();
@@ -221,28 +221,31 @@ public class CredentialServiceImpl implements CredentialService {
         displayProperties.entrySet().stream()
                 .forEachOrdered(entry -> {
                     String originalKey = entry.getKey();
-                    Object entryValue = entry.getValue();
+                    Map<CredentialIssuerDisplayResponse, Object> properties = entry.getValue();
 
                     // Process the inner map
-                    ((Map<?, ?>) entryValue).entrySet().stream()
+                    ((Map<CredentialIssuerDisplayResponse, ?>) properties).entrySet().stream()
                             .forEachOrdered(innerEntry -> {
-                                String propertyKey = innerEntry.getKey().toString();
-                                Object currentValue = innerEntry.getValue();
+                                // loadDisplayPropertiesFromWellknown method returns both name and locale field values of the matching display obj in the response
+                                CredentialIssuerDisplayResponse matchingWellknownDisplayObj = innerEntry.getKey();
+                                String nameFromDisplayObj = matchingWellknownDisplayObj.getName();
+                                String localeFromDisplayObj = matchingWellknownDisplayObj.getLocale();
+                                Object propertyValFromDownloadedVcResponse = innerEntry.getValue();
                                 String value = "";
 
-                                if (currentValue instanceof Map) {
+                                if (propertyValFromDownloadedVcResponse instanceof Map) {
                                     // If the value is a Map, handle it as a Map
-                                    value = handleMap(currentValue);
-                                } else if (currentValue instanceof List) {
+                                    value = handleMap(propertyValFromDownloadedVcResponse);
+                                } else if (propertyValFromDownloadedVcResponse instanceof List) {
                                     // If the value is a List, handle it as a List
-                                    value = handleList(currentValue);
+                                    value = handleList(propertyValFromDownloadedVcResponse, localeFromDisplayObj);
                                 } else {
                                     // Otherwise, just convert to string
-                                    value = currentValue.toString();
+                                    value = propertyValFromDownloadedVcResponse.toString();
                                 }
 
                                 // Put the result into the rowProperties map
-                                rowProperties.put(originalKey, Map.of(propertyKey, value));
+                                rowProperties.put(originalKey, Map.of(nameFromDisplayObj, value));
                             });
 
                 });
@@ -260,21 +263,20 @@ public class CredentialServiceImpl implements CredentialService {
         return data;
     }
 
-    private String handleList(Object list) {
-        if (list instanceof List) {
-            List<?> castedList = (List<?>) list;
-            if (castedList.isEmpty()) return "";
-            if (castedList.get(0) instanceof String) {
-                return castedList.stream().map(String.class::cast).collect(Collectors.joining(", "));
-            } else if (castedList.get(0) instanceof Map) {
-                return ((List<Map<?, ?>>) castedList).stream()
-                        .filter(obj -> obj.containsKey("language"))
-                        .map(obj -> obj.get("value").toString())
-                        .findFirst()
-                        .orElse("");
-            }
+    private String handleList(Object list, String locale) {
+        List<?> castedList = (List<?>) list;
+        String response = "";
+        if (castedList.isEmpty()) return "";
+        if (castedList.get(0) instanceof String) {
+            response = castedList.stream().map(String.class::cast).collect(Collectors.joining(", "));
+        } else if (castedList.get(0) instanceof Map) {
+            response = ((List<Map<?, ?>>) castedList).stream()
+                    .filter(obj -> LocaleUtils.matchesLocale(obj.get("language").toString(), locale))
+                    .map(obj -> obj.get("value").toString())
+                    .findFirst()
+                    .orElse("");
         }
-        return "";
+        return response;
     }
 
     private String handleMap(Object map) {
@@ -288,7 +290,7 @@ public class CredentialServiceImpl implements CredentialService {
 
     @NotNull
     private ByteArrayInputStream renderVCInCredentialTemplate(Map<String, Object> data, String issuerId, String credentialType) throws IOException {
-        String  credentialTemplate = utilities.getCredentialSupportedTemplateString(issuerId, credentialType);
+        String credentialTemplate = utilities.getCredentialSupportedTemplateString(issuerId, credentialType);
         Properties props = new Properties();
         props.setProperty("resource.loader", "class");
         props.setProperty("class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");

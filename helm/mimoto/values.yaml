@@ -251,7 +251,8 @@ extraEnvVarsCM:
 
 ## Secret with extra environment variables
 ##
-extraEnvVarsSecret: []
+extraEnvVarsSecret:
+  - google-client
 
 ## Extra volumes to add to the deployment
 ##
@@ -468,3 +469,9 @@ volumes:
     mimotooidc:
       key: oidckeystore.p12
       path: /home/mosip/certs
+
+mimoto:
+  secrets:
+    google-client:
+      MOSIP_INJIWEB_GOOGLE_CLIENT_ID: "your-app-google-client-id"
+      MOSIP_INJIWEB_GOOGLE_CLIENT_SECRET: "your-app-google-client-secret"

@@ -160,8 +160,10 @@ public class IssuersServiceTest {
         IssuerDTO enabledIssuer = getIssuerConfigDTO("Issuer1");
         IssuerDTO disabledIssuer = getIssuerConfigDTO("Issuer2");
         disabledIssuer.setEnabled("false");
+        issuersConfigJsonValue = new Gson().toJson(issuers);
         issuers.setIssuers(List.of(enabledIssuer, disabledIssuer));
-        Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(new Gson().toJson(issuers));
+        Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(issuersConfigJsonValue);
+        Mockito.when(objectMapper.readValue(issuersConfigJsonValue, IssuersDTO.class)).thenReturn(issuers);
         IssuersDTO expectedIssuersDTO = new IssuersDTO();
         expectedIssuersDTO.setIssuers(List.of(enabledIssuer));
 
