@@ -88,15 +88,30 @@ public class ResponseWrapperTest {
     }
 
     @Test
-    public void testEqualsForTwoWrapperObjectsWithSameTestDTOs() {
+    public void testEqualsForTwoWrapperObjectsWithSameRequestDTOs() {
         wrapper2.setResponse(responseDTO1);
 
         assertThat(wrapper1.equals(wrapper2)).isTrue();
     }
 
     @Test
-    public void testEqualsForTwoWrapperObjectsWithDifferentTestDTOs() {
+    public void testEqualsForTwoWrapperObjectsWithDifferentRequestDTOsOfSameContent() {
         assertThat(wrapper1.equals(wrapper2)).isFalse();
+    }
+
+    @Test
+    public void testEqualsWithNull() {
+        assertThat(wrapper1.equals(null)).isFalse();
+    }
+
+    @Test
+    public void testEqualsForWrapperClassAndStringClass() {
+        assertThat(wrapper1.equals("Hello World!!")).isFalse();
+    }
+
+    @Test
+    public void testEqualsWithSameInstance() {
+        assertThat(wrapper1.equals(wrapper1)).isTrue();
     }
 
     @Test
