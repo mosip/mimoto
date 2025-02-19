@@ -33,5 +33,20 @@ public class MimotoConfigManager extends ConfigManager{
 	public static String getSunbirdBaseURL() {
 		return MimotoUtil.getValueFromMimotoActuator("overrides", "mosip.sunbird.url");
 	}
+	
+	public static String getEsignetBaseUrl() {
+		String esignetBaseUrl = null;
+		if (getproperty("runPlugin").equals("mosipid")) {
+			esignetBaseUrl = "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", "mosip.esignet.mosipid.host");
+		} else if (getproperty("runPlugin").equals("mockid")) {
+			esignetBaseUrl = "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", "mosip.esignet.mock.host");
+		}
+
+		return esignetBaseUrl;
+	}
+	
+	public static String getEsignetSunBirdBaseURL() {
+		return "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", getproperty("mosip-esignet-insurance-host"));
+	}
 
 }
