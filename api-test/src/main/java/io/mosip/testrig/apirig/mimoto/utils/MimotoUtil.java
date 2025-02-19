@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.json.JSONObject;
@@ -31,6 +32,13 @@ public class MimotoUtil extends AdminTestUtil {
 	private static String fullNameForSunBirdR = generateFullNameForSunBirdR();
 	private static String dobForSunBirdR = generateDobForSunBirdR();
 	private static String policyNumberForSunBirdR = generateRandomNumberString(9);
+	
+	public static void setLogLevel() {
+		if (MimotoConfigManager.IsDebugEnabled())
+			logger.setLevel(Level.ALL);
+		else
+			logger.setLevel(Level.ERROR);
+	}
 
 	public static String isOTPEnabled() {
 		String value = getValueFromMimotoActuator("/mimoto-default.properties", "mosip.otp.download.enable").isBlank()
