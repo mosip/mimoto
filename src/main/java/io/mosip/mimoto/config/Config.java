@@ -13,7 +13,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -25,6 +27,7 @@ import java.util.Map;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@EnableRedisHttpSession
 @Order(1)
 public class Config {
 
@@ -52,6 +55,7 @@ public class Config {
 
     @Autowired
     private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         if (!isCSRFEnable) {
@@ -82,7 +86,7 @@ public class Config {
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl(injiWebUrl+"/login?logout")  // Custom logout success URL
+                        .logoutSuccessUrl(injiWebUrl + "/login?logout")  // Custom logout success URL
                         .clearAuthentication(true)          // Clear the authentication after logout
                         .invalidateHttpSession(true)        // Invalidate the session
                         .deleteCookies("JSESSIONID")        // Optionally, delete cookies
@@ -90,7 +94,8 @@ public class Config {
                         // Define secured endpoints
                         .requestMatchers("/secure/**").authenticated() // Secure endpoints that require login
                         // Default authorization rule for all other requests
-                        .anyRequest().permitAll());;
+                        .anyRequest().permitAll()
+                ).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
     }
 
     // Define CORS configuration

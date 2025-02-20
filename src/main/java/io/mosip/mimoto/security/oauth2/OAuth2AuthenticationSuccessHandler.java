@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 
@@ -23,6 +22,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         OAuth2AuthenticationToken oauth2Token = (OAuth2AuthenticationToken) authentication;
         OAuth2User oAuth2User = oauth2Token.getPrincipal();
+
+        // Storing clientRegistrationId in the Redis session to verify it against the one in user metadata during profile retrieval
+        String clientRegistrationId = oauth2Token.getAuthorizedClientRegistrationId();
+        request.getSession().setAttribute("clientRegistrationId", clientRegistrationId);
 
         // Extracting OAuth2 user information
         String providerSubjectId = oAuth2User.getAttribute("sub");
@@ -37,8 +40,4 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         response.sendRedirect("http://localhost:3004/login?status=success");
 
     }
-
-
-
-
 }
