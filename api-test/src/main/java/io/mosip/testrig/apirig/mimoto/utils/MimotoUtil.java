@@ -119,8 +119,10 @@ public class MimotoUtil extends AdminTestUtil {
 							emailId = request.getJSONObject(GlobalConstants.REQUEST)
 									.getJSONArray(GlobalConstants.CHALLENGELIST).getJSONObject(0)
 									.getString(GlobalConstants.CHALLENGE);
-							if (emailId.endsWith(GlobalConstants.OTP_AS_PHONE))
+							if (emailId.endsWith(GlobalConstants.OTP_AS_PHONE)) {
 								emailId = emailId.replace(GlobalConstants.OTP_AS_PHONE, "");
+								emailId = removeLeadingPlusSigns(emailId);
+							}
 							logger.info(emailId);
 							otp = OTPListener.getOtp(emailId);
 							request.getJSONObject(GlobalConstants.REQUEST).getJSONArray(GlobalConstants.CHALLENGELIST)
