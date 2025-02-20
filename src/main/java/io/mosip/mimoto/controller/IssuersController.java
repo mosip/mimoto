@@ -95,11 +95,7 @@ public class IssuersController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseWrapper);
         } catch (Exception exception) {
             log.error("Exception occurred while fetching issuers ", exception);
-            String[] errorObj = Utilities.handleExceptionWithErrorCode(exception, INVALID_ISSUER_ID_EXCEPTION.getCode());
-            List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
-            responseWrapper.setResponse(null);
-            responseWrapper.setErrors(errors);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
+            return Utilities.handleErrorResponse(exception, INVALID_ISSUER_ID_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -113,11 +109,7 @@ public class IssuersController {
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception exception) {
             log.error("Exception occurred while fetching issuers configurations - " + exception);
-            String[] errorObj = Utilities.handleExceptionWithErrorCode(exception, INVALID_ISSUER_ID_CONFIGURATION.getCode());
-            List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
-            responseWrapper.setResponse(null);
-            responseWrapper.setErrors(errors);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
+            return Utilities.handleErrorResponse(exception, INVALID_ISSUER_ID_CONFIGURATION.getCode(), HttpStatus.BAD_REQUEST);
         }
     }
 }

@@ -73,11 +73,7 @@ public class IdpController {
             return ResponseEntity.status(HttpStatus.OK).body(internalResponse);
         } catch (Exception e) {
             log.error("Wallet binding otp error occurred." + e);
-            String[] errorObj = Utilities.handleExceptionWithErrorCode(e, PlatformErrorMessages.MIMOTO_OTP_BINDING_EXCEPTION.getCode());
-            List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
-            responseWrapper.setResponse(null);
-            responseWrapper.setErrors(errors);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
+            return Utilities.handleErrorResponse(e, PlatformErrorMessages.MIMOTO_OTP_BINDING_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST);
         }
 
     }
@@ -110,31 +106,25 @@ public class IdpController {
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception e) {
             log.error("Wallet binding error occured for tranaction id " + requestDTO.getRequest().getIndividualId(), e);
-            String[] errorObj = Utilities.handleExceptionWithErrorCode(e, PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode());
-            List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
-            responseWrapper.setResponse(null);
-            responseWrapper.setErrors(errors);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
+            return Utilities.handleErrorResponse(e, PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST);
         }
     }
 
     @Operation(summary = SwaggerLiteralConstants.IDP_GET_TOKEN_SUMMARY, description = SwaggerLiteralConstants.IDP_GET_TOKEN_DESCRIPTION)
     @ApiResponses({
-            @ApiResponse(responseCode = "200", content = { @Content(schema = @Schema(implementation = TokenResponseDTO.class), mediaType = "application/json") }),
-            @ApiResponse(responseCode = "400", content = { @Content(schema = @Schema(implementation = ResponseWrapper.class), mediaType = "application/json") }) })
+            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = TokenResponseDTO.class), mediaType = "application/json")}),
+            @ApiResponse(responseCode = "400", content = {@Content(schema = @Schema(implementation = ResponseWrapper.class), mediaType = "application/json")})})
     @PostMapping(value = {"/get-token/{issuer}"}, consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE}, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> getToken(@RequestParam Map<String, String> params, @PathVariable(required = true, name= "issuer") String issuer) {
+    public ResponseEntity<ResponseWrapper<TokenResponseDTO>> getToken(@RequestParam Map<String, String> params, @PathVariable(required = true, name = "issuer") String issuer) {
         log.info("Reached the getToken Controller for Issuer " + issuer);
         ResponseWrapper<TokenResponseDTO> responseWrapper = new ResponseWrapper<>();
         try {
-            TokenResponseDTO response = credentialService.getTokenResponse(params, issuer);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            TokenResponseDTO tokenResponse = credentialService.getTokenResponse(params, issuer);
+            responseWrapper.setResponse(tokenResponse);
+            return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception ex) {
             log.error("Exception Occurred while Invoking the Token Endpoint : ", ex);
-            String[] errorObj = Utilities.handleExceptionWithErrorCode(ex, PlatformErrorMessages.MIMOTO_FETCHING_TOKEN_EXCEPTION.getCode());
-            List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
-            responseWrapper.setErrors(errors);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
+            return Utilities.handleErrorResponse(ex, PlatformErrorMessages.MIMOTO_FETCHING_TOKEN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST);
         }
     }
 }

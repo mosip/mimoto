@@ -3,11 +3,9 @@ package io.mosip.mimoto.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
-import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.exception.ExceptionUtils;
-import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.impl.CredentialShareServiceImpl;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
@@ -18,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.ImageIO;
@@ -204,16 +204,22 @@ public class Utilities {
         String specificCredentialPDFTemplate = getJson("", templateFileName);
         return !StringUtils.isEmpty(specificCredentialPDFTemplate)? specificCredentialPDFTemplate : getJson("", credentialTemplatePath);
     }
-    public static String[] handleExceptionWithErrorCode(Exception exception, String flowErrorCode) {
+
+    public static <T> ResponseEntity<ResponseWrapper<T>> handleErrorResponse(
+            Exception exception, String flowErrorCode, HttpStatus status) {
         String errorMessage = exception.getMessage();
         String errorCode = flowErrorCode;
 
-        if(errorMessage.contains(DELIMITER)){
+        if (errorMessage.contains(DELIMITER)) {
             String[] errorSections = errorMessage.split(DELIMITER);
             errorCode = errorSections[0];
             errorMessage = errorSections[1];
         }
-        return new String[]{errorCode, errorMessage};
+
+        ResponseWrapper<T> responseWrapper = new ResponseWrapper<>();
+        responseWrapper.setResponse(null);
+        responseWrapper.setErrors(Utilities.getErrors(errorCode, errorMessage));
+        return ResponseEntity.status(status).body(responseWrapper);
     }
 
     public static List<ErrorDTO> getErrors(String errorCode, String errorMessage) {
