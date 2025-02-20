@@ -136,6 +136,9 @@ public class GetWithParam extends AdminTestUtil implements ITest {
 
 			inputJson = MimotoUtil.inputstringKeyWordHandeler(inputJson, testCaseName);
 			
+			String outputJson = getJsonFromTemplate(testCaseDTO.getOutput(), testCaseDTO.getOutputTemplate());
+			outputJson = MimotoUtil.inputstringKeyWordHandeler(outputJson, testCaseName);
+			
 			if (testCaseName.contains("ESignet_")) {
 				if (MimotoConfigManager.isInServiceNotDeployedList(GlobalConstants.ESIGNET)) {
 					throw new SkipException("esignet is not deployed hence skipping the testcase");
@@ -173,8 +176,7 @@ public class GetWithParam extends AdminTestUtil implements ITest {
 				ouputValid = new HashMap<>();
 				ouputValid.put(GlobalConstants.EXPECTED_VS_ACTUAL, List.of(customResponse));
 			} else {
-				ouputValid = OutputValidationUtil.doJsonOutputValidation(response.asString(),
-						getJsonFromTemplate(testCaseDTO.getOutput(), testCaseDTO.getOutputTemplate()), testCaseDTO,
+				ouputValid = OutputValidationUtil.doJsonOutputValidation(response.asString(), outputJson, testCaseDTO,
 						response.getStatusCode());
 			}
 
