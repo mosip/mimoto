@@ -81,7 +81,7 @@ public class IssuerConfigUtilTest {
 
     @Test
     public void shouldThrowExceptionIfAuthorizationEndpointIsMissingInAuthServerWellknownResponse() throws Exception {
-        String expectedExceptionMessage = exceptionMsgPrefix + "java.lang.Exception: java.lang.Exception: Validation failed:\n" + "authorizationEndpoint: must not be blank";
+        String expectedExceptionMessage = exceptionMsgPrefix + "java.lang.Exception: Validation failed:\n" + "authorizationEndpoint: must not be blank";
         AuthorizationServerWellKnownResponse expectedAuthorizationServerWellKnownResponse = getAuthServerWellknownResponseDto(List.of("authorization_endpoint"));
         String expectedIssuersConfigJson = getExpectedIssuersConfigJson();
         Mockito.when(restApiClient.getApi(authorizationServerWellknownUrl, String.class)).thenReturn(expectedIssuersConfigJson);

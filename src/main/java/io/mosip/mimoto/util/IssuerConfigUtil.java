@@ -38,19 +38,14 @@ public class IssuerConfigUtil {
 
     @Cacheable(value = "issuerWellknown", key = "#p0")
     public CredentialIssuerWellKnownResponse getIssuerWellknown(String credentialIssuerHost) throws ApiNotAccessibleException, IOException, InvalidWellknownResponseException {
-        try {
-            String wellknownEndpoint = credentialIssuerHost + "/.well-known/openid-credential-issuer";
-            String wellknownResponse = restApiClient.getApi(wellknownEndpoint, String.class);
-            if (wellknownResponse == null) {
-                throw new ApiNotAccessibleException();
-            }
-            CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = objectMapper.readValue(wellknownResponse, CredentialIssuerWellKnownResponse.class);
-            credentialIssuerWellknownResponseValidator.validate(credentialIssuerWellKnownResponse, validator);
-            return credentialIssuerWellKnownResponse;
-        } catch (JsonProcessingException | ApiNotAccessibleException |
-                 InvalidWellknownResponseException e) {
-            throw e;
+        String wellknownEndpoint = credentialIssuerHost + "/.well-known/openid-credential-issuer";
+        String wellknownResponse = restApiClient.getApi(wellknownEndpoint, String.class);
+        if (wellknownResponse == null) {
+            throw new ApiNotAccessibleException();
         }
+        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = objectMapper.readValue(wellknownResponse, CredentialIssuerWellKnownResponse.class);
+        credentialIssuerWellknownResponseValidator.validate(credentialIssuerWellKnownResponse, validator);
+        return credentialIssuerWellKnownResponse;
     }
 
     @Cacheable(value = "authServerWellknown", key = "#p0")
@@ -67,25 +62,22 @@ public class IssuerConfigUtil {
 
             return authorizationServerWellKnownResponse;
         } catch (Exception e) {
+            log.error("Exception occurred while fetching Authorization Server wellknown ", e);
             throw new AuthorizationServerWellknownResponseException(e.toString());
         }
     }
 
     public void validate(AuthorizationServerWellKnownResponse response) throws Exception {
-        try {
-            ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-            Validator validator = factory.getValidator();
-            Set<ConstraintViolation<AuthorizationServerWellKnownResponse>> violations = validator.validate(response);
-            if (!violations.isEmpty()) {
-                StringBuilder sb = new StringBuilder("Validation failed:");
-                for (ConstraintViolation<AuthorizationServerWellKnownResponse> violation : violations) {
-                    sb.append("\n").append(violation.getPropertyPath()).append(": ").append(violation.getMessage());
-                }
-
-                throw new Exception(sb.toString());
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        Validator validator = factory.getValidator();
+        Set<ConstraintViolation<AuthorizationServerWellKnownResponse>> violations = validator.validate(response);
+        if (!violations.isEmpty()) {
+            StringBuilder sb = new StringBuilder("Validation failed:");
+            for (ConstraintViolation<AuthorizationServerWellKnownResponse> violation : violations) {
+                sb.append("\n").append(violation.getPropertyPath()).append(": ").append(violation.getMessage());
             }
-        } catch (Exception e) {
-            throw new Exception(e.toString());
+
+            throw new Exception(sb.toString());
         }
     }
 }
