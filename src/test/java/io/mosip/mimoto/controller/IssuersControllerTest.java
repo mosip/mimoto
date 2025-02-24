@@ -7,8 +7,6 @@ import io.mosip.mimoto.dto.IssuersDTO;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfigurationResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
-import io.mosip.mimoto.service.AuthorizationServerService;
-import io.mosip.mimoto.service.IssuerWellknownService;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.Utilities;
 import org.hamcrest.Matchers;
@@ -55,13 +53,7 @@ public class IssuersControllerTest {
     private Utilities utilities;
 
     @MockBean
-    private IssuerWellknownService issuerWellknownService;
-
-    @MockBean
     ObjectMapper objectMapper;
-
-    @MockBean
-    AuthorizationServerService authorizationServerService;
 
     @Test
     public void getIssuersTestForSearchValueNull() throws Exception {
