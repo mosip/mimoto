@@ -108,7 +108,7 @@ public class IssuersController {
             responseWrapper.setResponse(issuerConfigurationResponse);
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception exception) {
-            log.error("Exception occurred while fetching issuers configurations - " + exception);
+            log.error("Exception occurred while fetching issuers configurations - ", exception);
             String[] errorObj = Utilities.handleExceptionWithErrorCode(exception, INVALID_ISSUER_ID_CONFIGURATION.getCode());
             List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
             responseWrapper.setResponse(null);

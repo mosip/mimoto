@@ -5,6 +5,10 @@ import java.util.Locale;
 public class LocaleUtils {
     // Method to convert the input locale strings into 3-letter codes and compare
     public static boolean matchesLocale(String localeString1, String localeString2) {
+        if(localeString1 == null || localeString2 == null){
+            return false;
+        }
+
         String locale1Iso3Language = Locale.forLanguageTag(localeString1).getISO3Language(); // 3-letter code for locale1
         String locale2Iso3Language = Locale.forLanguageTag(localeString2).getISO3Language(); // 3-letter code for locale2
 
