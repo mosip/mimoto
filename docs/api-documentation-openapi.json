@@ -1890,6 +1890,7 @@
                 "tags": [
                     "Trusted Issuers"
                 ],
+                "deprecated": true,
                 "description": "This API fetches and allows searching for Credential Types offered by the issuer, all sourced from the issuer's well-known configuration. Since version 0.16.0, this endpoint is deprecated and will be removed in a future release. Use issuers new endpoint issuers/{issuer-id}/configuration instead.",
                 "responses": {
                     "200": {
