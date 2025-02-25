@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 public class CacheConfig {
 
     @Value("${cache.credential.issuer.config.expiry-time-in-min:60}")
-    private Long issuerConfigExpiryTimeInMin;
+    private Long credentialIssuerConfigExpiryTimeInMin;
 
     @Value("${cache.credential.issuer.wellknown.response.expiry-time-in-min:60}")
     private Long issuerWellknownExpiryTimeInMin;
@@ -42,7 +42,7 @@ public class CacheConfig {
         cacheManager.registerCustomCache("issuerWellknown", buildCache(issuerWellknownExpiryTimeInMin).build());
         cacheManager.registerCustomCache("issuersConfig", buildCache(issuersConfigExpiryTimeInMin).build());
         cacheManager.registerCustomCache("authServerWellknown", buildCache(authServerWellknownExpiryTimeInMin).build());
-        cacheManager.registerCustomCache("credentialIssuerConfig", buildCache(issuerConfigExpiryTimeInMin).build());
+        cacheManager.registerCustomCache("credentialIssuerConfig", buildCache(credentialIssuerConfigExpiryTimeInMin).build());
         cacheManager.setCaffeine(buildCache(null));
         return cacheManager;
     }
