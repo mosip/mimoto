@@ -1,5 +1,6 @@
 package io.mosip.mimoto.config;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.CacheManager;
@@ -13,18 +14,36 @@ import org.springframework.beans.factory.annotation.Value;
 @EnableCaching
 public class CacheConfig {
 
-    @Value("${cache.expiry.time.in.min}")
-    private long cacheExpiryTimeInMin;
+    @Value("${cache.credential.issuer.config.expiry-time-in-min:60}")
+    private Long credentialIssuerConfigExpiryTimeInMin;
 
-    @Bean
-    public Caffeine caffeineConfig() {
-        return Caffeine.newBuilder().expireAfterWrite(cacheExpiryTimeInMin, TimeUnit.MINUTES);
+    @Value("${cache.credential.issuer.wellknown.response.expiry-time-in-min:60}")
+    private Long issuerWellknownExpiryTimeInMin;
+
+    @Value("${cache.issuers.config.expiry-time-in-min:60}")
+    private Long issuersConfigExpiryTimeInMin;
+
+    @Value("${cache.credential.issuer.authserver.wellknown.response.expiry-time-in-min:60}")
+    private Long authServerWellknownExpiryTimeInMin;
+
+    @Value("${cache.default.expiry-time-in-min:60}")
+    private long defaultCacheExpiryTimeInMin;
+
+    private Caffeine<Object, Object> buildCache(Long expiryTime) {
+        return Caffeine.newBuilder().expireAfterWrite(
+                Objects.requireNonNullElse(expiryTime, defaultCacheExpiryTimeInMin), TimeUnit.MINUTES
+        );
     }
 
+
     @Bean
-    public CacheManager cacheManager(Caffeine caffeine) {
+    public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        cacheManager.setCaffeine(caffeine);
+        cacheManager.registerCustomCache("issuerWellknown", buildCache(issuerWellknownExpiryTimeInMin).build());
+        cacheManager.registerCustomCache("issuersConfig", buildCache(issuersConfigExpiryTimeInMin).build());
+        cacheManager.registerCustomCache("authServerWellknown", buildCache(authServerWellknownExpiryTimeInMin).build());
+        cacheManager.registerCustomCache("credentialIssuerConfig", buildCache(credentialIssuerConfigExpiryTimeInMin).build());
+        cacheManager.setCaffeine(buildCache(null));
         return cacheManager;
     }
 }

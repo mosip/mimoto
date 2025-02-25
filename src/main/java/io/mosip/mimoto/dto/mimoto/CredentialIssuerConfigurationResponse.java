@@ -20,20 +20,20 @@ public class CredentialIssuerConfigurationResponse {
     @NotBlank
     @URL
     @SerializedName("credential_issuer")
-    @JsonProperty("credential_issuer")
+    @JsonProperty(value = "credential_issuer", access = JsonProperty.Access.WRITE_ONLY)
     @Schema(description = "Unique Identifier of the Credential Issuer")
     private String credentialIssuer;
 
     @NotEmpty
     @SerializedName("authorization_servers")
-    @JsonProperty("authorization_servers")
+    @JsonProperty(value = "authorization_servers", access = JsonProperty.Access.WRITE_ONLY)
     @Schema(description = "List of Authorization Server Endpoint")
     private List<@NotBlank @URL String> authorizationServers;
 
     @NotBlank
     @SerializedName("credential_endpoint")
     @Pattern(regexp = "https?://.*?/credential$")
-    @JsonProperty("credential_endpoint")
+    @JsonProperty(value = "credential_endpoint", access = JsonProperty.Access.WRITE_ONLY)
     @Schema(description = "Endpoint to download the Credential")
     private String credentialEndPoint;
 
