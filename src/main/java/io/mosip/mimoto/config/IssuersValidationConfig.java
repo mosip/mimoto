@@ -41,7 +41,7 @@ public class IssuersValidationConfig implements ApplicationRunner {
         try {
             issuerDTOList = issuersService.getAllIssuers();
         } catch (Exception e) {
-            log.error(VALIDATION_ERROR_MSG + e);
+            log.error(VALIDATION_ERROR_MSG , e);
             throw new RuntimeException(VALIDATION_ERROR_MSG);
         }
 
