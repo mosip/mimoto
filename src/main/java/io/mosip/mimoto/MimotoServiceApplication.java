@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.mosip.kernel.biometrics.spi.CbeffUtil;
 import io.mosip.kernel.cbeffutil.impl.CbeffImpl;
+import io.mosip.kernel.keygenerator.bouncycastle.KeyGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.springframework.boot.SpringApplication;
@@ -22,12 +23,19 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
         "io.mosip.mimoto.*",
         "io.mosip.mimoto.dbentity",
         "io.mosip.kernel.websub.*",
+        "io.mosip.kernel.cryptomanager.*",
+        "io.mosip.kernel.keymanager.*",
+        "io.mosip.kernel.keymanagerservice.helper",
+        "io.mosip.kernel.keymanagerservice.util",
+        "io.mosip.kernel.keymanagerservice.service",
+        "io.mosip.kernel.keymanagerservice.validator",
+        "io.mosip.kernel.crypto",
         "${mosip.auth.adapter.impl.basepackage}"
 }, exclude = {
         SecurityAutoConfiguration.class
 })
-@EntityScan(basePackages = "io.mosip.mimoto.dbentity")
-@EnableJpaRepositories(basePackages = "io.mosip.mimoto.repository")
+@EntityScan(basePackages = {"io.mosip.mimoto.dbentity","io.mosip.kernel.keymanagerservice.entity"})
+@EnableJpaRepositories(basePackages = {"io.mosip.mimoto.repository","io.mosip.kernel.keymanagerservice.repository"})
 @Slf4j
 @EnableScheduling
 @EnableAsync
@@ -45,6 +53,11 @@ public class MimotoServiceApplication {
         threadPoolTaskScheduler.setPoolSize(5);
         threadPoolTaskScheduler.setThreadNamePrefix("ThreadPoolTaskScheduler");
         return threadPoolTaskScheduler;
+    }
+
+    @Bean
+    public KeyGenerator keyGenerator() {
+        return new KeyGenerator();
     }
 
     public static JSONObject getGitProp() {

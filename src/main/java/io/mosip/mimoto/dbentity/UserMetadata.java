@@ -21,16 +21,16 @@ public class UserMetadata {
     @Column(name = "identity_provider", nullable = false)
     private String identityProvider;
 
-    @Column(name = "display_name", nullable = false)
+    @Column(name = "display_name", nullable = false, columnDefinition = "TEXT")
     private String displayName;
 
-    @Column(name = "profile_picture_url")
+    @Column(name = "profile_picture_url", columnDefinition = "TEXT")
     private String profilePictureUrl;
 
     @Column(name = "phone_number")
     private String phoneNumber;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, columnDefinition = "TEXT")
     private String email;
 
     @Column(name = "created_at", updatable = false)

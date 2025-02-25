@@ -4,6 +4,7 @@ import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.exception.OAuth2AuthenticationException;
 import io.mosip.mimoto.repository.UserMetadataRepository;
+import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.Utilities;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,9 @@ public class UserController {
     @Autowired
     private UserMetadataRepository userMetadataRepository;
 
+    @Autowired
+    private EncryptionDecryptionUtil encryptionDecryptionUtill;
+
     @GetMapping("/profile")
     public ResponseEntity<ResponseWrapper<String>> getUserProfile(Authentication authentication, HttpSession session) {
         try {
@@ -41,8 +45,8 @@ public class UserController {
             validateIdentityProvider(userMetadata, identityProvider);
 
             String userDetails = String.format("{\"displayName\": \"%s\", \"profilePictureUrl\": \"%s\"}",
-                    userMetadata.getDisplayName(),
-                    userMetadata.getProfilePictureUrl());
+                    encryptionDecryptionUtill.decrypt(userMetadata.getDisplayName(), "user_pii", "", ""),
+                    encryptionDecryptionUtill.decrypt(userMetadata.getProfilePictureUrl(), "user_pii", "", ""));
             responseWrapper.setResponse(userDetails);
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
 
