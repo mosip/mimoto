@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfigurationResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
@@ -56,7 +56,7 @@ public class IssuersServiceTest {
     List<String> issuerConfigRelatedFields = List.of("additional_headers", "authorization_endpoint", "authorization_audience", "credential_endpoint", "credential_audience");
 
     String issuerWellKnownUrl, issuerId, credentialIssuerHostUrl, authServerWellknownUrl, issuersConfigJsonValue;
-    CredentialIssuerConfigurationResponse expectedCredentialIssuerConfigurationResponse;
+    CredentialIssuerConfiguration expectedCredentialIssuerConfiguration;
     IssuersDTO issuers = new IssuersDTO();
 
     CredentialIssuerWellKnownResponse expectedCredentialIssuerWellKnownResponse;
@@ -78,8 +78,8 @@ public class IssuersServiceTest {
         Mockito.when(issuersConfigUtil.getIssuerWellknown(credentialIssuerHostUrl))
                 .thenReturn(expectedCredentialIssuerWellKnownResponse);
 
-        expectedCredentialIssuerConfigurationResponse = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
-        Mockito.when(issuersConfigUtil.getAuthServerWellknown(authServerWellknownUrl)).thenReturn(expectedCredentialIssuerConfigurationResponse.getAuthorizationServerWellKnownResponse());
+        expectedCredentialIssuerConfiguration = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
+        Mockito.when(issuersConfigUtil.getAuthServerWellknown(authServerWellknownUrl)).thenReturn(expectedCredentialIssuerConfiguration.getAuthorizationServerWellKnownResponse());
     }
 
     @Test
@@ -173,9 +173,9 @@ public class IssuersServiceTest {
 
     @Test
     public void shouldReturnProperCredentialConfigurationsForTheRequestedIssuer() throws AuthorizationServerWellknownResponseException, ApiNotAccessibleException, IOException, InvalidWellknownResponseException {
-        CredentialIssuerConfigurationResponse actualCredentialIssuerConfigurationResponse = issuersService.getIssuerConfiguration("Issuer3id");
+        CredentialIssuerConfiguration actualCredentialIssuerConfiguration = issuersService.getIssuerConfiguration("Issuer3id");
 
-        assertEquals(expectedCredentialIssuerConfigurationResponse, actualCredentialIssuerConfigurationResponse);
+        assertEquals(expectedCredentialIssuerConfiguration, actualCredentialIssuerConfiguration);
     }
 
     @Test

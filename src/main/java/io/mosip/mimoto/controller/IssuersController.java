@@ -5,7 +5,8 @@ import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfigurationResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfigurationDTO;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
@@ -63,7 +64,7 @@ public class IssuersController {
     @GetMapping(value = "/{issuer-id}/well-known-proxy", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CredentialIssuerWellKnownResponse> getIssuerWellknown(@PathVariable("issuer-id") String issuerId) {
         try {
-            CredentialIssuerConfigurationResponse issuerConfigurationResponse = issuersService.getIssuerConfiguration(issuerId);
+            CredentialIssuerConfiguration issuerConfigurationResponse = issuersService.getIssuerConfiguration(issuerId);
             CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse(
                     issuerConfigurationResponse.getCredentialIssuer(),
                     issuerConfigurationResponse.getAuthorizationServers(),
@@ -101,11 +102,14 @@ public class IssuersController {
 
     @Operation(summary = SwaggerLiteralConstants.ISSUERS_GET_ISSUER_CONFIGURATION_SUMMARY, description = SwaggerLiteralConstants.ISSUERS_GET_ISSUER_CONFIGURATION_DESCRIPTION)
     @GetMapping(value = "/{issuer-id}/configuration", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ResponseWrapper<CredentialIssuerConfigurationResponse>> getIssuerConfiguration(@PathVariable("issuer-id") String issuerId) {
-        ResponseWrapper<CredentialIssuerConfigurationResponse> responseWrapper = new ResponseWrapper<>();
+    public ResponseEntity<ResponseWrapper<CredentialIssuerConfigurationDTO>> getIssuerConfiguration(@PathVariable("issuer-id") String issuerId) {
+        ResponseWrapper<CredentialIssuerConfigurationDTO> responseWrapper = new ResponseWrapper<>();
         try {
-            CredentialIssuerConfigurationResponse issuerConfigurationResponse = issuersService.getIssuerConfiguration(issuerId);
-            responseWrapper.setResponse(issuerConfigurationResponse);
+            CredentialIssuerConfiguration issuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
+            CredentialIssuerConfigurationDTO credentialIssuerConfigurationDTO = new CredentialIssuerConfigurationDTO(
+                    issuerConfiguration.getCredentialConfigurationsSupported(),
+                    issuerConfiguration.getAuthorizationServerWellKnownResponse());
+            responseWrapper.setResponse(credentialIssuerConfigurationDTO);
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception exception) {
             log.error("Exception occurred while fetching issuers configurations - ", exception);
