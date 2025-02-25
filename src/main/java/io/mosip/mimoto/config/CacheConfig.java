@@ -20,10 +20,13 @@ public class CacheConfig {
     @Value("${cache.credential.issuer.wellknown.response.expiry-time-in-min:60}")
     private Long issuerWellknownExpiryTimeInMin;
 
+    @Value("${cache.issuers.config.expiry-time-in-min:60}")
+    private Long issuersConfigExpiryTimeInMin;
+
     @Value("${cache.credential.issuer.authserver.wellknown.response.expiry-time-in-min:60}")
     private Long authServerWellknownExpiryTimeInMin;
 
-    @Value("${cache.default.expiry-time-in-min:0}")
+    @Value("${cache.default.expiry-time-in-min:60}")
     private long defaultCacheExpiryTimeInMin;
 
     private Caffeine<Object, Object> buildCache(Long expiryTime) {
@@ -37,6 +40,7 @@ public class CacheConfig {
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
         cacheManager.registerCustomCache("issuerWellknown", buildCache(issuerWellknownExpiryTimeInMin).build());
+        cacheManager.registerCustomCache("issuersConfig", buildCache(issuersConfigExpiryTimeInMin).build());
         cacheManager.registerCustomCache("authServerWellknown", buildCache(authServerWellknownExpiryTimeInMin).build());
         cacheManager.registerCustomCache("credentialIssuerConfig", buildCache(issuerConfigExpiryTimeInMin).build());
         cacheManager.setCaffeine(buildCache(null));

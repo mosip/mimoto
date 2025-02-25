@@ -38,6 +38,7 @@ public class IssuersServiceImpl implements IssuersService {
     private IssuerConfigUtil issuersConfigUtil;
 
     @Override
+    @Cacheable(value = "issuersConfig", key = "#p0 ?: 'allIssuersConfig'")
     public IssuersDTO getIssuers(String search) throws ApiNotAccessibleException, AuthorizationServerWellknownResponseException, IOException, InvalidWellknownResponseException {
         IssuersDTO issuersDTO = getAllIssuers();
         issuersDTO = getAllEnabledIssuers(issuersDTO);
