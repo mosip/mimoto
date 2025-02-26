@@ -236,9 +236,9 @@ public class PostWithAutogenIdWithOtpGenerate extends MimotoUtil implements ITes
 				&& MimotoUtil.isOTPEnabled().equals("true")) {
 			try {
 				long delayTime = Long.parseLong(properties.getProperty("Delaytime"));
-				if (!BaseTestCase.isTargetEnvLTS())
-					delayTime = Long.parseLong(properties.getProperty("uinGenDelayTime"))
-							* Long.parseLong(properties.getProperty("uinGenMaxLoopCount"));
+//				if (!BaseTestCase.isTargetEnvLTS())
+//					delayTime = Long.parseLong(properties.getProperty("uinGenDelayTime"))
+//							* Long.parseLong(properties.getProperty("uinGenMaxLoopCount"));
 				logger.info("waiting for " + delayTime + " mili secs after VID Generation In RESIDENT SERVICES");
 				Thread.sleep(delayTime);
 			} catch (Exception e) {
