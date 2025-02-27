@@ -2226,7 +2226,7 @@
                 "tags": [
                     "Trusted Issuers"
                 ],
-                "description": "Retrieve the well-known configuration of a specific issuer and its authorization server.",
+                "description": "Retrieve the required configuration details for a specific issuer and its authorization server from their respective well-known endpoints.",
                 "responses": {
                     "200": {
                         "description": "OK",
