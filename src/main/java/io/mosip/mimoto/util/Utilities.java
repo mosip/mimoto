@@ -184,7 +184,7 @@ public class Utilities {
         return getJson(trustedVerifiersJsonString, trustedVerifiersPath);
     }
     public String getCredentialSupportedTemplateString(String issuerId, String credentialType) {
-        String templateFileName = String.format("%s-%s-template.html", issuerId.toLowerCase(), credentialType.toLowerCase());
+        String templateFileName = String.format("%s-%s-template.html", issuerId, credentialType);
         if(activeProfile.equals("local")) {
             Path basePath = Paths.get("templates").toAbsolutePath().normalize();
             Path resolvedPath = basePath.resolve(templateFileName).normalize();
