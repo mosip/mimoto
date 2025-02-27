@@ -1,46 +1,19 @@
 ﻿{
-  "credential_configurations_supported": {
-    "CredentialType1": {
-      "format": "ldp_vc",
-      "scope": "CredentialType1_vc_ldp",
-      "proof_types_supported": {},
-      "credential_definition": {
-        "type": [
-          "VerifiableCredential",
-          "CredentialType1"
-        ],
-        "credentialSubject": {
-          "name": {
-            "display": [
-              {
-                "name": "Given Name",
-                "locale": "en"
-              }
-            ]
+    "credentials_supported": [
+      {
+        "name": "CredentialType1",
+        "scope": "CredentialType1_vc_ldp",
+        "display": [
+          {
+            "name": "CredentialType1",
+            "locale": "en",
+            "logo": "https://logo"
           }
-        }
-      },
-      "display": [
-        {
-          "name": "CredentialType1",
-          "locale": "en",
-          "logo": {
-            "url": "https://logo",
-            "alt_text": "logo-url"
-          },
-          "background_image": {
-            "uri": "https://bgimage"
-          },
-          "background_color": "#B34622",
-          "text_color": "#FFFFFF"
-        }
-      ]
-    }
-  },
-  "authorization": {
+        ]
+      }
+    ],
     "authorization_endpoint": "https://dev/authorize",
     "grant_types_supported": [
       "authorization_code"
     ]
-  }
 }

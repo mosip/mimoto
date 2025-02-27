@@ -1,7 +1,7 @@
 package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dto.IssuerDTO;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfigurationResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
 import io.mosip.mimoto.exception.IssuerOnboardingException;
 import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.util.JoseUtil;
@@ -86,11 +86,11 @@ public class IdpServiceTest {
 
     @Test
     public void shouldReturnTokenEndpointFromCredentialIssuerConfigurationResponse() {
-        CredentialIssuerConfigurationResponse credentialIssuerConfigurationResponse =
+        CredentialIssuerConfiguration credentialIssuerConfiguration =
                 getCredentialIssuerConfigurationResponseDto("issuer1", "CredentialType1", List.of());
         String expectedTokenEndpoint = "https://dev/token";
 
-        String actualTokenEndpoint = idpService.getTokenEndpoint(credentialIssuerConfigurationResponse);
+        String actualTokenEndpoint = idpService.getTokenEndpoint(credentialIssuerConfiguration);
 
         assertEquals(expectedTokenEndpoint, actualTokenEndpoint);
     }
