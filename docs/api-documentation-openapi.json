@@ -2253,7 +2253,7 @@
                                                         ]
                                                     }
                                                 ],
-                                                "authorization_endpoint": "https://esignet-insurance.dev1.mosip.net/authorize",
+                                                "authorization_endpoint": "https://esignet-insurance.collab.mosip.net/authorize",
                                                 "grant_types_supported": [
                                                     "authorization_code"
                                                 ]
