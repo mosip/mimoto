@@ -182,7 +182,7 @@
 			<class name="io.mosip.testrig.apirig.mimoto.testscripts.DeleteWithParam" />
 		</classes>
 	</test>
-		<test name="GetVerifierList">
+	<test name="GetVerifierList">
 		<parameter name="ymlFile"
 			value="mimoto/GetVerifierList/GetVerifierList.yml" />
 		<classes>
