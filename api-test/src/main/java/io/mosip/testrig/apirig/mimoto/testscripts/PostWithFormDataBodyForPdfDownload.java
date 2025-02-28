@@ -94,7 +94,10 @@ public class PostWithFormDataBodyForPdfDownload extends AdminTestUtil implements
 			}
 		}
 		
-		pdf = postWithFormDataBodyForPdf(ApplnURI + testCaseDTO.getEndPoint(), getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), COOKIENAME,  testCaseDTO.getRole(), testCaseDTO.getTestCaseName());
+		String inputJson = getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate());
+		inputJson = MimotoUtil.inputstringKeyWordHandeler(inputJson, testCaseName);
+		
+		pdf = postWithFormDataBodyForPdf(ApplnURI + testCaseDTO.getEndPoint(), inputJson, COOKIENAME,  testCaseDTO.getRole(), testCaseDTO.getTestCaseName());
 		PdfReader pdfReader = null;
 		ByteArrayInputStream bIS = null;
 		
