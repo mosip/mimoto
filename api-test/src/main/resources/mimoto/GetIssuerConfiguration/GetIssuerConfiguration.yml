@@ -5,12 +5,12 @@ GetIssuerConfiguration:
       uniqueIdentifier: TC_Mimoto_GetIssuerConfiguration_01
       role: resident
       restMethod: get
-      checkErrorsOnlyInResponse: true
       inputTemplate: mimoto/GetIssuerConfiguration/GetIssuerConfiguration
       outputTemplate: mimoto/GetIssuerConfiguration/GetIssuerConfigurationResult
       input: '{
 }'
       output: '{
+      "name": "MosipVerifiableCredential"
 }'
    Mimoto_GetIssuerConfiguration_With_Issuer_Removed_From_URL_Neg:
       endPoint: /v1/mimoto/issuers/configuration

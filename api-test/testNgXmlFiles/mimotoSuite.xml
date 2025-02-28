@@ -189,7 +189,7 @@
 			<class name="io.mosip.testrig.apirig.mimoto.testscripts.GetWithParam" />
 		</classes>
 	</test>
-		<test name="GetIssuerConfiguration">
+	<test name="GetIssuerConfiguration">
 		<parameter name="ymlFile"
 			value="mimoto/GetIssuerConfiguration/GetIssuerConfiguration.yml" />
 		<classes>
