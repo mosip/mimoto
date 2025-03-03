@@ -143,11 +143,11 @@ public class IdpControllerTest {
                                 new BasicNameValuePair("locale", "test-locale")
                         )))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id_token").value("test-id-token"))
-                .andExpect(jsonPath("$.access_token").value("test-accesstoken"))
-                .andExpect(jsonPath("$.expires_in").value(12345))
-                .andExpect(jsonPath("$.scope").value("test-scope"))
-                .andExpect(jsonPath("$.token_type").value("test-token-type"));
+                .andExpect(jsonPath("$.response.id_token").value("test-id-token"))
+                .andExpect(jsonPath("$.response.access_token").value("test-accesstoken"))
+                .andExpect(jsonPath("$.response.expires_in").value(12345))
+                .andExpect(jsonPath("$.response.scope").value("test-scope"))
+                .andExpect(jsonPath("$.response.token_type").value("test-token-type"));
     }
 
     @Test

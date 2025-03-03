@@ -73,7 +73,7 @@ public class IdpController {
             return ResponseEntity.status(HttpStatus.OK).body(internalResponse);
         } catch (Exception e) {
             log.error("Wallet binding otp error occurred." + e);
-            return Utilities.handleErrorResponse(e, PlatformErrorMessages.MIMOTO_OTP_BINDING_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST);
+            return Utilities.handleErrorResponse(e, PlatformErrorMessages.MIMOTO_OTP_BINDING_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST,null);
         }
 
     }
@@ -106,7 +106,7 @@ public class IdpController {
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception e) {
             log.error("Wallet binding error occured for tranaction id " + requestDTO.getRequest().getIndividualId(), e);
-            return Utilities.handleErrorResponse(e, PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST);
+            return Utilities.handleErrorResponse(e, PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST,null);
         }
     }
 
@@ -124,7 +124,7 @@ public class IdpController {
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception ex) {
             log.error("Exception Occurred while Invoking the Token Endpoint : ", ex);
-            return Utilities.handleErrorResponse(ex, PlatformErrorMessages.MIMOTO_FETCHING_TOKEN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST);
+            return Utilities.handleErrorResponse(ex, PlatformErrorMessages.MIMOTO_FETCHING_TOKEN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST,null);
         }
     }
 }

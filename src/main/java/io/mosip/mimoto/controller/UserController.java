@@ -52,10 +52,10 @@ public class UserController {
 
         } catch (OAuth2AuthenticationException exception) {
             log.error("Error occurred while retrieving user profile : ", exception);
-            return Utilities.handleErrorResponse(exception, OAUTH2_AUTHENTICATION_EXCEPTION.getCode(), exception.getStatus());
+            return Utilities.handleErrorResponse(exception, OAUTH2_AUTHENTICATION_EXCEPTION.getCode(), exception.getStatus(),null);
         } catch (Exception exception) {
             log.error("Error occurred while retrieving user profile : ", exception);
-            return Utilities.handleErrorResponse(exception, OAUTH2_AUTHENTICATION_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return Utilities.handleErrorResponse(exception, OAUTH2_AUTHENTICATION_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,null);
         }
     }
 

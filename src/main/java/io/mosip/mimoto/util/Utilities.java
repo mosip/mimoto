@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
@@ -206,7 +207,7 @@ public class Utilities {
     }
 
     public static <T> ResponseEntity<ResponseWrapper<T>> handleErrorResponse(
-            Exception exception, String flowErrorCode, HttpStatus status) {
+            Exception exception, String flowErrorCode, HttpStatus status, MediaType contentType) {
         String errorMessage = exception.getMessage();
         String errorCode = flowErrorCode;
 
@@ -219,7 +220,11 @@ public class Utilities {
         ResponseWrapper<T> responseWrapper = new ResponseWrapper<>();
         responseWrapper.setResponse(null);
         responseWrapper.setErrors(Utilities.getErrors(errorCode, errorMessage));
-        return ResponseEntity.status(status).body(responseWrapper);
+        ResponseEntity.BodyBuilder responseEntity = ResponseEntity.status(status);
+        if (contentType != null) {
+            responseEntity.contentType(contentType);
+        }
+        return responseEntity.body(responseWrapper);
     }
 
     public static List<ErrorDTO> getErrors(String errorCode, String errorMessage) {
