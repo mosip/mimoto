@@ -24,9 +24,13 @@ public class LocaleUtils {
     public static String resolveLocaleWithFallback(Map<String, CredentialDisplayResponseDto> credentialSubject, String locale) {
         String selectedLocale = null;
 
-        // Iterate through the credentials to check if any display object supports the requested locale
+        // Iterate through the credentials to find a display object that supports the requested locale. If none is found, use the first available display object.
         for (String VCProperty : credentialSubject.keySet()) {
             List<CredentialIssuerDisplayResponse> displayList = credentialSubject.get(VCProperty).getDisplay();
+            // If no matching locale is found for any of the fields, use the locale of the first display object
+            if(selectedLocale == null && displayList!=null && !displayList.isEmpty()){
+                selectedLocale = displayList.get(0).getLocale();
+            }
             // Check if any display object supports the requested locale
             Optional<CredentialIssuerDisplayResponse> filteredResponse = displayList.stream()
                     .filter(obj -> matchesLocale(obj.getLocale(), locale))
@@ -36,18 +40,7 @@ public class LocaleUtils {
                 break; // Break once a matching record is found
             }
         }
-        // If no matching locale is found, use the locale of the first display object
-        if (selectedLocale == null) {
-            // Fall back to the locale of the first display object if no matching locale is found
-            for (String VCProperty : credentialSubject.keySet()) {
-                List<CredentialIssuerDisplayResponse> displayList = credentialSubject.get(VCProperty).getDisplay();
-                if (displayList != null && !displayList.isEmpty()) {
-                    // Get the locale of the first display object in the list
-                    selectedLocale = displayList.get(0).getLocale();
-                    break; // Use the first locale and exit the loop
-                }
-            }
-        }
+
         return selectedLocale;
     }
 

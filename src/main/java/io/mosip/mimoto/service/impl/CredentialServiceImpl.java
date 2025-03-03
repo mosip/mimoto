@@ -185,18 +185,20 @@ public class CredentialServiceImpl implements CredentialService {
         Map<String, Object> credentialProperties = vcCredentialResponse.getCredential().getCredentialSubject();
         LinkedHashMap<String, CredentialIssuerDisplayResponse> vcPropertiesFromWellKnown = new LinkedHashMap<>();
         Map<String, CredentialDisplayResponseDto> credentialSubject = credentialsSupportedResponse.getCredentialDefinition().getCredentialSubject();
-        String locale = LocaleUtils.resolveLocaleWithFallback(credentialSubject,  userLocale);
-        credentialSubject.keySet().forEach(VCProperty -> {
-            Optional<CredentialIssuerDisplayResponse> filteredResponse = credentialSubject.get(VCProperty)
-                    .getDisplay().stream()
-                    .filter(obj -> "undefined".equals(locale) || LocaleUtils.matchesLocale(obj.getLocale(), locale))// if locale is not undefined use it to fetch the wellknown properties otherwise return the properties of the first display object which has language field
-                    .findFirst();
+        String locale = LocaleUtils.resolveLocaleWithFallback(credentialSubject, userLocale);
+        if (locale != null) {
+            credentialSubject.keySet().forEach(VCProperty -> {
+                Optional<CredentialIssuerDisplayResponse> filteredResponse = credentialSubject.get(VCProperty)
+                        .getDisplay().stream()
+                        .filter(obj -> LocaleUtils.matchesLocale(obj.getLocale(), locale))
+                        .findFirst();
 
-            if (filteredResponse.isPresent()) {
-                CredentialIssuerDisplayResponse filteredValue = filteredResponse.get();
-                vcPropertiesFromWellKnown.put(VCProperty, filteredValue);
-            }
-        });
+                if (filteredResponse.isPresent()) {
+                    CredentialIssuerDisplayResponse filteredValue = filteredResponse.get();
+                    vcPropertiesFromWellKnown.put(VCProperty, filteredValue);
+                }
+            });
+        }
 
         List<String> orderProperty = credentialsSupportedResponse.getOrder();
 
