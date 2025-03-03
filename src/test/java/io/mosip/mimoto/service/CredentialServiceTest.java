@@ -30,6 +30,7 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -82,7 +83,7 @@ public class CredentialServiceTest {
     );
 
     TokenResponseDTO expectedTokenResponse;
-    String tokenEndpoint, issuerId;
+    String tokenEndpoint, issuerId, expectedExceptionMsg;
     IssuerDTO issuerDTO;
     HttpEntity<MultiValueMap<String, String>> mockRequest;
     CredentialIssuerConfigurationResponse issuerConfig;
@@ -132,6 +133,7 @@ public class CredentialServiceTest {
         Mockito.when(credentialsVerifier.verify(any(String.class), eq(CredentialFormat.LDP_VC))).thenReturn(verificationResult);
         Mockito.when(objectMapper.writeValueAsString(vc.getCredential())).thenReturn("vc");
         Boolean verificationStatus = credentialService.verifyCredential(vc);
+
         assertTrue(verificationStatus);
     }
 
@@ -141,13 +143,13 @@ public class CredentialServiceTest {
         VerificationResult verificationResult = new VerificationResult(false, "Verification failed for the provided credentials", "Verification Failed!");
         Mockito.when(credentialsVerifier.verify(any(String.class), eq(CredentialFormat.LDP_VC))).thenReturn(verificationResult);
         Mockito.when(objectMapper.writeValueAsString(vc.getCredential())).thenReturn("vc");
-        String expetcedExceptionMsg = "verification failed! --> Verification failed for the provided credentials";
+        expectedExceptionMsg = "verification failed! --> Verification failed for the provided credentials";
 
         VCVerificationException actualException = assertThrows(VCVerificationException.class, () ->
                 credentialService.verifyCredential(vc)
         );
 
-        assertEquals(expetcedExceptionMsg,actualException.getMessage());
+        assertEquals(expectedExceptionMsg, actualException.getMessage());
     }
 
     @Test
@@ -171,13 +173,29 @@ public class CredentialServiceTest {
     }
 
     @Test
+    public void shouldThrowExceptionOnFetchingCredentialFromCredentialEndpointFailure() {
+        CredentialsSupportedResponse credentialsSupportedResponse = getCredentialSupportedResponse("CredentialType1");
+        CredentialIssuerWellKnownResponse issuerWellKnownResponse = getCredentialIssuerWellKnownResponseDto(issuerId, Map.of("CredentialType1", credentialsSupportedResponse));
+        VCCredentialRequest vcCredentialRequest = getVCCredentialRequestDTO();
+        Mockito.when(restApiClient.postApi(issuerWellKnownResponse.getCredentialEndPoint(), MediaType.APPLICATION_JSON, vcCredentialRequest, VCCredentialResponse.class, "test-access-token")).thenReturn(null);
+        String credentialEndpoint = issuerWellKnownResponse.getCredentialEndPoint();
+        expectedExceptionMsg = "VC Credential Issue API not accessible";
+
+
+        RuntimeException actualException = assertThrows(RuntimeException.class, () -> {
+            credentialService.downloadCredential(credentialEndpoint, vcCredentialRequest, "test-access-token");
+        });
+
+        assertEquals(expectedExceptionMsg, actualException.getMessage());
+    }
+
+    @Test
     public void shouldReturnVCCredentialWhenCallingCredentialEndpointWithCredentialRequest() {
         CredentialsSupportedResponse credentialsSupportedResponse = getCredentialSupportedResponse("CredentialType1");
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = getCredentialIssuerWellKnownResponseDto(issuerId, Map.of("CredentialType1", credentialsSupportedResponse));
         VCCredentialRequest vcCredentialRequest = getVCCredentialRequestDTO();
         VCCredentialResponse expectedCredentialResponse = getVCCredentialResponseDTO("RSASignature2020");
-        Mockito.when(restApiClient.postApi(any(), any(),
-                any(), any(), any())).thenReturn(expectedCredentialResponse);
+        Mockito.when(restApiClient.postApi(issuerWellKnownResponse.getCredentialEndPoint(), MediaType.APPLICATION_JSON, vcCredentialRequest, VCCredentialResponse.class, "test-access-token")).thenReturn(expectedCredentialResponse);
 
         VCCredentialResponse actualCredentialResponse = credentialService.downloadCredential(issuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, "test-access-token");
 

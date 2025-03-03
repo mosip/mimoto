@@ -52,11 +52,7 @@ public class VerifierServiceImpl implements VerifierService {
     }
 
     public Optional<VerifierDTO> getVerifierByClientId(String clientId) throws ApiNotAccessibleException, JsonProcessingException {
-        String trustedVerifiersJsonValue = utilities.getTrustedVerifiersJsonValue();
-        if (trustedVerifiersJsonValue == null) {
-            throw new ApiNotAccessibleException();
-        }
-        VerifiersDTO verifiersDTO = objectMapper.readValue(trustedVerifiersJsonValue, VerifiersDTO.class);
+        VerifiersDTO verifiersDTO = getTrustedVerifiers();
         return verifiersDTO.getVerifiers().stream().filter(verifier -> verifier.getClientId().equals(clientId)).findFirst();
     }
 

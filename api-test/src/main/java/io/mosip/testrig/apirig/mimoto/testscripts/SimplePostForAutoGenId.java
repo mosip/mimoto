@@ -141,9 +141,9 @@ public class SimplePostForAutoGenId extends AdminTestUtil implements ITest {
 					if (MimotoConfigManager.isInServiceNotDeployedList("sunbirdrc"))
 						throw new SkipException(GlobalConstants.SERVICE_NOT_DEPLOYED_MESSAGE);
 
-					if (MimotoConfigManager.getproperty("esignetSunBirdBaseURL") != null
-							&& !MimotoConfigManager.getproperty("esignetSunBirdBaseURL").isBlank())
-						tempUrl = MimotoConfigManager.getproperty("esignetSunBirdBaseURL");
+					String esignetSunBirdBaseURL = MimotoConfigManager.getEsignetSunBirdBaseURL();
+					if (esignetSunBirdBaseURL != null && !esignetSunBirdBaseURL.isBlank())
+						tempUrl = esignetSunBirdBaseURL;
 					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$ESIGNETMOCKBASEURL$", ""));
 				} else if (testCaseDTO.getEndPoint().startsWith("$SUNBIRDBASEURL$") && testCaseName.contains("SunBirdR")) {
 
@@ -152,16 +152,9 @@ public class SimplePostForAutoGenId extends AdminTestUtil implements ITest {
 
 					if (MimotoConfigManager.getSunbirdBaseURL() != null && !MimotoConfigManager.getSunbirdBaseURL().isBlank())
 						tempUrl = MimotoConfigManager.getSunbirdBaseURL();
-						//Once sunbird registry is pointing to specific env, remove the above line and uncomment below line
-						//tempUrl = ApplnURI.replace(GlobalConstants.API_INTERNAL, MimotoConfigManager.getSunBirdBaseURL());
 					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$SUNBIRDBASEURL$", ""));
 				}
 				
-				if (inputJson.contains("$GETCLIENTIDFROMMIMOTOACTUATOR$")) {
-					String clientIdSection = MimotoUtil.getClientIdSection(tempUrl);
-					inputJson = replaceKeywordWithValue(inputJson, "$GETCLIENTIDFROMMIMOTOACTUATOR$",
-							getValueFromMimotoActuator("overrides", clientIdSection));
-				}
 				if (testCaseName.contains("_AuthorizationCode_")) {
 					response = postRequestWithCookieAuthHeaderAndXsrfTokenForAutoGenId(
 							tempUrl + testCaseDTO.getEndPoint(), inputJson, COOKIENAME, testCaseDTO.getTestCaseName(),
