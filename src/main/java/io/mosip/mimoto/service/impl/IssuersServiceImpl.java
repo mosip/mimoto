@@ -5,15 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
 import io.mosip.mimoto.dto.mimoto.AuthorizationServerWellKnownResponse;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfigurationResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
-import io.mosip.mimoto.service.AuthorizationServerService;
-import io.mosip.mimoto.service.IssuerWellknownService;
 import io.mosip.mimoto.service.IssuersService;
+import io.mosip.mimoto.util.IssuerConfigUtil;
 import io.mosip.mimoto.util.Utilities;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -33,15 +32,13 @@ public class IssuersServiceImpl implements IssuersService {
     private Utilities utilities;
 
     @Autowired
-    private AuthorizationServerService authorizationServerService;
-
-    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
-    private IssuerWellknownService issuerWellknownService;
+    private IssuerConfigUtil issuersConfigUtil;
 
     @Override
+    @Cacheable(value = "issuersConfig", key = "#p0 ?: 'allIssuersConfig'")
     public IssuersDTO getIssuers(String search) throws ApiNotAccessibleException, AuthorizationServerWellknownResponseException, IOException, InvalidWellknownResponseException {
         IssuersDTO issuersDTO = getAllIssuers();
         issuersDTO = getAllEnabledIssuers(issuersDTO);
@@ -92,12 +89,11 @@ public class IssuersServiceImpl implements IssuersService {
     }
 
     @Override
-    @Cacheable(value = "credentialIssuerConfig", key = "#p0")
-    public CredentialIssuerConfigurationResponse getIssuerConfiguration(String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
-        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = issuerWellknownService.getWellknown(getIssuerDetails(issuerId).getCredential_issuer_host());
-        AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = authorizationServerService.getWellknown(credentialIssuerWellKnownResponse.getAuthorizationServers().get(0));
+    public CredentialIssuerConfiguration getIssuerConfiguration(String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = issuersConfigUtil.getIssuerWellknown(getIssuerDetails(issuerId).getCredential_issuer_host());
+        AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = issuersConfigUtil.getAuthServerWellknown(credentialIssuerWellKnownResponse.getAuthorizationServers().get(0));
 
-        return new CredentialIssuerConfigurationResponse(
+        return new CredentialIssuerConfiguration(
                 credentialIssuerWellKnownResponse.getCredentialIssuer(),
                 credentialIssuerWellKnownResponse.getAuthorizationServers(),
                 credentialIssuerWellKnownResponse.getCredentialEndPoint(),

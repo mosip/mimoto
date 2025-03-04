@@ -72,7 +72,7 @@ public class IdpController {
                 throw new IdpException();
             return ResponseEntity.status(HttpStatus.OK).body(internalResponse);
         } catch (Exception e) {
-            log.error("Wallet binding otp error occurred." + e);
+            log.error("Wallet binding otp error occurred.", e);
             String[] errorObj = Utilities.handleExceptionWithErrorCode(e, PlatformErrorMessages.MIMOTO_OTP_BINDING_EXCEPTION.getCode());
             List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
             responseWrapper.setResponse(null);
@@ -109,7 +109,7 @@ public class IdpController {
             responseWrapper = joseUtil.addThumbprintAndKeyId(internalResponse);
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception e) {
-            log.error("Wallet binding error occured for tranaction id " + requestDTO.getRequest().getIndividualId(), e);
+            log.error("Wallet binding error occurred for transaction id " + requestDTO.getRequest().getIndividualId(), e);
             String[] errorObj = Utilities.handleExceptionWithErrorCode(e, PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode());
             List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
             responseWrapper.setResponse(null);

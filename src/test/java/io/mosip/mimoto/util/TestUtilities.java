@@ -139,11 +139,11 @@ public class TestUtilities {
         return credentialIssuerWellKnownResponse;
     }
 
-    public static CredentialIssuerConfigurationResponse getCredentialIssuerConfigurationResponseDto(String issuerName, String credentialType, List<String> nullFields) {
+    public static CredentialIssuerConfiguration getCredentialIssuerConfigurationResponseDto(String issuerName, String credentialType, List<String> nullFields) {
         AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = getAuthServerWellknownResponseDto(nullFields);
         Map<String, CredentialsSupportedResponse> credentialsSupportedResponses = Map.of(credentialType, getCredentialSupportedResponse(credentialType));
-        CredentialIssuerConfigurationResponse credentialIssuerConfigurationResponse = new CredentialIssuerConfigurationResponse("https://dev/" + issuerName, List.of("https://auth-server.env.net"), "https://dev/issuance/credential", credentialsSupportedResponses, authorizationServerWellKnownResponse);
-        return credentialIssuerConfigurationResponse;
+        CredentialIssuerConfiguration credentialIssuerConfiguration = new CredentialIssuerConfiguration("https://dev/" + issuerName, List.of("https://auth-server.env.net"), "https://dev/issuance/credential", credentialsSupportedResponses, authorizationServerWellKnownResponse);
+        return credentialIssuerConfiguration;
     }
 
     public static AuthorizationServerWellKnownResponse getAuthServerWellknownResponseDto(List<String> nullFields) {

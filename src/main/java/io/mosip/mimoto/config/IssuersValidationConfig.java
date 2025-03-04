@@ -4,7 +4,6 @@ import io.mosip.mimoto.dto.IssuersDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
-import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.service.IssuersService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,14 +13,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
-
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 @Slf4j
 @Component
@@ -45,14 +40,8 @@ public class IssuersValidationConfig implements ApplicationRunner {
         IssuersDTO issuerDTOList = null;
         try {
             issuerDTOList = issuersService.getAllIssuers();
-        } catch (InvalidFormatException e) {
-            String validValues = Arrays.stream(QRCodeType.values())
-                    .map(Enum::name)
-                    .collect(Collectors.joining(", "));
-            log.error(VALIDATION_ERROR_MSG + "qr_code_type value of issuer is invalid. It has to be one of these values : [ " + validValues + " ]");
-            throw new RuntimeException(VALIDATION_ERROR_MSG);
         } catch (Exception e) {
-            log.error(VALIDATION_ERROR_MSG + e.toString());
+            log.error(VALIDATION_ERROR_MSG , e);
             throw new RuntimeException(VALIDATION_ERROR_MSG);
         }
 

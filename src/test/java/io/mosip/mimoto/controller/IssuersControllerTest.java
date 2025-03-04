@@ -4,11 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.mosip.mimoto.dto.IssuersDTO;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfigurationResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
-import io.mosip.mimoto.service.AuthorizationServerService;
-import io.mosip.mimoto.service.IssuerWellknownService;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.Utilities;
 import org.hamcrest.Matchers;
@@ -29,7 +27,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static io.mosip.mimoto.exception.PlatformErrorMessages.API_NOT_ACCESSIBLE_EXCEPTION;
@@ -55,13 +52,7 @@ public class IssuersControllerTest {
     private Utilities utilities;
 
     @MockBean
-    private IssuerWellknownService issuerWellknownService;
-
-    @MockBean
     ObjectMapper objectMapper;
-
-    @MockBean
-    AuthorizationServerService authorizationServerService;
 
     @Test
     public void getIssuersTestForSearchValueNull() throws Exception {
@@ -180,8 +171,8 @@ public class IssuersControllerTest {
     public void getIssuerWellknownTest() throws Exception {
         String issuerId = "issuer1";
         String expectedCredentialIssuerWellknownResponse = getExpectedWellKnownJson();
-        CredentialIssuerConfigurationResponse expectedCredentialIssuerConfigurationResponse = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
-        Mockito.when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(expectedCredentialIssuerConfigurationResponse);
+        CredentialIssuerConfiguration expectedCredentialIssuerConfiguration = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
+        Mockito.when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(expectedCredentialIssuerConfiguration);
 
         String actualResponse = mockMvc.perform(get("/issuers/" + issuerId + "/well-known-proxy").accept(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(status().isOk())
@@ -206,8 +197,8 @@ public class IssuersControllerTest {
             expectedJsonString = expectedJsonString.substring(1);
         }
         String finalExpectedJsonString = expectedJsonString;
-        CredentialIssuerConfigurationResponse expectedResponse = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
-        Mockito.when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(expectedResponse);
+        CredentialIssuerConfiguration expectedCredentialIssuerConfiguration = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
+        Mockito.when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(expectedCredentialIssuerConfiguration);
 
         mockMvc.perform(get("/issuers/" + issuerId + "/configuration")
                         .accept(MediaType.APPLICATION_JSON_VALUE))
