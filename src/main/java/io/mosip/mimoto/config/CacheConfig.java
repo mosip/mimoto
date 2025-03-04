@@ -14,13 +14,13 @@ import org.springframework.beans.factory.annotation.Value;
 @EnableCaching
 public class CacheConfig {
 
-    @Value("${cache.credential.issuer.wellknown.response.expiry-time-in-min:60}")
+    @Value("${cache.credential-issuer.wellknown.expiry-time-in-min:60}")
     private Long issuerWellknownExpiryTimeInMin;
 
-    @Value("${cache.issuers.config.expiry-time-in-min:60}")
+    @Value("${cache.issuers-config.expiry-time-in-min:60}")
     private Long issuersConfigExpiryTimeInMin;
 
-    @Value("${cache.credential.issuer.authserver.wellknown.response.expiry-time-in-min:60}")
+    @Value("${cache.credential-issuer.authserver-wellknown.expiry-time-in-min:60}")
     private Long authServerWellknownExpiryTimeInMin;
 
     @Value("${cache.default.expiry-time-in-min:60}")
