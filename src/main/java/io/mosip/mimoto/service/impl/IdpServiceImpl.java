@@ -1,7 +1,7 @@
 package io.mosip.mimoto.service.impl;
 
 import io.mosip.mimoto.dto.IssuerDTO;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfigurationResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
 import io.mosip.mimoto.exception.IssuerOnboardingException;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.util.JoseUtil;
@@ -54,7 +54,7 @@ public class IdpServiceImpl implements IdpService {
     }
 
     @Override
-    public String getTokenEndpoint(CredentialIssuerConfigurationResponse credentialIssuerConfigurationResponse) {
-        return credentialIssuerConfigurationResponse.getAuthorizationServerWellKnownResponse().getTokenEndpoint();
+    public String getTokenEndpoint(CredentialIssuerConfiguration credentialIssuerConfiguration) {
+        return credentialIssuerConfiguration.getAuthorizationServerWellKnownResponse().getTokenEndpoint();
     }
 }
