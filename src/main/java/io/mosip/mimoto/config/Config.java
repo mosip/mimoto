@@ -1,6 +1,10 @@
 package io.mosip.mimoto.config;
 
+import io.mosip.mimoto.security.oauth2.OAuth2AuthenticationFailureHandler;
 import io.mosip.mimoto.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -15,6 +19,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.session.SessionRepository;
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -29,6 +34,7 @@ import java.util.Map;
 @EnableMethodSecurity
 @EnableRedisHttpSession
 @Order(1)
+@Slf4j
 public class Config {
 
     @Value("${mosipbox.public.url}")
@@ -56,8 +62,11 @@ public class Config {
     @Autowired
     private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
+    @Autowired
+    private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, SessionRepository sessionRepository) throws Exception {
         if (!isCSRFEnable) {
             http.csrf(AbstractHttpConfigurer::disable);
         }
@@ -71,31 +80,44 @@ public class Config {
             headersEntry.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin);
         });
 
-        setupOauth2Config(http);
+        setupOauth2Config(http, sessionRepository);
 
         return http.build();
 
     }
 
-    private void setupOauth2Config(HttpSecurity http) throws Exception {
-        http.oauth2Login((oauth2Login) -> oauth2Login.loginPage(injiWebUrl + "/login")
-                        .authorizationEndpoint(authorization -> authorization.baseUri("/oauth2/authorize")
-                        )
-                        .redirectionEndpoint(redirect -> redirect.baseUri("/oauth2/callback/*"))
-                        .successHandler(oAuth2AuthenticationSuccessHandler)
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl(injiWebUrl + "/login?logout")  // Custom logout success URL
-                        .clearAuthentication(true)          // Clear the authentication after logout
-                        .invalidateHttpSession(true)        // Invalidate the session
-                        .deleteCookies("JSESSIONID")        // Optionally, delete cookies
-                ).authorizeHttpRequests(authz -> authz
-                        // Define secured endpoints
-                        .requestMatchers("/secure/**").authenticated() // Secure endpoints that require login
-                        // Default authorization rule for all other requests
-                        .anyRequest().permitAll()
-                ).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
+    private void setupOauth2Config(HttpSecurity http, SessionRepository sessionRepository) throws Exception {
+        http
+            .oauth2Login((oauth2Login) -> oauth2Login.loginPage(injiWebUrl + "/login")
+                    .authorizationEndpoint(authorization -> authorization.baseUri("/oauth2/authorize")
+                    )
+                    .redirectionEndpoint(redirect -> redirect.baseUri("/oauth2/callback/*"))
+                    .successHandler(oAuth2AuthenticationSuccessHandler)
+                    .failureHandler(oAuth2AuthenticationFailureHandler)
+            )
+            .logout(logout -> logout
+                    .logoutUrl("/logout") // Ensure this matches the frontend request
+                    .clearAuthentication(true) // Clear authentication
+                    .invalidateHttpSession(true) // Invalidate session
+                    .deleteCookies("JSESSIONID") // Optionally, delete cookies
+                    .logoutSuccessHandler((request, response, authentication) -> {
+                        log.info("inside logout success handler::");
+                        HttpSession session = request.getSession(false);
+                        log.info("session::" + session);
+                        if (session != null) {
+                            sessionRepository.deleteById(session.getId()); // Remove session from Redis
+                            session.invalidate(); // Invalidate the session
+                        }
+                        response.setStatus(HttpServletResponse.SC_FOUND); // 302 Redirect
+                        response.setHeader("Location", "/login?logout"); // Redirect to login page
+                    })
+            )
+            .authorizeHttpRequests(authz -> authz
+                    // Define secured endpoints
+                    .requestMatchers("/secure/**").authenticated() // Secure endpoints that require login
+                    // Default authorization rule for all other requests
+                    .anyRequest().permitAll()
+            ).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
     }
 
     // Define CORS configuration

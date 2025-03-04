@@ -91,7 +91,8 @@ public enum PlatformErrorMessages {
     INVALID_CREDENTIAL_ISSUER_WELLKNOWN_RESPONSE_EXCEPTION(PlatformConstants.PREFIX + "041", "Invalid Wellknown from Issuer"),
     INVALID_AUTHORIZATION_SERVER_WELLKNOWN_RESPONSE_EXCEPTION(PlatformConstants.PREFIX + "042", "Invalid Authorization Server well-known from server:"),
     MIMOTO_FETCHING_TOKEN_EXCEPTION(PlatformConstants.PREFIX + "043", "Exception occurred when fetching the Token"),
-    OAUTH2_AUTHENTICATION_EXCEPTION(PlatformConstants.PREFIX + "044", "Failed to authenticate user via OAuth Identity Provider during login");
+    OAUTH2_AUTHENTICATION_EXCEPTION(PlatformConstants.PREFIX + "044", "Failed to authenticate user via OAuth Identity Provider during login"),
+    LOGIN_SESSION_EXCEPTION(PlatformConstants.PREFIX + "045", "Exception occurred when fetching the login session details");
 
     /** The error message. */
     private final String errorMessage;
