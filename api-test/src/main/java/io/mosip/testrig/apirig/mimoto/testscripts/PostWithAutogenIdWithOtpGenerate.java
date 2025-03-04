@@ -34,7 +34,7 @@ import io.mosip.testrig.apirig.utils.OutputValidationUtil;
 import io.mosip.testrig.apirig.utils.ReportUtil;
 import io.restassured.response.Response;
 
-public class PostWithAutogenIdWithOtpGenerate extends AdminTestUtil implements ITest {
+public class PostWithAutogenIdWithOtpGenerate extends MimotoUtil implements ITest {
 	private static final Logger logger = Logger.getLogger(PostWithAutogenIdWithOtpGenerate.class);
 	protected String testCaseName = "";
 	public String idKeyName = null;
@@ -236,9 +236,9 @@ public class PostWithAutogenIdWithOtpGenerate extends AdminTestUtil implements I
 				&& MimotoUtil.isOTPEnabled().equals("true")) {
 			try {
 				long delayTime = Long.parseLong(properties.getProperty("Delaytime"));
-				if (!BaseTestCase.isTargetEnvLTS())
-					delayTime = Long.parseLong(properties.getProperty("uinGenDelayTime"))
-							* Long.parseLong(properties.getProperty("uinGenMaxLoopCount"));
+//				if (!BaseTestCase.isTargetEnvLTS())
+//					delayTime = Long.parseLong(properties.getProperty("uinGenDelayTime"))
+//							* Long.parseLong(properties.getProperty("uinGenMaxLoopCount"));
 				logger.info("waiting for " + delayTime + " mili secs after VID Generation In RESIDENT SERVICES");
 				Thread.sleep(delayTime);
 			} catch (Exception e) {
