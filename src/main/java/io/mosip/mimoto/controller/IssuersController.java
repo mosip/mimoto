@@ -5,8 +5,7 @@ import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfigurationResponse;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
+import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
@@ -23,7 +22,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 
@@ -63,7 +64,7 @@ public class IssuersController {
     @GetMapping(value = "/{issuer-id}/well-known-proxy", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CredentialIssuerWellKnownResponse> getIssuerWellknown(@PathVariable("issuer-id") String issuerId) {
         try {
-            CredentialIssuerConfigurationResponse issuerConfigurationResponse = issuersService.getIssuerConfiguration(issuerId);
+            CredentialIssuerConfiguration issuerConfigurationResponse = issuersService.getIssuerConfiguration(issuerId);
             CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse(
                     issuerConfigurationResponse.getCredentialIssuer(),
                     issuerConfigurationResponse.getAuthorizationServers(),
@@ -101,14 +102,32 @@ public class IssuersController {
 
     @Operation(summary = SwaggerLiteralConstants.ISSUERS_GET_ISSUER_CONFIGURATION_SUMMARY, description = SwaggerLiteralConstants.ISSUERS_GET_ISSUER_CONFIGURATION_DESCRIPTION)
     @GetMapping(value = "/{issuer-id}/configuration", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ResponseWrapper<CredentialIssuerConfigurationResponse>> getIssuerConfiguration(@PathVariable("issuer-id") String issuerId) {
-        ResponseWrapper<CredentialIssuerConfigurationResponse> responseWrapper = new ResponseWrapper<>();
+    public ResponseEntity<ResponseWrapper<CredentialIssuerConfigurationResponseDTO>> getIssuerConfiguration(@PathVariable("issuer-id") String issuerId) {
+        ResponseWrapper<CredentialIssuerConfigurationResponseDTO> responseWrapper = new ResponseWrapper<>();
         try {
-            CredentialIssuerConfigurationResponse issuerConfigurationResponse = issuersService.getIssuerConfiguration(issuerId);
-            responseWrapper.setResponse(issuerConfigurationResponse);
+            CredentialIssuerConfiguration issuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
+            List<CredentialsResponse> credentials = new LinkedList<>();
+
+            issuerConfiguration.getCredentialConfigurationsSupported().forEach((key, value) -> {
+                List<CredentialDisplayResponse> display = value.getDisplay().stream()
+                        .map(displayConfig -> new CredentialDisplayResponse(
+                                displayConfig.getName(),
+                                displayConfig.getLocale(),
+                                displayConfig.getLogo().getUrl()))
+                        .collect(Collectors.toList());
+                CredentialsResponse credential = new CredentialsResponse(key,
+                        value.getScope(), display);
+                credentials.add(credential);
+            });
+
+            CredentialIssuerConfigurationResponseDTO credentialIssuerConfigurationResponseDTO = new CredentialIssuerConfigurationResponseDTO(
+                    credentials,
+                    issuerConfiguration.getAuthorizationServerWellKnownResponse().getAuthorizationEndpoint(),
+                    issuerConfiguration.getAuthorizationServerWellKnownResponse().getGrantTypesSupported());
+            responseWrapper.setResponse(credentialIssuerConfigurationResponseDTO);
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception exception) {
-            log.error("Exception occurred while fetching issuers configurations - " + exception);
+            log.error("Exception occurred while fetching issuers configurations - ", exception);
             String[] errorObj = Utilities.handleExceptionWithErrorCode(exception, INVALID_ISSUER_ID_CONFIGURATION.getCode());
             List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
             responseWrapper.setResponse(null);

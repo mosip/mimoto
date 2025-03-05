@@ -86,7 +86,7 @@ public class CredentialServiceTest {
     String tokenEndpoint, issuerId, expectedExceptionMsg;
     IssuerDTO issuerDTO;
     HttpEntity<MultiValueMap<String, String>> mockRequest;
-    CredentialIssuerConfigurationResponse issuerConfig;
+    CredentialIssuerConfiguration issuerConfig;
 
     @Before
     public void setUp() throws Exception {
