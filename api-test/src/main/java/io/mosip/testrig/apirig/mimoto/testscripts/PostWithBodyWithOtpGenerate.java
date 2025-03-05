@@ -33,7 +33,7 @@ import io.mosip.testrig.apirig.utils.OutputValidationUtil;
 import io.mosip.testrig.apirig.utils.ReportUtil;
 import io.restassured.response.Response;
 
-public class PostWithBodyWithOtpGenerate extends AdminTestUtil implements ITest {
+public class PostWithBodyWithOtpGenerate extends MimotoUtil implements ITest {
 	private static final Logger logger = Logger.getLogger(PostWithBodyWithOtpGenerate.class);
 	protected String testCaseName = "";
 	public Response response = null;
@@ -110,10 +110,12 @@ public class PostWithBodyWithOtpGenerate extends AdminTestUtil implements ITest 
 		sendOtpEndPoint = otpReqJson.getString("sendOtpEndPoint");
 		otpReqJson.remove("sendOtpEndPoint");
 		Response otpResponse = null;
+		
+		String inputReqJson = getJsonFromTemplate(otpReqJson.toString(), sendOtpReqTemplate);
+		inputReqJson = MimotoUtil.inputstringKeyWordHandeler(inputReqJson, testCaseName);
 
-		otpResponse = postWithBodyAndCookie(ApplnURI + sendOtpEndPoint,
-				getJsonFromTemplate(otpReqJson.toString(), sendOtpReqTemplate), COOKIENAME, GlobalConstants.RESIDENT,
-				testCaseDTO.getTestCaseName());
+		otpResponse = postWithBodyAndCookie(ApplnURI + sendOtpEndPoint, inputReqJson, COOKIENAME,
+				GlobalConstants.RESIDENT, testCaseDTO.getTestCaseName());
 
 		JSONObject res = new JSONObject(testCaseDTO.getOutput());
 		String sendOtpResp = null, sendOtpResTemplate = null;
@@ -147,12 +149,15 @@ public class PostWithBodyWithOtpGenerate extends AdminTestUtil implements ITest 
 				Thread.currentThread().interrupt();
 			}
 		}
+		
+		String inputJson = getJsonFromTemplate(req.toString(), testCaseDTO.getInputTemplate());
+		inputJson = MimotoUtil.inputstringKeyWordHandeler(inputJson, testCaseName);
 
-		response = postRequestWithCookieAndHeader(ApplnURI + testCaseDTO.getEndPoint(),
-				getJsonFromTemplate(req.toString(), testCaseDTO.getInputTemplate()), COOKIENAME, testCaseDTO.getRole(),
-				testCaseDTO.getTestCaseName(), sendEsignetToken);
-		Map<String, List<OutputValidationDto>> ouputValid = OutputValidationUtil.doJsonOutputValidation(
-				response.asString(), getJsonFromTemplate(res.toString(), testCaseDTO.getOutputTemplate()), testCaseDTO,
+		response = postRequestWithCookieAndHeader(ApplnURI + testCaseDTO.getEndPoint(), inputJson, COOKIENAME,
+				testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
+		Map<String, List<OutputValidationDto>> ouputValid = OutputValidationUtil
+				.doJsonOutputValidation(response.asString(), getJsonFromTemplate(res.toString(),
+						testCaseDTO.getOutputTemplate()), testCaseDTO,
 				response.getStatusCode());
 		Reporter.log(ReportUtil.getOutputValidationReport(ouputValid));
 

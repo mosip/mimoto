@@ -33,7 +33,7 @@ import io.mosip.testrig.apirig.utils.GlobalConstants;
 import io.mosip.testrig.apirig.utils.GlobalMethods;
 import io.restassured.response.Response;
 
-public class PostWithFormDataBodyForPdfDownload extends AdminTestUtil implements ITest {
+public class PostWithFormDataBodyForPdfDownload extends MimotoUtil implements ITest {
 	private static final Logger logger = Logger.getLogger(PostWithFormDataBodyForPdfDownload.class);
 	protected String testCaseName = "";
 	public Response response = null;
@@ -94,7 +94,10 @@ public class PostWithFormDataBodyForPdfDownload extends AdminTestUtil implements
 			}
 		}
 		
-		pdf = postWithFormDataBodyForPdf(ApplnURI + testCaseDTO.getEndPoint(), getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate()), COOKIENAME,  testCaseDTO.getRole(), testCaseDTO.getTestCaseName());
+		String inputJson = getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate());
+		inputJson = MimotoUtil.inputstringKeyWordHandeler(inputJson, testCaseName);
+		
+		pdf = postWithFormDataBodyForPdf(ApplnURI + testCaseDTO.getEndPoint(), inputJson, COOKIENAME,  testCaseDTO.getRole(), testCaseDTO.getTestCaseName());
 		PdfReader pdfReader = null;
 		ByteArrayInputStream bIS = null;
 		

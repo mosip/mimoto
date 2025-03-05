@@ -40,7 +40,7 @@ import io.mosip.testrig.apirig.utils.ReportUtil;
 import io.mosip.testrig.apirig.utils.RestClient;
 import io.restassured.response.Response;
 
-public class AddIdentity extends AdminTestUtil implements ITest {
+public class AddIdentity extends MimotoUtil implements ITest {
 	private static final Logger logger = Logger.getLogger(AddIdentity.class);
 	protected String testCaseName = "";
 	public Response response = null;
@@ -124,6 +124,7 @@ public class AddIdentity extends AdminTestUtil implements ITest {
 			inputJson = replaceKeywordWithValue(inputJson, "$PHONENUMBERFORIDENTITY$", phoneNumber);
 			inputJson = replaceKeywordWithValue(inputJson, "$EMAILVALUE$", email);
 		}
+		inputJson = MimotoUtil.inputstringKeyWordHandeler(inputJson, testCaseName);
 
 		response = postWithBodyAndCookie(ApplnURI + testCaseDTO.getEndPoint(), inputJson, COOKIENAME,
 				testCaseDTO.getRole(), testCaseDTO.getTestCaseName());

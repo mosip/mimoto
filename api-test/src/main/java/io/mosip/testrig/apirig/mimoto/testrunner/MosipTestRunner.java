@@ -26,6 +26,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import io.mosip.testrig.apirig.dataprovider.BiometricDataProvider;
 import io.mosip.testrig.apirig.dbaccess.DBManager;
 import io.mosip.testrig.apirig.mimoto.utils.MimotoConfigManager;
+import io.mosip.testrig.apirig.mimoto.utils.MimotoUtil;
 import io.mosip.testrig.apirig.report.EmailableReport;
 import io.mosip.testrig.apirig.testrunner.BaseTestCase;
 import io.mosip.testrig.apirig.testrunner.ExtractResource;
@@ -35,7 +36,9 @@ import io.mosip.testrig.apirig.utils.AdminTestUtil;
 import io.mosip.testrig.apirig.utils.AuthTestsUtil;
 import io.mosip.testrig.apirig.utils.CertsUtil;
 import io.mosip.testrig.apirig.utils.GlobalConstants;
+import io.mosip.testrig.apirig.utils.GlobalMethods;
 import io.mosip.testrig.apirig.utils.JWKKeyUtil;
+import io.mosip.testrig.apirig.utils.KernelAuthentication;
 import io.mosip.testrig.apirig.utils.KeyCloakUserAndAPIKeyGeneration;
 import io.mosip.testrig.apirig.utils.KeycloakUserManager;
 import io.mosip.testrig.apirig.utils.MispPartnerAndLicenseKeyGeneration;
@@ -65,12 +68,8 @@ public class MosipTestRunner {
 	public static void main(String[] arg) {
 
 		try {
-
-			Map<String, String> envMap = System.getenv();
-			LOGGER.info("** ------------- Get ALL ENV varibales --------------------------------------------- **");
-			for (String envName : envMap.keySet()) {
-				LOGGER.info(String.format("ENV %s = %s%n", envName, envMap.get(envName)));
-			}
+			LOGGER.info("** ------------- API Test Rig Run Started --------------------------------------------- **");
+			
 			BaseTestCase.setRunContext(getRunType(), jarUrl);
 			ExtractResource.removeOldMosipTestTestResource();
 			if (getRunType().equalsIgnoreCase("JAR")) {
@@ -82,18 +81,18 @@ public class MosipTestRunner {
 			MimotoConfigManager.init();
 			suiteSetup(getRunType());
 			SkipTestCaseHandler.loadTestcaseToBeSkippedList("testCaseSkippedList.txt");
+			GlobalMethods.setModuleNameAndReCompilePattern(MimotoConfigManager.getproperty("moduleNamePattern"));
 			setLogLevels();
 
-			// For now we are not doing health check for qa-115.
-			if (BaseTestCase.isTargetEnvLTS()) {
-				HealthChecker healthcheck = new HealthChecker();
-				healthcheck.setCurrentRunningModule(BaseTestCase.currentModule);
-				Thread trigger = new Thread(healthcheck);
-				trigger.start();
-			}
+			HealthChecker healthcheck = new HealthChecker();
+			healthcheck.setCurrentRunningModule(BaseTestCase.currentModule);
+			Thread trigger = new Thread(healthcheck);
+			trigger.start();
+			
 			KeycloakUserManager.removeUser();
 			KeycloakUserManager.createUsers();
 			KeycloakUserManager.closeKeycloakInstance();
+			AdminTestUtil.getRequiredField();
 
 			// Generate device certificates to be consumed by Mock-MDS
 			PartnerRegistration.deleteCertificates();
@@ -110,9 +109,7 @@ public class MosipTestRunner {
 		}
 
 		OTPListener.bTerminate = true;
-
-		if (BaseTestCase.isTargetEnvLTS())
-			HealthChecker.bTerminate = true;
+		HealthChecker.bTerminate = true;
 
 		System.exit(0);
 
@@ -153,6 +150,12 @@ public class MosipTestRunner {
 		MispPartnerAndLicenseKeyGeneration.setLogLevel();
 		JWKKeyUtil.setLogLevel();
 		CertsUtil.setLogLevel();
+		KernelAuthentication.setLogLevel();
+		BaseTestCase.setLogLevel();
+		MimotoUtil.setLogLevel();
+		KeycloakUserManager.setLogLevel();
+		DBManager.setLogLevel();
+		BiometricDataProvider.setLogLevel();
 	}
 
 	/**
@@ -172,33 +175,13 @@ public class MosipTestRunner {
 			homeDir = new File(dir.getParent() + "/mosip/testNgXmlFiles");
 			LOGGER.info("ELSE :" + homeDir);
 		}
-		// List and sort the files
 		File[] files = homeDir.listFiles();
 		if (files != null) {
-			Arrays.sort(files, (f1, f2) -> {
-				// Customize the comparison based on file names
-				if (f1.getName().toLowerCase().contains("prerequisite")) {
-					return -1; // f1 should come before f2
-				} else if (f2.getName().toLowerCase().contains("prerequisite")) {
-					return 1; // f2 comes before f1
-				}
-				return f1.getName().compareTo(f2.getName()); // default alphabetical order
-			});
-
 			for (File file : files) {
 				TestNG runner = new TestNG();
 				List<String> suitefiles = new ArrayList<>();
-				if (file.getName().toLowerCase().contains(GlobalConstants.MIMOTO)) {
-					if (file.getName().toLowerCase().contains("prerequisite")) {
-						BaseTestCase.setReportName(GlobalConstants.MIMOTO + "-prerequisite");
-					} else {
-						// if the prerequisite total skipped/failed count is greater than zero
-						if (EmailableReport.getFailedCount() > 0 || EmailableReport.getSkippedCount() > 0) {
-							// skipAll = true;
-						}
-
-						BaseTestCase.setReportName(GlobalConstants.MIMOTO);
-					}
+				if (file.getName().toLowerCase().contains("mastertestsuite")) {
+					BaseTestCase.setReportName(GlobalConstants.MIMOTO);
 					suitefiles.add(file.getAbsolutePath());
 					runner.setTestSuites(suitefiles);
 					System.getProperties().setProperty("testng.outpur.dir", "testng-report");

@@ -10,7 +10,7 @@ OAuthDetailsRequest:
       outputTemplate: mimoto/OAuthDetailsRequest/OAuthDetailsRequestResult
       input: '{
       	"requestTime": "$TIMESTAMP$",
-      	"clientId": "$GETCLIENTIDFROMMIMOTOACTUATOR$",
+      	"clientId": "$GETCLIENTIDFORMOSIPIDFROMMIMOTOACTUATOR$",
       	"scope": "mosip_identity_vc_ldp",
       	"responseType": "code",
       	"redirectUri": "$INJIREDIRECTURI$",
