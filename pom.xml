@@ -141,7 +141,7 @@
         <dependency>
             <groupId>io.mosip</groupId>
             <artifactId>vcverifier-jar</artifactId>
-            <version>1.1.0-beta.1</version>
+            <version>1.1.0</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>

@@ -4,15 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfigurationResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
 import io.mosip.mimoto.service.impl.CredentialServiceImpl;
-import io.mosip.mimoto.service.impl.IssuerWellknownServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
+import io.mosip.mimoto.util.IssuerConfigUtil;
 import io.mosip.mimoto.util.Utilities;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,10 +48,7 @@ public class IssuersServiceTest {
     Utilities utilities;
 
     @Mock
-    IssuerWellknownServiceImpl issuerWellknownService;
-
-    @Mock
-    AuthorizationServerService authorizationServerService;
+    IssuerConfigUtil issuersConfigUtil;
 
     @Spy
     ObjectMapper objectMapper;
@@ -59,7 +56,7 @@ public class IssuersServiceTest {
     List<String> issuerConfigRelatedFields = List.of("additional_headers", "authorization_endpoint", "authorization_audience", "credential_endpoint", "credential_audience");
 
     String issuerWellKnownUrl, issuerId, credentialIssuerHostUrl, authServerWellknownUrl, issuersConfigJsonValue;
-    CredentialIssuerConfigurationResponse expectedCredentialIssuerConfigurationResponse;
+    CredentialIssuerConfiguration expectedCredentialIssuerConfiguration;
     IssuersDTO issuers = new IssuersDTO();
 
     CredentialIssuerWellKnownResponse expectedCredentialIssuerWellKnownResponse;
@@ -78,11 +75,11 @@ public class IssuersServiceTest {
 
         expectedCredentialIssuerWellKnownResponse = getCredentialIssuerWellKnownResponseDto(issuerId,
                 Map.of("CredentialType1", getCredentialSupportedResponse("CredentialType1")));
-        Mockito.when(issuerWellknownService.getWellknown(credentialIssuerHostUrl))
+        Mockito.when(issuersConfigUtil.getIssuerWellknown(credentialIssuerHostUrl))
                 .thenReturn(expectedCredentialIssuerWellKnownResponse);
 
-        expectedCredentialIssuerConfigurationResponse = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
-        Mockito.when(authorizationServerService.getWellknown(authServerWellknownUrl)).thenReturn(expectedCredentialIssuerConfigurationResponse.getAuthorizationServerWellKnownResponse());
+        expectedCredentialIssuerConfiguration = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
+        Mockito.when(issuersConfigUtil.getAuthServerWellknown(authServerWellknownUrl)).thenReturn(expectedCredentialIssuerConfiguration.getAuthorizationServerWellKnownResponse());
     }
 
     @Test
@@ -132,7 +129,7 @@ public class IssuersServiceTest {
     }
 
     @Test
-    public void shouldReturnIssuerDataAndConfigForAllIssuer() throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+    public void shouldReturnIssuerDataAndConfigForAllIssuer() throws ApiNotAccessibleException, IOException {
         IssuersDTO expectedIssuers = new IssuersDTO();
         List<IssuerDTO> issuers = new ArrayList<>(List.of(getIssuerConfigDTO("Issuer3"), getIssuerConfigDTO("Issuer4")));
         expectedIssuers.setIssuers(issuers);
@@ -176,13 +173,13 @@ public class IssuersServiceTest {
 
     @Test
     public void shouldReturnProperCredentialConfigurationsForTheRequestedIssuer() throws AuthorizationServerWellknownResponseException, ApiNotAccessibleException, IOException, InvalidWellknownResponseException {
-        CredentialIssuerConfigurationResponse actualCredentialIssuerConfigurationResponse = issuersService.getIssuerConfiguration("Issuer3id");
+        CredentialIssuerConfiguration actualCredentialIssuerConfiguration = issuersService.getIssuerConfiguration("Issuer3id");
 
-        assertEquals(expectedCredentialIssuerConfigurationResponse, actualCredentialIssuerConfigurationResponse);
+        assertEquals(expectedCredentialIssuerConfiguration, actualCredentialIssuerConfiguration);
     }
 
     @Test
-    public void issuersConfigShouldThrowExceptionIfAnyErrorOccurredWhileFetchingIssuersWellknown() throws ApiNotAccessibleException, IOException {
+    public void issuersConfigShouldThrowExceptionIfAnyErrorOccurredWhileFetchingIssuersWellknown() {
         Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(null);
 
         ApiNotAccessibleException actualException = assertThrows(ApiNotAccessibleException.class, () -> {
@@ -196,7 +193,7 @@ public class IssuersServiceTest {
 
     @Test
     public void issuersConfigShouldThrowExceptionIfAnyErrorOccurredWhileFetchingIssuersAuthorizationServerWellknown() throws IOException, AuthorizationServerWellknownResponseException {
-        Mockito.when(authorizationServerService.getWellknown(authServerWellknownUrl)).thenThrow(new AuthorizationServerWellknownResponseException("well-known api is not accessible"));
+        Mockito.when(issuersConfigUtil.getAuthServerWellknown(authServerWellknownUrl)).thenThrow(new AuthorizationServerWellknownResponseException("well-known api is not accessible"));
 
         AuthorizationServerWellknownResponseException actualException = assertThrows(AuthorizationServerWellknownResponseException.class, () -> {
             issuersService.getIssuerConfiguration("Issuer3id");
@@ -204,6 +201,6 @@ public class IssuersServiceTest {
 
         assertEquals("RESIDENT-APP-042 --> Invalid Authorization Server well-known from server:\n" +
                 "well-known api is not accessible", actualException.getMessage());
-        verify(authorizationServerService, times(1)).getWellknown(authServerWellknownUrl);
+        verify(issuersConfigUtil, times(1)).getAuthServerWellknown(authServerWellknownUrl);
     }
 }
