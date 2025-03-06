@@ -151,13 +151,11 @@ public class GetWithParam extends MimotoUtil implements ITest {
 					if (MimotoConfigManager.isInServiceNotDeployedList("sunbirdrc"))
 						throw new SkipException(GlobalConstants.SERVICE_NOT_DEPLOYED_MESSAGE);
 
-					if (MimotoConfigManager.getSunbirdBaseURL() != null && !MimotoConfigManager.getSunbirdBaseURL().isBlank())
+					if (MimotoConfigManager.getSunbirdBaseURL() != null
+							&& !MimotoConfigManager.getSunbirdBaseURL().isBlank())
 						tempUrl = MimotoConfigManager.getSunbirdBaseURL();
-						//Once sunbird registry is pointing to specific env, remove the above line and uncomment below line
-						// tempUrl = ApplnURI.replace(GlobalConstants.API_INTERNAL,
-						// MimotoConfigManager.getSunBirdBaseURL());
-						testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$SUNBIRDBASEURL$", ""));
-					}
+					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$SUNBIRDBASEURL$", ""));
+				}
 
 					response = getWithPathParamAndCookie(tempUrl + testCaseDTO.getEndPoint(), inputJson, auditLogCheck,
 							COOKIENAME, testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);
