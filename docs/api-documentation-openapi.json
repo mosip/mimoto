@@ -60,13 +60,17 @@
                                             "type": "string"
                                         },
                                         "str": {
-                                            "type": "null"
+                                            "type": "string",
+                                            "nullable": true
                                         },
                                         "responsetime": {
-                                            "type": "null"
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "nullable": true
                                         },
                                         "metadata": {
-                                            "type": "null"
+                                            "type": "object",
+                                            "nullable": true
                                         },
                                         "response": {
                                             "type": "object",
@@ -80,7 +84,19 @@
                                             }
                                         },
                                         "errors": {
-                                            "type": "null"
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "errorCode": {
+                                                        "type": "string"
+                                                    },
+                                                    "errorMessage": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "nullable": true
                                         }
                                     },
                                     "x-examples": {
@@ -140,17 +156,29 @@
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "verifiers": [
-                                            {
-                                                "client_id": "string",
-                                                "redirect_uris": [
-                                                    "string"
-                                                ],
-                                                "response_uris": [
-                                                    "string"
-                                                ]
+                                        "verifiers": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "client_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "redirect_uris": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "response_uris": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
                                             }
-                                        ]
+                                        }
                                     }
                                 },
                                 "examples": {
@@ -435,13 +463,17 @@
                                             "type": "string"
                                         },
                                         "str": {
-                                            "type": "null"
+                                            "type": "string",
+                                            "nullable": true
                                         },
                                         "responsetime": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "nullable": true
                                         },
                                         "metadata": {
-                                            "type": "null"
+                                            "type": "object",
+                                            "nullable": true
                                         },
                                         "response": {
                                             "type": "object",
@@ -455,7 +487,19 @@
                                             }
                                         },
                                         "errors": {
-                                            "type": "null"
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "errorCode": {
+                                                        "type": "string"
+                                                    },
+                                                    "errorMessage": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "nullable": true
                                         }
                                     },
                                     "x-examples": {
@@ -537,21 +581,6 @@
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "id": {
-                                            "type": "null"
-                                        },
-                                        "version": {
-                                            "type": "null"
-                                        },
-                                        "str": {
-                                            "type": "null"
-                                        },
-                                        "responsetime": {
-                                            "type": "string"
-                                        },
-                                        "metadata": {
-                                            "type": "null"
-                                        },
                                         "response": {
                                             "type": "object",
                                             "properties": {
@@ -563,24 +592,19 @@
                                                 },
                                                 "statusCode": {
                                                     "type": "string"
+                                                },
+                                                "errors": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {}
+                                                    }
                                                 }
-                                            }
-                                        },
-                                        "errors": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {}
                                             }
                                         }
                                     },
                                     "x-examples": {
                                         "Example 1": {
-                                            "id": null,
-                                            "version": null,
-                                            "str": null,
-                                            "responsetime": "2022-10-31T05:10:58.337Z",
-                                            "metadata": null,
                                             "response": {
                                                 "id": "2057135194",
                                                 "requestId": "2bc3bb7f-6156-46d1-ae03-bf7b76e0c257",
@@ -593,11 +617,6 @@
                                 "examples": {
                                     "success response": {
                                         "value": {
-                                            "id": null,
-                                            "version": null,
-                                            "str": null,
-                                            "responsetime": "2022-10-31T05:10:58.337Z",
-                                            "metadata": null,
                                             "response": {
                                                 "id": "2057135194",
                                                 "requestId": "2bc3bb7f-6156-46d1-ae03-bf7b76e0c257",
@@ -1310,88 +1329,49 @@
         "/allProperties": {
             "get": {
                 "operationId": "getAllProperties",
-                "responses": {},
-                "description": "get all configurable properties for inji.",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "id": {
-                                        "type": "string"
-                                    },
-                                    "version": {
-                                        "type": "string"
-                                    },
-                                    "str": {
-                                        "type": "null"
-                                    },
-                                    "responsetime": {
-                                        "type": "string"
-                                    },
-                                    "metadata": {
-                                        "type": "null"
-                                    },
-                                    "response": {
-                                        "type": "object",
-                                        "properties": {
-                                            "internal.auth.types.allowed": {
-                                                "type": "string"
-                                            },
-                                            "auth.types.allowed": {
-                                                "type": "string"
-                                            },
-                                            "ekyc.auth.types.allowed": {
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved all configurable properties for Inji.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "response": {
+                                            "type": "object",
+                                            "additionalProperties": {
                                                 "type": "string"
                                             }
-                                        }
-                                    },
-                                    "errors": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "object",
-                                            "properties": {}
+                                        },
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
                                         }
                                     }
                                 },
-                                "x-examples": {
-                                    "Example 1": {
-                                        "id": "mosip.inji.properties",
-                                        "version": "v1",
-                                        "str": null,
-                                        "responsetime": "2022-10-31T05:22:21.009Z",
-                                        "metadata": null,
-                                        "response": {
-                                            "internal.auth.types.allowed": "otp,bio-Finger,bio-Iris,bio-Face",
-                                            "auth.types.allowed": "demo,otp,bio-Finger,bio-Iris,bio-Face",
-                                            "ekyc.auth.types.allowed": "demo,otp,bio-Finger,bio-Iris,bio-Face"
-                                        },
-                                        "errors": []
-                                    }
-                                }
-                            },
-                            "examples": {
-                                "example-1": {
-                                    "value": {
-                                        "id": "mosip.inji.properties",
-                                        "version": "v1",
-                                        "str": null,
-                                        "responsetime": "2022-10-31T05:22:21.009Z",
-                                        "metadata": null,
-                                        "response": {
-                                            "internal.auth.types.allowed": "otp,bio-Finger,bio-Iris,bio-Face",
-                                            "auth.types.allowed": "demo,otp,bio-Finger,bio-Iris,bio-Face",
-                                            "ekyc.auth.types.allowed": "demo,otp,bio-Finger,bio-Iris,bio-Face"
-                                        },
-                                        "errors": []
+                                "examples": {
+                                    "example-1": {
+                                        "value": {
+                                            "response": {
+                                                "internal.auth.types.allowed": "otp,bio-Finger,bio-Iris,bio-Face",
+                                                "auth.types.allowed": "demo,otp,bio-Finger,bio-Iris,bio-Face",
+                                                "ekyc.auth.types.allowed": "demo,otp,bio-Finger,bio-Iris,bio-Face"
+                                            },
+                                            "errors": []
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 },
-                "summary": "Get all Inji app properties"
+                "description": "Get all configurable properties for Inji.",
+                "summary": "Get all Inji app properties",
+                "tags": [
+                    "Inji Config"
+                ]
             }
         },
         "/issuers": {
@@ -1419,45 +1399,89 @@
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "issuers": [
-                                            {
-                                                "issuer_id": "string",
-                                                "protocol": "string",
-                                                "display": [
-                                                    {
-                                                        "name": "string",
-                                                        "logo": {
-                                                            "url": "string",
-                                                            "alt_text": "string"
-                                                        },
-                                                        "title": "string",
-                                                        "description": "string",
-                                                        "language": "string"
+                                        "issuers": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "issuer_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "protocol": {
+                                                        "type": "string"
+                                                    },
+                                                    "display": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "logo": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "url": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "alt_text": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "title": {
+                                                                    "type": "string"
+                                                                },
+                                                                "description": {
+                                                                    "type": "string"
+                                                                },
+                                                                "language": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "client_id": {
+                                                        "type": "string"
+                                                    },
+                                                    "wellknown_endpoint": {
+                                                        "type": "string"
+                                                    },
+                                                    "redirect_uri": {
+                                                        "type": "string"
+                                                    },
+                                                    "authorization_audience": {
+                                                        "type": "string"
+                                                    },
+                                                    "token_endpoint": {
+                                                        "type": "string"
+                                                    },
+                                                    "proxy_token_endpoint": {
+                                                        "type": "string"
+                                                    },
+                                                    "client_alias": {
+                                                        "type": "string"
+                                                    },
+                                                    "qr_code_type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "OnlineSharing",
+                                                            "EmbeddedVC",
+                                                            "None"
+                                                        ]
+                                                    },
+                                                    "enabled": {
+                                                        "type": "string"
+                                                    },
+                                                    "credential_issuer": {
+                                                        "type": "string"
+                                                    },
+                                                    "credential_issuer_host": {
+                                                        "type": "string"
                                                     }
-                                                ],
-                                                "client_id": "string",
-                                                "redirect_uri": "string",
-                                                "scopes_supported": [
-                                                    "string"
-                                                ],
-                                                "authorization_endpoint": "string",
-                                                "token_endpoint": "string",
-                                                "proxy_token_endpoint": "string",
-                                                "credential_endpoint": "string",
-                                                "credential_type": [
-                                                    "string"
-                                                ],
-                                                "credential_audience": "string",
-                                                "client_alias": "string",
-                                                "additional_headers": {
-                                                    "additionalProp1": "string",
-                                                    "additionalProp2": "string",
-                                                    "additionalProp3": "string"
-                                                },
-                                                "wellknown_endpoint": "string",
-                                                "credential_issuer": "string"
+                                                }
                                             }
-                                        ]
+                                        }
                                     }
                                 },
                                 "x-examples": {
@@ -1470,7 +1494,7 @@
                                         "response": {
                                             "issuers": [
                                                 {
-                                                    "issuer_id": "MOSIPInsurance",
+                                                    "credential_issuer": "MOSIPInsurance",
                                                     "protocol": "OpenId4VCI",
                                                     "display": [
                                                         {
@@ -1485,11 +1509,10 @@
                                                         }
                                                     ],
                                                     "client_id": "3yz7-j3xRzU3SODdoNgSGvO_cD8UijH3AIWRDAg1x-M",
-                                                    ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer",
-                                                    "credential_issuer": "http://localhost:8088"
+                                                    "wellknown_endpoint": "http://localhost:8088/.well-known/openid-credential-issuer"
                                                 },
                                                 {
-                                                    "issuer_id": "MOSIPNationalID",
+                                                    "credential_issuer": "MOSIPNationalID",
                                                     "protocol": "OpenId4VCI",
                                                     "display": [
                                                         {
@@ -1504,13 +1527,12 @@
                                                         }
                                                     ],
                                                     "client_id": "3yz7-j3xRzU3SODdoNgSGvO_cD8UijH3AIWRDAg1x-M",
-                                                    ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer",
-                                                    "credential_issuer": "http://localhost:8088"
+                                                    "wellknown_endpoint": "http://localhost:8088/.well-known/openid-credential-issuer"
                                                 }
                                             ]
-                                        }
-                                    },
-                                    "errors": null
+                                        },
+                                        "errors": null
+                                    }
                                 },
                                 "examples": {
                                     "Success response": {
@@ -1523,7 +1545,7 @@
                                             "response": {
                                                 "issuers": [
                                                     {
-                                                        "issuer_id": "MOSIPInsurance",
+                                                        "credential_issuer": "MOSIPInsurance",
                                                         "protocol": "OpenId4VCI",
                                                         "display": [
                                                             {
@@ -1538,11 +1560,10 @@
                                                             }
                                                         ],
                                                         "client_id": "3yz7-j3xRzU3SODdoNgSGvO_cD8UijH3AIWRDAg1x-M",
-                                                        ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer",
-                                                        "credential_issuer": "http://localhost:8088"
+                                                        ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer"
                                                     },
                                                     {
-                                                        "issuer_id": "MOSIPNationalID",
+                                                        "credential_issuer": "MOSIPNationalID",
                                                         "protocol": "OpenId4VCI",
                                                         "display": [
                                                             {
@@ -1557,13 +1578,11 @@
                                                             }
                                                         ],
                                                         "client_id": "3yz7-j3xRzU3SODdoNgSGvO_cD8UijH3AIWRDAg1x-M",
-                                                        ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer",
-                                                        "credential_issuer": "http://localhost:8088"
+                                                        ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer"
                                                     }
                                                 ]
                                             }
-                                        },
-                                        "errors": null
+                                        }
                                     },
                                     "Failure response": {
                                         "value": {
@@ -1604,7 +1623,7 @@
                 "tags": [
                     "Trusted Issuers"
                 ],
-                "description": "This API provides the complete configuration details for the specific issuers passed in the path variable.",
+                "description": "This API provides the complete configuration details for the specific issuers passed in the path variable",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1613,54 +1632,104 @@
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "issuers": [
-                                            {
-                                                "credential_issuer": "string",
-                                                "protocol": "string",
-                                                "display": [
-                                                    {
-                                                        "name": "string",
-                                                        "logo": {
-                                                            "url": "string",
-                                                            "alt_text": "string"
-                                                        },
-                                                        "title": "string",
-                                                        "description": "string",
-                                                        "language": "string"
-                                                    }
-                                                ],
-                                                "client_id": "string",
-                                                "redirect_uri": "string",
-                                                "scopes_supported": [
-                                                    "string"
-                                                ],
-                                                "authorization_endpoint": "string",
-                                                "authorization_audience": "string",
-                                                "token_endpoint": "string",
-                                                "proxy_token_endpoint": "string",
-                                                "credential_endpoint": "string",
-                                                "credential_type": [
-                                                    "string"
-                                                ],
-                                                "credential_audience": "string",
-                                                "client_alias": "string",
-                                                "additional_headers": {
-                                                    "additionalProp1": "string",
-                                                    "additionalProp2": "string",
-                                                    "additionalProp3": "string"
+                                        "response": {
+                                            "type": "object",
+                                            "properties": {
+                                                "issuer_id": {
+                                                    "type": "string"
                                                 },
-                                                "wellknown_endpoint": "string"
+                                                "protocol": {
+                                                    "type": "string"
+                                                },
+                                                "display": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "logo": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "url": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "alt_text": {
+                                                                        "type": "string"
+                                                                    }
+                                                                }
+                                                            },
+                                                            "title": {
+                                                                "type": "string"
+                                                            },
+                                                            "description": {
+                                                                "type": "string"
+                                                            },
+                                                            "language": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "client_id": {
+                                                    "type": "string"
+                                                },
+                                                "wellknown_endpoint": {
+                                                    "type": "string"
+                                                },
+                                                "redirect_uri": {
+                                                    "type": "string"
+                                                },
+                                                "authorization_audience": {
+                                                    "type": "string"
+                                                },
+                                                "token_endpoint": {
+                                                    "type": "string"
+                                                },
+                                                "proxy_token_endpoint": {
+                                                    "type": "string"
+                                                },
+                                                "client_alias": {
+                                                    "type": "string"
+                                                },
+                                                "qr_code_type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "OnlineSharing",
+                                                        "EmbeddedVC",
+                                                        "None"
+                                                    ]
+                                                },
+                                                "enabled": {
+                                                    "type": "boolean"
+                                                },
+                                                "credential_issuer": {
+                                                    "type": "string"
+                                                },
+                                                "credential_issuer_host": {
+                                                    "type": "string"
+                                                }
                                             }
-                                        ]
+                                        },
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "code": {
+                                                        "type": "string"
+                                                    },
+                                                    "message": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 },
                                 "x-examples": {
                                     "Example 1": {
-                                        "id": "mosip.mimoto.issuers",
-                                        "version": "v1",
-                                        "str": null,
-                                        "responsetime": "2024-04-25T05:56:55.890Z",
-                                        "metadata": null,
                                         "response": {
                                             "issuer_id": "ESignet",
                                             "protocol": "OpenId4VCI",
@@ -1694,36 +1763,6 @@
                                                     "title": "MOSIP क्रेडेंशियल डाउनलोड करेंं",
                                                     "description": "यूआईएन या वीआईडी प्रदान करके क्रेडेंशियल डाउनलोड करें",
                                                     "language": "hi"
-                                                },
-                                                {
-                                                    "name": "e-Signet",
-                                                    "logo": {
-                                                        "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
-                                                        "alt_text": "mosip ಲೋಗೋ"
-                                                    },
-                                                    "title": "MOSIP ರುಜುವಾತುಗಳನ್ನು ಡೌನ್ಲೋಡ್ ಮಾಡಿ",
-                                                    "description": "UIN ಅಥವಾ VID ಒದಗಿಸುವ ಮೂಲಕ ರುಜುವಾತುಗಳನ್ನು ಡೌನ್ಲೋಡ್ ಮಾಡಿ",
-                                                    "language": "kn"
-                                                },
-                                                {
-                                                    "name": "e-Signet",
-                                                    "logo": {
-                                                        "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
-                                                        "alt_text": "mosip லோகோ"
-                                                    },
-                                                    "title": "MOSIP சான்றுகளைப் பதிவிறக்கவும்",
-                                                    "description": "UIN அல்லது VIDஐ வழங்குவதன் மூலம் நற்சான்றிதழ்களைப் பதிவிறக்கவும்",
-                                                    "language": "ta"
-                                                },
-                                                {
-                                                    "name": "e-Signet",
-                                                    "logo": {
-                                                        "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
-                                                        "alt_text": "logo ng mosip"
-                                                    },
-                                                    "title": "I-download ang Mga Kredensyal ng MOSIP",
-                                                    "description": "Mag-download ng mga kredensyal sa pamamagitan ng pagbibigay ng UIN o VID",
-                                                    "language": "fil"
                                                 }
                                             ],
                                             "client_id": "*****",
@@ -1745,8 +1784,7 @@
                                             "additional_headers": {
                                                 "Accept": "application/json"
                                             },
-                                            ".well-known": "https://esignet.collab.mosip.net/.well-known/openid-credential-issuer",
-                                            "credential_issuer": "https://esignet.collab.mosip.net"
+                                            "wellknown_endpoint": "https://esignet.collab.mosip.net/.well-known/openid-credential-issuer"
                                         },
                                         "errors": []
                                     },
@@ -1761,7 +1799,7 @@
                                             "responsetime": "2024-04-25T05:56:55.890Z",
                                             "metadata": null,
                                             "response": {
-                                                "issuer_id": "ESignet",
+                                                "issuer_id": "mosip.mimoto.issuers",
                                                 "protocol": "OpenId4VCI",
                                                 "display": [
                                                     {
@@ -1827,10 +1865,6 @@
                                                 ],
                                                 "client_id": "DEqVWfdKe9cQWikLdjak3vlDF0Pq7jtnwTcGdEXoT1I",
                                                 "redirect_uri": "io.mosip.residentapp.inji://oauthredirect",
-                                                "scopes_supported": [
-                                                    "mosip_identity_vc_ldp"
-                                                ],
-                                                "authorization_endpoint": "https://esignet.collab.mosip.net/authorize",
                                                 "authorization_audience": "https://esignet.collab.mosip.net/v1/esignet/oauth/v2/token",
                                                 "token_endpoint": "https://api.collab.mosip.net/v1/mimoto/get-token/ESignet",
                                                 "proxy_token_endpoint": "https://esignet.collab.mosip.net/v1/esignet/oauth/v2/token",
@@ -1844,12 +1878,10 @@
                                                 "additional_headers": {
                                                     "Accept": "application/json"
                                                 },
-                                                ".well-known": "https://esignet.collab.mosip.net/.well-known/openid-credential-issuer",
-                                                "credential_issuer": "https://esignet.collab.mosip.net"
+                                                "wellknown_endpoint": "https://esignet.collab.mosip.net/.well-known/openid-credential-issuer"
                                             },
                                             "errors": []
-                                        },
-                                        "errors": null
+                                        }
                                     },
                                     "Failure response": {
                                         "value": {
@@ -1890,8 +1922,7 @@
                 "tags": [
                     "Trusted Issuers"
                 ],
-                "deprecated": true,
-                "description": "This API fetches and allows searching for Credential Types offered by the issuer, all sourced from the issuer's well-known configuration. Since version 0.16.0, this endpoint is deprecated and will be removed in a future release. Use issuers new endpoint issuers/{issuer-id}/configuration instead.",
+                "description": "This API fetches and allows searching for Credential Types offered by the issuer, all sourced from the issuer's well-known configuration.",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1899,8 +1930,131 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "errors": {
-                                        "type": "null"
+                                    "properties": {
+                                        "credential_issuer": {
+                                            "type": "string"
+                                        },
+                                        "authorization_servers": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "credential_endpoint": {
+                                            "type": "string"
+                                        },
+                                        "credential_configurations_supported": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "format": {
+                                                        "type": "string"
+                                                    },
+                                                    "scope": {
+                                                        "type": "string"
+                                                    },
+                                                    "doctype": {
+                                                        "type": "string"
+                                                    },
+                                                    "proof_types_supported": {
+                                                        "type": "object",
+                                                        "additionalProperties": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "proof_signing_alg_values_supported": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "claims": {
+                                                        "type": "object"
+                                                    },
+                                                    "credential_definition": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "type": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "credentialSubject": {
+                                                                "type": "object",
+                                                                "additionalProperties": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "display": {
+                                                                            "type": "array",
+                                                                            "items": {
+                                                                                "type": "object",
+                                                                                "properties": {
+                                                                                    "name": {
+                                                                                        "type": "string"
+                                                                                    },
+                                                                                    "locale": {
+                                                                                        "type": "string"
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "display": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "locale": {
+                                                                    "type": "string"
+                                                                },
+                                                                "logo": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "url": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "alt_text": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "background_image": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "uri": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "background_color": {
+                                                                    "type": "string"
+                                                                },
+                                                                "text_color": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "order": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 },
                                 "examples": {
