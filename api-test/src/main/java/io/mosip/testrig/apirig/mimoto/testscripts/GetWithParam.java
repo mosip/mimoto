@@ -35,7 +35,7 @@ import io.mosip.testrig.apirig.utils.OutputValidationUtil;
 import io.mosip.testrig.apirig.utils.ReportUtil;
 import io.restassured.response.Response;
 
-public class GetWithParam extends AdminTestUtil implements ITest {
+public class GetWithParam extends MimotoUtil implements ITest {
 	private static final Logger logger = Logger.getLogger(GetWithParam.class);
 	protected String testCaseName = "";
 	public Response response = null;
@@ -151,13 +151,11 @@ public class GetWithParam extends AdminTestUtil implements ITest {
 					if (MimotoConfigManager.isInServiceNotDeployedList("sunbirdrc"))
 						throw new SkipException(GlobalConstants.SERVICE_NOT_DEPLOYED_MESSAGE);
 
-					if (MimotoConfigManager.getSunbirdBaseURL() != null && !MimotoConfigManager.getSunbirdBaseURL().isBlank())
+					if (MimotoConfigManager.getSunbirdBaseURL() != null
+							&& !MimotoConfigManager.getSunbirdBaseURL().isBlank())
 						tempUrl = MimotoConfigManager.getSunbirdBaseURL();
-						//Once sunbird registry is pointing to specific env, remove the above line and uncomment below line
-						// tempUrl = ApplnURI.replace(GlobalConstants.API_INTERNAL,
-						// MimotoConfigManager.getSunBirdBaseURL());
-						testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$SUNBIRDBASEURL$", ""));
-					}
+					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$SUNBIRDBASEURL$", ""));
+				}
 
 					response = getWithPathParamAndCookie(tempUrl + testCaseDTO.getEndPoint(), inputJson, auditLogCheck,
 							COOKIENAME, testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), sendEsignetToken);

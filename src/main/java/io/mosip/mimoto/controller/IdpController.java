@@ -72,8 +72,12 @@ public class IdpController {
                 throw new IdpException();
             return ResponseEntity.status(HttpStatus.OK).body(internalResponse);
         } catch (Exception e) {
-            log.error("Wallet binding otp error occurred." + e);
-            return Utilities.handleErrorResponse(e, PlatformErrorMessages.MIMOTO_OTP_BINDING_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST,null);
+            log.error("Wallet binding otp error occurred.", e);
+            String[] errorObj = Utilities.handleExceptionWithErrorCode(e, PlatformErrorMessages.MIMOTO_OTP_BINDING_EXCEPTION.getCode());
+            List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
+            responseWrapper.setResponse(null);
+            responseWrapper.setErrors(errors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
         }
 
     }
@@ -105,8 +109,12 @@ public class IdpController {
             responseWrapper = joseUtil.addThumbprintAndKeyId(internalResponse);
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception e) {
-            log.error("Wallet binding error occured for tranaction id " + requestDTO.getRequest().getIndividualId(), e);
-            return Utilities.handleErrorResponse(e, PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST,null);
+            log.error("Wallet binding error occurred for transaction id " + requestDTO.getRequest().getIndividualId(), e);
+            String[] errorObj = Utilities.handleExceptionWithErrorCode(e, PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode());
+            List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
+            responseWrapper.setResponse(null);
+            responseWrapper.setErrors(errors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
         }
     }
 
@@ -115,16 +123,18 @@ public class IdpController {
             @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = TokenResponseDTO.class), mediaType = "application/json")}),
             @ApiResponse(responseCode = "400", content = {@Content(schema = @Schema(implementation = ResponseWrapper.class), mediaType = "application/json")})})
     @PostMapping(value = {"/get-token/{issuer}"}, consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE}, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ResponseWrapper<TokenResponseDTO>> getToken(@RequestParam Map<String, String> params, @PathVariable(required = true, name = "issuer") String issuer) {
+    public ResponseEntity<Object> getToken(@RequestParam Map<String, String> params, @PathVariable(required = true, name= "issuer") String issuer) {
         log.info("Reached the getToken Controller for Issuer " + issuer);
         ResponseWrapper<TokenResponseDTO> responseWrapper = new ResponseWrapper<>();
         try {
-            TokenResponseDTO tokenResponse = credentialService.getTokenResponse(params, issuer);
-            responseWrapper.setResponse(tokenResponse);
-            return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
+            TokenResponseDTO response = credentialService.getTokenResponse(params, issuer);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception ex) {
             log.error("Exception Occurred while Invoking the Token Endpoint : ", ex);
-            return Utilities.handleErrorResponse(ex, PlatformErrorMessages.MIMOTO_FETCHING_TOKEN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST,null);
+            String[] errorObj = Utilities.handleExceptionWithErrorCode(ex, PlatformErrorMessages.MIMOTO_FETCHING_TOKEN_EXCEPTION.getCode());
+            List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
+            responseWrapper.setErrors(errors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
         }
     }
 }

@@ -108,8 +108,8 @@ public class CredentialServiceImpl implements CredentialService {
     @Override
     public TokenResponseDTO getTokenResponse(Map<String, String> params, String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
         IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
-        CredentialIssuerConfigurationResponse credentialIssuerConfigurationResponse = issuersService.getIssuerConfiguration(issuerId);
-        String tokenEndpoint = idpService.getTokenEndpoint(credentialIssuerConfigurationResponse);
+        CredentialIssuerConfiguration credentialIssuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
+        String tokenEndpoint = idpService.getTokenEndpoint(credentialIssuerConfiguration);
         HttpEntity<MultiValueMap<String, String>> request = idpService.constructGetTokenRequest(params, issuerDTO, tokenEndpoint);
         TokenResponseDTO response = restTemplate.postForObject(tokenEndpoint, request, TokenResponseDTO.class);
         if (response == null) {
@@ -121,12 +121,12 @@ public class CredentialServiceImpl implements CredentialService {
     @Override
     public ByteArrayInputStream downloadCredentialAsPDF(String issuerId, String credentialType, TokenResponseDTO response, String credentialValidity, String locale) throws Exception {
         IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
-        CredentialIssuerConfigurationResponse issuerConfigurationResponse = issuersService.getIssuerConfiguration(issuerId);
+        CredentialIssuerConfiguration credentialIssuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse(
-                issuerConfigurationResponse.getCredentialIssuer(),
-                issuerConfigurationResponse.getAuthorizationServers(),
-                issuerConfigurationResponse.getCredentialEndPoint(),
-                issuerConfigurationResponse.getCredentialConfigurationsSupported());
+                credentialIssuerConfiguration.getCredentialIssuer(),
+                credentialIssuerConfiguration.getAuthorizationServers(),
+                credentialIssuerConfiguration.getCredentialEndPoint(),
+                credentialIssuerConfiguration.getCredentialConfigurationsSupported());
         CredentialsSupportedResponse credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported().get(credentialType);
         VCCredentialRequest vcCredentialRequest = generateVCCredentialRequest(issuerDTO, credentialIssuerWellKnownResponse, credentialsSupportedResponse, response.getAccess_token());
         VCCredentialResponse vcCredentialResponse = downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
@@ -164,7 +164,7 @@ public class CredentialServiceImpl implements CredentialService {
 
     public ByteArrayInputStream generatePdfForVerifiableCredentials(String credentialType, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
         LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties = loadDisplayPropertiesFromWellknown(vcCredentialResponse, credentialsSupportedResponse, locale);
-        Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse, vcCredentialResponse, issuerDTO, dataShareUrl, credentialValidity, locale);
+        Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse, vcCredentialResponse, issuerDTO, dataShareUrl, credentialValidity);
         return renderVCInCredentialTemplate(data, issuerDTO.getIssuer_id(), credentialType);
     }
 
@@ -180,22 +180,25 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @NotNull
-    private static LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> loadDisplayPropertiesFromWellknown(VCCredentialResponse vcCredentialResponse, CredentialsSupportedResponse credentialsSupportedResponse, String locale) {
+    private static LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> loadDisplayPropertiesFromWellknown(VCCredentialResponse vcCredentialResponse, CredentialsSupportedResponse credentialsSupportedResponse, String userLocale) {
         LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties = new LinkedHashMap<>();
         Map<String, Object> credentialProperties = vcCredentialResponse.getCredential().getCredentialSubject();
         LinkedHashMap<String, CredentialIssuerDisplayResponse> vcPropertiesFromWellKnown = new LinkedHashMap<>();
         Map<String, CredentialDisplayResponseDto> credentialSubject = credentialsSupportedResponse.getCredentialDefinition().getCredentialSubject();
-        credentialSubject.keySet().forEach(VCProperty -> {
-            Optional<CredentialIssuerDisplayResponse> filteredResponse = credentialSubject.get(VCProperty)
-                    .getDisplay().stream()
-                    .filter(obj -> "undefined".equals(locale) || LocaleUtils.matchesLocale(obj.getLocale(), locale))// if locale is not undefined use it to fetch the wellknown properties otherwise return the properties of the first display object which has language field
-                    .findFirst();
+        String locale = LocaleUtils.resolveLocaleWithFallback(credentialSubject, userLocale);
+        if (locale != null) {
+            credentialSubject.keySet().forEach(VCProperty -> {
+                Optional<CredentialIssuerDisplayResponse> filteredResponse = credentialSubject.get(VCProperty)
+                        .getDisplay().stream()
+                        .filter(obj -> LocaleUtils.matchesLocale(obj.getLocale(), locale))
+                        .findFirst();
 
-            if (filteredResponse.isPresent()) {
-                CredentialIssuerDisplayResponse filteredValue = filteredResponse.get();
-                vcPropertiesFromWellKnown.put(VCProperty, filteredValue);
-            }
-        });
+                if (filteredResponse.isPresent()) {
+                    CredentialIssuerDisplayResponse filteredValue = filteredResponse.get();
+                    vcPropertiesFromWellKnown.put(VCProperty, filteredValue);
+                }
+            });
+        }
 
         List<String> orderProperty = credentialsSupportedResponse.getOrder();
 
@@ -209,7 +212,7 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
 
-    private Map<String, Object> getPdfResourceFromVcProperties(LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties, CredentialsSupportedResponse credentialsSupportedResponse, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, String dataShareUrl, String credentialValidity, String locale) throws IOException, WriterException {
+    private Map<String, Object> getPdfResourceFromVcProperties(LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties, CredentialsSupportedResponse credentialsSupportedResponse, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, String dataShareUrl, String credentialValidity) throws IOException, WriterException {
         Map<String, Object> data = new HashMap<>();
         LinkedHashMap<String, Object> rowProperties = new LinkedHashMap<>();
         String backgroundColor = credentialsSupportedResponse.getDisplay().get(0).getBackgroundColor();
@@ -289,7 +292,7 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @NotNull
-    private ByteArrayInputStream renderVCInCredentialTemplate(Map<String, Object> data, String issuerId, String credentialType) throws IOException {
+    private ByteArrayInputStream renderVCInCredentialTemplate(Map<String, Object> data, String issuerId, String credentialType) {
         String credentialTemplate = utilities.getCredentialSupportedTemplateString(issuerId, credentialType);
         Properties props = new Properties();
         props.setProperty("resource.loader", "class");
