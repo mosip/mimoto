@@ -1494,7 +1494,9 @@
                                         "response": {
                                             "issuers": [
                                                 {
+                                                    "issuer_id": "MOSIPInsurance",
                                                     "credential_issuer": "MOSIPInsurance",
+                                                    "credential_issuer_host": "https://injicertify-insurance.qa-inji1.mosip.net",
                                                     "protocol": "OpenId4VCI",
                                                     "display": [
                                                         {
@@ -1512,7 +1514,9 @@
                                                     "wellknown_endpoint": "http://localhost:8088/.well-known/openid-credential-issuer"
                                                 },
                                                 {
+                                                    "issuer_id": "MOSIPNationalID",
                                                     "credential_issuer": "MOSIPNationalID",
+                                                    "credential_issuer_host": "https://injicertify-mosipid.released.mosip.net",
                                                     "protocol": "OpenId4VCI",
                                                     "display": [
                                                         {
@@ -1545,7 +1549,9 @@
                                             "response": {
                                                 "issuers": [
                                                     {
+                                                        "issuer_id": "MOSIPInsurance",
                                                         "credential_issuer": "MOSIPInsurance",
+                                                        "credential_issuer_host": "https://injicertify-insurance.qa-inji1.mosip.net",
                                                         "protocol": "OpenId4VCI",
                                                         "display": [
                                                             {
@@ -1563,7 +1569,9 @@
                                                         ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer"
                                                     },
                                                     {
+                                                        "issuer_id": "MOSIPNationalID",
                                                         "credential_issuer": "MOSIPNationalID",
+                                                        "credential_issuer_host": "https://injicertify-mosipid.released.mosip.net",
                                                         "protocol": "OpenId4VCI",
                                                         "display": [
                                                             {
@@ -1922,7 +1930,8 @@
                 "tags": [
                     "Trusted Issuers"
                 ],
-                "description": "This API fetches and allows searching for Credential Types offered by the issuer, all sourced from the issuer's well-known configuration.",
+                "deprecated": true,
+                "description": "This API fetches and allows searching for Credential Types offered by the issuer, all sourced from the issuer's well-known configuration. Since version 0.16.0, this endpoint is deprecated and will be removed in a future release. Use issuers new endpoint issuers/{issuer-id}/configuration instead.",
                 "responses": {
                     "200": {
                         "description": "OK",
