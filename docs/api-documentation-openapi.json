@@ -1496,7 +1496,7 @@
                                                 {
                                                     "issuer_id": "MOSIPInsurance",
                                                     "credential_issuer": "MOSIPInsurance",
-                                                    "credential_issuer_host": "https://injicertify-insurance.qa-inji1.mosip.net",
+                                                    "credential_issuer_host": "https://injicertify-insurance.collab.mosip.net",
                                                     "protocol": "OpenId4VCI",
                                                     "display": [
                                                         {
@@ -1551,7 +1551,7 @@
                                                     {
                                                         "issuer_id": "MOSIPInsurance",
                                                         "credential_issuer": "MOSIPInsurance",
-                                                        "credential_issuer_host": "https://injicertify-insurance.qa-inji1.mosip.net",
+                                                        "credential_issuer_host": "https://injicertify-insurance.collab.mosip.net",
                                                         "protocol": "OpenId4VCI",
                                                         "display": [
                                                             {
