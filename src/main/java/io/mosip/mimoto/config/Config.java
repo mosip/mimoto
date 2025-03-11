@@ -105,8 +105,6 @@ public class Config {
                                 sessionRepository.deleteById(session.getId()); // Remove session from Redis
                                 session.invalidate(); // Invalidate the session
                             }
-                            response.setStatus(HttpServletResponse.SC_FOUND); // 302 Redirect
-                            response.setHeader("Location", "/login?logout"); // Redirect to login page
                         })
                 )
                 .authorizeHttpRequests(authz -> authz
