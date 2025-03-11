@@ -10,6 +10,7 @@ import java.sql.Timestamp;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.UUID;
 
 @Service
 public class UserMetadataService {
@@ -20,9 +21,9 @@ public class UserMetadataService {
     @Autowired
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
-    public void updateOrInsertUserMetadata(String providerSubjectId, String identityProvider,
-                                           String displayName, String profilePictureUrl,
-                                           String email) {
+    public UUID updateOrInsertUserMetadata(String providerSubjectId, String identityProvider,
+                                             String displayName, String profilePictureUrl,
+                                             String email) {
         // Compute current time once
         Timestamp now = new Timestamp(System.currentTimeMillis());
 
@@ -30,11 +31,12 @@ public class UserMetadataService {
         Optional<UserMetadata> existingUser = userMetadataRepository.findByProviderSubjectId(providerSubjectId);
 
         if (existingUser.isPresent()) {
-            // If user exists, update metadata
+            // If user exists, update metadata and return the userID
             updateUserMetadata(existingUser.get(), displayName, profilePictureUrl, email, now);
+            return existingUser.get().getId(); // Return the userID from the existing user
         } else {
-            // If user does not exist, create new record
-            createUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email, now);
+            // If user does not exist, create new record and return the userID
+            return createUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email, now);
         }
     }
 
@@ -47,10 +49,10 @@ public class UserMetadataService {
         isUpdated |= updateField(userMetadata::getProfilePictureUrl, userMetadata::setProfilePictureUrl, profilePictureUrl);
         isUpdated |= updateField(userMetadata::getEmail, userMetadata::setEmail, email);
 
-        // Save the updated record
+        // If any field was updated, save the updated record and set the updated timestamp
         if (isUpdated) {
             userMetadata.setUpdatedAt(now);
-            userMetadataRepository.save(userMetadata);
+            userMetadataRepository.save(userMetadata); // Save the updated record
         }
     }
 
@@ -63,8 +65,8 @@ public class UserMetadataService {
         return false;
     }
 
-    private void createUserMetadata(String providerSubjectId, String identityProvider, String displayName,
-                                    String profilePictureUrl, String email, Timestamp now) {
+    private UUID createUserMetadata(String providerSubjectId, String identityProvider, String displayName,
+                                      String profilePictureUrl, String email, Timestamp now) {
         UserMetadata userMetadata = new UserMetadata();
         userMetadata.setProviderSubjectId(providerSubjectId);
         userMetadata.setIdentityProvider(identityProvider);
@@ -74,6 +76,8 @@ public class UserMetadataService {
         userMetadata.setCreatedAt(now);
         userMetadata.setUpdatedAt(now);
 
-        userMetadataRepository.save(userMetadata); // Insert new record
+        UserMetadata savedUserMetadata = userMetadataRepository.save(userMetadata); // Insert new record
+        return savedUserMetadata.getId(); // Return the userID of the newly created user
     }
+
 }

@@ -88,36 +88,33 @@ public class Config {
 
     private void setupOauth2Config(HttpSecurity http, SessionRepository sessionRepository) throws Exception {
         http
-            .oauth2Login((oauth2Login) -> oauth2Login.loginPage(injiWebUrl + "/login")
-                    .authorizationEndpoint(authorization -> authorization.baseUri("/oauth2/authorize")
-                    )
-                    .redirectionEndpoint(redirect -> redirect.baseUri("/oauth2/callback/*"))
-                    .successHandler(oAuth2AuthenticationSuccessHandler)
-                    .failureHandler(oAuth2AuthenticationFailureHandler)
-            )
-            .logout(logout -> logout
-                    .logoutUrl("/logout") // Ensure this matches the frontend request
-                    .clearAuthentication(true) // Clear authentication
-                    .invalidateHttpSession(true) // Invalidate session
-                    .deleteCookies("JSESSIONID") // Optionally, delete cookies
-                    .logoutSuccessHandler((request, response, authentication) -> {
-                        log.info("inside logout success handler::");
-                        HttpSession session = request.getSession(false);
-                        log.info("session::" + session);
-                        if (session != null) {
-                            sessionRepository.deleteById(session.getId()); // Remove session from Redis
-                            session.invalidate(); // Invalidate the session
-                        }
-                        response.setStatus(HttpServletResponse.SC_FOUND); // 302 Redirect
-                        response.setHeader("Location", "/login?logout"); // Redirect to login page
-                    })
-            )
-            .authorizeHttpRequests(authz -> authz
-                    // Define secured endpoints
-                    .requestMatchers("/secure/**").authenticated() // Secure endpoints that require login
-                    // Default authorization rule for all other requests
-                    .anyRequest().permitAll()
-            ).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
+                .oauth2Login((oauth2Login) -> oauth2Login.loginPage(injiWebUrl + "/login")
+                        .authorizationEndpoint(authorization -> authorization.baseUri("/oauth2/authorize")
+                        )
+                        .redirectionEndpoint(redirect -> redirect.baseUri("/oauth2/callback/*"))
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            log.info("inside logout success handler::");
+                            HttpSession session = request.getSession(false);
+                            log.info("session::" + session);
+                            if (session != null) {
+                                sessionRepository.deleteById(session.getId()); // Remove session from Redis
+                                session.invalidate(); // Invalidate the session
+                            }
+                            response.setStatus(HttpServletResponse.SC_FOUND); // 302 Redirect
+                            response.setHeader("Location", "/login?logout"); // Redirect to login page
+                        })
+                )
+                .authorizeHttpRequests(authz -> authz
+                        // Define secured endpoints
+                        .requestMatchers("/secure/**").authenticated() // Secure endpoints that require login
+                        // Default authorization rule for all other requests
+                        .anyRequest().permitAll()
+                ).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
     }
 
     // Define CORS configuration

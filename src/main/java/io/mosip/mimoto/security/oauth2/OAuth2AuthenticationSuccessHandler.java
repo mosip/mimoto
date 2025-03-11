@@ -2,7 +2,9 @@ package io.mosip.mimoto.security.oauth2;
 
 import io.mosip.mimoto.service.UserMetadataService;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -15,8 +17,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.UUID;
 
 @Component
+@Slf4j
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     @Autowired
     private UserMetadataService userMetadataService;
@@ -24,11 +29,16 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     @Autowired
     private OAuth2AuthorizedClientService authorizedClientService;
 
+    @Value("${mosip.inji.web.url}")
+    private String injiWebUrl;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         OAuth2AuthenticationToken oauth2Token = (OAuth2AuthenticationToken) authentication;
         OAuth2User oAuth2User = oauth2Token.getPrincipal();
-        HttpSession session = request.getSession();
+        HttpSession session = request.getSession(false);
+        log.info("Request Cookies: {}", Arrays.toString(request.getCookies()));
+        log.info("Session ID after login: {}", session.getId());
         // Storing clientRegistrationId in the Redis session to verify it against the one in user metadata during profile retrieval
         String clientRegistrationId = oauth2Token.getAuthorizedClientRegistrationId();
         session.setAttribute("clientRegistrationId", clientRegistrationId);
@@ -49,9 +59,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         session.setAttribute("refreshToken", refreshToken);
 
         // Call the service to update or insert the user metadata in the database
-        userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+        UUID userId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+        session.setAttribute("userId", userId);
 
-        response.sendRedirect("http://localhost:3004/login?status=success");
+        response.sendRedirect(injiWebUrl +"/login?status=success");
 
     }
 }
