@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS verifiable_credentials (
 
 COMMENT ON TABLE verifiable_credentials IS 'Verifiable Credentials: Contains user credentials, encrypted using wallet key';
 COMMENT ON COLUMN verifiable_credentials.id IS 'Primary Key: Unique identifier for the verifiable credential record';
-COMMENT ON COLUMN verifiable_credentials.wallet_id IS 'Wallet ID: Foreign key referring to the wallet table, linked to the user\'s wallet';
-COMMENT ON COLUMN verifiable_credentials.credential IS 'Credential: Encrypted credential using the wallet\'s key';
+COMMENT ON COLUMN verifiable_credentials.wallet_id IS 'Wallet ID: Foreign key referring to the wallet table, linked to the user''s wallet';
+COMMENT ON COLUMN verifiable_credentials.credential IS 'Credential: Encrypted credential using the wallet''s key';
 COMMENT ON COLUMN verifiable_credentials.credential_format IS 'Credential Format: Format of the credential (e.g., JSON, JWT)';
 COMMENT ON COLUMN verifiable_credentials.credential_metadata IS 'Credential Metadata: Additional information about the credential (e.g., issuer, claims)';
 COMMENT ON COLUMN verifiable_credentials.created_at IS 'Created At: The date and time when the credential was created';
