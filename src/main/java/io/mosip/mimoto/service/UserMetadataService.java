@@ -45,9 +45,10 @@ public class UserMetadataService {
         boolean isUpdated = false;
 
         // Check and update fields if needed
-        isUpdated |= updateField(userMetadata::getDisplayName, userMetadata::setDisplayName, displayName);
-        isUpdated |= updateField(userMetadata::getProfilePictureUrl, userMetadata::setProfilePictureUrl, profilePictureUrl);
-        isUpdated |= updateField(userMetadata::getEmail, userMetadata::setEmail, email);
+        isUpdated |= updateEncryptedField(userMetadata::getDisplayName, userMetadata::setDisplayName, displayName);
+        isUpdated |= updateEncryptedField(userMetadata::getProfilePictureUrl, userMetadata::setProfilePictureUrl, profilePictureUrl);
+        isUpdated |= updateEncryptedField(userMetadata::getEmail, userMetadata::setEmail, email);
+        isUpdated |= updateField(userMetadata::getUpdatedAt, userMetadata::setUpdatedAt, now);
 
         // If any field was updated, save the updated record and set the updated timestamp
         if (isUpdated) {
@@ -56,10 +57,19 @@ public class UserMetadataService {
         }
     }
 
-    private boolean updateField(Supplier<String> getter, Consumer<String> setter, String newValue) {
+    private boolean updateEncryptedField(Supplier<String> getter, Consumer<String> setter, String newValue) {
         String decryptedValue = encryptionDecryptionUtil.decrypt(getter.get(), "user_pii", "", "");
         if (!decryptedValue.equals(newValue)) {
             setter.accept(encryptionDecryptionUtil.encrypt(newValue, "user_pii", "", ""));
+            return true;
+        }
+        return false;
+    }
+
+    private <T> boolean updateField(Supplier<T> getter, Consumer<T> setter, T newValue) {
+        T value = (T) getter.get();
+        if (!value.equals(newValue)) {
+            setter.accept((T) newValue);
             return true;
         }
         return false;
