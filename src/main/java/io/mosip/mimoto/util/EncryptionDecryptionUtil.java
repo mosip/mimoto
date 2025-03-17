@@ -35,7 +35,6 @@ public class EncryptionDecryptionUtil {
         request.setAad(aad);
         request.setSalt(saltToEncrypt);
         return cryptomanagerService.encrypt(request).getData();
-     //   return new String(CryptoUtil.decodeURLSafeBase64(encryptedData));
     }
 
     public String decrypt(String dataToDecrypt, String refId, String aad, String saltToDecrypt) {
