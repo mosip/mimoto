@@ -32,7 +32,6 @@ import java.util.Map;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableRedisHttpSession
 @Order(1)
 @Slf4j
 public class Config {
