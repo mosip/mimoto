@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS wallet (
     wallet_key TEXT NOT NULL,  -- Encrypted wallet key
     public_key TEXT NOT NULL,  -- Public key for wallet
     secret_key TEXT NOT NULL,  -- Secret key, encrypted with wallet_key
-    key_metadata JSON NOT NULL,  -- Metadata about the public and private keys
-    wallet_metadata JSON NOT NULL,  -- Metadata about the wallet, including encryption info
+    key_metadata JSONB NOT NULL,  -- Metadata about the public and private keys
+    wallet_metadata JSONB NOT NULL,  -- Metadata about the wallet, including encryption info
     created_at TIMESTAMP DEFAULT now(),  -- Timestamp of record creation (defaults to current time)
     updated_at TIMESTAMP DEFAULT now(),  -- Timestamp of last update (defaults to current time)
 
