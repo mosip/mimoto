@@ -9,7 +9,14 @@ import org.springframework.stereotype.Component;
 import io.mosip.kernel.cryptomanager.dto.CryptomanagerRequestDto;
 import io.mosip.kernel.core.util.CryptoUtil;
 
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 @Component
 @Slf4j
@@ -49,6 +56,26 @@ public class EncryptionDecryptionUtil {
         request.setAad(aad);
         request.setSalt(saltToDecrypt);
         return new String(CryptoUtil.decodeURLSafeBase64(cryptomanagerService.decrypt(request).getData()));
+    }
+
+    public static SecretKey generateEncryptionKey(String algorithm, int keysize) throws NoSuchAlgorithmException {
+        KeyGenerator keyGenerator = KeyGenerator.getInstance(algorithm);
+        keyGenerator.init(keysize);
+        return keyGenerator.generateKey();
+    }
+
+    // Helper method to generate ED25519 key pair
+    public static KeyPair generateKeyPair(String algorithm) throws NoSuchAlgorithmException {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
+        return keyPairGenerator.generateKeyPair();
+    }
+
+    // Helper method to encrypt the private key using the AES key
+    public static String encryptPrivateKeyWithAES(SecretKey aesKey, java.security.PrivateKey privateKey) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.ENCRYPT_MODE, aesKey);
+        byte[] encryptedPrivateKey = cipher.doFinal(privateKey.getEncoded());
+        return Base64.getEncoder().encodeToString(encryptedPrivateKey);
     }
 
 }

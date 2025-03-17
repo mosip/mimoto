@@ -96,7 +96,9 @@ public enum PlatformErrorMessages {
     LOGIN_SESSION_INVALIDATE_EXCEPTION(PlatformConstants.PREFIX + "046", "Exception occurred when invalidating the session from redis"),
     DATABASE_CONNECTION_EXCEPTION(PlatformConstants.PREFIX + "047", "Failed to connect to the shared database"),
     USER_METADATA_STORAGE_EXCEPTION(PlatformConstants.PREFIX + "048", "Failed to store the User metadata into database"),
-    USER_METADATA_FETCH_EXCEPTION(PlatformConstants.PREFIX + "049", "Failed to fetch the User metadata from database");
+    USER_METADATA_FETCH_EXCEPTION(PlatformConstants.PREFIX + "049", "Failed to fetch the User metadata from database"),
+    USER_WALLET_CREATION_EXCEPTION(PlatformConstants.PREFIX + "050", "Exception occurred when creating the wallet for user"),
+    USER_WALLET_RETRIEVAL_EXCEPTION(PlatformConstants.PREFIX + "051", "Exception occurred when creating the wallet for user");
 
     /** The error message. */
     private final String errorMessage;
