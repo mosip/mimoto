@@ -2,8 +2,7 @@ package io.mosip.mimoto.config;
 
 import io.mosip.mimoto.security.oauth2.OAuth2AuthenticationFailureHandler;
 import io.mosip.mimoto.security.oauth2.OAuth2AuthenticationSuccessHandler;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Cookie;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +25,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -98,14 +98,20 @@ public class Config {
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessHandler((request, response, authentication) -> {
-                            log.info("inside logout success handler::");
-                            HttpSession session = request.getSession(false);
-                            log.info("session::" + session);
-                            if (session != null) {
-                                sessionRepository.deleteById(session.getId()); // Remove session from Redis
-                                session.invalidate(); // Invalidate the session
+                            Cookie[] cookies = request.getCookies();
+                            if (cookies != null) {
+                                for (Cookie cookie : cookies) {
+                                    if ("SESSION".equals(cookie.getName())) {
+                                        String encodedSessionId = cookie.getValue();
+                                        String sessionId = new String(Base64.getUrlDecoder().decode(encodedSessionId));
+                                        if (sessionId != null) {
+                                            sessionRepository.deleteById(sessionId);
+                                        }
+                                    }
+                                }
                             }
                         })
+                        .clearAuthentication(true)
                 )
                 .authorizeHttpRequests(authz -> authz
                         // Define secured endpoints

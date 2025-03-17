@@ -3,6 +3,7 @@ package io.mosip.mimoto.controller;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.exception.LoginSessionException;
 import io.mosip.mimoto.util.Utilities;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,8 +19,9 @@ import static io.mosip.mimoto.exception.PlatformErrorMessages.LOGIN_SESSION_EXCE
 @Slf4j
 public class SessionController {
     @GetMapping("/status")
-    public ResponseEntity<ResponseWrapper<String>> getSessionStatus(HttpSession httpSession) {
+    public ResponseEntity<ResponseWrapper<String>> getSessionStatus(HttpServletRequest request) {
         try {
+            HttpSession httpSession = request.getSession(false);
             log.info("Session: {}", httpSession);
 
             if (httpSession == null || httpSession.getAttribute("userId") == null) {
