@@ -34,7 +34,7 @@ import io.mosip.testrig.apirig.utils.OutputValidationUtil;
 import io.mosip.testrig.apirig.utils.ReportUtil;
 import io.restassured.response.Response;
 
-public class PostWithAutogenIdWithOtpGenerate extends AdminTestUtil implements ITest {
+public class PostWithAutogenIdWithOtpGenerate extends MimotoUtil implements ITest {
 	private static final Logger logger = Logger.getLogger(PostWithAutogenIdWithOtpGenerate.class);
 	protected String testCaseName = "";
 	public String idKeyName = null;
@@ -138,8 +138,6 @@ public class PostWithAutogenIdWithOtpGenerate extends AdminTestUtil implements I
 						+ " as UIN not available in database");
 				try {
 					Thread.sleep(Long.parseLong(properties.getProperty("uinGenDelayTime")));
-//					SlackChannelIntegration.sendMessageToSlack("UIN not available in database in :" + ApplnURI + "Env") ;
-
 				} catch (NumberFormatException | InterruptedException e) {
 					logger.error(e.getMessage());
 					Thread.currentThread().interrupt();
@@ -169,7 +167,6 @@ public class PostWithAutogenIdWithOtpGenerate extends AdminTestUtil implements I
 
 			if (!OutputValidationUtil.publishOutputResult(ouputValidOtp)) {
 				if (otpResponse.asString().contains("IDA-OTA-001")) {
-//					SlackChannelIntegration.sendMessageToSlack("Exceeded number of OTP requests in a given time, :" + ApplnURI + "Env") ;
 					throw new AdminTestException(
 							"Exceeded number of OTP requests in a given time, Increase otp.request.flooding.max-count");
 				}
@@ -190,8 +187,6 @@ public class PostWithAutogenIdWithOtpGenerate extends AdminTestUtil implements I
 				throw new SkipException("esignet is not deployed hence skipping the testcase");
 			}
 			String tempUrl = MimotoConfigManager.getEsignetBaseUrl();
-//			String inputJson = getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate());
-//			inputJson = inputJsonKeyWordHandeler(inputJson, testCaseName);
 			inputJson = MimotoUtil.getOTPFromSMTP(inputJson, testCaseDTO);
 			response = postRequestWithCookieAuthHeaderAndXsrfTokenForAutoGenId(tempUrl + testCaseDTO.getEndPoint(),
 					inputJson, COOKIENAME, testCaseDTO.getTestCaseName(), idKeyName);
@@ -236,9 +231,6 @@ public class PostWithAutogenIdWithOtpGenerate extends AdminTestUtil implements I
 				&& MimotoUtil.isOTPEnabled().equals("true")) {
 			try {
 				long delayTime = Long.parseLong(properties.getProperty("Delaytime"));
-				if (!BaseTestCase.isTargetEnvLTS())
-					delayTime = Long.parseLong(properties.getProperty("uinGenDelayTime"))
-							* Long.parseLong(properties.getProperty("uinGenMaxLoopCount"));
 				logger.info("waiting for " + delayTime + " mili secs after VID Generation In RESIDENT SERVICES");
 				Thread.sleep(delayTime);
 			} catch (Exception e) {

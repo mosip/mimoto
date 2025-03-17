@@ -35,7 +35,7 @@ import io.mosip.testrig.apirig.utils.OutputValidationUtil;
 import io.mosip.testrig.apirig.utils.ReportUtil;
 import io.restassured.response.Response;
 
-public class SimplePost extends AdminTestUtil implements ITest {
+public class SimplePost extends MimotoUtil implements ITest {
 	private static final Logger logger = Logger.getLogger(SimplePost.class);
 	protected String testCaseName = "";
 	public Response response = null;
@@ -136,8 +136,6 @@ public class SimplePost extends AdminTestUtil implements ITest {
 
 					if (MimotoConfigManager.getSunbirdBaseURL() != null && !MimotoConfigManager.getSunbirdBaseURL().isBlank())
 						tempUrl = MimotoConfigManager.getSunbirdBaseURL();
-						//Once sunbird registry is pointing to specific env, remove the above line and uncomment below line
-						//tempUrl = ApplnURI.replace(GlobalConstants.API_INTERNAL, MimotoConfigManager.getSunBirdBaseURL());
 					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$SUNBIRDBASEURL$", ""));
 					
 					response = postWithBodyAndCookie(tempUrl + testCaseDTO.getEndPoint(), inputJson, auditLogCheck,
@@ -148,9 +146,9 @@ public class SimplePost extends AdminTestUtil implements ITest {
 					if (MimotoConfigManager.isInServiceNotDeployedList("sunbirdrc"))
 						throw new SkipException(GlobalConstants.SERVICE_NOT_DEPLOYED_MESSAGE);
 
-					if (MimotoConfigManager.getproperty("esignetSunBirdBaseURL") != null
-							&& !MimotoConfigManager.getproperty("esignetSunBirdBaseURL").isBlank())
-						tempUrl = MimotoConfigManager.getproperty("esignetSunBirdBaseURL");
+					String esignetSunBirdBaseURL = MimotoConfigManager.getEsignetSunBirdBaseURL();
+					if (esignetSunBirdBaseURL != null && !esignetSunBirdBaseURL.isBlank())
+						tempUrl = esignetSunBirdBaseURL;
 					testCaseDTO.setEndPoint(testCaseDTO.getEndPoint().replace("$ESIGNETMOCKBASEURL$", ""));
 					
 					response = postRequestWithCookieAuthHeaderAndXsrfToken(tempUrl + testCaseDTO.getEndPoint(),
