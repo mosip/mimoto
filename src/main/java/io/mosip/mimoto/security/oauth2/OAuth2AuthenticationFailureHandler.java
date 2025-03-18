@@ -8,6 +8,8 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationFa
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Component
 @Slf4j
@@ -16,8 +18,17 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
             throws IOException {
-        log.error("OAuth2 authentication failed: {}", exception.getMessage());
+        String error = request.getParameter("error");
+        String errorMessage;
 
-        getRedirectStrategy().sendRedirect(request, response, "http://localhost:3004/login?status=error");
+        if ("access_denied".equals(error)) {
+            errorMessage = "Access Denied. Please try again.";
+        } else {
+            errorMessage = "Authentication failed. Please try again.";
+        }
+
+        String encodedErrorMessage = URLEncoder.encode(errorMessage, StandardCharsets.UTF_8);
+        String redirectUrl = "http://localhost:3004/login?status=error&error_message=" + encodedErrorMessage;
+        getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 }
