@@ -9,13 +9,14 @@ import io.mosip.mimoto.util.Utilities;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import static io.mosip.mimoto.exception.PlatformErrorMessages.OAUTH2_AUTHENTICATION_EXCEPTION;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 
 @Slf4j
 @RestController
@@ -49,19 +50,25 @@ public class UserController {
                     encryptionDecryptionUtill.decrypt(userMetadata.getProfilePictureUrl(), "user_pii", "", ""));
             responseWrapper.setResponse(userDetails);
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
-
         } catch (OAuth2AuthenticationException exception) {
             log.error("Error occurred while retrieving user profile : ", exception);
-            return Utilities.handleErrorResponse(exception, OAUTH2_AUTHENTICATION_EXCEPTION.getCode(), exception.getStatus(),null);
+            return Utilities.handleErrorResponse(exception, USER_METADATA_FETCH_EXCEPTION.getCode(), exception.getStatus(), null);
         } catch (Exception exception) {
             log.error("Error occurred while retrieving user profile : ", exception);
-            return Utilities.handleErrorResponse(exception, OAUTH2_AUTHENTICATION_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,null);
+            return Utilities.handleErrorResponse(exception, USER_METADATA_FETCH_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
+
     }
 
     private UserMetadata fetchUserMetadata(String providerSubjectId) throws OAuth2AuthenticationException {
-        return userMetadataRepository.findByProviderSubjectId(providerSubjectId)
-                .orElseThrow(() -> new OAuth2AuthenticationException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
+        try {
+            return userMetadataRepository.findByProviderSubjectId(providerSubjectId)
+                    .orElseThrow(() -> new OAuth2AuthenticationException("NOT_FOUND", "User not found. Please check your credentials or register.", HttpStatus.NOT_FOUND));
+        } catch (DataAccessResourceFailureException exception) {
+            throw new OAuth2AuthenticationException(DATABASE_CONNECTION_EXCEPTION.getCode(), DATABASE_CONNECTION_EXCEPTION.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception exception) {
+            throw new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), USER_METADATA_FETCH_EXCEPTION.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private void validateIdentityProvider(UserMetadata userMetadata, String identityProvider) throws OAuth2AuthenticationException {
