@@ -1,8 +1,13 @@
 package io.mosip.mimoto.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.core.http.ResponseWrapper;
+import io.mosip.mimoto.exception.OAuth2AuthenticationException;
 import io.mosip.mimoto.security.oauth2.OAuth2AuthenticationFailureHandler;
 import io.mosip.mimoto.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import io.mosip.mimoto.util.Utilities;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +15,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,7 +26,6 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.session.SessionRepository;
-import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,6 +34,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.LOGIN_SESSION_INVALIDATE_EXCEPTION;
 
 @Configuration
 @EnableWebSecurity
@@ -95,19 +102,46 @@ public class Config {
                         .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
                 .logout(logout -> logout
+                        .invalidateHttpSession(false)
+                        .clearAuthentication(false)
                         .logoutUrl("/logout")
                         .logoutSuccessHandler((request, response, authentication) -> {
-                            Cookie[] cookies = request.getCookies();
-                            if (cookies != null) {
-                                for (Cookie cookie : cookies) {
-                                    if ("SESSION".equals(cookie.getName())) {
-                                        String encodedSessionId = cookie.getValue();
-                                        String sessionId = new String(Base64.getUrlDecoder().decode(encodedSessionId));
-                                        if (sessionId != null) {
-                                            sessionRepository.deleteById(sessionId);
+                            try {
+                                Cookie[] cookies = request.getCookies();
+                                if (cookies != null) {
+                                    for (Cookie cookie : cookies) {
+                                        if ("SESSION".equals(cookie.getName())) {
+                                            String encodedSessionId = cookie.getValue();
+                                            String sessionId = new String(Base64.getUrlDecoder().decode(encodedSessionId));
+                                            if (sessionRepository.findById(sessionId) != null) {
+                                                sessionRepository.deleteById(sessionId);
+                                            } else {
+                                                throw new OAuth2AuthenticationException("NOT_FOUND", "Logout request was sent for an invalid or expired session", HttpStatus.NOT_FOUND);
+                                            }
                                         }
                                     }
                                 }
+
+                                HttpSession session = request.getSession(false);
+                                if (session != null) {
+                                    session.invalidate(); // Explicitly invalidate the session
+                                }
+                            } catch (OAuth2AuthenticationException exception) {
+                                ResponseEntity<ResponseWrapper<String>> responseEntity = Utilities.handleErrorResponse(exception, LOGIN_SESSION_INVALIDATE_EXCEPTION.getCode(), exception.getStatus(), null);
+                                response.setStatus(responseEntity.getStatusCodeValue());
+                                response.setContentType("application/json");
+
+                                ObjectMapper objectMapper = new ObjectMapper();
+                                String jsonResponse = objectMapper.writeValueAsString(responseEntity.getBody());
+                                response.getWriter().write(jsonResponse);
+                            } catch (Exception exception) {
+                                ResponseEntity<ResponseWrapper<String>> responseEntity = Utilities.handleErrorResponse(exception, LOGIN_SESSION_INVALIDATE_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+                                response.setStatus(responseEntity.getStatusCodeValue());
+                                response.setContentType("application/json");
+
+                                ObjectMapper objectMapper = new ObjectMapper();
+                                String jsonResponse = objectMapper.writeValueAsString(responseEntity.getBody());
+                                response.getWriter().write(jsonResponse);
                             }
                         })
                         .clearAuthentication(true)

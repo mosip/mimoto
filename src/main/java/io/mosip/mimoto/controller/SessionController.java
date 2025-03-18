@@ -25,7 +25,7 @@ public class SessionController {
             log.info("Session: {}", httpSession);
 
             if (httpSession == null || httpSession.getAttribute("userId") == null) {
-                throw new LoginSessionException("UNAUTHORIZED", "Session is expired, please log in again", HttpStatus.UNAUTHORIZED);
+                throw new LoginSessionException("NOT_FOUND", "The session is invalid or expired due to inactivity", HttpStatus.NOT_FOUND);
             }
 
             ResponseWrapper<String> responseWrapper = new ResponseWrapper<>();
