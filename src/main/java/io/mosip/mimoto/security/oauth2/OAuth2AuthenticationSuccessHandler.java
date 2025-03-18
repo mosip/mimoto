@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -17,8 +18,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.UUID;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 
 @Component
 @Slf4j
@@ -59,10 +63,27 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         session.setAttribute("refreshToken", refreshToken);
 
         // Call the service to update or insert the user metadata in the database
-        UUID userId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
-        session.setAttribute("userId", userId);
+        try {
+            UUID userId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+            session.setAttribute("userId", userId);
+            response.sendRedirect(injiWebUrl + "/login?status=success");
+        } catch (DataAccessResourceFailureException exception) {
+            log.error("Exception occurred while connecting to the database to store user data:", exception);
+            String errorMessage = String.format(
+                    "status=error&error_code=%s&error_message=%s",
+                    URLEncoder.encode(DATABASE_CONNECTION_EXCEPTION.getCode(), StandardCharsets.UTF_8),
+                    URLEncoder.encode(DATABASE_CONNECTION_EXCEPTION.getMessage(), StandardCharsets.UTF_8)
 
-        response.sendRedirect(injiWebUrl +"/login?status=success");
-
+            );
+            response.sendRedirect(injiWebUrl + "/login?" + errorMessage);
+        } catch (Exception exception) {
+            log.error("Exception occurred while saving or updating user data in the database:", exception);
+            String errorMessage = String.format(
+                    "status=error&error_code=%s&error_message=%s",
+                    URLEncoder.encode(USER_METADATA_STORAGE_EXCEPTION.getCode(),StandardCharsets.UTF_8),
+                    URLEncoder.encode(USER_METADATA_STORAGE_EXCEPTION.getMessage(), StandardCharsets.UTF_8)
+            );
+            response.sendRedirect(injiWebUrl + "/login?" + errorMessage);
+        }
     }
 }
