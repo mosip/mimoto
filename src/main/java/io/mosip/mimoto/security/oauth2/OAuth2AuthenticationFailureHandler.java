@@ -35,10 +35,10 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                 } else if (exception.getMessage().contains("access_denied")) {
                     errorMessage = "Access Denied. Please try again.";
                 } else {
-                    errorMessage = "IDP login is failed due to: " + exception.getMessage();
+                    errorMessage = "Login is failed due to: " + exception.getMessage();
                 }
             } else {
-                errorMessage = "IDP login is failed due to: " + exception.getMessage();
+                errorMessage = "Login is failed due to: " + exception.getMessage();
             }
         }
 
