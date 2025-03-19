@@ -29,7 +29,6 @@ public class UserMetadataService {
 
         // Check if user exists
         Optional<UserMetadata> existingUser = userMetadataRepository.findByProviderSubjectId(providerSubjectId);
-
         if (existingUser.isPresent()) {
             // If user exists, update metadata and return the userID
             updateUserMetadata(existingUser.get(), displayName, profilePictureUrl, email, now);
@@ -42,34 +41,21 @@ public class UserMetadataService {
 
     private void updateUserMetadata(UserMetadata userMetadata, String displayName, String profilePictureUrl,
                                     String email, Timestamp now) {
-        boolean isUpdated = false;
 
         // Check and update fields if needed
-        isUpdated |= updateEncryptedField(userMetadata::getDisplayName, userMetadata::setDisplayName, displayName);
-        isUpdated |= updateEncryptedField(userMetadata::getProfilePictureUrl, userMetadata::setProfilePictureUrl, profilePictureUrl);
-        isUpdated |= updateEncryptedField(userMetadata::getEmail, userMetadata::setEmail, email);
-        isUpdated |= updateField(userMetadata::getUpdatedAt, userMetadata::setUpdatedAt, now);
+        checkAndUpdateEncryptedField(userMetadata::getDisplayName, userMetadata::setDisplayName, displayName);
+        checkAndUpdateEncryptedField(userMetadata::getProfilePictureUrl, userMetadata::setProfilePictureUrl, profilePictureUrl);
+        checkAndUpdateEncryptedField(userMetadata::getEmail, userMetadata::setEmail, email);
 
-        // If any field was updated, save the updated record and set the updated timestamp
-        if (isUpdated) {
-            userMetadata.setUpdatedAt(now);
-            userMetadataRepository.save(userMetadata); // Save the updated record
-        }
+        // update the timestamp even if there is no change in details as we want to track the last time the user has logged in
+        userMetadata.setUpdatedAt(now);
+        userMetadataRepository.save(userMetadata); // Save the updated record
     }
 
-    private boolean updateEncryptedField(Supplier<String> getter, Consumer<String> setter, String newValue) {
+    private boolean checkAndUpdateEncryptedField(Supplier<String> getter, Consumer<String> setter, String newValue) {
         String decryptedValue = encryptionDecryptionUtil.decrypt(getter.get(), "user_pii", "", "");
         if (!decryptedValue.equals(newValue)) {
             setter.accept(encryptionDecryptionUtil.encrypt(newValue, "user_pii", "", ""));
-            return true;
-        }
-        return false;
-    }
-
-    private <T> boolean updateField(Supplier<T> getter, Consumer<T> setter, T newValue) {
-        T value = (T) getter.get();
-        if (!value.equals(newValue)) {
-            setter.accept((T) newValue);
             return true;
         }
         return false;
