@@ -33,13 +33,9 @@ public class UserController {
     public ResponseEntity<ResponseWrapper<String>> getUserProfile(Authentication authentication, HttpSession session) {
         try {
             ResponseWrapper<String> responseWrapper = new ResponseWrapper<>();
-            if (authentication == null || !authentication.isAuthenticated()) {
-                throw new OAuth2AuthenticationException("UNAUTHORIZED", "User is not authenticated", HttpStatus.UNAUTHORIZED);
-            }
-
             String identityProvider = (String) session.getAttribute("clientRegistrationId");
             if (identityProvider.isEmpty()) {
-                throw new OAuth2AuthenticationException("BAD_REQUEST", "Identity provider is not available in the received authentication response", HttpStatus.BAD_REQUEST);
+                throw new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), "The Identity provider in the authentication object is invalid", HttpStatus.BAD_REQUEST);
             }
 
             UserMetadata userMetadata = fetchUserMetadata(authentication.getName());
@@ -53,27 +49,26 @@ public class UserController {
         } catch (OAuth2AuthenticationException exception) {
             log.error("Error occurred while retrieving user profile : ", exception);
             return Utilities.handleErrorResponse(exception, USER_METADATA_FETCH_EXCEPTION.getCode(), exception.getStatus(), null);
+        } catch (DataAccessResourceFailureException exception) {
+            log.error("Error occurred while connecting to the database : ", exception);
+            OAuth2AuthenticationException authenticationException = new OAuth2AuthenticationException(DATABASE_CONNECTION_EXCEPTION.getCode(), DATABASE_CONNECTION_EXCEPTION.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return Utilities.handleErrorResponse(authenticationException, USER_METADATA_FETCH_EXCEPTION.getCode(), authenticationException.getStatus(), null);
         } catch (Exception exception) {
             log.error("Error occurred while retrieving user profile : ", exception);
-            return Utilities.handleErrorResponse(exception, USER_METADATA_FETCH_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+            OAuth2AuthenticationException authenticationException = new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), USER_METADATA_FETCH_EXCEPTION.getMessage() + " due to : " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return Utilities.handleErrorResponse(authenticationException, USER_METADATA_FETCH_EXCEPTION.getCode(), authenticationException.getStatus(), null);
         }
 
     }
 
     private UserMetadata fetchUserMetadata(String providerSubjectId) throws OAuth2AuthenticationException {
-        try {
-            return userMetadataRepository.findByProviderSubjectId(providerSubjectId)
-                    .orElseThrow(() -> new OAuth2AuthenticationException("NOT_FOUND", "User not found. Please check your credentials or register.", HttpStatus.NOT_FOUND));
-        } catch (DataAccessResourceFailureException exception) {
-            throw new OAuth2AuthenticationException(DATABASE_CONNECTION_EXCEPTION.getCode(), DATABASE_CONNECTION_EXCEPTION.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (Exception exception) {
-            throw new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), USER_METADATA_FETCH_EXCEPTION.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return userMetadataRepository.findByProviderSubjectId(providerSubjectId)
+                .orElseThrow(() -> new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), "User not found. Please check your credentials or register", HttpStatus.NOT_FOUND));
     }
 
     private void validateIdentityProvider(UserMetadata userMetadata, String identityProvider) throws OAuth2AuthenticationException {
         if (!userMetadata.getIdentityProvider().equals(identityProvider)) {
-            throw new OAuth2AuthenticationException("UNAUTHORIZED", "Identity provider mismatch", HttpStatus.UNAUTHORIZED);
+            throw new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), "Identity provider in session and user database doesn't match", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
