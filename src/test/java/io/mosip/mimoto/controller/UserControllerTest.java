@@ -51,7 +51,7 @@ public class UserControllerTest {
     private UserMetadata userMetadata;
 
     MockHttpSession mockSession;
-    
+
     String identityProvider;
 
     @Before
