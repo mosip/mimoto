@@ -50,10 +50,14 @@ public class UserControllerTest {
     private UserMetadata userMetadata;
 
     MockHttpSession mockSession;
+    
+    String identityProvider;
+
     @Before
     public void setUp() {
+        identityProvider = "google";
         userMetadata = new UserMetadata();
-        userMetadata.setIdentityProvider("google");
+        userMetadata.setIdentityProvider(identityProvider);
         userMetadata.setDisplayName("encryptedName");
         userMetadata.setProfilePictureUrl("encryptedUrl");
         userMetadata.setEmail("encryptedEmail");
@@ -63,7 +67,7 @@ public class UserControllerTest {
         mockSession = new MockHttpSession();
         mockSession.setAttribute("clientRegistrationId", "google");
         mockSession.setAttribute("userId", "user123");
-        when(userMetadataRepository.findByProviderSubjectId("user123")).thenReturn(Optional.of(userMetadata));
+        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123",identityProvider)).thenReturn(Optional.of(userMetadata));
         when(encryptionDecryptionUtil.decrypt("encryptedName", "user_pii", "", "")).thenReturn("Name 123");
         when(encryptionDecryptionUtil.decrypt("encryptedUrl", "user_pii", "", "")).thenReturn("https://profile.com/pic.jpg");
         when(encryptionDecryptionUtil.decrypt("encryptedEmail", "user_pii", "", "")).thenReturn("name123@gmail.com");
@@ -79,7 +83,7 @@ public class UserControllerTest {
 
     @Test
     public void shouldThrowExceptionForAInvalidUser() throws Exception {
-        when(userMetadataRepository.findByProviderSubjectId("user123")).thenReturn(Optional.empty());
+        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123",identityProvider)).thenReturn(Optional.empty());
 
         mockMvc.perform(MockMvcRequestBuilders.get("/secure/user/profile").accept(MediaType.APPLICATION_JSON)
                         .session(mockSession)
@@ -91,7 +95,7 @@ public class UserControllerTest {
 
     @Test
     public void shouldThrowExceptionIfAnyOtherErrorOccurredWhileFetchingUserData() throws Exception {
-        when(userMetadataRepository.findByProviderSubjectId("user123")).thenReturn(Optional.of(userMetadata));
+        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123",identityProvider)).thenReturn(Optional.of(userMetadata));
         when(encryptionDecryptionUtil.decrypt("encryptedName", "user_pii", "", "")).thenThrow(new RuntimeException("Failure occurred while decrypting the name"));
 
         mockMvc.perform(MockMvcRequestBuilders.get("/secure/user/profile").accept(MediaType.APPLICATION_JSON)
@@ -100,17 +104,5 @@ public class UserControllerTest {
                 .andExpect(MockMvcResultMatchers.status().isInternalServerError())
                 .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-049"))
                 .andExpect(jsonPath("$.errors[0].errorMessage").value("Failed to fetch the User metadata from database due to : Failure occurred while decrypting the name"));
-    }
-
-    @Test
-    public void shouldThrowExceptionIfIdentityProviderInSessionMismatchWithValueStoredInUserRecord() throws Exception {
-        mockSession.setAttribute("clientRegistrationId", "facebook");
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/secure/user/profile").accept(MediaType.APPLICATION_JSON)
-                        .session(mockSession)
-                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
-                .andExpect(MockMvcResultMatchers.status().isInternalServerError())
-                .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-049"))
-                .andExpect(jsonPath("$.errors[0].errorMessage").value("Identity provider in session and user database doesn't match"));
     }
 }

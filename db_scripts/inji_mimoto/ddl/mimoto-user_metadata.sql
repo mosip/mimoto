@@ -10,8 +10,8 @@
 
 CREATE TABLE IF NOT EXISTS user_metadata (
     id VARCHAR(36) PRIMARY KEY,  -- Primary key for the table
-    provider_subject_id VARCHAR(255) UNIQUE NOT NULL,  -- Unique identifier for the provider subject
-    identity_provider VARCHAR(255) UNIQUE NOT NULL,  -- Unique identifier for the identity provider
+    provider_subject_id VARCHAR(255) NOT NULL,  -- Unique identifier for the provider subject
+    identity_provider VARCHAR(255) NOT NULL,  -- Unique identifier for the identity provider
     display_name TEXT NOT NULL,  -- Display name of the user
     profile_picture_url TEXT,  -- URL of the user's profile picture
     phone_number TEXT,  -- Phone number of the user

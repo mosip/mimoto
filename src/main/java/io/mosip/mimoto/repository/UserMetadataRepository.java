@@ -7,5 +7,5 @@ import java.util.Optional;
 
 @Repository
 public interface UserMetadataRepository extends JpaRepository<UserMetadata, String> {
-    Optional<UserMetadata> findByProviderSubjectId(String providerSubjectId);
+    Optional<UserMetadata> findByProviderSubjectIdAndIdentityProvider(String providerSubjectId, String identityProvider);
 }

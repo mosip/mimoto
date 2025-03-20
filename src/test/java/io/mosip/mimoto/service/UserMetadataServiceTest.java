@@ -65,7 +65,7 @@ public class UserMetadataServiceTest {
     @Test
     public void shouldUpdateUserMetadataForSameProviderSubjectIdAndDifferentDisplayName() {
         String updatedDisplayName = "Name 124";
-        when(userMetadataRepository.findByProviderSubjectId(providerSubjectId)).thenReturn(Optional.of(userMetadata));
+        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider)).thenReturn(Optional.of(userMetadata));
         when(encryptionDecryptionUtil.decrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
         when(encryptionDecryptionUtil.encrypt(anyString(), any(), any(), any())).thenReturn(updatedDisplayName, profilePictureUrl, email);
 
@@ -78,7 +78,7 @@ public class UserMetadataServiceTest {
 
     @Test
     public void shouldCreateNewUserMetadataIfUserRecordIsNotAvailableForReceivedProviderSubjectId() {
-        when(userMetadataRepository.findByProviderSubjectId(providerSubjectId)).thenReturn(Optional.empty());
+        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider)).thenReturn(Optional.empty());
         when(encryptionDecryptionUtil.encrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
         when(userMetadataRepository.save(any(UserMetadata.class))).thenAnswer(invocation -> {
             UserMetadata savedUser = invocation.getArgument(0);
@@ -98,7 +98,7 @@ public class UserMetadataServiceTest {
         String updatedDisplayName = "Name 123";
         String updatedProfilePictureUrl = "http://profile.pic";
         String updatedEmail = "name.123@example.com";
-        when(userMetadataRepository.findByProviderSubjectId(providerSubjectId)).thenReturn(Optional.of(userMetadata));
+        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider)).thenReturn(Optional.of(userMetadata));
         when(encryptionDecryptionUtil.decrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
         when(encryptionDecryptionUtil.encrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
         Thread.sleep(1);

@@ -17,7 +17,7 @@ public class UserMetadata {
     @Column(length = 36, updatable = false, nullable = false)
     private String id;
 
-    @Column(name = "provider_subject_id", nullable = false, unique = true)
+    @Column(name = "provider_subject_id", nullable = false)
     private String providerSubjectId;
 
     @Column(name = "identity_provider", nullable = false)

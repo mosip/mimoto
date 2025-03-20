@@ -35,8 +35,7 @@ public class UserController {
             ResponseWrapper<String> responseWrapper = new ResponseWrapper<>();
             String identityProvider = (String) session.getAttribute("clientRegistrationId");
 
-            UserMetadata userMetadata = fetchUserMetadata(authentication.getName());
-            validateIdentityProvider(userMetadata, identityProvider);
+            UserMetadata userMetadata = fetchUserMetadata(authentication.getName(), identityProvider);
 
             String userDetails = String.format("{\"displayName\": \"%s\", \"profilePictureUrl\": \"%s\", \"email\": \"%s\"}",
                     encryptionDecryptionUtill.decrypt(userMetadata.getDisplayName(), "user_pii", "", ""),
@@ -59,14 +58,8 @@ public class UserController {
 
     }
 
-    private UserMetadata fetchUserMetadata(String userId) throws OAuth2AuthenticationException {
-        return userMetadataRepository.findByProviderSubjectId(userId)
+    private UserMetadata fetchUserMetadata(String providerSubjectId, String identityProvider) throws OAuth2AuthenticationException {
+        return userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider)
                 .orElseThrow(() -> new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), "User not found. Please check your credentials or register", HttpStatus.NOT_FOUND));
-    }
-
-    private void validateIdentityProvider(UserMetadata userMetadata, String identityProvider) throws OAuth2AuthenticationException {
-        if (!userMetadata.getIdentityProvider().equals(identityProvider)) {
-            throw new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), "Identity provider in session and user database doesn't match", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 }

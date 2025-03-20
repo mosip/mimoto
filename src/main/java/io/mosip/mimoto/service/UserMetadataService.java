@@ -27,7 +27,7 @@ public class UserMetadataService {
         Timestamp now = new Timestamp(System.currentTimeMillis());
 
         // Check if user exists
-        Optional<UserMetadata> existingUser = userMetadataRepository.findByProviderSubjectId(providerSubjectId);
+        Optional<UserMetadata> existingUser = userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId,identityProvider);
         if (existingUser.isPresent()) {
             // If user exists, update metadata and return the userID
             updateUserMetadata(existingUser.get(), displayName, profilePictureUrl, email, now);
