@@ -9,8 +9,8 @@
 -- ------------------------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS wallet (
-    id UUID PRIMARY KEY,  -- Primary key for the table
-    user_id UUID NOT NULL,  -- Foreign key referencing user_metadata (long-based)
+    id character varying(36) PRIMARY KEY,  -- Primary key for the table
+    user_id character varying(36) NOT NULL,  -- Foreign key referencing user_metadata (long-based)
     wallet_key TEXT NOT NULL,  -- Encrypted wallet key
     public_key TEXT NOT NULL,  -- Public key for wallet
     secret_key TEXT NOT NULL,  -- Secret key, encrypted with wallet_key
