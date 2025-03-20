@@ -3,6 +3,7 @@ package io.mosip.mimoto.dbentity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -15,11 +16,11 @@ import java.util.UUID;
 public class Wallet {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+    @Column(length = 36, updatable = false, nullable = false)
+    private String id;
 
     @Column(nullable = false)
-    private UUID userId; // Foreign key reference to user_metadata (long-based)
+    private String userId; // Foreign key reference to user_metadata
 
     @Column(nullable = false)
     private String walletKey; // Encrypted wallet key using AES256-GCM

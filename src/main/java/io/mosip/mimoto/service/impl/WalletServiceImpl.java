@@ -24,20 +24,20 @@ public class WalletServiceImpl implements WalletService {
     @Autowired
     private WalletUtil walletHelper;
     @Override
-    public UUID createWallet(UUID userId, String pin) throws Exception {
+    public String createWallet(String userId, String pin) throws Exception {
         // Create a new wallet for the user
         return walletHelper.createEd25519AlgoWallet(userId, pin);
     }
 
     @Override
-    public String getWalletKey(UUID userId, UUID walletId, String pin) {
+    public String getWalletKey(String userId, String walletId, String pin) {
         Optional<Wallet> existingWallet = walletRepository.findByUserIdAndId(userId, walletId);
         // Decrypt wallet key using the user's PIN
         return existingWallet.map(wallet -> walletHelper.decryptWalletKey(wallet.getWalletKey(), pin)).orElse(null);
     }
 
     @Override
-    public List<UUID> getWallets(UUID userId) {
+    public List<String> getWallets(String userId) {
         return walletRepository.findWalletIdByUserId(userId);
     }
 }

@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public interface WalletRepository extends JpaRepository<Wallet, String> {
     @Query("SELECT w.id FROM Wallet w WHERE w.userId = :userId")
-    List<UUID> findWalletIdByUserId(@Param("userId") UUID userId);
+    List<String> findWalletIdByUserId(@Param("userId") String userId);
 
-    Optional<Wallet> findByUserIdAndId(UUID userId, UUID walletId);
+    Optional<Wallet> findByUserIdAndId(String userId, String walletId);
 }

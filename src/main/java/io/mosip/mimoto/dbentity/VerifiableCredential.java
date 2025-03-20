@@ -3,6 +3,8 @@ package io.mosip.mimoto.dbentity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
+
 import java.time.Instant;
 
 @Entity
@@ -11,8 +13,8 @@ import java.time.Instant;
 public class VerifiableCredential {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    @Column(length = 36, updatable = false, nullable = false)
+    private String id;
 
     @ManyToOne
     @JoinColumn(name = "wallet_id", nullable = false) // Foreign key reference to wallet table

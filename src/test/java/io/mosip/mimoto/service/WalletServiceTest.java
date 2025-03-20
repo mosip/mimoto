@@ -31,8 +31,8 @@ public class WalletServiceTest {
     @InjectMocks
     private WalletServiceImpl walletService;
 
-    private UUID userId;
-    private UUID walletId;
+    private String userId;
+    private String walletId;
     private String pin;
     private Wallet wallet;
     private String encryptedWalletKey;
@@ -40,8 +40,8 @@ public class WalletServiceTest {
 
     @Before
     public void setUp() {
-        userId = UUID.randomUUID();
-        walletId = UUID.randomUUID();
+        userId = UUID.randomUUID().toString();
+        walletId = UUID.randomUUID().toString();
         pin = "1234";
         encryptedWalletKey = "encryptedKey";
         decryptedWalletKey = "decryptedKey";
@@ -54,10 +54,10 @@ public class WalletServiceTest {
 
     @Test
     public void createWallet_shouldCreateWalletSuccessfully() throws Exception {
-        UUID newWalletId = UUID.randomUUID();
+        String newWalletId = UUID.randomUUID().toString();
         when(walletHelper.createEd25519AlgoWallet(userId, pin)).thenReturn(newWalletId);
 
-        UUID result = walletService.createWallet(userId, pin);
+        String result = walletService.createWallet(userId, pin);
 
         assertEquals(newWalletId, result);
     }
@@ -83,10 +83,10 @@ public class WalletServiceTest {
 
     @Test
     public void getWallets_shouldReturnListOfWalletIds() {
-        List<UUID> walletIds = Arrays.asList(UUID.randomUUID(), UUID.randomUUID());
+        List<String> walletIds = Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString());
         when(walletRepository.findWalletIdByUserId(userId)).thenReturn(walletIds);
 
-        List<UUID> result = walletService.getWallets(userId);
+        List<String> result = walletService.getWallets(userId);
 
         assertEquals(walletIds, result);
     }
@@ -95,7 +95,7 @@ public class WalletServiceTest {
     public void getWallets_shouldReturnEmptyListIfNoWalletsFound() {
         when(walletRepository.findWalletIdByUserId(userId)).thenReturn(List.of());
 
-        List<UUID> result = walletService.getWallets(userId);
+        List<String> result = walletService.getWallets(userId);
 
         assertTrue(result.isEmpty());
     }

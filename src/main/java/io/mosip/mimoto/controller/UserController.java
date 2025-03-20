@@ -76,10 +76,10 @@ public class UserController {
     }
 
     @PostMapping("/wallets")
-    public ResponseEntity<ResponseWrapper<UUID>> createWallet(@RequestBody WalletRequestDto wallet, HttpSession httpSession) {
+    public ResponseEntity<ResponseWrapper<String>> createWallet(@RequestBody WalletRequestDto wallet, HttpSession httpSession) {
         try {
-            ResponseWrapper<UUID> responseWrapper = new ResponseWrapper<>();
-            responseWrapper.setResponse(walletService.createWallet((UUID) httpSession.getAttribute("userId"), wallet.getPin()));
+            ResponseWrapper<String> responseWrapper = new ResponseWrapper<>();
+            responseWrapper.setResponse(walletService.createWallet((String) httpSession.getAttribute("userId"), wallet.getPin()));
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception exception) {
             log.error("Error occurred while creating user wallets : ", exception);
@@ -88,11 +88,11 @@ public class UserController {
     }
 
     @GetMapping("/wallets")
-    public ResponseEntity<ResponseWrapper<List<UUID>>> getWallets(HttpSession httpSession) {
+    public ResponseEntity<ResponseWrapper<List<String>>> getWallets(HttpSession httpSession) {
         try {
-            ResponseWrapper<List<UUID>> responseWrapper = new ResponseWrapper<>();
-            List<UUID> list = new ArrayList<>();
-            list.addAll(walletService.getWallets((UUID) httpSession.getAttribute("userId")));
+            ResponseWrapper<List<String>> responseWrapper = new ResponseWrapper<>();
+            List<String> list = new ArrayList<>();
+            list.addAll(walletService.getWallets((String) httpSession.getAttribute("userId")));
             responseWrapper.setResponse(list);
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception exception) {
@@ -102,13 +102,13 @@ public class UserController {
     }
 
     @PostMapping("/wallets/{walletId}")
-    public ResponseEntity<ResponseWrapper<UUID>> getWallet(@PathVariable("walletId") UUID walletId, @RequestBody WalletRequestDto wallet, HttpSession httpSession) {
+    public ResponseEntity<ResponseWrapper<String>> getWallet(@PathVariable("walletId") String walletId, @RequestBody WalletRequestDto wallet, HttpSession httpSession) {
         try {
             // If wallet_key does not exist in the session, fetch it and set it in the session
-            String walletKey = walletService.getWalletKey((UUID) httpSession.getAttribute("userId"), walletId, wallet.getPin());
+            String walletKey = walletService.getWalletKey((String) httpSession.getAttribute("userId"), walletId, wallet.getPin());
             httpSession.setAttribute("wallet_key", walletKey);
 
-            ResponseWrapper<UUID> responseWrapper = new ResponseWrapper<>();
+            ResponseWrapper<String> responseWrapper = new ResponseWrapper<>();
             responseWrapper.setResponse(walletId);
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception exception) {

@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.UUID;
 
 public interface WalletService {
-    public UUID createWallet(UUID userId, String pin) throws NoSuchAlgorithmException, Exception;
+    public String createWallet(String userId, String pin) throws NoSuchAlgorithmException, Exception;
 
-    String getWalletKey(UUID userId, UUID walletId, String pin);
+    String getWalletKey(String userId, String walletId, String pin);
 
-    List<UUID> getWallets(UUID userId);
+    List<String> getWallets(String userId);
 }
