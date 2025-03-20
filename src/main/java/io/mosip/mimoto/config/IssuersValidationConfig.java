@@ -53,6 +53,11 @@ public class IssuersValidationConfig implements ApplicationRunner {
                     String issuerId = issuerDTO.getIssuer_id();
                     if (errors.get() != null && errors.get().hasErrors()) {
                         log.error("{} for issuer {}: {}", VALIDATION_ERROR_MSG, issuerId, errors.get());
+                        errors.get().getFieldErrors().forEach(error -> {
+                            fieldErrors.set(fieldErrors.get() + error.getField() + " " + error.getDefaultMessage() + "\n");
+                        });
+                        log.error(VALIDATION_ERROR_MSG + fieldErrors.get());
+                        throw new RuntimeException(VALIDATION_ERROR_MSG);
                     }
                     String[] tokenEndpointArray = issuerDTO.getToken_endpoint().split("/");
                     Set<String> currentIssuers = credentialIssuers.get();
@@ -67,15 +72,6 @@ public class IssuersValidationConfig implements ApplicationRunner {
                     credentialIssuers.set(currentIssuers);
                 }
             });
-        }
-
-
-        if (errors.get() != null && errors.get().hasErrors()) {
-            errors.get().getFieldErrors().forEach(error -> {
-                fieldErrors.set(fieldErrors.get() + error.getField() + " " + error.getDefaultMessage() + "\n");
-            });
-            log.error(VALIDATION_ERROR_MSG + fieldErrors.get());
-            throw new RuntimeException(VALIDATION_ERROR_MSG);
         }
 
         log.info("Validation for mimoto-issuers-config.json COMPLETED");
