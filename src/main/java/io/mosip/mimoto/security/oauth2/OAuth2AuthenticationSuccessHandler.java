@@ -64,7 +64,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         // Call the service to update or insert the user metadata in the database
         try {
-            UUID userId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+            String userId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
             session.setAttribute("userId", userId);
             response.sendRedirect(injiWebUrl + "/login?status=success");
         } catch (DataAccessResourceFailureException exception) {

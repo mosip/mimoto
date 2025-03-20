@@ -10,7 +10,6 @@ import java.sql.Timestamp;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.UUID;
 
 @Service
 public class UserMetadataService {
@@ -21,7 +20,7 @@ public class UserMetadataService {
     @Autowired
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
-    public UUID updateOrInsertUserMetadata(String providerSubjectId, String identityProvider,
+    public String updateOrInsertUserMetadata(String providerSubjectId, String identityProvider,
                                              String displayName, String profilePictureUrl,
                                              String email) {
         // Compute current time once
@@ -61,7 +60,7 @@ public class UserMetadataService {
         return false;
     }
 
-    private UUID createUserMetadata(String providerSubjectId, String identityProvider, String displayName,
+    private String createUserMetadata(String providerSubjectId, String identityProvider, String displayName,
                                       String profilePictureUrl, String email, Timestamp now) {
         UserMetadata userMetadata = new UserMetadata();
         userMetadata.setProviderSubjectId(providerSubjectId);

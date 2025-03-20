@@ -34,16 +34,14 @@ public class UserController {
         try {
             ResponseWrapper<String> responseWrapper = new ResponseWrapper<>();
             String identityProvider = (String) session.getAttribute("clientRegistrationId");
-            if (identityProvider.isEmpty()) {
-                throw new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), "The Identity provider in the authentication object is invalid", HttpStatus.BAD_REQUEST);
-            }
 
             UserMetadata userMetadata = fetchUserMetadata(authentication.getName());
             validateIdentityProvider(userMetadata, identityProvider);
 
-            String userDetails = String.format("{\"displayName\": \"%s\", \"profilePictureUrl\": \"%s\"}",
+            String userDetails = String.format("{\"displayName\": \"%s\", \"profilePictureUrl\": \"%s\", \"email\": \"%s\"}",
                     encryptionDecryptionUtill.decrypt(userMetadata.getDisplayName(), "user_pii", "", ""),
-                    encryptionDecryptionUtill.decrypt(userMetadata.getProfilePictureUrl(), "user_pii", "", ""));
+                    encryptionDecryptionUtill.decrypt(userMetadata.getProfilePictureUrl(), "user_pii", "", ""),
+                    encryptionDecryptionUtill.decrypt(userMetadata.getEmail(), "user_pii", "", ""));
             responseWrapper.setResponse(userDetails);
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (OAuth2AuthenticationException exception) {
@@ -61,8 +59,8 @@ public class UserController {
 
     }
 
-    private UserMetadata fetchUserMetadata(String providerSubjectId) throws OAuth2AuthenticationException {
-        return userMetadataRepository.findByProviderSubjectId(providerSubjectId)
+    private UserMetadata fetchUserMetadata(String userId) throws OAuth2AuthenticationException {
+        return userMetadataRepository.findByProviderSubjectId(userId)
                 .orElseThrow(() -> new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), "User not found. Please check your credentials or register", HttpStatus.NOT_FOUND));
     }
 

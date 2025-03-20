@@ -36,10 +36,9 @@ public class UserMetadataServiceTest {
     @InjectMocks
     private UserMetadataService userMetadataService;
 
-    private String providerSubjectId,identityProvider,displayName,profilePictureUrl,email;
+    private String providerSubjectId, identityProvider, displayName, profilePictureUrl, email, userId, storedUserId;
     private Timestamp now;
     private UserMetadata userMetadata;
-    private UUID userId;
 
     @Before
     public void setUp() {
@@ -50,7 +49,7 @@ public class UserMetadataServiceTest {
         profilePictureUrl = "http://profile.pic";
         email = "name.123@example.com";
         now = new Timestamp(System.currentTimeMillis());
-        userId = UUID.randomUUID();
+        userId = UUID.randomUUID().toString();
 
         userMetadata = new UserMetadata();
         userMetadata.setId(userId);
@@ -70,10 +69,10 @@ public class UserMetadataServiceTest {
         when(encryptionDecryptionUtil.decrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
         when(encryptionDecryptionUtil.encrypt(anyString(), any(), any(), any())).thenReturn(updatedDisplayName, profilePictureUrl, email);
 
-        UUID result = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, updatedDisplayName, profilePictureUrl, email);
+        storedUserId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, updatedDisplayName, profilePictureUrl, email);
 
-        assertEquals(userId, result);
-        assertEquals(userMetadata.getDisplayName(),updatedDisplayName);
+        assertEquals(userId, storedUserId);
+        assertEquals(userMetadata.getDisplayName(), updatedDisplayName);
         verify(userMetadataRepository, times(1)).save(userMetadata);
     }
 
@@ -87,14 +86,14 @@ public class UserMetadataServiceTest {
             return savedUser;
         });
 
-        UUID result = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+        storedUserId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
 
-        assertEquals(userId, result);
+        assertEquals(userId, storedUserId);
         verify(userMetadataRepository, times(1)).save(any(UserMetadata.class));
     }
 
     @Test
-    public void shouldUpdateTheUpdatedFieldEvenIfNoChangesInMetadataObserved() {
+    public void shouldUpdateTheUpdatedFieldEvenIfNoChangesInMetadataObserved() throws InterruptedException {
         Timestamp timestampBeforeUpdate = userMetadata.getUpdatedAt();
         String updatedDisplayName = "Name 123";
         String updatedProfilePictureUrl = "http://profile.pic";
@@ -102,16 +101,18 @@ public class UserMetadataServiceTest {
         when(userMetadataRepository.findByProviderSubjectId(providerSubjectId)).thenReturn(Optional.of(userMetadata));
         when(encryptionDecryptionUtil.decrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
         when(encryptionDecryptionUtil.encrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
-        UUID result = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+        Thread.sleep(1);
+        storedUserId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
 
         ArgumentCaptor<UserMetadata> userMetadataCaptor = ArgumentCaptor.forClass(UserMetadata.class);
         verify(userMetadataRepository).save(userMetadataCaptor.capture());
 
         UserMetadata capturedUserMetadata = userMetadataCaptor.getValue();
+        Timestamp after = capturedUserMetadata.getUpdatedAt();
         assertEquals(updatedDisplayName, capturedUserMetadata.getDisplayName());
         assertEquals(updatedProfilePictureUrl, capturedUserMetadata.getProfilePictureUrl());
         assertEquals(updatedEmail, capturedUserMetadata.getEmail());
-        assertNotEquals(timestampBeforeUpdate, capturedUserMetadata.getUpdatedAt());
-        assertEquals(userId, result);
+        assertNotEquals(timestampBeforeUpdate, after);
+        assertEquals(userId, storedUserId);
     }
 }

@@ -56,41 +56,26 @@ public class UserControllerTest {
         userMetadata.setIdentityProvider("google");
         userMetadata.setDisplayName("encryptedName");
         userMetadata.setProfilePictureUrl("encryptedUrl");
+        userMetadata.setEmail("encryptedEmail");
         mockMvc = MockMvcBuilders.webAppContextSetup(context)
                 .apply(springSecurity())
                 .build();
         mockSession = new MockHttpSession();
         mockSession.setAttribute("clientRegistrationId", "google");
+        mockSession.setAttribute("userId", "user123");
+        when(userMetadataRepository.findByProviderSubjectId("user123")).thenReturn(Optional.of(userMetadata));
+        when(encryptionDecryptionUtil.decrypt("encryptedName", "user_pii", "", "")).thenReturn("Name 123");
+        when(encryptionDecryptionUtil.decrypt("encryptedUrl", "user_pii", "", "")).thenReturn("https://profile.com/pic.jpg");
+        when(encryptionDecryptionUtil.decrypt("encryptedEmail", "user_pii", "", "")).thenReturn("name123@gmail.com");
     }
 
     @Test
     public void shouldReturnTheUserDataForValidValues() throws Exception {
-        when(userMetadataRepository.findByProviderSubjectId("user123")).thenReturn(Optional.of(userMetadata));
-        when(encryptionDecryptionUtil.decrypt("encryptedName", "user_pii", "", "")).thenReturn("Name 123");
-        when(encryptionDecryptionUtil.decrypt("encryptedUrl", "user_pii", "", "")).thenReturn("https://profile.com/pic.jpg");
-
         mockMvc.perform(MockMvcRequestBuilders.get("/secure/user/profile").accept(MediaType.APPLICATION_JSON)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.response").value("{\"displayName\": \"Name 123\", \"profilePictureUrl\": \"https://profile.com/pic.jpg\"}"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.response").value("{\"displayName\": \"Name 123\", \"profilePictureUrl\": \"https://profile.com/pic.jpg\", \"email\": \"name123@gmail.com\"}"));
     }
-
-    @Test
-    public void shouldThrowExceptionIfIdentityProviderIsEmpty() throws Exception {
-        mockSession.setAttribute("clientRegistrationId", "");
-
-        when(userMetadataRepository.findByProviderSubjectId("user123")).thenReturn(Optional.of(userMetadata));
-        when(encryptionDecryptionUtil.decrypt("encryptedName", "user_pii", "", "")).thenReturn("Name 123");
-        when(encryptionDecryptionUtil.decrypt("encryptedUrl", "user_pii", "", "")).thenReturn("https://profile.com/pic.jpg");
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/secure/user/profile").accept(MediaType.APPLICATION_JSON)
-                        .session(mockSession)
-                .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-049"))
-                .andExpect(jsonPath("$.errors[0].errorMessage").value("The Identity provider in the authentication object is invalid"));
-    }
-
 
     @Test
     public void shouldThrowExceptionForAInvalidUser() throws Exception {
@@ -120,10 +105,6 @@ public class UserControllerTest {
     @Test
     public void shouldThrowExceptionIfIdentityProviderInSessionMismatchWithValueStoredInUserRecord() throws Exception {
         mockSession.setAttribute("clientRegistrationId", "facebook");
-
-        when(userMetadataRepository.findByProviderSubjectId("user123")).thenReturn(Optional.of(userMetadata));
-        when(encryptionDecryptionUtil.decrypt("encryptedName", "user_pii", "", "")).thenReturn("Name 123");
-        when(encryptionDecryptionUtil.decrypt("encryptedUrl", "user_pii", "", "")).thenReturn("https://profile.com/pic.jpg");
 
         mockMvc.perform(MockMvcRequestBuilders.get("/secure/user/profile").accept(MediaType.APPLICATION_JSON)
                         .session(mockSession)
