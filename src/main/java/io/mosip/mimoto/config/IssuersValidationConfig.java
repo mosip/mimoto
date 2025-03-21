@@ -13,12 +13,10 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.Validator;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
@@ -61,7 +59,10 @@ public class IssuersValidationConfig implements ApplicationRunner {
 
                     if (errors.hasErrors()) {
                         issuerHasErrors = true;
-                        errors.getFieldErrors().forEach(error -> issuerErrors.append(String.format("- %s %s%n", error.getField(), error.getDefaultMessage())));
+                        errors.getFieldErrors().stream()
+                                .sorted(Comparator.comparing(FieldError::getField))
+                                .forEach(error -> issuerErrors.append(String.format("- %s %s%n", error.getField(), error.getDefaultMessage())));
+
                     }
 
                     String[] tokenEndpointArray = issuerDTO.getToken_endpoint().split("/");
@@ -89,7 +90,7 @@ public class IssuersValidationConfig implements ApplicationRunner {
         if (!allErrors.isEmpty()) {
             StringBuilder fieldErrorsBuilder = new StringBuilder();
             allErrors.forEach(fieldErrorsBuilder::append);
-            String fieldErrorsString = VALIDATION_ERROR_MSG + ":\n" + fieldErrorsBuilder;
+            String fieldErrorsString = VALIDATION_ERROR_MSG + "\n" + fieldErrorsBuilder;
             log.error(fieldErrorsString);
             throw new RuntimeException(fieldErrorsString);
         }
