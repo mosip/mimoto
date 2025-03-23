@@ -38,6 +38,8 @@ public class IssuerDTO {
     @NotBlank
     @Schema(description = "Authorization Audience for retrieving Token from token endpoint")
     String authorization_audience;
+    @URL
+    @NotBlank
     @Schema(description = "Mimoto Token Endpoint Fetching the Token From Authorization Server with Client Assertion")
     String token_endpoint;
     @URL
@@ -55,6 +57,7 @@ public class IssuerDTO {
     @NotBlank
     @Schema(description = "Unique Identifier of the Issuer")
     String credential_issuer;
+    @URL
     @NotBlank
     @Schema(description = "Credential Issuer Host")
     String credential_issuer_host;
