@@ -58,6 +58,7 @@ public class IssuerDTO {
     String authorization_audience;
     @Expose
     @JsonInclude(NON_NULL)
+    @NotBlank
     @Schema(description = "Mimoto Token Endpoint Fetching the Token From Authorization Server with Client Assertion")
     String token_endpoint;
     @Expose
