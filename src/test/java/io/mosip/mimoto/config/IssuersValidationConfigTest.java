@@ -37,7 +37,7 @@ public class IssuersValidationConfigTest {
     @Test
     public void shouldNotThrowAnyExceptionForValidIssuersConfig() {
         try {
-            issuers.setIssuers(List.of(getIssuerConfigDTO("Issuer8", Collections.emptyList()), getIssuerConfigDTO("Issuer7",Collections.emptyList())));
+            issuers.setIssuers(List.of(getIssuerConfigDTO("Issuer8", Collections.emptyList()), getIssuerConfigDTO("Issuer7", Collections.emptyList())));
             when(issuersService.getAllIssuersWithAllFields()).thenReturn(issuers);
 
             issuersValidationConfig.run(mock(ApplicationArguments.class));
@@ -49,7 +49,7 @@ public class IssuersValidationConfigTest {
     @Test
     public void shouldThrowExceptionIfTheFieldValuesOfIssuerAreNotSatisfyingNotBlankAnnotation() {
         try {
-            issuers.setIssuers(List.of(getIssuerConfigDTOWithInvalidFieldValues("Issuer1", true), getIssuerConfigDTOWithInvalidFieldValues("Issuer2",true)));
+            issuers.setIssuers(List.of(getIssuerConfigDTOWithInvalidFieldValues("Issuer1", true, false), getIssuerConfigDTOWithInvalidFieldValues("Issuer2", true, false)));
             when(issuersService.getAllIssuersWithAllFields()).thenReturn(issuers);
 
             issuersValidationConfig.run(mock(ApplicationArguments.class));
@@ -62,14 +62,14 @@ public class IssuersValidationConfigTest {
     }
 
     @Test
-    public void shouldThrowExceptionIfTheIssuerIdInTokenEndpointIsNotMatchingWithIssuerId() {
+    public void shouldThrowExceptionIfTheFieldValuesOfIssuerAreNotSatisfyingUrlAnnotation() {
         try {
-            issuers.setIssuers(List.of(getIssuerConfigDTOWithInvalidFieldValues("Issuer1", false), getIssuerConfigDTOWithInvalidFieldValues("Issuer2",false)));
+            issuers.setIssuers(List.of(getIssuerConfigDTOWithInvalidFieldValues("Issuer1", false, true), getIssuerConfigDTOWithInvalidFieldValues("Issuer2", false, true)));
             when(issuersService.getAllIssuersWithAllFields()).thenReturn(issuers);
 
             issuersValidationConfig.run(mock(ApplicationArguments.class));
         } catch (Exception exception) {
-            String expectedErrorMsg = "\n\nValidation failed in Mimoto-issuers-config.json:\nErrors for issuer at index: 0 with issuerId - Issuer1id\n- TokenEndpoint does not match with the credential issuerId\nErrors for issuer at index: 1 with issuerId - Issuer2id\n- TokenEndpoint does not match with the credential issuerId\n";
+            String expectedErrorMsg = "\n\nValidation failed in Mimoto-issuers-config.json:\nErrors for issuer at index: 0 with issuerId - Issuer1id\n- credential_issuer_host must be a valid URL\n- proxy_token_endpoint must be a valid URL\n- token_endpoint must be a valid URL\n- wellknown_endpoint must be a valid URL\n- TokenEndpoint does not match with the credential issuerId\nErrors for issuer at index: 1 with issuerId - Issuer2id\n- credential_issuer_host must be a valid URL\n- proxy_token_endpoint must be a valid URL\n- token_endpoint must be a valid URL\n- wellknown_endpoint must be a valid URL\n- TokenEndpoint does not match with the credential issuerId\n";
             String actualErrorMsg = exception.getMessage();
 
             assertEquals(expectedErrorMsg, actualErrorMsg);

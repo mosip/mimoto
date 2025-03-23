@@ -1,15 +1,14 @@
 package io.mosip.mimoto.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
 import io.mosip.mimoto.model.QRCodeType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
+import org.hibernate.validator.constraints.URL;
 
 import java.util.List;
 
@@ -26,6 +25,7 @@ public class IssuerDTO {
     @NotBlank
     @Schema(description = "Unique Identifier of the Issuer")
     String issuer_id;
+    @URL
     @Expose
     @NotBlank
     @Schema(description = "Credential Issuer Host")
@@ -43,6 +43,7 @@ public class IssuerDTO {
     @NotBlank
     @Schema(description = "Client Id of the Onboarded Mimoto OIDC Client")
     String client_id;
+    @URL
     @NotBlank
     @Expose
     @Schema(description = "Wellknown endpoint of the credential issuer")
@@ -56,11 +57,13 @@ public class IssuerDTO {
     @NotBlank
     @Schema(description = "Authorization Audience for retrieving Token from token endpoint")
     String authorization_audience;
+    @URL
     @Expose
     @JsonInclude(NON_NULL)
     @NotBlank
     @Schema(description = "Mimoto Token Endpoint Fetching the Token From Authorization Server with Client Assertion")
     String token_endpoint;
+    @URL
     @Expose
     @JsonInclude(NON_NULL)
     @NotBlank

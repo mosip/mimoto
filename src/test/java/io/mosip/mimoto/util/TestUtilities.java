@@ -142,7 +142,8 @@ public class TestUtilities {
         return issuer;
     }
 
-    public static IssuerDTO getIssuerConfigDTOWithInvalidFieldValues(String issuerName, boolean emptyValues) {
+
+    public static IssuerDTO getIssuerConfigDTOWithInvalidFieldValues(String issuerName, boolean emptyValues, boolean invalidUrls) {
         LogoDTO logo = new LogoDTO();
         logo.setUrl(emptyValues ? "/logo" : "https://logo");
         logo.setAlt_text("logo-url");
@@ -163,11 +164,13 @@ public class TestUtilities {
         issuer.setRedirect_uri(emptyValues ? "" : "https://oauthredirect");
         issuer.setEnabled(emptyValues ? "" : "true");
         issuer.setProtocol(emptyValues ? "" : "OpenId4VCI");
-        issuer.setWellknown_endpoint(emptyValues ? "" : "https://issuer.env.net/.well-known/openid-credential-issuer");
-        issuer.setCredential_issuer_host(emptyValues ? "" : "https://issuer.env.net");
-        issuer.setToken_endpoint(emptyValues ? "" : "https://dev/token");
-        issuer.setAuthorization_audience(emptyValues ? "" : "https://dev/auth-server/token");
-        issuer.setProxy_token_endpoint(emptyValues ? "" : "https://dev/auth-server/token");
+
+        // Handle valid and invalid URLs
+        issuer.setWellknown_endpoint(emptyValues ? "" : (invalidUrls ? "ht//issuer.env.net/.well-known/openid-credential-issuer" : "https://issuer.env.net/.well-known/openid-credential-issuer"));
+        issuer.setCredential_issuer_host(emptyValues ? "" : (invalidUrls ? "https//issuer.env.net" : "https://issuer.env.net"));
+        issuer.setToken_endpoint(emptyValues ? "" : (invalidUrls ? "h://dev/token" : "https://dev/token"));
+        issuer.setAuthorization_audience(emptyValues ? "" : (invalidUrls ? "htt://dev/auth-server/token" : "https://dev/auth-server/token"));
+        issuer.setProxy_token_endpoint(emptyValues ? "" : (invalidUrls ? "htp://dev/auth-server/token" : "https://dev/auth-server/token"));
 
         return issuer;
     }
