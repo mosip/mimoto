@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -27,7 +28,7 @@ public class UserMetadataService {
         Timestamp now = new Timestamp(System.currentTimeMillis());
 
         // Check if user exists
-        Optional<UserMetadata> existingUser = userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId,identityProvider);
+        Optional<UserMetadata> existingUser = userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider);
         if (existingUser.isPresent()) {
             // If user exists, update metadata and return the userID
             updateUserMetadata(existingUser.get(), displayName, profilePictureUrl, email, now);
@@ -63,6 +64,8 @@ public class UserMetadataService {
     private String createUserMetadata(String providerSubjectId, String identityProvider, String displayName,
                                       String profilePictureUrl, String email, Timestamp now) {
         UserMetadata userMetadata = new UserMetadata();
+        String userId = UUID.randomUUID().toString();
+        userMetadata.setId(userId);
         userMetadata.setProviderSubjectId(providerSubjectId);
         userMetadata.setIdentityProvider(identityProvider);
         userMetadata.setDisplayName(encryptionDecryptionUtil.encrypt(displayName, "user_pii", "", ""));

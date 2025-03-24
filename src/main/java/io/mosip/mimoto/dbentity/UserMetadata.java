@@ -3,7 +3,6 @@ package io.mosip.mimoto.dbentity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "user_metadata")
@@ -12,8 +11,6 @@ import org.hibernate.annotations.GenericGenerator;
 public class UserMetadata {
 
     @Id
-    @GeneratedValue(generator = "uuid")
-    @GenericGenerator(name = "uuid", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(length = 36, updatable = false, nullable = false)
     private String id;
 
