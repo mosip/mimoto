@@ -147,10 +147,14 @@ public class Config {
                         .clearAuthentication(true)
                 )
                 .authorizeHttpRequests(authz -> authz
-                        // Define secured endpoints
-                        .requestMatchers("/secure/**").authenticated() // Secure endpoints that require login
-                        // Default authorization rule for all other requests
-                        .anyRequest().permitAll()
+                        // make existing endpoints public
+                        .requestMatchers("/safetynet/**", "/allProperties", "/credentials/**",
+                                "/credentialshare/**","/binding-otp","/wallet-binding","/get-token/**",
+                                "/issuers","/issuers/**","/authorize","/req/otp","/vid","/req/auth/**",
+                                "/req/individualId/otp","/aid/get-individual-id","/session/status",
+                                "/verifiers").permitAll()
+                        // Apply the default authorization rule to all other requests, ensuring authentication is required.
+                        .anyRequest().authenticated()
                 ).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
     }
 

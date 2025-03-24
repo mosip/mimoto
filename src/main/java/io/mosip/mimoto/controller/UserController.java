@@ -2,6 +2,7 @@ package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dbentity.UserMetadata;
+import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.exception.OAuth2AuthenticationException;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
@@ -30,18 +31,18 @@ public class UserController {
     private EncryptionDecryptionUtil encryptionDecryptionUtill;
 
     @GetMapping("/profile")
-    public ResponseEntity<ResponseWrapper<String>> getUserProfile(Authentication authentication, HttpSession session) {
+    public ResponseEntity<ResponseWrapper<UserMetadataDTO>> getUserProfile(Authentication authentication, HttpSession session) {
         try {
-            ResponseWrapper<String> responseWrapper = new ResponseWrapper<>();
+            ResponseWrapper<UserMetadataDTO> responseWrapper = new ResponseWrapper<>();
             String identityProvider = (String) session.getAttribute("clientRegistrationId");
 
             UserMetadata userMetadata = fetchUserMetadata(authentication.getName(), identityProvider);
 
-            String userDetails = String.format("{\"displayName\": \"%s\", \"profilePictureUrl\": \"%s\", \"email\": \"%s\"}",
-                    encryptionDecryptionUtill.decrypt(userMetadata.getDisplayName(), "user_pii", "", ""),
+            UserMetadataDTO userMetadataDTO = new UserMetadataDTO(encryptionDecryptionUtill.decrypt(userMetadata.getDisplayName(), "user_pii", "", ""),
                     encryptionDecryptionUtill.decrypt(userMetadata.getProfilePictureUrl(), "user_pii", "", ""),
                     encryptionDecryptionUtill.decrypt(userMetadata.getEmail(), "user_pii", "", ""));
-            responseWrapper.setResponse(userDetails);
+            responseWrapper.setResponse(userMetadataDTO);
+
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (OAuth2AuthenticationException exception) {
             log.error("Error occurred while retrieving user profile : ", exception);

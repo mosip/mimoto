@@ -3,6 +3,7 @@ package io.mosip.mimoto.controller;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,7 +79,11 @@ public class UserControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/secure/user/profile").accept(MediaType.APPLICATION_JSON)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
                 .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.response").value("{\"displayName\": \"Name 123\", \"profilePictureUrl\": \"https://profile.com/pic.jpg\", \"email\": \"name123@gmail.com\"}"));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.response.display_name").value("Name 123"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.response.profile_picture_url").value("https://profile.com/pic.jpg"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.response.email").value("name123@gmail.com"))
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors").isEmpty());
     }
 
     @Test
@@ -89,6 +94,7 @@ public class UserControllerTest {
                         .session(mockSession)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
+                .andExpect(jsonPath("$.response").doesNotExist())
                 .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-049"))
                 .andExpect(jsonPath("$.errors[0].errorMessage").value("User not found. Please check your credentials or register"));
     }
