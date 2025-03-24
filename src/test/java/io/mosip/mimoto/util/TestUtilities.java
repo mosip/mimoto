@@ -112,9 +112,10 @@ public class TestUtilities {
         }
         return issuer;
     }
+
     public static IssuerDTO getIssuerConfigDTO(String issuerName, List<String> nullFields) {
         LogoDTO logo = new LogoDTO();
-        logo.setUrl("/logo");
+        logo.setUrl("https://logo");
         logo.setAlt_text("logo-url");
         DisplayDTO display = new DisplayDTO();
         display.setName(issuerName);
@@ -128,20 +129,49 @@ public class TestUtilities {
         issuer.setCredential_issuer_host("https://injicertify-mock.dev1.mosip.net");
         issuer.setDisplay(Collections.singletonList(display));
         issuer.setClient_id("123");
+        issuer.setClient_alias("test-client-alias");
         issuer.setEnabled("true");
-        if (issuerName.equals("Issuer1")) issuer.setWellknown_endpoint("/well-known-proxy");
-        else {
-            if (!nullFields.contains("redirect_uri"))
-                issuer.setRedirect_uri("/redirection");
-            if (!nullFields.contains("authorization_audience"))
-                issuer.setAuthorization_audience("/authorization_audience");
-            if (!nullFields.contains("redirect_uri"))
-                issuer.setRedirect_uri("/redirection");
-            if (!nullFields.contains("token_endpoint"))
-                issuer.setToken_endpoint("/token_endpoint");
-            if (!nullFields.contains("proxy_token_endpoint"))
-                issuer.setProxy_token_endpoint("/proxy_token_endpoint");
-        }
+        issuer.setProtocol("OpenId4VCI");
+        issuer.setRedirect_uri("/redirection");
+        issuer.setToken_endpoint("https://dev/" + issuerName + "id");
+        issuer.setProxy_token_endpoint("https://dev/auth-server/token");
+        issuer.setWellknown_endpoint("https://well-known-proxy");
+        if (!nullFields.contains("authorization_audience"))
+            issuer.setAuthorization_audience("https://dev/auth-server/token");
+
+        return issuer;
+    }
+
+
+    public static IssuerDTO getIssuerConfigDTOWithInvalidFieldValues(String issuerName, boolean emptyValues, boolean invalidUrls) {
+        LogoDTO logo = new LogoDTO();
+        logo.setUrl(emptyValues ? "/logo" : "https://logo");
+        logo.setAlt_text("logo-url");
+
+        DisplayDTO display = new DisplayDTO();
+        display.setName(emptyValues ? "" : issuerName);
+        display.setTitle(emptyValues ? "" : "Download via " + issuerName);
+        display.setDescription(emptyValues ? "" : issuerName + " description");
+        display.setLanguage(emptyValues ? "" : "en");
+        display.setLogo(logo);
+
+        IssuerDTO issuer = new IssuerDTO();
+        issuer.setIssuer_id(emptyValues ? "" : issuerName + "id");
+        issuer.setCredential_issuer(emptyValues ? "" : issuerName + "id");
+        issuer.setDisplay(Collections.singletonList(display));
+        issuer.setClient_id(emptyValues ? "" : "123");
+        issuer.setClient_alias(emptyValues ? "" : "test-client-alias");
+        issuer.setRedirect_uri(emptyValues ? "" : "https://oauthredirect");
+        issuer.setEnabled(emptyValues ? "" : "true");
+        issuer.setProtocol(emptyValues ? "" : "OpenId4VCI");
+
+        // Handle valid and invalid URLs
+        issuer.setWellknown_endpoint(emptyValues ? "" : (invalidUrls ? "ht//issuer.env.net/.well-known/openid-credential-issuer" : "https://issuer.env.net/.well-known/openid-credential-issuer"));
+        issuer.setCredential_issuer_host(emptyValues ? "" : (invalidUrls ? "https//issuer.env.net" : "https://issuer.env.net"));
+        issuer.setToken_endpoint(emptyValues ? "" : (invalidUrls ? "h://dev/token" : "https://dev/token"));
+        issuer.setAuthorization_audience(emptyValues ? "" : (invalidUrls ? "htt://dev/auth-server/token" : "https://dev/auth-server/token"));
+        issuer.setProxy_token_endpoint(emptyValues ? "" : (invalidUrls ? "htp://dev/auth-server/token" : "https://dev/auth-server/token"));
+
         return issuer;
     }
 
