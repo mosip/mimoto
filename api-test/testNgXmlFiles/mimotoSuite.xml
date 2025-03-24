@@ -189,9 +189,9 @@
 			<class name="io.mosip.testrig.apirig.mimoto.testscripts.GetWithParam" />
 		</classes>
 	</test>
-	<test name="GetIssuerConfiguration">
+	<test name="GetWellknownIssuerMockMdl">
 		<parameter name="ymlFile"
-			value="mimoto/GetIssuerConfiguration/GetIssuerConfiguration.yml" />
+			value="mimoto/GetWellknownIssuerMockMdl/GetWellknownIssuerMockMdl.yml" />
 		<classes>
 			<class name="io.mosip.testrig.apirig.mimoto.testscripts.GetWithParam" />
 		</classes>
