@@ -26,8 +26,8 @@ COMMENT ON COLUMN user_metadata.id IS 'Primary Key: Unique identifier for the us
 COMMENT ON COLUMN user_metadata.provider_subject_id IS 'Provider Subject ID: Unique identifier for the subject assigned by the identity provider';
 COMMENT ON COLUMN user_metadata.identity_provider IS 'Identity Provider: The identity provider associated with the user';
 COMMENT ON COLUMN user_metadata.display_name IS 'Display Name: The name shown to other users';
-COMMENT ON COLUMN user_metadata.profile_picture_url IS 'Profile Picture URL: The URL link to the user\'s profile picture';
-COMMENT ON COLUMN user_metadata.phone_number IS 'Phone Number: User\'s phone number, if available';
-COMMENT ON COLUMN user_metadata.email IS 'Email: User\'s email address';
+COMMENT ON COLUMN user_metadata.profile_picture_url IS 'Profile Picture URL: The URL link to the user''s profile picture';
+COMMENT ON COLUMN user_metadata.phone_number IS 'Phone Number: User''s phone number, if available';
+COMMENT ON COLUMN user_metadata.email IS 'Email: User''s email address';
 COMMENT ON COLUMN user_metadata.created_at IS 'Created At: The date and time when the metadata was created';
 COMMENT ON COLUMN user_metadata.updated_at IS 'Updated At: The date and time when the metadata was last updated';
