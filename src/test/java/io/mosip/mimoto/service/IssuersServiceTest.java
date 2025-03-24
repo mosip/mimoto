@@ -58,8 +58,7 @@ public class IssuersServiceTest {
     @Mock
     ObjectMapper objectMapper;
 
-    List<String> issuerConfigRelatedFields11 = List.of("additional_headers", "authorization_endpoint","authorization_audience", "token_endpoint", "proxy_token_endpoint", "credential_endpoint", "credential_audience", "redirect_uri");
-    List<String> issuerConfigRelatedFields=List.of("additional_headers", "authorization_endpoint","authorization_audience","credential_endpoint", "credential_audience");
+    List<String> issuerConfigRelatedFields=List.of("authorization_audience");
 
     @Before
     public void setUp() throws Exception {
@@ -71,7 +70,7 @@ public class IssuersServiceTest {
     @Test
     public void shouldReturnIssuersWithIssuerConfigAsNull() throws ApiNotAccessibleException, IOException {
         IssuersDTO expectedIssuers = new IssuersDTO();
-        List<IssuerDTO> issuers = new ArrayList<>(List.of(getIssuerConfigDTO("Issuer1", issuerConfigRelatedFields), getIssuerConfigDTO("Issuer2", issuerConfigRelatedFields)));
+        List<IssuerDTO> issuers = new ArrayList<>(List.of(getIssuerConfigDTO("Issuer1",issuerConfigRelatedFields), getIssuerConfigDTO("Issuer2", issuerConfigRelatedFields)));
         expectedIssuers.setIssuers(issuers);
 
         IssuersDTO expectedFilteredIssuers = new IssuersDTO();
@@ -93,7 +92,7 @@ public class IssuersServiceTest {
 
     @Test
     public void shouldReturnIssuerDataAndConfigForTheIssuerIdIfExist() throws ApiNotAccessibleException, IOException, InvalidIssuerIdException {
-        IssuerDTO expectedIssuer = getIssuerConfigDTO("Issuer1", issuerConfigRelatedFields);
+        IssuerDTO expectedIssuer = getIssuerConfigDTO("Issuer1", Collections.emptyList());
 
         IssuerDTO issuer = issuersService.getIssuerConfig("Issuer1id");
 
@@ -103,7 +102,7 @@ public class IssuersServiceTest {
     @Test
     public void shouldReturnIssuerWellknownForTheIssuerIdIfExist() throws ApiNotAccessibleException, IOException {
         String issuerId = "Issuer1id";
-        String wellKnownUrl = "/well-known-proxy";
+        String wellKnownUrl = "https://well-known-proxy";
         CredentialIssuerWellKnownResponse expextedCredentialIssuerWellKnownResponse=getCredentialIssuerWellKnownResponseDto("Issuer1",
                Map.of("CredentialType1",getCredentialSupportedResponse("CredentialType1")));
 
@@ -142,8 +141,8 @@ public class IssuersServiceTest {
     @Test
     public void shouldReturnOnlyEnabledIssuers() throws IOException, ApiNotAccessibleException {
         IssuersDTO issuers = new IssuersDTO();
-        IssuerDTO enabledIssuer = getIssuerConfigDTO("Issuer1", Collections.emptyList());
-        IssuerDTO disbaledIssuer = getIssuerConfigDTO("Issuer2", Collections.emptyList());
+        IssuerDTO enabledIssuer = getIssuerConfigDTO("Issuer1",issuerConfigRelatedFields );
+        IssuerDTO disbaledIssuer = getIssuerConfigDTO("Issuer2", issuerConfigRelatedFields);
         disbaledIssuer.setEnabled("false");
         issuers.setIssuers(List.of(enabledIssuer, disbaledIssuer));
         Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(new Gson().toJson(issuers));
