@@ -11,7 +11,7 @@ This is the docker-compose setup to run mimoto which act as BFF for Inji mobile 
 
 ## How to run this setup?
 
-1. Add Id providers as an issuers in mimoto-issuers-config.json. For each provider, include the token_endpoint property, which should be an HTTPS URL. This can either be an exposed domain or, for local setups, an ngrok URL if you're using mimoto for local testing with the Inji mobile wallet.
+1. Add Id providers as issuers in mimoto-issuers-config.json. For each provider, include the token_endpoint property, which should be an HTTPS URL. This can either be an exposed domain or, for local setups, an ngrok URL if you're using mimoto for local testing with the Inji mobile wallet.
 
 2. Add verifiers clientId and redirect Uris in mimoto-trusted-verifiers.json for Online Sharing
 
