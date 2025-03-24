@@ -41,8 +41,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2AuthenticationToken oauth2Token = (OAuth2AuthenticationToken) authentication;
         OAuth2User oAuth2User = oauth2Token.getPrincipal();
         HttpSession session = request.getSession(false);
-        log.info("Request Cookies: {}", Arrays.toString(request.getCookies()));
-        log.info("Session ID after login: {}", session.getId());
+
         // Storing clientRegistrationId in the Redis session to verify it against the one in user metadata during profile retrieval
         String clientRegistrationId = oauth2Token.getAuthorizedClientRegistrationId();
         session.setAttribute("clientRegistrationId", clientRegistrationId);
@@ -53,14 +52,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String displayName = oAuth2User.getAttribute("name");
         String profilePictureUrl = oAuth2User.getAttribute("picture");
         String email = oAuth2User.getAttribute("email");
-
-        OAuth2AuthorizedClient authorizedClient = authorizedClientService
-                .loadAuthorizedClient(oauth2Token.getAuthorizedClientRegistrationId(), authentication.getName());
-
-        String accessToken = authorizedClient.getAccessToken().getTokenValue();
-        String refreshToken = authorizedClient.getRefreshToken().getTokenValue();
-        session.setAttribute("accessToken", accessToken);
-        session.setAttribute("refreshToken", refreshToken);
 
         // Call the service to update or insert the user metadata in the database
         try {
