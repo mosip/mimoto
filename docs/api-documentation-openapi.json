@@ -2682,17 +2682,20 @@
                                 "type": "array",
                                 "items": {
                                     "$ref": "#/components/schemas/Credential"
-                                }
+                                },
+                                "description": "A list of credentials that are supported by the issuer."
                             },
                             "authorization_endpoint": {
                                 "type": "string",
-                                "format": "uri"
+                                "format": "uri",
+                                "description": "The authorization endpoint where the issuer's authorization server can be accessed."
                             },
                             "grant_types_supported": {
                                 "type": "array",
                                 "items": {
                                     "type": "string"
-                                }
+                                },
+                                "description": "The grant types that are supported by the authorization server."
                             }
                         }
                     },
@@ -2701,7 +2704,8 @@
                         "items": {
                             "$ref": "#/components/schemas/Error"
                         },
-                        "example": []
+                        "example": [],
+                        "description": "A list of error details, if any occurred during the request."
                     }
                 }
             },
@@ -2710,13 +2714,15 @@
                 "properties": {
                     "response": {
                         "type": "object",
-                        "nullable": true
+                        "nullable": true,
+                        "description": "The response object, which may be null in case of an error."
                     },
                     "errors": {
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/Error"
-                        }
+                        },
+                        "description": "A list of error objects describing the issues with the request."
                     }
                 }
             },
@@ -2724,16 +2730,19 @@
                 "type": "object",
                 "properties": {
                     "name": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "The name of the credential (e.g., 'InsuranceCredential')."
                     },
                     "scope": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "The scope associated with the credential (e.g., 'sunbird_rc_insurance_vc_ldp')."
                     },
                     "display": {
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/Display"
-                        }
+                        },
+                        "description": "A list of display options for the credential, including name, locale, and logo."
                     }
                 }
             },
@@ -2741,13 +2750,16 @@
                 "type": "object",
                 "properties": {
                     "name": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "The display name of the credential (e.g., 'Health Insurance')."
                     },
                     "locale": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "The locale for the credential display (e.g., 'en' for English)."
                     },
                     "logo": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "The URL for the logo associated with the credential."
                     }
                 }
             },
@@ -2755,10 +2767,12 @@
                 "type": "object",
                 "properties": {
                     "errorCode": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "A unique code representing the error."
                     },
                     "errorMessage": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "A detailed message describing the error."
                     }
                 }
             },
