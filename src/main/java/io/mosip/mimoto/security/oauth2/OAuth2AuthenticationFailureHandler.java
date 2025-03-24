@@ -29,11 +29,11 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
             if (exception instanceof OAuth2AuthenticationException) {
                 Throwable cause = exception.getCause();
                 if (cause instanceof java.net.SocketTimeoutException) {
-                    errorMessage = "Timeout while connecting to the IDP for authorization.";
+                    errorMessage = "Timeout while connecting to the IDP for authorization";
                 } else if (cause instanceof java.net.ConnectException) {
-                    errorMessage = "Could not connect to the IDP for authorization.";
+                    errorMessage = "Could not connect to the IDP for authorization";
                 } else if (exception.getMessage().contains("access_denied")) {
-                    errorMessage = "Access Denied. Please try again.";
+                    errorMessage = "Access Denied. Please try again";
                 } else {
                     errorMessage = "Login is failed due to: " + exception.getMessage();
                 }
