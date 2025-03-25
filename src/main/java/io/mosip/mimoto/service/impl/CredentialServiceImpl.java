@@ -17,6 +17,7 @@ import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.*;
 import io.mosip.pixelpass.PixelPass;
+import io.mosip.pixelpass.exception.QrDataOverflowException;
 import io.mosip.pixelpass.types.ECC;
 import io.mosip.vercred.vcverifier.CredentialsVerifier;
 import jakarta.annotation.PostConstruct;
@@ -42,6 +43,8 @@ import static io.mosip.mimoto.exception.ErrorConstants.*;
 @Slf4j
 @Service
 public class CredentialServiceImpl implements CredentialService {
+
+    private static final ECC DEFAULT_ECC_LEVEL = ECC.L;
 
     @Autowired
     private Utilities utilities;
@@ -252,13 +255,19 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     private String constructQRCodeWithVCData(VCCredentialResponse vcCredentialResponse) throws JsonProcessingException {
-         return pixelPass.generateQRCodeWithinLimit(allowedQRDataSizeLimit, objectMapper.writeValueAsString(vcCredentialResponse.getCredential()), ECC.L, "");
+        try {
+            String qrData = objectMapper.writeValueAsString(vcCredentialResponse.getCredential());
+            return pixelPass.generateQRCodeWithinLimit(allowedQRDataSizeLimit, qrData, DEFAULT_ECC_LEVEL, "");
+        } catch (QrDataOverflowException e) {
+            log.warn("QR data exceeds the allowed limit", allowedQRDataSizeLimit);
+            return "";
+        }
     }
 
     private String constructQRCodeWithAuthorizeRequest(VCCredentialResponse vcCredentialResponse, String dataShareUrl) throws JsonProcessingException {
         PresentationDefinitionDTO presentationDefinitionDTO = presentationService.constructPresentationDefinition(vcCredentialResponse);
         String presentationString = objectMapper.writeValueAsString(presentationDefinitionDTO);
         String qrData = String.format(ovpQRDataPattern, URLEncoder.encode(dataShareUrl, StandardCharsets.UTF_8), URLEncoder.encode(presentationString, StandardCharsets.UTF_8));
-         return pixelPass.generateQRCode(qrData, ECC.L, "");
+         return pixelPass.generateQRCode(qrData, DEFAULT_ECC_LEVEL, "");
     }
 }
