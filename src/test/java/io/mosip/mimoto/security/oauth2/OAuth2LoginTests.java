@@ -4,6 +4,7 @@ import io.mosip.mimoto.config.Config;
 import io.mosip.mimoto.controller.UserController;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.repository.UserMetadataRepository;
+import io.mosip.mimoto.service.UserMetadataService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import jakarta.servlet.http.Cookie;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -20,8 +22,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.session.Session;
@@ -44,16 +52,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ContextConfiguration(classes = Config.class)
 @WebMvcTest(Config.class)
 @AutoConfigureMockMvc
-@Import({UserController.class})
+@Import({UserController.class, OAuth2AuthenticationSuccessHandler.class, OAuth2AuthenticationFailureHandler.class, HttpSessionOAuth2AuthorizationRequestRepository.class})
 @Slf4j
 public class OAuth2LoginTests {
+
+    @Value("${mosip.inji.web.url}")
+    private String injiWebUrl;
+
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Autowired
     private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
-    @MockBean
+    @Autowired
     private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
     @MockBean
@@ -67,6 +79,12 @@ public class OAuth2LoginTests {
 
     @MockBean
     private SessionRepository sessionRepository;
+
+    @MockBean
+    private UserMetadataService userMetadataService;
+
+    @MockBean
+    private OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
 
     private String providerSubjectId, identityProvider, displayName, profilePictureUrl, email, userId;
     private Timestamp now;
@@ -92,13 +110,26 @@ public class OAuth2LoginTests {
         userMetadata.setEmail(email);
         userMetadata.setCreatedAt(now);
         userMetadata.setUpdatedAt(now);
+
+        ClientRegistration googleClient = ClientRegistration.withRegistrationId("google")
+                .clientId("test-client-id")
+                .clientSecret("test-client-secret")
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .redirectUri("https://injiweb.dev1.mosip.net/login/oauth2/callback/google")
+                .tokenUri("https://oauth2.googleapis.com/token")
+                .authorizationUri("https://accounts.google.com/o/oauth2/auth")
+                .userInfoUri("https://www.googleapis.com/oauth2/v3/userinfo")
+                .clientName("Google")
+                .build();
+
+        when(clientRegistrationRepository.findByRegistrationId("google")).thenReturn(googleClient);
     }
 
     @Test
     public void shouldBeRedirectedToRedirectEndpointOnUnauthenticatedAccessToProtectedEndpoint() throws Exception {
         mockMvc.perform(get("/secure/user/profile"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("https://injiweb.dev1.mosip.net/login"));
+                .andExpect(redirectedUrl(injiWebUrl+"/login"));
     }
 
     @Test
@@ -171,5 +202,55 @@ public class OAuth2LoginTests {
 
         verify(sessionRepository, times(1)).findById(sessionId);
         verify(sessionRepository, times(1)).deleteById(sessionId);
+    }
+
+    @Test
+    public void shouldSendTheCustomErrorInRedirectUrlWhenUserDeniesConsentDuringLogin() throws Exception {
+        MockHttpSession mockSession = new MockHttpSession();
+
+        OAuth2AuthorizationRequest authRequest = OAuth2AuthorizationRequest.authorizationCode()
+                .authorizationUri("https://accounts.google.com/o/oauth2/auth")
+                .clientId("test-client-id")
+                .redirectUri("https://yourapp.com/oauth2/callback/google")
+                .scopes(Collections.singleton("profile"))
+                .state("test-state")
+                .attributes(Map.of(OAuth2ParameterNames.REGISTRATION_ID, "google"))
+                .build();
+
+        // Store in session under the expected key
+        mockSession.setAttribute(HttpSessionOAuth2AuthorizationRequestRepository.class.getName() + ".AUTHORIZATION_REQUEST", authRequest);
+
+        mockMvc.perform(get("/oauth2/callback/google")
+                        .session(mockSession)
+                        .param("error", "access_denied")  // Simulating the user clicking "Deny or Cancel" button in the consent
+                        .param("state", "test-state")
+                        .param("registration_id", "google"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("https://injiweb.dev1.mosip.net/login?status=error&error_message=Consent+was+denied+to+share+the+details+with+the+application.+Please+give+consent+and+try+again"));
+    }
+
+    @Test
+    public void shouldThrowTheCustomErrorInRedirectUrlWhenAnyExceptionOccurredDuringLogin() throws Exception {
+        MockHttpSession mockSession = new MockHttpSession();
+
+        //registration_id is not sent in the auth request
+        OAuth2AuthorizationRequest authRequest = OAuth2AuthorizationRequest.authorizationCode()
+                .authorizationUri("https://accounts.google.com/o/oauth2/auth")
+                .clientId("test-client-id")
+                .redirectUri("https://yourapp.com/oauth2/callback/google")
+                .scopes(Collections.singleton("profile"))
+                .state("test-state")
+                .build();
+
+        // Store in session under the expected key
+        mockSession.setAttribute(HttpSessionOAuth2AuthorizationRequestRepository.class.getName() + ".AUTHORIZATION_REQUEST", authRequest);
+
+        mockMvc.perform(get("/oauth2/callback/google")
+                        .session(mockSession)
+                        .param("error", "access_denied")
+                        .param("state", "test-state")
+                        .param("registration_id", "google"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(injiWebUrl+"/login?status=error&error_message=Login+is+failed+due+to+%3A+%5Bclient_registration_not_found%5D+Client+Registration+not+found+with+Id%3A+null"));
     }
 }
