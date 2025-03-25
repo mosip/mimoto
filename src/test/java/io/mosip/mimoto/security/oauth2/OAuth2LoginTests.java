@@ -5,6 +5,7 @@ import io.mosip.mimoto.controller.UserController;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.service.UserMetadataService;
+import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import jakarta.servlet.http.Cookie;
 import lombok.extern.slf4j.Slf4j;
@@ -72,6 +73,9 @@ public class OAuth2LoginTests {
     private UserMetadataRepository userMetadataRepository;
 
     @MockBean
+    private WalletService walletService;
+
+    @MockBean
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
     @MockBean
@@ -127,7 +131,7 @@ public class OAuth2LoginTests {
 
     @Test
     public void shouldBeRedirectedToRedirectEndpointOnUnauthenticatedAccessToProtectedEndpoint() throws Exception {
-        mockMvc.perform(get("/secure/user/profile"))
+        mockMvc.perform(get("/users/me"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl(injiWebUrl+"/login"));
     }
@@ -156,7 +160,7 @@ public class OAuth2LoginTests {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         securityContext.setAuthentication(authenticationToken);
 
-        mockMvc.perform(get("/secure/user/profile")
+        mockMvc.perform(get("/users/me")
                         .session(mockSession)
                         .with(oauth2Login().oauth2User(oauth2User)))
                 .andExpect(status().isOk())

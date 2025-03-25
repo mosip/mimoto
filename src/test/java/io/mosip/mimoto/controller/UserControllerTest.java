@@ -2,8 +2,8 @@ package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.repository.UserMetadataRepository;
+import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,6 +48,9 @@ public class UserControllerTest {
     @Autowired
     private WebApplicationContext context;
 
+    @MockBean
+    private WalletService walletService;
+
     private UserMetadata userMetadata;
 
     MockHttpSession mockSession;
@@ -76,7 +79,7 @@ public class UserControllerTest {
 
     @Test
     public void shouldReturnTheUserDataForValidValues() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/secure/user/profile").accept(MediaType.APPLICATION_JSON)
+        mockMvc.perform(MockMvcRequestBuilders.get("/users/me").accept(MediaType.APPLICATION_JSON)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.response.display_name").value("Name 123"))
@@ -90,7 +93,7 @@ public class UserControllerTest {
     public void shouldThrowExceptionForAInvalidUser() throws Exception {
         when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123",identityProvider)).thenReturn(Optional.empty());
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/secure/user/profile").accept(MediaType.APPLICATION_JSON)
+        mockMvc.perform(MockMvcRequestBuilders.get("/users/me").accept(MediaType.APPLICATION_JSON)
                         .session(mockSession)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
                 .andExpect(MockMvcResultMatchers.status().isNotFound())
@@ -104,7 +107,7 @@ public class UserControllerTest {
         when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123",identityProvider)).thenReturn(Optional.of(userMetadata));
         when(encryptionDecryptionUtil.decrypt("encryptedName", "user_pii", "", "")).thenThrow(new RuntimeException("Failure occurred while decrypting the name"));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/secure/user/profile").accept(MediaType.APPLICATION_JSON)
+        mockMvc.perform(MockMvcRequestBuilders.get("/users/me").accept(MediaType.APPLICATION_JSON)
                         .session(mockSession)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
                 .andExpect(MockMvcResultMatchers.status().isInternalServerError())
