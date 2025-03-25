@@ -33,12 +33,12 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                 } else if (cause instanceof java.net.ConnectException) {
                     errorMessage = "Could not connect to the IDP for authorization";
                 } else if (exception.getMessage().contains("access_denied")) {
-                    errorMessage = "Access Denied. Please try again";
+                    errorMessage = "Consent was denied to share the details with the application. Please give consent and try again";
                 } else {
-                    errorMessage = "Login is failed due to: " + exception.getMessage();
+                    errorMessage = "Login is failed due to : " + exception.getMessage();
                 }
             } else {
-                errorMessage = "Login is failed due to: " + exception.getMessage();
+                errorMessage = "Login is failed due to : " + exception.getMessage();
             }
         }
 
