@@ -10,6 +10,7 @@
 
 CREATE TABLE IF NOT EXISTS wallet (
     id character varying(36) PRIMARY KEY,  -- Primary key for the table
+    name TEXT NOT NULL, -- wallet name
     user_id character varying(36) NOT NULL,  -- Foreign key referencing user_metadata (long-based)
     wallet_key TEXT NOT NULL,  -- Encrypted wallet key
     public_key TEXT NOT NULL,  -- Public key for wallet

@@ -32,6 +32,7 @@ public class WalletServiceTest {
     private WalletServiceImpl walletService;
 
     private String userId;
+    private String name;
     private String walletId;
     private String pin;
     private Wallet wallet;
@@ -43,6 +44,7 @@ public class WalletServiceTest {
         userId = UUID.randomUUID().toString();
         walletId = UUID.randomUUID().toString();
         pin = "1234";
+        name = "default";
         encryptedWalletKey = "encryptedKey";
         decryptedWalletKey = "decryptedKey";
 
@@ -55,9 +57,9 @@ public class WalletServiceTest {
     @Test
     public void createWallet_shouldCreateWalletSuccessfully() throws Exception {
         String newWalletId = UUID.randomUUID().toString();
-        when(walletHelper.createEd25519AlgoWallet(userId, pin)).thenReturn(newWalletId);
+        when(walletHelper.createEd25519AlgoWallet(userId, name, pin)).thenReturn(newWalletId);
 
-        String result = walletService.createWallet(userId, pin);
+        String result = walletService.createWallet(userId, name, pin);
 
         assertEquals(newWalletId, result);
     }
@@ -102,8 +104,8 @@ public class WalletServiceTest {
 
     @Test(expected = Exception.class)
     public void createWallet_shouldThrowException() throws Exception {
-        when(walletHelper.createEd25519AlgoWallet(userId, pin)).thenThrow(new Exception("Test Exception"));
+        when(walletHelper.createEd25519AlgoWallet(userId, name, pin)).thenThrow(new Exception("Test Exception"));
 
-        walletService.createWallet(userId, pin);
+        walletService.createWallet(userId, name, pin);
     }
 }

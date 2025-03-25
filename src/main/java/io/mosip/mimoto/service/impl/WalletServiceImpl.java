@@ -24,9 +24,9 @@ public class WalletServiceImpl implements WalletService {
     @Autowired
     private WalletUtil walletHelper;
     @Override
-    public String createWallet(String userId, String pin) throws Exception {
+    public String createWallet(String userId, String walletName, String pin) throws Exception {
         // Create a new wallet for the user
-        return walletHelper.createEd25519AlgoWallet(userId, pin);
+        return walletHelper.createEd25519AlgoWallet(userId, walletName, pin);
     }
 
     @Override

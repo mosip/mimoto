@@ -20,6 +20,9 @@ public class Wallet {
     private String id;
 
     @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
     private String userId; // Foreign key reference to user_metadata
 
     @Column(nullable = false)

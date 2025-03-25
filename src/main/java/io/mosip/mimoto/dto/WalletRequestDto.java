@@ -9,4 +9,5 @@ import lombok.ToString;
 @ApiModel(description = "Model representing a user wallet request")
 public class WalletRequestDto {
     String pin;
+    String name;
 }

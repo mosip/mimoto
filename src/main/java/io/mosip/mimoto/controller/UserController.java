@@ -29,7 +29,7 @@ import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 
 @Slf4j
 @RestController
-@RequestMapping(value = "/secure/user")
+@RequestMapping(value = "/users/me")
 public class UserController {
 
     @Autowired
@@ -41,7 +41,7 @@ public class UserController {
     @Autowired
     private WalletService walletService;
 
-    @GetMapping("/profile")
+    @GetMapping
     public ResponseEntity<ResponseWrapper<UserMetadataDTO>> getUserProfile(Authentication authentication, HttpSession session) {
         try {
             ResponseWrapper<UserMetadataDTO> responseWrapper = new ResponseWrapper<>();
@@ -79,7 +79,7 @@ public class UserController {
     public ResponseEntity<ResponseWrapper<String>> createWallet(@RequestBody WalletRequestDto wallet, HttpSession httpSession) {
         try {
             ResponseWrapper<String> responseWrapper = new ResponseWrapper<>();
-            responseWrapper.setResponse(walletService.createWallet((String) httpSession.getAttribute("userId"), wallet.getPin()));
+            responseWrapper.setResponse(walletService.createWallet((String) httpSession.getAttribute("userId"), wallet.getName(), wallet.getPin()));
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception exception) {
             log.error("Error occurred while creating user wallets : ", exception);

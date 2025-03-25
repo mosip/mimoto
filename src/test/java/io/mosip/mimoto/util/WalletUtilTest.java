@@ -39,6 +39,7 @@ class WalletUtilTest {
     private WalletUtil walletUtil;
 
     private String pin;
+    private String name;
     private String userId;
     private KeyPair keyPair;
     private SecretKey encryptionKey;
@@ -53,6 +54,7 @@ class WalletUtilTest {
     @BeforeEach
     void setUp() throws Exception {
         pin = "1234";
+        name = "default";
         userId = UUID.randomUUID().toString();
         keyPair = EncryptionDecryptionUtil.generateKeyPair("Ed25519");
         encryptionKey = EncryptionDecryptionUtil.generateEncryptionKey("AES", 256);
@@ -79,7 +81,7 @@ class WalletUtilTest {
     void createNewWallet_shouldCreateWalletSuccessfully() throws Exception {
         cryptoResponseDto.setData(encryptedWalletKey);
         when(cryptomanagerService.encryptWithPin(any(CryptoWithPinRequestDto.class))).thenReturn(cryptoResponseDto);
-        String walletId = walletUtil.createNewWallet(userId, pin, keyPair, encryptionKey, encryptionAlgorithm, encryptionType);
+        String walletId = walletUtil.createNewWallet(userId, pin, name, keyPair, encryptionKey, encryptionAlgorithm, encryptionType);
 
         assertNotNull(walletId);
     }
@@ -88,7 +90,7 @@ class WalletUtilTest {
     void createEd25519AlgoWallet_shouldCreateEd25519WalletSuccessfully() throws Exception {
         cryptoResponseDto.setData(encryptedWalletKey);
         when(cryptomanagerService.encryptWithPin(any(CryptoWithPinRequestDto.class))).thenReturn(cryptoResponseDto);
-        String walletId = walletUtil.createEd25519AlgoWallet(userId, pin);
+        String walletId = walletUtil.createEd25519AlgoWallet(userId, name, pin);
 
         assertNotNull(walletId);
     }
@@ -98,7 +100,7 @@ class WalletUtilTest {
     void createNewWallet_verifyWalletObject() throws Exception {
         cryptoResponseDto.setData(encryptedWalletKey);
         when(cryptomanagerService.encryptWithPin(any(CryptoWithPinRequestDto.class))).thenReturn(cryptoResponseDto);
-        String walletId = walletUtil.createNewWallet(userId, pin, keyPair, encryptionKey, encryptionAlgorithm, encryptionType);
+        String walletId = walletUtil.createNewWallet(userId, pin, name, keyPair, encryptionKey, encryptionAlgorithm, encryptionType);
 
         ArgumentCaptor<Wallet> walletCaptor = ArgumentCaptor.forClass(Wallet.class);
         verify(walletRepository).save(walletCaptor.capture());

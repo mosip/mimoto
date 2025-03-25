@@ -39,7 +39,7 @@ public class WalletUtil {
         return responseDto.getData();
     }
 
-    public String createNewWallet(String userId, String pin, KeyPair keyPair, SecretKey encryptionKey, String encryptionAlgorithm, String encryptionType) throws Exception {
+    public String createNewWallet(String userId, String walletName, String pin, KeyPair keyPair, SecretKey encryptionKey, String encryptionAlgorithm, String encryptionType) throws Exception {
 
         // Encrypt the private key with the encryption key
         String encryptedPrivateKey = EncryptionDecryptionUtil.encryptPrivateKeyWithAES(encryptionKey, keyPair.getPrivate());
@@ -48,6 +48,7 @@ public class WalletUtil {
         String walletId = UUID.randomUUID().toString();
         Wallet newWallet = new Wallet();
         newWallet.setId(walletId);
+        newWallet.setName(walletName);
         newWallet.setUserId(userId);
         KeyMetadata keyMetadata = new KeyMetadata();
         keyMetadata.setAlgorithmName(keyPair.getPublic().getAlgorithm());
@@ -75,10 +76,10 @@ public class WalletUtil {
 
 
     // Default method for Ed25519 and AES
-    public String createEd25519AlgoWallet(String userId, String pin) throws Exception {
+    public String createEd25519AlgoWallet(String userId, String walletName, String pin) throws Exception {
         SecretKey encryptionKey = EncryptionDecryptionUtil.generateEncryptionKey("AES", 256);
         KeyPair keyPair = EncryptionDecryptionUtil.generateKeyPair("Ed25519");
-        return createNewWallet(userId, pin, keyPair, encryptionKey, "AES", "encryptWithPin");
+        return createNewWallet(userId, walletName, pin, keyPair, encryptionKey, "AES", "encryptWithPin");
     }
 
 }
