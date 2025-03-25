@@ -54,7 +54,8 @@
 
         <!-- spring -->
         <spring.boot.version>3.2.3</spring.boot.version>
-
+        <session.redis.version>3.4.0</session.redis.version>
+        <starter.redis.version>3.4.1</starter.redis.version>
 
         <!-- data -->
         <h2.version>2.1.210</h2.version>
@@ -91,8 +92,9 @@
         <swagger.version>2.9.2</swagger.version>
         <springdoc.version>1.5.10</springdoc.version>
         <jjwt-version>0.9.1</jjwt-version>
+        <postgresql.version>42.7.2</postgresql.version>
         <sonar.coverage.exclusions>
-            **/constant/**,**/config/**,**/httpfilter/**,**/cache/**,**/dto/**,**/entity/**,**/model/**,**/exception/**,**/repository/**,**/security/**,**/*Config.java,**/*BootApplication.java,**/*VertxApplication.java,**/cbeffutil/**,**/core/http/**,**/util/**
+            **/constant/**,**/config/**,**/httpfilter/**,**/cache/**,**/dto/**,**/entity/**,**/dbentity/**,**/model/**,**/exception/**,**/repository/**,**/security/**,**/*Config.java,**/*BootApplication.java,**/*VertxApplication.java,**/cbeffutil/**,**/core/http/**,**/util/**
         </sonar.coverage.exclusions>
         <sonar.cpd.exclusions>**/dto/**,**/entity/**,**/config/**</sonar.cpd.exclusions>
     </properties>
@@ -205,6 +207,21 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
             <version>${spring.boot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+            <version>${spring.boot.version}</version>
+        </dependency>
+        <dependency>
+             <groupId>org.springframework.session</groupId>
+             <artifactId>spring-session-data-redis</artifactId>
+             <version>${session.redis.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <version>${starter.redis.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.vintage</groupId>
@@ -462,7 +479,18 @@
             <artifactId>jakarta.validation-api</artifactId>
             <version>3.0.2</version>
         </dependency>
-
+        <!-- Postgres -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+        </dependency>
+     <dependency>
+            <groupId>io.mosip.kernel</groupId>
+            <artifactId>kernel-keymanager-service</artifactId>
+            <version>1.3.0-beta.2</version>
+            <classifier>lib</classifier>
+        </dependency>
     </dependencies>
 
     <repositories>

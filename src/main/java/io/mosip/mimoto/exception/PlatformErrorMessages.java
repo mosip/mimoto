@@ -90,7 +90,15 @@ public enum PlatformErrorMessages {
     INVALID_CREDENTIAL_RESOURCE_URI_EXCEPTION(PlatformConstants.PREFIX + "040", "The Credential Resource is Invalid"),
     INVALID_CREDENTIAL_ISSUER_WELLKNOWN_RESPONSE_EXCEPTION(PlatformConstants.PREFIX + "041", "Invalid Wellknown from Issuer"),
     INVALID_AUTHORIZATION_SERVER_WELLKNOWN_RESPONSE_EXCEPTION(PlatformConstants.PREFIX + "042", "Invalid Authorization Server well-known from server:"),
-    MIMOTO_FETCHING_TOKEN_EXCEPTION(PlatformConstants.PREFIX + "043", "Exception occurred when fetching the Token");
+    MIMOTO_FETCHING_TOKEN_EXCEPTION(PlatformConstants.PREFIX + "043", "Exception occurred when fetching the Token"),
+    OAUTH2_AUTHENTICATION_EXCEPTION(PlatformConstants.PREFIX + "044", "Failed to authenticate user via OAuth Identity Provider during login"),
+    LOGIN_SESSION_EXCEPTION(PlatformConstants.PREFIX + "045", "Exception occurred when fetching the login session details"),
+    LOGIN_SESSION_INVALIDATE_EXCEPTION(PlatformConstants.PREFIX + "046", "Exception occurred when invalidating the session from redis"),
+    DATABASE_CONNECTION_EXCEPTION(PlatformConstants.PREFIX + "047", "Failed to connect to the shared database"),
+    USER_METADATA_STORAGE_EXCEPTION(PlatformConstants.PREFIX + "048", "Failed to store the User metadata into database"),
+    USER_METADATA_FETCH_EXCEPTION(PlatformConstants.PREFIX + "049", "Failed to fetch the User metadata from database"),
+    USER_WALLET_CREATION_EXCEPTION(PlatformConstants.PREFIX + "050", "Exception occurred when creating the wallet for user"),
+    USER_WALLET_RETRIEVAL_EXCEPTION(PlatformConstants.PREFIX + "051", "Exception occurred when creating the wallet for user");
 
     /** The error message. */
     private final String errorMessage;
