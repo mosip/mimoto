@@ -7,7 +7,7 @@ if [ $# -ge 1 ] ; then
 fi
 
 NS=config-server
-CHART_VERSION=0.0.1-develop
+CHART_VERSION=0.0.2-develop
 
     echo Create $NS namespace
     kubectl create ns $NS
@@ -25,10 +25,10 @@ CHART_VERSION=0.0.1-develop
 
     echo Copy configmaps
     COPY_UTIL=../copy_cm_func.sh
-    $COPY_UTIL configmap global default $NS
+    $COPY_UTIL configmap inji-global default $NS
 
     echo Copy secrets
-    $COPY_UTIL secret db-common-secrets postgres $NS
+    #$COPY_UTIL secret db-common-secrets postgres $NS
     $COPY_UTIL secret conf-secrets-various conf-secrets $NS
 
     echo Installing config-server

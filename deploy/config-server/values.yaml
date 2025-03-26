@@ -1,6 +1,6 @@
 gitRepo:
   uri: https://github.com/mosip/inji-config
-  version: develop
+  version: injistack
   ## Folders within the base repo where properties may be found.
   searchFolders: ""
   private: false
@@ -31,38 +31,7 @@ envVariables:
     enabled: true
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MPARTNER_DEFAULT_MOBILE_SECRET
-    valueFrom:
-      secretKeyRef:
-        key: mpartner_default_mobile_secret
-        name: keycloak-client-secrets
-    enabled: true
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_INTERNAL_URL
-    valueFrom:
-      configMapKeyRef:
-        name: keycloak-host
-        key: keycloak-internal-url
-    enabled: true
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_EXTERNAL_URL
-    valueFrom:
-      configMapKeyRef:
-        name: keycloak-host
-        key: keycloak-external-url
-    enabled: true
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_INTERNAL_HOST
-    valueFrom:
-      configMapKeyRef:
-        name: keycloak-host
-        key: keycloak-internal-host
-    enabled: true
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_EXTERNAL_HOST
-    valueFrom:
-      configMapKeyRef:
-        name: keycloak-host
-        key: keycloak-external-host
+    value: WXFvqo48eLCSBpRa
     enabled: true
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_DB_DBUSER_PASSWORD
@@ -70,7 +39,7 @@ envVariables:
       secretKeyRef:
         name: db-common-secrets
         key: db-dbuser-password
-    enabled: true
+    enabled: false
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_S3_ACCESSKEY
     valueFrom:
@@ -97,30 +66,33 @@ envVariables:
     valueFrom:
       configMapKeyRef:
         key: mosip-esignet-host
-        name: global
+        name: inji-global
     enabled: true
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_ESIGNET_INSURANCE_HOST
     valueFrom:
       configMapKeyRef:
         key: mosip-esignet-insurance-host
-        name: global
-    enabled: true
+        name: inji-global
+    enabled: false
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_INJI_DATASHARE_HOST
     valueFrom:
       configMapKeyRef:
         key: mosip-inji-datashare-host
-        name: global
+        name: inji-global
+    enabled: true
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_INJIWEB_HOST
     valueFrom:
       configMapKeyRef:
         key: mosip-injiweb-host
-        name: global
+        name: inji-global
+    enabled: true
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_INJIVERIFY_HOST
     valueFrom:
       configMapKeyRef:
         key: mosip-injiverify-host
-        name: global
+        name: inji-global
+    enabled: true

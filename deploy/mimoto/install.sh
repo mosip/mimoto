@@ -52,8 +52,7 @@ function installing_mimoto() {
   kubectl -n config-server set env --keys=mimoto-oidc-partner-clientid --from secret/mimoto-oidc-partner-clientid deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
   kubectl -n config-server set env --keys=mimoto-oidc-keystore-password --from secret/mimoto-oidc-keystore-password deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
 
-  kubectl -n config-server rollout restart deployment config-server
-  kubectl -n config-server rollout status deployment config-server
+  kubectl -n config-server get deploy -o name | xargs -n1 -t kubectl -n config-server rollout status
 
   echo "Please share relevant google client id "
   read -p "" clientId
