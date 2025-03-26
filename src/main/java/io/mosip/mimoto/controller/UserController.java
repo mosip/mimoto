@@ -9,6 +9,7 @@ import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.Utilities;
+import io.mosip.mimoto.util.WalletValidator;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,9 @@ public class UserController {
 
     @Autowired
     private WalletService walletService;
+
+    @Autowired
+    private WalletValidator walletValidator;
 
     @GetMapping
     public ResponseEntity<ResponseWrapper<UserMetadataDTO>> getUserProfile(Authentication authentication, HttpSession session) {
@@ -78,10 +82,14 @@ public class UserController {
     @PostMapping("/wallets")
     public ResponseEntity<ResponseWrapper<String>> createWallet(@RequestBody WalletRequestDto wallet, HttpSession httpSession) {
         try {
+            walletValidator.validateWalletRequest(wallet);
             ResponseWrapper<String> responseWrapper = new ResponseWrapper<>();
             responseWrapper.setResponse(walletService.createWallet((String) httpSession.getAttribute("userId"), wallet.getName(), wallet.getPin()));
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
-        } catch (Exception exception) {
+        } catch (IllegalArgumentException exception) {
+            log.error("Error occurred while creating user wallets : ", exception);
+            return Utilities.handleErrorResponse(exception, USER_WALLET_CREATION_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+        }  catch (Exception exception) {
             log.error("Error occurred while creating user wallets : ", exception);
             return Utilities.handleErrorResponse(exception, USER_WALLET_CREATION_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,MediaType.APPLICATION_JSON);
         }
