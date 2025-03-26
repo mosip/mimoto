@@ -7,6 +7,7 @@ import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.service.UserMetadataService;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
+import io.mosip.mimoto.util.WalletValidator;
 import jakarta.servlet.http.Cookie;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
@@ -74,6 +75,9 @@ public class OAuth2LoginTests {
 
     @MockBean
     private WalletService walletService;
+
+    @MockBean
+    private WalletValidator walletValidator;
 
     @MockBean
     private EncryptionDecryptionUtil encryptionDecryptionUtil;

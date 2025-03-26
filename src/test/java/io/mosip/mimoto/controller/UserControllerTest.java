@@ -4,6 +4,7 @@ import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
+import io.mosip.mimoto.util.WalletValidator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,6 +45,9 @@ public class UserControllerTest {
 
     @MockBean
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
+
+    @MockBean
+    private WalletValidator walletValidator;
 
     @Autowired
     private WebApplicationContext context;
