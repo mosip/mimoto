@@ -1,6 +1,6 @@
 gitRepo:
   uri: https://github.com/mosip/inji-config
-  version: injistack
+  version: develop
   ## Folders within the base repo where properties may be found.
   searchFolders: ""
   private: false
@@ -33,6 +33,22 @@ envVariables:
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MPARTNER_DEFAULT_MOBILE_SECRET
     value: WXFvqo48eLCSBpRa
     enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_INTERNAL_URL
+      value: http://keycloak.keycloak
+      enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_EXTERNAL_URL
+      value: https://iam.sanbox.mosip.net
+      enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_INTERNAL_HOST
+      value: keycloak.keycloak
+      enabled: true
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_EXTERNAL_HOST
+      value: iam.sanbox.mosip.net
+      enabled: true
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_DB_DBUSER_PASSWORD
     valueFrom:
