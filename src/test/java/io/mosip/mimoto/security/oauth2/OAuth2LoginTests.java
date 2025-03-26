@@ -98,6 +98,8 @@ public class OAuth2LoginTests {
     private Timestamp now;
     private UserMetadata userMetadata;
 
+    MockHttpSession mockSession;
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
@@ -131,6 +133,7 @@ public class OAuth2LoginTests {
                 .build();
 
         when(clientRegistrationRepository.findByRegistrationId("google")).thenReturn(googleClient);
+        mockSession = new MockHttpSession();
     }
 
     @Test
@@ -144,7 +147,6 @@ public class OAuth2LoginTests {
     public void shouldBeAbleToAccessProtectedEndpointWhenUserIsAuthenticatedUsingOAuth2() throws Exception {
         Mockito.when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123", "google")).thenReturn(Optional.of(userMetadata));
         when(encryptionDecryptionUtil.decrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
-        MockHttpSession mockSession = new MockHttpSession();
         mockSession.setAttribute("clientRegistrationId", "google");
 
         // Create a mock OAuth2User with the necessary attributes, including the name.
@@ -168,16 +170,15 @@ public class OAuth2LoginTests {
                         .session(mockSession)
                         .with(oauth2Login().oauth2User(oauth2User)))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.response.display_name").value("user_123"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.response.profile_picture_url").value("https://example.com/profile.jpg"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.response.email").value("user.123@example.com"))
-                .andExpect(jsonPath("$.errors").isArray())
-                .andExpect(jsonPath("$.errors").isEmpty());
+                .andExpect(MockMvcResultMatchers.jsonPath("$.display_name").value("user_123"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.profile_picture_url").value("https://example.com/profile.jpg"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.email").value("user.123@example.com"))
+                .andExpect(jsonPath("$.errorCode").doesNotExist())
+                .andExpect(jsonPath("$.errorMessage").doesNotExist());
     }
 
     @Test
     public void shouldThrowExceptionWhenLogoutRequestWasSentForInvalidSession() throws Exception {
-        MockHttpSession mockSession = new MockHttpSession();
         String sessionId = "mockSessionId";
         String encodedSessionId = Base64.getUrlEncoder().encodeToString(sessionId.getBytes());
         Cookie sessionCookie = new Cookie("SESSION", encodedSessionId);
@@ -196,7 +197,6 @@ public class OAuth2LoginTests {
 
     @Test
     public void shouldPerformLogoutSuccessfullyForaValidSession() throws Exception {
-        MockHttpSession mockSession = new MockHttpSession();
         String sessionId = "mockSessionId";
         String encodedSessionId = Base64.getUrlEncoder().encodeToString(sessionId.getBytes());
         Cookie sessionCookie = new Cookie("SESSION", encodedSessionId);
@@ -214,8 +214,6 @@ public class OAuth2LoginTests {
 
     @Test
     public void shouldSendTheCustomErrorInRedirectUrlWhenUserDeniesConsentDuringLogin() throws Exception {
-        MockHttpSession mockSession = new MockHttpSession();
-
         OAuth2AuthorizationRequest authRequest = OAuth2AuthorizationRequest.authorizationCode()
                 .authorizationUri("https://accounts.google.com/o/oauth2/auth")
                 .clientId("test-client-id")
@@ -239,8 +237,6 @@ public class OAuth2LoginTests {
 
     @Test
     public void shouldThrowTheCustomErrorInRedirectUrlWhenAnyExceptionOccurredDuringLogin() throws Exception {
-        MockHttpSession mockSession = new MockHttpSession();
-
         //registration_id is not sent in the auth request
         OAuth2AuthorizationRequest authRequest = OAuth2AuthorizationRequest.authorizationCode()
                 .authorizationUri("https://accounts.google.com/o/oauth2/auth")
