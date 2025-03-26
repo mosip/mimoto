@@ -25,14 +25,16 @@
       * __Monitoring__ : Setup monitoring consisting elasticsearch, kibana, grafana using [steps](https://github.com/mosip/k8s-infra/tree/v1.2.0.2/monitoring).
 
 ### Install Pre-requisites
-* `inji-global` configmap: For inji K8's env, `inji-global` configmap in `default` namespace contains Domain related information. Follow below steps to add domain details for `inji-global` configmap.
-    * Copy `inji-global-cm.yaml.sample` to `inji-global-cm.yaml`.
-    * Update the domain names in `inji-global-cm.yaml` correctly for your environment.
-
+* `global` configmap: For inji K8's env, `global` configmap in `default` namespace contains Domain related information. Follow below steps to add domain details for `global` configmap.
+    * Copy `global-cm.yaml.sample` to `global-cm.yaml`.
+    * Update the domain names in `global-cm.yaml` correctly for your environment.
+  ````
+  kubectl -n default apply -f global-cm.yaml
+  ````
 * Install minio
     * Execute minio install script
    ```
-  cd deploy/object-store/minio
+  cd object-store/minio
   ./install.sh
   ```
     * Create secrets for config server
@@ -41,14 +43,15 @@
   ./cred.sh
   ```
 ### Install artifactory
-      ```
-    cd deploy/artifactory
+
+   ```
+    cd artifactory
     ./install.sh
-    ``` 
+   ``` 
 ### Install config server
 * Execute config-server install script
   ```
-  cd deploy/config-server
+  cd config-server
   ./install.sh
   ```
     * Review values.yaml and make sure git repository parameters are as per your installation.
@@ -66,7 +69,7 @@
 * Execute mimoto install script
 
   ```
-  cd helm/mimoto
+  cd mimoto
   ./install.sh
   ```
 * During the execution of the `install.sh` script, a prompt appears requesting information regarding the presence of a public domain and a valid SSL certificate on the server.

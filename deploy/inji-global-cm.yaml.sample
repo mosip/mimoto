@@ -6,7 +6,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: inji-global
+  name: global
   namespace: default
 data:
   mosip-version: develop
@@ -15,7 +15,6 @@ data:
   mosip-iam-external-host: iam.sandbox.xyz.net
   mosip-api-internal-host: api-internal.sandbox.xyz.net
   mosip-esignet-host: esignet.sandbox.xyz.net
-  mosip-inji-datashare-host: inji-datashare.sandbox.xyz.net
   mosip-injiweb-host: injiweb.sandbox.xyz.net
   mosip-injiverify-host: injiverify.sandbox.xyz.net
   mosip-postgres-host: postgres.sandbox.xyz.net
