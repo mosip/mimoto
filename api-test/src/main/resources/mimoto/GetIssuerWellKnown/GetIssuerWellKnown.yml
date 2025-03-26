@@ -1,0 +1,15 @@
+GetIssuerWellKnown:
+   Mimoto_GetIssuerWellKnown_All_Valid_Smoke:
+      endPoint: /v1/mimoto/issuers/{issuerId}/well-known-proxy
+      description: Generating the issuer well known with all valid parameters
+      role: resident
+      restMethod: get
+      checkErrorsOnlyInResponse: true
+      inputTemplate: mimoto/GetIssuerWellKnown/GetIssuerWellKnown
+      outputTemplate: mimoto/GetIssuerWellKnown/GetIssuerWellKnownResult
+      input: '{
+      "issuerId":  "Mosip",
+      "credentialType": "$REMOVE$"
+}'
+      output: '{
+}'
