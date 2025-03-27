@@ -2,7 +2,7 @@
 
 Helm chart for installing MOSIP mimoto Application.
 
-## TL;DR
+## TL;DR 
 
 ```console
 $ helm repo add mosip https://mosip.github.io
