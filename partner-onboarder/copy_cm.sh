@@ -5,6 +5,6 @@
 COPY_UTIL=./copy_cm_func.sh
 DST_NS=injiweb
 
-$COPY_UTIL configmap inji-global default $DST_NS
+$COPY_UTIL configmap global default $DST_NS
 $COPY_UTIL configmap keycloak-env-vars keycloak $DST_NS
 $COPY_UTIL configmap keycloak-host keycloak $DST_NS

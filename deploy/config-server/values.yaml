@@ -1,6 +1,6 @@
 gitRepo:
   uri: https://github.com/mosip/inji-config
-  version: injistack
+  version: develop
   ## Folders within the base repo where properties may be found.
   searchFolders: ""
   private: false
@@ -14,7 +14,7 @@ spring_profiles:
     # Based on the user requiremnt the number of multiple sources from where configuration needs to be pulled can be updated below as mentioned.
     - type: git
       uri: https://github.com/mosip/inji-config
-      version: injistack
+      version: develop
       spring_cloud_config_server_git_cloneOnStart: true
       spring_cloud_config_server_git_force_pull: true
       spring_cloud_config_server_git_refreshRate: 5
