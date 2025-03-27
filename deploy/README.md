@@ -26,10 +26,10 @@
 
 ### Install Pre-requisites
 * `global` configmap: For inji K8's env, `global` configmap in `default` namespace contains Domain related information. Follow below steps to add domain details for `global` configmap.
-    * Copy `global-cm.yaml.sample` to `global-cm.yaml`.
-    * Update the domain names in `global-cm.yaml` correctly for your environment.
+    * Copy `inji-global-cm.yaml.sample` to `inji-global-cm.yaml`.
+    * Update the domain names in `inji-global-cm.yaml` correctly for your environment.
   ````
-  kubectl -n default apply -f global-cm.yaml
+  kubectl -n default apply -f inji-global-cm.yaml
   ````
 * Install minio
     * Execute minio install script
