@@ -2,7 +2,6 @@ package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.core.http.ResponseWrapper;
-import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
@@ -70,31 +69,16 @@ public class CredentialsController {
                     .body(new InputStreamResource(inputStream));
         } catch (ApiNotAccessibleException | IOException exception) {
             log.error("Exception occurred while fetching credential types ", exception);
-            return handleException(exception, responseWrapper);
+            return Utilities.handleErrorResponse(exception, MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
         } catch (InvalidCredentialResourceException invalidCredentialResourceException) {
             log.error("Exception occurred while pushing the data to data share ", invalidCredentialResourceException);
-            return handleException(invalidCredentialResourceException, responseWrapper);
+            return Utilities.handleErrorResponse(invalidCredentialResourceException, MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST,MediaType.APPLICATION_JSON);
         } catch (VCVerificationException exception) {
             log.error("Exception occurred while verification of the verifiable Credential" + exception);
-            return handleException(exception, responseWrapper);
+            return Utilities.handleErrorResponse(exception, MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST,MediaType.APPLICATION_JSON);
         } catch (Exception exception) {
             log.error("Exception occurred while generating pdf ", exception);
-            return handleException(exception, responseWrapper);
+            return Utilities.handleErrorResponse(exception, MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,MediaType.APPLICATION_JSON);
         }
-    }
-
-    private ResponseEntity<ResponseWrapper<Object>> handleException(Exception exception, ResponseWrapper<Object> responseWrapper) {
-        String errorCode = MIMOTO_PDF_SIGN_EXCEPTION.getCode();
-        String[] errorObj = Utilities.handleExceptionWithErrorCode(exception, errorCode);
-        List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
-        responseWrapper.setErrors(errors);
-
-        HttpStatus status = exception instanceof ApiNotAccessibleException || exception instanceof IOException || exception instanceof InvalidCredentialResourceException || exception instanceof VCVerificationException
-                ? HttpStatus.BAD_REQUEST
-                : HttpStatus.INTERNAL_SERVER_ERROR;
-
-        return ResponseEntity.status(status)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(responseWrapper);
     }
 }

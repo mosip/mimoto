@@ -198,7 +198,7 @@ public class TestUtilities {
 
     public static IssuerDTO getIssuerConfigDTO(String issuerName) {
         LogoDTO logo = new LogoDTO();
-        logo.setUrl("/logo");
+        logo.setUrl("https://logo");
         logo.setAlt_text("logo-url");
         DisplayDTO display = new DisplayDTO();
         display.setName(issuerName);
@@ -211,12 +211,47 @@ public class TestUtilities {
         issuer.setCredential_issuer(issuerName + "id");
         issuer.setDisplay(Collections.singletonList(display));
         issuer.setClient_id("123");
+        issuer.setClient_alias("test-client-alias");
+        issuer.setRedirect_uri("https://oauthredirect");
         issuer.setEnabled("true");
         issuer.setProtocol("OpenId4VCI");
         issuer.setWellknown_endpoint("https://issuer.env.net/.well-known/openid-credential-issuer");
         issuer.setCredential_issuer_host("https://issuer.env.net");
-        issuer.setAuthorization_audience("https://dev/token");
-        issuer.setProxy_token_endpoint("https://dev/token");
+        issuer.setToken_endpoint("https://dev/" + issuerName + "id");
+        issuer.setAuthorization_audience("https://dev/auth-server/token");
+        issuer.setProxy_token_endpoint("https://dev/auth-server/token");
+        return issuer;
+    }
+
+    public static IssuerDTO getIssuerConfigDTOWithInvalidFieldValues(String issuerName, boolean emptyValues, boolean invalidUrls) {
+        LogoDTO logo = new LogoDTO();
+        logo.setUrl(emptyValues ? "/logo" : "https://logo");
+        logo.setAlt_text("logo-url");
+
+        DisplayDTO display = new DisplayDTO();
+        display.setName(emptyValues ? "" : issuerName);
+        display.setTitle(emptyValues ? "" : "Download via " + issuerName);
+        display.setDescription(emptyValues ? "" : issuerName + " description");
+        display.setLanguage(emptyValues ? "" : "en");
+        display.setLogo(logo);
+
+        IssuerDTO issuer = new IssuerDTO();
+        issuer.setIssuer_id(emptyValues ? "" : issuerName + "id");
+        issuer.setCredential_issuer(emptyValues ? "" : issuerName + "id");
+        issuer.setDisplay(Collections.singletonList(display));
+        issuer.setClient_id(emptyValues ? "" : "123");
+        issuer.setClient_alias(emptyValues ? "" : "test-client-alias");
+        issuer.setRedirect_uri(emptyValues ? "" : "https://oauthredirect");
+        issuer.setEnabled(emptyValues ? "" : "true");
+        issuer.setProtocol(emptyValues ? "" : "OpenId4VCI");
+
+        // Handle valid and invalid URLs
+        issuer.setWellknown_endpoint(emptyValues ? "" : (invalidUrls ? "ht//issuer.env.net/.well-known/openid-credential-issuer" : "https://issuer.env.net/.well-known/openid-credential-issuer"));
+        issuer.setCredential_issuer_host(emptyValues ? "" : (invalidUrls ? "https//issuer.env.net" : "https://issuer.env.net"));
+        issuer.setToken_endpoint(emptyValues ? "" : (invalidUrls ? "h://dev/token" : "https://dev/token"));
+        issuer.setAuthorization_audience(emptyValues ? "" : (invalidUrls ? "htt://dev/auth-server/token" : "https://dev/auth-server/token"));
+        issuer.setProxy_token_endpoint(emptyValues ? "" : (invalidUrls ? "htp://dev/auth-server/token" : "https://dev/auth-server/token"));
+
         return issuer;
     }
 

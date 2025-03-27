@@ -4,16 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.mosip.kernel.biometrics.spi.CbeffUtil;
 import io.mosip.kernel.cbeffutil.impl.CbeffImpl;
+import io.mosip.kernel.keygenerator.bouncycastle.KeyGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -21,14 +21,21 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 @SpringBootApplication(scanBasePackages = {
         "io.mosip.mimoto.*",
+        "io.mosip.mimoto.dbentity",
         "io.mosip.kernel.websub.*",
+        "io.mosip.kernel.cryptomanager.*",
+        "io.mosip.kernel.keymanager.*",
+        "io.mosip.kernel.keymanagerservice.helper",
+        "io.mosip.kernel.keymanagerservice.util",
+        "io.mosip.kernel.keymanagerservice.service",
+        "io.mosip.kernel.keymanagerservice.validator",
+        "io.mosip.kernel.crypto",
         "${mosip.auth.adapter.impl.basepackage}"
 }, exclude = {
-        SecurityAutoConfiguration.class,
-        DataSourceAutoConfiguration.class,
-        HibernateJpaAutoConfiguration.class,
-        CacheAutoConfiguration.class
+        SecurityAutoConfiguration.class
 })
+@EntityScan(basePackages = {"io.mosip.mimoto.dbentity","io.mosip.kernel.keymanagerservice.entity"})
+@EnableJpaRepositories(basePackages = {"io.mosip.mimoto.repository","io.mosip.kernel.keymanagerservice.repository"})
 @Slf4j
 @EnableScheduling
 @EnableAsync
@@ -46,6 +53,11 @@ public class MimotoServiceApplication {
         threadPoolTaskScheduler.setPoolSize(5);
         threadPoolTaskScheduler.setThreadNamePrefix("ThreadPoolTaskScheduler");
         return threadPoolTaskScheduler;
+    }
+
+    @Bean
+    public KeyGenerator keyGenerator() {
+        return new KeyGenerator();
     }
 
     public static JSONObject getGitProp() {
