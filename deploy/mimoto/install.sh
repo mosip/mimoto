@@ -24,8 +24,6 @@ function installing_mimoto() {
   $COPY_UTIL configmap artifactory-share artifactory $NS
   $COPY_UTIL configmap config-server-share config-server $NS
 
-  echo Copy Secrets
-  $COPY_UTIL secret keycloak-client-secrets keycloak $NS
 
   echo "Do you have public domain & valid SSL? (Y/n) "
   echo "Y: if you have public domain & valid ssl certificate"
@@ -52,7 +50,7 @@ function installing_mimoto() {
   kubectl -n config-server set env --keys=mimoto-oidc-partner-clientid --from secret/mimoto-oidc-partner-clientid deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
   kubectl -n config-server set env --keys=mimoto-oidc-keystore-password --from secret/mimoto-oidc-keystore-password deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
 
-  kubectl -n config-server get deploy -o name | xargs -n1 -t kubectl -n config-server rollout status
+ # kubectl -n config-server get deploy -o name | xargs -n1 -t kubectl -n config-server rollout status
 
   echo "Please share relevant google client id "
   read -p "" clientId

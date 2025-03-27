@@ -45,31 +45,37 @@
 ### Install artifactory
 
    ```
-    cd artifactory
+    cd ../artifactory
     ./install.sh
-   ``` 
+   ```
+### Install artifactory
+
+   ```
+    cd ../conf-secrets
+    ./install.sh
+   ```
 ### Install config server
 * Execute config-server install script
   ```
-  cd config-server
+  cd ../config-server
   ./install.sh
   ```
     * Review values.yaml and make sure git repository parameters are as per your installation.
 
-### install Onboarder
+### Install Onboarder
 * Execute Onboarder install script
   ```
-  cd partner-onboarder
+  cd ../partner-onboarder
   ./install.sh
   ```
 * During the execution of the `install.sh` script, a prompt appears requesting information for the S3 bucket, including its name and URL.
 * Once the job is completed, log in to S3 / NFS and check the reports. There should not be any failures.
 
-### install mimoto
+### Install mimoto
 * Execute mimoto install script
 
   ```
-  cd mimoto
+  cd ../mimoto
   ./install.sh
   ```
 * During the execution of the `install.sh` script, a prompt appears requesting information regarding the presence of a public domain and a valid SSL certificate on the server.

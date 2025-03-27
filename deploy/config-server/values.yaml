@@ -1,12 +1,24 @@
 gitRepo:
   uri: https://github.com/mosip/inji-config
-  version: develop
+  version: injistack
   ## Folders within the base repo where properties may be found.
   searchFolders: ""
   private: false
   ## User name of user who has access to the private repo. Ignore for public repo
   username: ""
   token: ""
+
+spring_profiles:
+  enabled: true
+  spring_compositeRepos:
+    # Based on the user requiremnt the number of multiple sources from where configuration needs to be pulled can be updated below as mentioned.
+    - type: git
+      uri: https://github.com/mosip/inji-config
+      version: injistack
+      spring_cloud_config_server_git_cloneOnStart: true
+      spring_cloud_config_server_git_force_pull: true
+      spring_cloud_config_server_git_refreshRate: 5
+  spring_fail_on_composite_error: false
 
 envVariables:
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_API_PUBLIC_HOST
@@ -29,26 +41,6 @@ envVariables:
         key: mosip-partner-crypto-p12-password
         name: conf-secrets-various
     enabled: true
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MPARTNER_DEFAULT_MOBILE_SECRET
-    value: WXFvqo48eLCSBpRa
-    enabled: true
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_INTERNAL_URL
-      value: http://keycloak.keycloak
-      enabled: true
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_EXTERNAL_URL
-      value: https://iam.sanbox.mosip.net
-      enabled: true
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_INTERNAL_HOST
-      value: keycloak.keycloak
-      enabled: true
-
-  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_EXTERNAL_HOST
-      value: iam.sanbox.mosip.net
-      enabled: true
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_DB_DBUSER_PASSWORD
     valueFrom:
@@ -92,7 +84,6 @@ envVariables:
         name: global
     enabled: false
 
-
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_INJIWEB_HOST
     valueFrom:
       configMapKeyRef:
@@ -106,3 +97,19 @@ envVariables:
         key: mosip-injiverify-host
         name: global
     enabled: true
+
+extraEnvVars:
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MPARTNER_DEFAULT_MOBILE_SECRET
+    value: WXFvqo48eLCSBpRa
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_INTERNAL_URL
+    value: http://keycloak.keycloak
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_EXTERNAL_URL
+    value: https://iam.sanbox.mosip.net
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_INTERNAL_HOST
+    value: keycloak.keycloak
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_KEYCLOAK_EXTERNAL_HOST
+    value: iam.sanbox.mosip.net
