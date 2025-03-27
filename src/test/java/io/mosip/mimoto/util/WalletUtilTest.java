@@ -109,9 +109,9 @@ class WalletUtilTest {
 
         assertEquals(walletId, savedWallet.getId());
         assertEquals(userId, savedWallet.getUserId());
-        assertEquals(keyPair.getPublic().getAlgorithm(), savedWallet.getKeyMetadata().getAlgorithmName());
-        assertEquals(publicKeyBase64, savedWallet.getPublicKey());
-        assertEquals(encryptedPrivateKey, savedWallet.getSecretKey());
+        assertEquals(keyPair.getPublic().getAlgorithm(), savedWallet.getProofSigningKeys().get(0).getKeyMetadata().getAlgorithmName());
+        assertEquals(publicKeyBase64, savedWallet.getProofSigningKeys().get(0).getPublicKey());
+        assertEquals(encryptedPrivateKey, savedWallet.getProofSigningKeys().get(0).getSecretKey());
         assertEquals(encryptedWalletKey, savedWallet.getWalletKey());
         assertEquals(encryptionAlgorithm, savedWallet.getWalletMetadata().getEncryptionAlgo());
         assertEquals(encryptionType, savedWallet.getWalletMetadata().getEncryptionType());

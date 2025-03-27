@@ -5,6 +5,7 @@ import io.mosip.kernel.cryptomanager.dto.CryptoWithPinResponseDto;
 import io.mosip.kernel.cryptomanager.service.CryptomanagerService;
 import io.mosip.mimoto.dbentity.KeyMetadata;
 import io.mosip.mimoto.dbentity.Wallet;
+import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dbentity.WalletMetadata;
 import io.mosip.mimoto.repository.WalletRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,10 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.security.KeyPair;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -48,13 +52,7 @@ public class WalletUtil {
         String walletId = UUID.randomUUID().toString();
         Wallet newWallet = new Wallet();
         newWallet.setId(walletId);
-        newWallet.setName(walletName);
         newWallet.setUserId(userId);
-        KeyMetadata keyMetadata = new KeyMetadata();
-        keyMetadata.setAlgorithmName(keyPair.getPublic().getAlgorithm());
-        newWallet.setKeyMetadata(keyMetadata);
-        newWallet.setPublicKey(Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded()));
-        newWallet.setSecretKey(encryptedPrivateKey);
 
         // Encrypt the encryption key using the user's PIN before storing into database
         CryptoWithPinRequestDto requestDto = new CryptoWithPinRequestDto();
@@ -63,14 +61,40 @@ public class WalletUtil {
         requestDto.setData(dataAsString);
         String encryptedWalletKey = cryptomanagerService.encryptWithPin(requestDto).getData();
 
-        newWallet.setWalletKey(encryptedWalletKey);
+        // Set wallet metadata (encryption settings)
         WalletMetadata walletMetadata = new WalletMetadata();
         walletMetadata.setEncryptionAlgo(encryptionAlgorithm);
         walletMetadata.setEncryptionType(encryptionType);
+        walletMetadata.setName(walletName);
         newWallet.setWalletMetadata(walletMetadata);
 
-        // Save wallet to database
-        walletRepository.save(newWallet);
+        // Set the wallet encryption key (encrypted wallet key)
+        newWallet.setWalletKey(encryptedWalletKey);
+
+        // Create the WalletKey entity (this will hold the actual keys)
+        ProofSigningKey proofSigningKey = new ProofSigningKey();
+        proofSigningKey.setId(UUID.randomUUID().toString());  // Generate a unique ID for the WalletKey
+        proofSigningKey.setPublicKey(Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded()));
+        proofSigningKey.setSecretKey(encryptedPrivateKey);  // The private key is encrypted using the wallet's encryption key
+
+        // Create and set the key metadata for the WalletKey
+        KeyMetadata keyMetadata = new KeyMetadata();
+        keyMetadata.setAlgorithmName(keyPair.getPublic().getAlgorithm());
+        proofSigningKey.setKeyMetadata(keyMetadata);  // Associate the key metadata with the WalletKey
+
+        // Associate the WalletKey with the Wallet
+        proofSigningKey.setWallet(newWallet);  // Set the wallet for the key
+        proofSigningKey.setCreatedAt(Instant.now());
+        proofSigningKey.setUpdatedAt(Instant.now());
+
+        // Add the WalletKey to the Wallet's list of keys
+        List<ProofSigningKey> proofSigningKeys = new ArrayList<>();
+        proofSigningKeys.add(proofSigningKey);
+        newWallet.setProofSigningKeys(proofSigningKeys);
+
+        // Save the wallet and its associated keys to the database
+        walletRepository.save(newWallet);  // This will cascade and save the WalletKey as well
+
         return walletId;
     }
 
