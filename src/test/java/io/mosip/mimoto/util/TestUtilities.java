@@ -33,11 +33,17 @@ import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor;
 public class TestUtilities {
 
     public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName) {
+        return getCredentialSupportedResponse(credentialSupportedName, true);
+    }
+
+    public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName, boolean includeBackgroundImage) {
         LogoDTO logo = new LogoDTO();
         logo.setUrl("https://logo");
         logo.setAlt_text("logo-url");
         CredentialSupportedDisplayResponse credentialSupportedDisplay = new CredentialSupportedDisplayResponse();
-        credentialSupportedDisplay.setBackgroundImage(new BackgroundImageDTO("https://bgimage"));
+        if (includeBackgroundImage) {
+            credentialSupportedDisplay.setBackgroundImage(new BackgroundImageDTO("https://bgimage"));
+        }
         credentialSupportedDisplay.setLogo(logo);
         credentialSupportedDisplay.setName(credentialSupportedName);
         credentialSupportedDisplay.setLocale("en");
@@ -101,6 +107,10 @@ public class TestUtilities {
     }
 
     public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName, String format) {
+        return getCredentialSupportedResponse(credentialSupportedName, format, true);
+    }
+
+    public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName, String format, boolean includeBackgroundImage) {
         LogoDTO logo = new LogoDTO();
         logo.setUrl("https://logo");
         logo.setAlt_text("logo-url");
@@ -110,7 +120,9 @@ public class TestUtilities {
         credentialSupportedDisplay.setLocale("en");
         credentialSupportedDisplay.setTextColor("#FFFFFF");
         credentialSupportedDisplay.setBackgroundColor("#B34622");
-        credentialSupportedDisplay.setBackgroundImage(new BackgroundImageDTO("https://bgimage"));
+        if (includeBackgroundImage) {
+            credentialSupportedDisplay.setBackgroundImage(new BackgroundImageDTO("https://bgimage"));
+        }
         CredentialIssuerDisplayResponse credentialIssuerDisplayResponse = new CredentialIssuerDisplayResponse();
         credentialIssuerDisplayResponse.setName("Given Name");
         credentialIssuerDisplayResponse.setLocale("en");

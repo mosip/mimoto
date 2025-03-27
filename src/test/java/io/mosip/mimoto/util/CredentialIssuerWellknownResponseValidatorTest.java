@@ -221,12 +221,22 @@ public class CredentialIssuerWellknownResponseValidatorTest {
                 Validation failed:
                 credentialConfigurationsSupported[CredentialType1].display[0].backgroundColor: must not be blank
                 credentialConfigurationsSupported[CredentialType1].display[0].textColor: must not be blank
-                credentialConfigurationsSupported[CredentialType1].display[0].backgroundImage: must not be null
                 credentialConfigurationsSupported[CredentialType1].display[0].name: must not be blank
                 credentialConfigurationsSupported[CredentialType1].display[0].locale: must not be blank
                 credentialConfigurationsSupported[CredentialType1].display[0].logo: must not be null""".split("\n")).toList()));
     }
 
+    @Test
+    public void shouldAcceptNullBackgroundImage() {
+        // Create a response with a null background image
+        response = getCredentialIssuerWellKnownResponseDto("Issuer1",
+                Map.of("CredentialType1", getCredentialSupportedResponse("CredentialType1", false)));
+        
+        CredentialIssuerWellknownResponseValidator credentialIssuerWellknownResponseValidator = new CredentialIssuerWellknownResponseValidator();
+        
+        // Should not throw any exception
+        assertDoesNotThrow(() -> credentialIssuerWellknownResponseValidator.validate(response, validator));
+    }
 
     @Nested
     class LdpVcFormatWellKnownResponseValidationTest {
