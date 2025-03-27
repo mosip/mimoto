@@ -1,6 +1,7 @@
 package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.dto.WalletRequestDto;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.test.context.TestPropertySource;
@@ -28,6 +29,8 @@ public class WalletValidator {
     public void validateWalletRequest(WalletRequestDto walletRequest) {
         // Validate both PIN and wallet name
         validatePin(walletRequest.getPin());
-        validateWalletName(walletRequest.getName());
+        if (!StringUtils.isEmpty(walletRequest.getName())) {
+            validateWalletName(walletRequest.getName());
+        }
     }
 }
