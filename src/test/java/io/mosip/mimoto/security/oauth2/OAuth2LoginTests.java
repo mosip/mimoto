@@ -4,7 +4,6 @@ import io.mosip.mimoto.config.Config;
 import io.mosip.mimoto.controller.UserController;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.repository.UserMetadataRepository;
-import io.mosip.mimoto.service.UserMetadataService;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.WalletValidator;
@@ -64,7 +63,7 @@ public class OAuth2LoginTests {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
+    @MockBean
     private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     @Autowired
@@ -87,9 +86,6 @@ public class OAuth2LoginTests {
 
     @MockBean
     private SessionRepository sessionRepository;
-
-    @MockBean
-    private UserMetadataService userMetadataService;
 
     @MockBean
     private OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
@@ -140,7 +136,7 @@ public class OAuth2LoginTests {
     public void shouldBeRedirectedToRedirectEndpointOnUnauthenticatedAccessToProtectedEndpoint() throws Exception {
         mockMvc.perform(get("/users/me"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl(injiWebUrl+"/login"));
+                .andExpect(redirectedUrl(injiWebUrl + "/login"));
     }
 
     @Test
@@ -223,14 +219,12 @@ public class OAuth2LoginTests {
                 .attributes(Map.of(OAuth2ParameterNames.REGISTRATION_ID, "google"))
                 .build();
 
-        // Store in session under the expected key
         mockSession.setAttribute(HttpSessionOAuth2AuthorizationRequestRepository.class.getName() + ".AUTHORIZATION_REQUEST", authRequest);
 
         mockMvc.perform(get("/oauth2/callback/google")
                         .session(mockSession)
                         .param("error", "access_denied")  // Simulating the user clicking "Deny or Cancel" button in the consent
-                        .param("state", "test-state")
-                        .param("registration_id", "google"))
+                        .param("state", "test-state"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("https://injiweb.dev1.mosip.net/login?status=error&error_message=Consent+was+denied+to+share+the+details+with+the+application.+Please+give+consent+and+try+again"));
     }
@@ -246,15 +240,13 @@ public class OAuth2LoginTests {
                 .state("test-state")
                 .build();
 
-        // Store in session under the expected key
         mockSession.setAttribute(HttpSessionOAuth2AuthorizationRequestRepository.class.getName() + ".AUTHORIZATION_REQUEST", authRequest);
 
         mockMvc.perform(get("/oauth2/callback/google")
                         .session(mockSession)
                         .param("error", "access_denied")
-                        .param("state", "test-state")
-                        .param("registration_id", "google"))
+                        .param("state", "test-state"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl(injiWebUrl+"/login?status=error&error_message=Login+is+failed+due+to+%3A+%5Bclient_registration_not_found%5D+Client+Registration+not+found+with+Id%3A+null"));
+                .andExpect(redirectedUrl(injiWebUrl + "/login?status=error&error_message=Login+is+failed+due+to+%3A+%5Bclient_registration_not_found%5D+Client+Registration+not+found+with+Id%3A+null"));
     }
 }
