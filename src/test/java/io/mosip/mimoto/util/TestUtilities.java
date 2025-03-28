@@ -256,7 +256,12 @@ public class TestUtilities {
     }
 
     public static String getExpectedWellKnownJson() throws IOException {
-        return new String(Files.readAllBytes(ResourceUtils.getFile(ResourceUtils.CLASSPATH_URL_PREFIX + "responses/expectedWellknown.json").toPath())).trim();
+        return getExpectedWellKnownJson(true);
+    }
+
+    public static String getExpectedWellKnownJson(boolean includeBackgroundImage) throws IOException {
+        String fileName = includeBackgroundImage ? "expectedWellknown.json" : "expectedWellknownWithoutBackground.json";
+        return new String(Files.readAllBytes(ResourceUtils.getFile(ResourceUtils.CLASSPATH_URL_PREFIX + "responses/" + fileName).toPath())).trim();
     }
 
     public static String getExpectedIssuersConfigJson() throws IOException {
