@@ -10,15 +10,17 @@ This repository contains source code for backend service of Inji Mobile and Inji
 ## Build & run (for developers)
 The project requires JDK 21, postgres, redis and google client credentials
 ### without docker-compose Build & install
-1. Install pgadmin, redis and create google client credentials from https://console.cloud.google.com/.
-2. Update application-local.properties file with values
+1. Install pgadmin, redis and update application-local.properties file with values 
    ```
    spring.datasource.username=
    spring.datasource.password=
    spring.redis.password=
-   spring.security.oauth2.client.registration.google.client-id=
-   spring.security.oauth2.client.registration.google.client-secret=
    ```
+2. Create google client credentials from https://console.cloud.google.com/ and update below properties in application-local.properties 
+    ``` 
+    spring.security.oauth2.client.registration.google.client-id=
+    spring.security.oauth2.client.registration.google.client-secret=
+    ```
 3. Run the SQLs using <db name>/deploy.sh script. from [db_scripts folder](db_scripts/inji_mimoto)
    ```
    ./deploy.sh deploy.properties
