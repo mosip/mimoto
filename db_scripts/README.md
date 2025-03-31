@@ -1,5 +1,5 @@
 # Mimoto Database
-Backend service of Inji Mobile and Inji Web. The modules exposes API endpoints.
+Mimoto Database acts as a centralized data repository, ensuring that both Inji Mobile and Inji Web applications can access consistent and up-to-date information
 
 ## Overview
 This folder contains SQL scripts to create databases and tables in postgres. The table structure is described under the `<db name>/ddl/` folder. Default data populated in the tables can be found in the `<db name>/dml` folder.
