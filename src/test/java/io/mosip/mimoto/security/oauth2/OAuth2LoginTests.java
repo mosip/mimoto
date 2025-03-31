@@ -4,7 +4,6 @@ import io.mosip.mimoto.config.Config;
 import io.mosip.mimoto.controller.UserController;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.repository.UserMetadataRepository;
-import io.mosip.mimoto.service.UserMetadataService;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.WalletValidator;
@@ -64,7 +63,7 @@ public class OAuth2LoginTests {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
+    @MockBean
     private OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     @Autowired
@@ -89,14 +88,13 @@ public class OAuth2LoginTests {
     private SessionRepository sessionRepository;
 
     @MockBean
-    private UserMetadataService userMetadataService;
-
-    @MockBean
     private OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
 
     private String providerSubjectId, identityProvider, displayName, profilePictureUrl, email, userId;
     private Timestamp now;
     private UserMetadata userMetadata;
+
+    MockHttpSession mockSession;
 
     @Before
     public void setUp() {
@@ -131,20 +129,20 @@ public class OAuth2LoginTests {
                 .build();
 
         when(clientRegistrationRepository.findByRegistrationId("google")).thenReturn(googleClient);
+        mockSession = new MockHttpSession();
     }
 
     @Test
     public void shouldBeRedirectedToRedirectEndpointOnUnauthenticatedAccessToProtectedEndpoint() throws Exception {
         mockMvc.perform(get("/users/me"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl(injiWebUrl+"/login"));
+                .andExpect(redirectedUrl(injiWebUrl + "/login"));
     }
 
     @Test
     public void shouldBeAbleToAccessProtectedEndpointWhenUserIsAuthenticatedUsingOAuth2() throws Exception {
         Mockito.when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123", "google")).thenReturn(Optional.of(userMetadata));
         when(encryptionDecryptionUtil.decrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
-        MockHttpSession mockSession = new MockHttpSession();
         mockSession.setAttribute("clientRegistrationId", "google");
 
         // Create a mock OAuth2User with the necessary attributes, including the name.
@@ -168,16 +166,15 @@ public class OAuth2LoginTests {
                         .session(mockSession)
                         .with(oauth2Login().oauth2User(oauth2User)))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.response.display_name").value("user_123"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.response.profile_picture_url").value("https://example.com/profile.jpg"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.response.email").value("user.123@example.com"))
-                .andExpect(jsonPath("$.errors").isArray())
-                .andExpect(jsonPath("$.errors").isEmpty());
+                .andExpect(MockMvcResultMatchers.jsonPath("$.display_name").value("user_123"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.profile_picture_url").value("https://example.com/profile.jpg"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.email").value("user.123@example.com"))
+                .andExpect(jsonPath("$.errorCode").doesNotExist())
+                .andExpect(jsonPath("$.errorMessage").doesNotExist());
     }
 
     @Test
     public void shouldThrowExceptionWhenLogoutRequestWasSentForInvalidSession() throws Exception {
-        MockHttpSession mockSession = new MockHttpSession();
         String sessionId = "mockSessionId";
         String encodedSessionId = Base64.getUrlEncoder().encodeToString(sessionId.getBytes());
         Cookie sessionCookie = new Cookie("SESSION", encodedSessionId);
@@ -196,7 +193,6 @@ public class OAuth2LoginTests {
 
     @Test
     public void shouldPerformLogoutSuccessfullyForaValidSession() throws Exception {
-        MockHttpSession mockSession = new MockHttpSession();
         String sessionId = "mockSessionId";
         String encodedSessionId = Base64.getUrlEncoder().encodeToString(sessionId.getBytes());
         Cookie sessionCookie = new Cookie("SESSION", encodedSessionId);
@@ -214,8 +210,6 @@ public class OAuth2LoginTests {
 
     @Test
     public void shouldSendTheCustomErrorInRedirectUrlWhenUserDeniesConsentDuringLogin() throws Exception {
-        MockHttpSession mockSession = new MockHttpSession();
-
         OAuth2AuthorizationRequest authRequest = OAuth2AuthorizationRequest.authorizationCode()
                 .authorizationUri("https://accounts.google.com/o/oauth2/auth")
                 .clientId("test-client-id")
@@ -225,22 +219,18 @@ public class OAuth2LoginTests {
                 .attributes(Map.of(OAuth2ParameterNames.REGISTRATION_ID, "google"))
                 .build();
 
-        // Store in session under the expected key
         mockSession.setAttribute(HttpSessionOAuth2AuthorizationRequestRepository.class.getName() + ".AUTHORIZATION_REQUEST", authRequest);
 
         mockMvc.perform(get("/oauth2/callback/google")
                         .session(mockSession)
                         .param("error", "access_denied")  // Simulating the user clicking "Deny or Cancel" button in the consent
-                        .param("state", "test-state")
-                        .param("registration_id", "google"))
+                        .param("state", "test-state"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("https://injiweb.dev1.mosip.net/login?status=error&error_message=Consent+was+denied+to+share+the+details+with+the+application.+Please+give+consent+and+try+again"));
     }
 
     @Test
     public void shouldThrowTheCustomErrorInRedirectUrlWhenAnyExceptionOccurredDuringLogin() throws Exception {
-        MockHttpSession mockSession = new MockHttpSession();
-
         //registration_id is not sent in the auth request
         OAuth2AuthorizationRequest authRequest = OAuth2AuthorizationRequest.authorizationCode()
                 .authorizationUri("https://accounts.google.com/o/oauth2/auth")
@@ -250,15 +240,13 @@ public class OAuth2LoginTests {
                 .state("test-state")
                 .build();
 
-        // Store in session under the expected key
         mockSession.setAttribute(HttpSessionOAuth2AuthorizationRequestRepository.class.getName() + ".AUTHORIZATION_REQUEST", authRequest);
 
         mockMvc.perform(get("/oauth2/callback/google")
                         .session(mockSession)
                         .param("error", "access_denied")
-                        .param("state", "test-state")
-                        .param("registration_id", "google"))
+                        .param("state", "test-state"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl(injiWebUrl+"/login?status=error&error_message=Login+is+failed+due+to+%3A+%5Bclient_registration_not_found%5D+Client+Registration+not+found+with+Id%3A+null"));
+                .andExpect(redirectedUrl(injiWebUrl + "/login?status=error&error_message=Login+is+failed+due+to+%3A+%5Bclient_registration_not_found%5D+Client+Registration+not+found+with+Id%3A+null"));
     }
 }

@@ -46,9 +46,8 @@ public class UserController {
     private WalletValidator walletValidator;
 
     @GetMapping
-    public ResponseEntity<ResponseWrapper<UserMetadataDTO>> getUserProfile(Authentication authentication, HttpSession session) {
+    public ResponseEntity<UserMetadataDTO> getUserProfile(Authentication authentication, HttpSession session) {
         try {
-            ResponseWrapper<UserMetadataDTO> responseWrapper = new ResponseWrapper<>();
             String identityProvider = (String) session.getAttribute("clientRegistrationId");
 
             UserMetadata userMetadata = fetchUserMetadata(authentication.getName(), identityProvider);
@@ -56,20 +55,19 @@ public class UserController {
             UserMetadataDTO userMetadataDTO = new UserMetadataDTO(encryptionDecryptionUtill.decrypt(userMetadata.getDisplayName(), "user_pii", "", ""),
                     encryptionDecryptionUtill.decrypt(userMetadata.getProfilePictureUrl(), "user_pii", "", ""),
                     encryptionDecryptionUtill.decrypt(userMetadata.getEmail(), "user_pii", "", ""));
-            responseWrapper.setResponse(userMetadataDTO);
 
-            return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
+            return ResponseEntity.status(HttpStatus.OK).body(userMetadataDTO);
         } catch (OAuth2AuthenticationException exception) {
             log.error("Error occurred while retrieving user profile : ", exception);
-            return Utilities.handleErrorResponse(exception, USER_METADATA_FETCH_EXCEPTION.getCode(), exception.getStatus(), null);
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, USER_METADATA_FETCH_EXCEPTION.getCode(), exception.getStatus(), null);
         } catch (DataAccessResourceFailureException exception) {
             log.error("Error occurred while connecting to the database : ", exception);
             OAuth2AuthenticationException authenticationException = new OAuth2AuthenticationException(DATABASE_CONNECTION_EXCEPTION.getCode(), DATABASE_CONNECTION_EXCEPTION.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-            return Utilities.handleErrorResponse(authenticationException, USER_METADATA_FETCH_EXCEPTION.getCode(), authenticationException.getStatus(), null);
+            return Utilities.getErrorResponseEntityWithoutWrapper(authenticationException, USER_METADATA_FETCH_EXCEPTION.getCode(), authenticationException.getStatus(), null);
         } catch (Exception exception) {
             log.error("Error occurred while retrieving user profile : ", exception);
             OAuth2AuthenticationException authenticationException = new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), USER_METADATA_FETCH_EXCEPTION.getMessage() + " due to : " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-            return Utilities.handleErrorResponse(authenticationException, USER_METADATA_FETCH_EXCEPTION.getCode(), authenticationException.getStatus(), null);
+            return Utilities.getErrorResponseEntityWithoutWrapper(authenticationException, USER_METADATA_FETCH_EXCEPTION.getCode(), authenticationException.getStatus(), null);
         }
 
     }
@@ -80,48 +78,43 @@ public class UserController {
     }
 
     @PostMapping("/wallets")
-    public ResponseEntity<ResponseWrapper<String>> createWallet(@RequestBody WalletRequestDto wallet, HttpSession httpSession) {
+    public ResponseEntity<String> createWallet(@RequestBody WalletRequestDto wallet, HttpSession httpSession) {
         try {
             walletValidator.validateWalletRequest(wallet);
-            ResponseWrapper<String> responseWrapper = new ResponseWrapper<>();
-            responseWrapper.setResponse(walletService.createWallet((String) httpSession.getAttribute("userId"), wallet.getName(), wallet.getPin()));
-            return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
+            return ResponseEntity.status(HttpStatus.OK).body(walletService.createWallet((String) httpSession.getAttribute("userId"), wallet.getName(), wallet.getPin()));
         } catch (IllegalArgumentException exception) {
             log.error("Error occurred while creating user wallets : ", exception);
-            return Utilities.handleErrorResponse(exception, USER_WALLET_CREATION_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, USER_WALLET_CREATION_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
         }  catch (Exception exception) {
             log.error("Error occurred while creating user wallets : ", exception);
-            return Utilities.handleErrorResponse(exception, USER_WALLET_CREATION_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,MediaType.APPLICATION_JSON);
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, USER_WALLET_CREATION_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,MediaType.APPLICATION_JSON);
         }
     }
 
     @GetMapping("/wallets")
-    public ResponseEntity<ResponseWrapper<List<String>>> getWallets(HttpSession httpSession) {
+    public ResponseEntity<List<String>> getWallets(HttpSession httpSession) {
         try {
-            ResponseWrapper<List<String>> responseWrapper = new ResponseWrapper<>();
             List<String> list = new ArrayList<>();
             list.addAll(walletService.getWallets((String) httpSession.getAttribute("userId")));
-            responseWrapper.setResponse(list);
-            return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
+
+            return ResponseEntity.status(HttpStatus.OK).body(list);
         } catch (Exception exception) {
             log.error("Error occurred while retrieving user wallets : ", exception);
-            return Utilities.handleErrorResponse(exception, USER_WALLET_RETRIEVAL_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,MediaType.APPLICATION_JSON);
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, USER_WALLET_RETRIEVAL_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,MediaType.APPLICATION_JSON);
         }
     }
 
     @PostMapping("/wallets/{walletId}")
-    public ResponseEntity<ResponseWrapper<String>> getWallet(@PathVariable("walletId") String walletId, @RequestBody WalletRequestDto wallet, HttpSession httpSession) {
+    public ResponseEntity<String> getWallet(@PathVariable("walletId") String walletId, @RequestBody WalletRequestDto wallet, HttpSession httpSession) {
         try {
             // If wallet_key does not exist in the session, fetch it and set it in the session
             String walletKey = walletService.getWalletKey((String) httpSession.getAttribute("userId"), walletId, wallet.getPin());
             httpSession.setAttribute("wallet_key", walletKey);
 
-            ResponseWrapper<String> responseWrapper = new ResponseWrapper<>();
-            responseWrapper.setResponse(walletId);
-            return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
+            return ResponseEntity.status(HttpStatus.OK).body(walletId);
         } catch (Exception exception) {
             log.error("Error occurred while retrieving user wallet ", exception);
-            return Utilities.handleErrorResponse(exception, USER_WALLET_RETRIEVAL_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,MediaType.APPLICATION_JSON);
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, USER_WALLET_RETRIEVAL_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,MediaType.APPLICATION_JSON);
         }
     }
 }

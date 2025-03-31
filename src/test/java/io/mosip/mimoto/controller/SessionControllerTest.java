@@ -14,8 +14,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import jakarta.servlet.http.HttpServletRequest;
 
 @RunWith(SpringRunner.class)
@@ -43,15 +43,15 @@ public class SessionControllerTest {
 
         this.mockMvc.perform(get("/session/status").session(mockSession).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.response").value("Session is active"));
+                .andExpect(content().string("The session is valid and active"));
     }
 
     @Test
     public void shouldReturnProperErrorResponseWhenSessionIsNull() throws Exception {
         this.mockMvc.perform(get("/session/status").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-045"))
-                .andExpect(jsonPath("$.errors[0].errorMessage").value("The session is invalid or expired due to inactivity"));
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-045"))
+                .andExpect(jsonPath("$.errorMessage").value("The session is invalid or expired due to inactivity"));
     }
 
 
@@ -61,7 +61,7 @@ public class SessionControllerTest {
 
         this.mockMvc.perform(get("/session/status").session(mockSession).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-045"))
-                .andExpect(jsonPath("$.errors[0].errorMessage").value("The session is invalid or expired due to inactivity"));
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-045"))
+                .andExpect(jsonPath("$.errorMessage").value("The session is invalid or expired due to inactivity"));
     }
 }
