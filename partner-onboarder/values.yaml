@@ -3,19 +3,6 @@
 #  repository: mosipdev/partner-onboarder
 #  tag: develop
 
-extraEnvVarsCM:
-  - global
-extraEnvVarsSecret: []
-extraEnvVars:
-  - name: keycloak-external-url
-    value: iam.sandbox.mosip.net
-  - name: KEYCLOAK_ADMIN_USER
-    value: admin
-  - name: admin-password
-    value: DKttMoRdu9
-  - name: mosip_pms_client_secret
-    value: TvPNOeVUJm1oAjYH
-
 onboarding:
   modules:
     - name: mobileid
