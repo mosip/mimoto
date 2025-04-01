@@ -1,7 +1,7 @@
 package io.mosip.mimoto.security.oauth2;
 
 import io.mosip.mimoto.config.Config;
-import io.mosip.mimoto.controller.UserController;
+import io.mosip.mimoto.controller.UsersController;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.service.UserMetadataService;
 import io.mosip.mimoto.service.WalletService;
@@ -50,7 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ContextConfiguration(classes = Config.class)
 @WebMvcTest(Config.class)
 @AutoConfigureMockMvc
-@Import({UserController.class, OAuth2AuthenticationSuccessHandler.class})
+@Import({UsersController.class, OAuth2AuthenticationSuccessHandler.class})
 @Slf4j
 public class OAuth2AuthenticationSuccessHandlerTest {
     @Autowired

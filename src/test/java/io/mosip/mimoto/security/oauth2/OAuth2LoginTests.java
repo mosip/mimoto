@@ -1,7 +1,7 @@
 package io.mosip.mimoto.security.oauth2;
 
 import io.mosip.mimoto.config.Config;
-import io.mosip.mimoto.controller.UserController;
+import io.mosip.mimoto.controller.UsersController;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.service.WalletService;
@@ -53,7 +53,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ContextConfiguration(classes = Config.class)
 @WebMvcTest(Config.class)
 @AutoConfigureMockMvc
-@Import({UserController.class, OAuth2AuthenticationSuccessHandler.class, OAuth2AuthenticationFailureHandler.class, HttpSessionOAuth2AuthorizationRequestRepository.class})
+@Import({UsersController.class, OAuth2AuthenticationSuccessHandler.class, OAuth2AuthenticationFailureHandler.class, HttpSessionOAuth2AuthorizationRequestRepository.class})
 @Slf4j
 public class OAuth2LoginTests {
 
@@ -162,7 +162,7 @@ public class OAuth2LoginTests {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         securityContext.setAuthentication(authenticationToken);
 
-        mockMvc.perform(get("/users/me")
+        mockMvc.perform(get("/users/me/db")
                         .session(mockSession)
                         .with(oauth2Login().oauth2User(oauth2User)))
                 .andExpect(status().isOk())

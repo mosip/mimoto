@@ -1,6 +1,6 @@
 package io.mosip.mimoto.service;
 
-import io.mosip.mimoto.controller.SessionController;
+import io.mosip.mimoto.controller.UsersController;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
@@ -11,20 +11,22 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+
 import java.sql.Timestamp;
 import java.util.Optional;
 import java.util.UUID;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.*;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = SessionController.class)
-@AutoConfigureMockMvc(addFilters = false)
-@EnableWebMvc
+
+@RunWith(MockitoJUnitRunner.class)
 public class UserMetadataServiceTest {
 
     @Mock
@@ -100,7 +102,6 @@ public class UserMetadataServiceTest {
         String updatedEmail = "name.123@example.com";
         when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider)).thenReturn(Optional.of(userMetadata));
         when(encryptionDecryptionUtil.decrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
-        when(encryptionDecryptionUtil.encrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
         Thread.sleep(1);
         storedUserId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
 
