@@ -30,7 +30,7 @@ CHART_VERSION=0.0.2-develop
 
     echo Copy secrets
     #$COPY_UTIL secret db-common-secrets postgres $NS
-    $COPY_UTIL secret conf-secrets-various conf-secrets $NS
+    #$COPY_UTIL secret conf-secrets-various conf-secrets $NS
     $COPY_UTIL secret s3 s3 $NS
 
     echo Installing config-server

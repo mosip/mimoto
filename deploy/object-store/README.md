@@ -2,7 +2,7 @@
 
 ## Overview
 
-MOSIP uses S3 API compliant object store for storing biometric and other data. 
+Inji uses S3 API compliant object store for storing VC. 
 
 For on-prem, install [minio](minio/README.md) which is S3 API compliant object store.
 

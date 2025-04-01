@@ -1,7 +1,7 @@
 # Config server
 
 ## Introduction
-Config server serves all properties required by Inji modules. This must be installed before any other MOSIP modules.
+Config server serves all properties required by inji modules. This must be installed before any other MOSIP modules.
 
 ## Pre-requisites
 * `conf-secrets` MOSIP module.

@@ -40,7 +40,7 @@ envVariables:
       secretKeyRef:
         key: mosip-partner-crypto-p12-password
         name: conf-secrets-various
-    enabled: true
+    enabled: false
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_DB_DBUSER_PASSWORD
     valueFrom:
@@ -99,6 +99,9 @@ envVariables:
     enabled: true
 
 extraEnvVars:
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_PARTNER_CRYPTO_P12_PASSWORD
+    value: abc123
+
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MPARTNER_DEFAULT_MOBILE_SECRET
     value: WXFvqo48eLCSBpRa
 

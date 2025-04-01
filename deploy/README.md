@@ -7,31 +7,31 @@
   * Installing Istio
   * Configuring storage class
   * Configuring the necessary dependent services
-  * Deploying Esignet services
+  * Deploying inji services
 ## Deployment
 ### K8 cluster
 * Kubernetes cluster should be ready with storage class and ingress configured properly.
 * Below is the document containing steps to create and configure K8 cluster.
-  * __Onprem RKE CLuster__ : Create RKE K8 cluster using mentioned [steps](https://github.com/mosip/k8s-infra/tree/v1.2.0.2/mosip/on-prem#mosip-k8s-cluster-setup-using-rke).
-      * __Persistence__ : Setup storage class as per [steps](https://github.com/mosip/k8s-infra/tree/v1.2.0.1/mosip/on-prem#storage-classes).
-      * __Istio service mesh__ : Setup Istio service mesh using [steps](https://github.com/mosip/k8s-infra/tree/v1.2.0.2/mosip/on-prem#istio-for-service-discovery-and-ingress).
-      * __Nginx__ : Setup and configure nginx as per [steps](https://github.com/mosip/k8s-infra/blob/v1.2.0.2/mosip/on-prem/nginx).
-      * __Logging__ : Setup logging as per [steps](https://github.com/mosip/k8s-infra/tree/v1.2.0.2/logging).
-      * __Monitoring__ : Setup monitoring consisting elasticsearch, kibana, grafana using [steps](https://github.com/mosip/k8s-infra/tree/v1.2.0.2/monitoring).
+  * __Onprem RKE CLuster__ : Create RKE K8 cluster using mentioned [steps](https://github.com/mosip/k8s-infra/tree/main/mosip/on-prem#mosip-k8s-cluster-setup-using-rke).
+      * __Persistence__ : Setup storage class as per [steps](https://github.com/mosip/k8s-infra/tree/main/mosip/on-prem#storage-classes).
+      * __Istio service mesh__ : Setup Istio service mesh using [steps](https://github.com/mosip/k8s-infra/tree/main/mosip/on-prem#istio-for-service-discovery-and-ingress).
+      * __Nginx__ : Setup and configure nginx as per [steps](https://github.com/mosip/k8s-infra/blob/main/mosip/on-prem/nginx).
+      * __Logging__ : Setup logging as per [steps](https://github.com/mosip/k8s-infra/tree/main/logging).
+      * __Monitoring__ : Setup monitoring consisting elasticsearch, kibana, grafana using [steps](https://github.com/mosip/k8s-infra/tree/main/monitoring).
   * __AWS EKS cluster__ : Create AWS EKS cluster using mentioned [steps](https://github.com/mosip/k8s-infra/tree/main/mosip/aws#mosip-cluster-on-amazon-eks).
       * __Persistence__ : Setup storage class as per [steps](https://github.com/mosip/k8s-infra/tree/main/mosip/aws#persistence).
       * __Ingress and Loadbalancer__ : Setup nginx and configure NLB for exposing services outside using [steps](https://github.com/mosip/k8s-infra/tree/main/mosip/aws#ingress-and-load-balancer-lb).
-      * __Logging__ : Setup logging as per [steps](https://github.com/mosip/k8s-infra/tree/v1.2.0.2/logging).
-      * __Monitoring__ : Setup monitoring consisting elasticsearch, kibana, grafana using [steps](https://github.com/mosip/k8s-infra/tree/v1.2.0.2/monitoring).
+      * __Logging__ : Setup logging as per [steps](https://github.com/mosip/k8s-infra/tree/main/logging).
+      * __Monitoring__ : Setup monitoring consisting elasticsearch, kibana, grafana using [steps](https://github.com/mosip/k8s-infra/tree/main/monitoring).
 
 ### Install Pre-requisites
 * `global` configmap: For inji K8's env, `global` configmap in `default` namespace contains Domain related information. Follow below steps to add domain details for `global` configmap.
-    * Copy `inji-global-cm.yaml.sample` to `inji-global-cm.yaml`.
-    * Update the domain names in `inji-global-cm.yaml` correctly for your environment.
+    * Copy `inji-stack-cm.yaml.sample` to `inji-stack-cm.yaml`.
+    * Update the domain names in `inji-stack-cm.yaml` correctly for your environment, ensuring that only new domain names are added (remove existing domains).
   ````
-  kubectl -n default apply -f inji-global-cm.yaml
+  kubectl -n default apply -f inji-stack-cm.yaml
   ````
-* Install minio
+* Install minio (Skip this step if minio is already installed)
     * Execute minio install script
    ```
   cd object-store/minio
@@ -48,14 +48,10 @@
     cd ../artifactory
     ./install.sh
    ```
-### Install artifactory
 
-   ```
-    cd ../conf-secrets
-    ./install.sh
-   ```
-### Install config server
-* Execute config-server install script
+### Install config server 
+* If the config server is already installed, update the environment variables and composite repository in deployment accordingly.
+* Otherwise, execute config-server install script
   ```
   cd ../config-server
   ./install.sh

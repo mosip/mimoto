@@ -17,4 +17,6 @@ data:
   mosip-esignet-host: esignet.sandbox.xyz.net
   mosip-injiweb-host: injiweb.sandbox.xyz.net
   mosip-injiverify-host: injiverify.sandbox.xyz.net
+  mosip-injicertify-host: injicertify.sandbox.xyz.net
   mosip-postgres-host: postgres.sandbox.xyz.net
+  mosip-minio-host: minio.sandbox.mosip.net
