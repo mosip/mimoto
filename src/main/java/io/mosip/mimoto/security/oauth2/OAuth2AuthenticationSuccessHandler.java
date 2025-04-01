@@ -1,5 +1,6 @@
 package io.mosip.mimoto.security.oauth2;
 
+import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.service.UserMetadataService;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +57,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // Call the service to update or insert the user metadata in the database
         try {
             String userId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+            UserMetadataDTO userMetadataDTO = new UserMetadataDTO(displayName,
+                    profilePictureUrl,
+                    email);
+            session.setAttribute("userMetadata", userMetadataDTO);
             session.setAttribute("userId", userId);
             response.sendRedirect(injiWebUrl + "/login?status=success");
         } catch (DataAccessResourceFailureException exception) {

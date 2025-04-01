@@ -1,6 +1,7 @@
 package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dbentity.Wallet;
+import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.service.impl.WalletServiceImpl;
 import io.mosip.mimoto.util.WalletUtil;
@@ -84,20 +85,23 @@ public class WalletServiceTest {
     }
 
     @Test
-    public void getWallets_shouldReturnListOfWalletIds() {
+    public void getWallets_shouldReturnListOfWalletResponseDtos() {
         List<String> walletIds = Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString());
         when(walletRepository.findWalletIdByUserId(userId)).thenReturn(walletIds);
 
-        List<String> result = walletService.getWallets(userId);
+        List<WalletResponseDto> result = walletService.getWallets(userId);
 
-        assertEquals(walletIds, result);
+        assertEquals(walletIds.size(), result.size());
+        for (int i = 0; i < walletIds.size(); i++) {
+            assertEquals(walletIds.get(i), result.get(i).getWalletId());
+        }
     }
 
     @Test
     public void getWallets_shouldReturnEmptyListIfNoWalletsFound() {
         when(walletRepository.findWalletIdByUserId(userId)).thenReturn(List.of());
 
-        List<String> result = walletService.getWallets(userId);
+        List<WalletResponseDto> result = walletService.getWallets(userId);
 
         assertTrue(result.isEmpty());
     }
