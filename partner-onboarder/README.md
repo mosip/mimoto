@@ -3,7 +3,7 @@
 ## Overview
 * Upload certificate for default partners. Refer [mosip-onboarding repo](https://github.com/mosip/mosip-onboarding).
 
-## Install 
+## Install
 * Create a directory for onboarder on the NFS server at `/srv/nfs/<sandbox>/onboarder/`:
 ```
 mkdir -p /srv/nfs/mosip/<sandbox>/onboarder/
