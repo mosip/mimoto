@@ -3,7 +3,10 @@ package io.mosip.mimoto.controller;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.exception.LoginSessionException;
+import io.mosip.mimoto.exception.DatabaseConnectionException;
 import io.mosip.mimoto.exception.OAuth2AuthenticationException;
+import io.mosip.mimoto.model.DatabaseEntity;
+import io.mosip.mimoto.model.DatabaseOperation;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.Utilities;
@@ -17,7 +20,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 
 @Slf4j
@@ -48,14 +50,13 @@ public class UsersController {
             return Utilities.getErrorResponseEntityWithoutWrapper(exception, USER_METADATA_FETCH_EXCEPTION.getCode(), exception.getStatus(), null);
         } catch (DataAccessResourceFailureException exception) {
             log.error("Error occurred while connecting to the database : ", exception);
-            OAuth2AuthenticationException authenticationException = new OAuth2AuthenticationException(DATABASE_CONNECTION_EXCEPTION.getCode(), DATABASE_CONNECTION_EXCEPTION.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-            return Utilities.getErrorResponseEntityWithoutWrapper(authenticationException, USER_METADATA_FETCH_EXCEPTION.getCode(), authenticationException.getStatus(), null);
+            DatabaseConnectionException connectionException = new DatabaseConnectionException(DATABASE_CONNECTION_EXCEPTION.getCode(), DATABASE_CONNECTION_EXCEPTION.getMessage(), DatabaseEntity.USERMETADATA, DatabaseOperation.FETCHING, HttpStatus.INTERNAL_SERVER_ERROR);
+            return Utilities.getErrorResponseEntityWithoutWrapper(connectionException, USER_METADATA_FETCH_EXCEPTION.getCode(), connectionException.getStatus(), null);
         } catch (Exception exception) {
             log.error("Error occurred while retrieving user profile : ", exception);
             OAuth2AuthenticationException authenticationException = new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), USER_METADATA_FETCH_EXCEPTION.getMessage() + " due to : " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             return Utilities.getErrorResponseEntityWithoutWrapper(authenticationException, USER_METADATA_FETCH_EXCEPTION.getCode(), authenticationException.getStatus(), null);
         }
-
     }
 
     private UserMetadata fetchUserMetadata(String providerSubjectId, String identityProvider) throws OAuth2AuthenticationException {

@@ -7,6 +7,7 @@ import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.exception.VCVerificationException;
 import io.mosip.mimoto.service.CredentialService;
+import io.mosip.mimoto.util.CredentialUtilService;
 import io.mosip.mimoto.util.Utilities;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,7 +29,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
@@ -42,13 +42,15 @@ public class CredentialsController {
     @Autowired
     CredentialService credentialService;
 
+    @Autowired
+    CredentialUtilService credentialUtilService;
+
     @Operation(summary = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_SUMMARY, description = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_DESCRIPTION)
     @ApiResponses({
             @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/pdf")}),
             @ApiResponse(responseCode = "400", content = {@Content(schema = @Schema(implementation = ResponseWrapper.class), mediaType = "application/json")})})
     @PostMapping("/download")
     public ResponseEntity<?> downloadCredentialAsPDF(@RequestParam Map<String, String> params) {
-        ResponseWrapper<Object> responseWrapper = new ResponseWrapper<>();
         //TODO: remove this default value after the apitest is updated
         params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
 
@@ -58,7 +60,7 @@ public class CredentialsController {
             String credentialValidity = params.get("vcStorageExpiryLimitInTimes");
             String locale = params.get("locale");
             log.info("Initiated Token Call");
-            TokenResponseDTO response = credentialService.getTokenResponse(params, issuerId);
+            TokenResponseDTO response = credentialUtilService.getTokenResponse(params, issuerId);
 
             log.info("Initiated Download Credential Call");
             ByteArrayInputStream inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response, credentialValidity, locale);

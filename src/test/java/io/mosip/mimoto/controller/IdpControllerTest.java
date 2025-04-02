@@ -9,10 +9,7 @@ import io.mosip.mimoto.service.RestClientService;
 import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
-import io.mosip.mimoto.util.DateUtils;
-import io.mosip.mimoto.util.JoseUtil;
-import io.mosip.mimoto.util.RequestValidator;
-import io.mosip.mimoto.util.RestApiClient;
+import io.mosip.mimoto.util.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
@@ -65,7 +62,8 @@ public class IdpControllerTest {
     private IdpServiceImpl idpService;
 
     @MockBean
-    private CredentialServiceImpl credentialService;
+    private CredentialUtilService credentialUtilService;
+
 
     @Test
     public void otpRequestTest() throws Exception {
@@ -128,7 +126,7 @@ public class IdpControllerTest {
     @Test
     public void shouldReturnTokenResponseForValidIssuerAndParams() throws Exception {
         String issuer = "test-issuer";
-        Mockito.when(credentialService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer))).thenReturn(getTokenResponseDTO());
+        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer))).thenReturn(getTokenResponseDTO());
 
         mockMvc.perform(post("/get-token/{issuer}", issuer)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -153,7 +151,7 @@ public class IdpControllerTest {
     @Test
     public void shouldReturnBadRequestWithErrorIfTokenResponseIsNull() throws Exception {
         String issuer = "test-issuer";
-        Mockito.when(credentialService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer)))
+        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer)))
                 .thenThrow(new IdpException("Exception occurred while performing the authorization"));
 
         mockMvc.perform(post("/get-token/{issuer}", issuer)

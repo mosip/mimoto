@@ -99,7 +99,9 @@ public enum PlatformErrorMessages {
     USER_METADATA_FETCH_EXCEPTION(PlatformConstants.PREFIX + "049", "Failed to fetch the User metadata from database"),
     USER_WALLET_CREATION_EXCEPTION(PlatformConstants.PREFIX + "050", "Exception occurred when creating the wallet for user"),
     USER_WALLET_RETRIEVAL_EXCEPTION(PlatformConstants.PREFIX + "051", "Exception occurred when creating the wallet for user"),
-    USER_METADATA_CACHE_FETCH_EXCEPTION(PlatformConstants.PREFIX + "052", "Failed to fetch the User metadata from cache");
+    USER_METADATA_CACHE_FETCH_EXCEPTION(PlatformConstants.PREFIX + "052", "Failed to fetch the User metadata from cache"),
+    LOGIN_CREDENTIAL_DOWNLOAD_EXCEPTION(PlatformConstants.PREFIX + "052", "Exception occurred when downloading and storing the credential"),
+    CREDENTIALS_FETCH_EXCEPTION(PlatformConstants.PREFIX + "053", "Exception occurred when fetch credentials for the specified wallet");
 
     /** The error message. */
     private final String errorMessage;
