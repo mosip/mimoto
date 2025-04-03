@@ -66,7 +66,7 @@
   ```
 * During the execution of the `install.sh` script, a prompt appears requesting information for the S3 bucket, including its name and URL.
 * Once the job is completed, log in to S3 / NFS and check the reports. There should not be any failures.
-* Note: If you are running the Onboarder in a separate INJI cluster, update the extraEnvVars section accordingly in [values.yaml](partner-onboarder/values.yaml).
+* Note: If you are running the Onboarder in a separate INJI cluster, update the extraEnvVars section accordingly in [values.yaml](../partner-onboarder/values.yaml).
 
 ### Install mimoto
 * Execute mimoto install script
