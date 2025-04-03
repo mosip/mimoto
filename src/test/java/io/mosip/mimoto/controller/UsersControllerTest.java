@@ -1,10 +1,9 @@
 package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.dbentity.UserMetadata;
+import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.repository.UserMetadataRepository;
-import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
-import io.mosip.mimoto.util.WalletValidator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,7 +17,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -26,16 +24,18 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.util.Optional;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = UserController.class)
+@SpringBootTest(classes = UsersController.class)
 @AutoConfigureMockMvc
 @EnableWebMvc
 @EnableWebSecurity
-public class UserControllerTest {
+public class UsersControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -46,20 +46,14 @@ public class UserControllerTest {
     @MockBean
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
-    @MockBean
-    private WalletValidator walletValidator;
-
     @Autowired
     private WebApplicationContext context;
-
-    @MockBean
-    private WalletService walletService;
 
     private UserMetadata userMetadata;
 
     MockHttpSession mockSession;
 
-    String identityProvider;
+    String identityProvider, userId;
 
     @Before
     public void setUp() {
@@ -75,47 +69,77 @@ public class UserControllerTest {
         mockSession = new MockHttpSession();
         mockSession.setAttribute("clientRegistrationId", "google");
         mockSession.setAttribute("userId", "user123");
-        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123",identityProvider)).thenReturn(Optional.of(userMetadata));
+        userId = (String) mockSession.getAttribute("userId");
+        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123", identityProvider)).thenReturn(Optional.of(userMetadata));
         when(encryptionDecryptionUtil.decrypt("encryptedName", "user_pii", "", "")).thenReturn("Name 123");
         when(encryptionDecryptionUtil.decrypt("encryptedUrl", "user_pii", "", "")).thenReturn("https://profile.com/pic.jpg");
         when(encryptionDecryptionUtil.decrypt("encryptedEmail", "user_pii", "", "")).thenReturn("name123@gmail.com");
+
     }
 
     @Test
     public void shouldReturnTheUserDataForValidValues() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/users/me").accept(MediaType.APPLICATION_JSON)
+        mockMvc.perform(get("/users/me/db").accept(MediaType.APPLICATION_JSON)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.response.display_name").value("Name 123"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.response.profile_picture_url").value("https://profile.com/pic.jpg"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.response.email").value("name123@gmail.com"))
-                .andExpect(jsonPath("$.errors").isArray())
-                .andExpect(jsonPath("$.errors").isEmpty());
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.display_name").value("Name 123"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.profile_picture_url").value("https://profile.com/pic.jpg"))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.email").value("name123@gmail.com"))
+                .andExpect(jsonPath("$.errorCode").doesNotExist())
+                .andExpect(jsonPath("$.errorMessage").doesNotExist());
     }
 
     @Test
     public void shouldThrowExceptionForAInvalidUser() throws Exception {
-        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123",identityProvider)).thenReturn(Optional.empty());
+        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123", identityProvider)).thenReturn(Optional.empty());
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/users/me").accept(MediaType.APPLICATION_JSON)
+        mockMvc.perform(get("/users/me/db").accept(MediaType.APPLICATION_JSON)
                         .session(mockSession)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
-                .andExpect(MockMvcResultMatchers.status().isNotFound())
-                .andExpect(jsonPath("$.response").doesNotExist())
-                .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-049"))
-                .andExpect(jsonPath("$.errors[0].errorMessage").value("User not found. Please check your credentials or register"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-049"))
+                .andExpect(jsonPath("$.errorMessage").value("User not found. Please check your credentials or register"));
     }
 
     @Test
     public void shouldThrowExceptionIfAnyOtherErrorOccurredWhileFetchingUserData() throws Exception {
-        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123",identityProvider)).thenReturn(Optional.of(userMetadata));
+        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123", identityProvider)).thenReturn(Optional.of(userMetadata));
         when(encryptionDecryptionUtil.decrypt("encryptedName", "user_pii", "", "")).thenThrow(new RuntimeException("Failure occurred while decrypting the name"));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/users/me").accept(MediaType.APPLICATION_JSON)
+        mockMvc.perform(get("/users/me/db").accept(MediaType.APPLICATION_JSON)
                         .session(mockSession)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
-                .andExpect(MockMvcResultMatchers.status().isInternalServerError())
-                .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-049"))
-                .andExpect(jsonPath("$.errors[0].errorMessage").value("Failed to fetch the User metadata from database due to : Failure occurred while decrypting the name"));
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-049"))
+                .andExpect(jsonPath("$.errorMessage").value("Failed to fetch the User metadata from database due to : Failure occurred while decrypting the name"));
     }
+
+    @Test
+    public void shouldReturnUserProfileFromCacheForValidSession() throws Exception {
+        UserMetadataDTO userMetadataDTO = new UserMetadataDTO("Name 123", "https://profile.com/pic.jpg", "name123@gmail.com");
+        mockSession.setAttribute("userMetadata", userMetadataDTO);
+
+        mockMvc.perform(get("/users/me/cache")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .session(mockSession))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.display_name").value("Name 123"))
+                .andExpect(jsonPath("$.profile_picture_url").value("https://profile.com/pic.jpg"))
+                .andExpect(jsonPath("$.email").value("name123@gmail.com"));
+    }
+
+    @Test
+    public void shouldReturnInternalServerErrorForCacheError() throws Exception {
+        mockSession.setAttribute("userMetadata", null);
+
+        mockMvc.perform(get("/users/me/cache")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .session(mockSession))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-052"))
+                .andExpect(jsonPath("$.errorMessage").value("No user metadata present in cache"));
+    }
+
 }

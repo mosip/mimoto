@@ -1,0 +1,15 @@
+dbUserPasswords:
+  dbuserPassword: ""
+
+databases:
+  inji_mimoto:
+    enabled: true
+    host: "postgres-postgresql.postgres"
+    port: 5432
+    su:
+      user: postgres
+      secret:
+        name: postgres-postgresql
+        key: postgres-password
+    dml: 1
+    branch: develop

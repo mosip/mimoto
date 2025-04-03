@@ -240,6 +240,24 @@ public class Utilities {
         return responseEntity.body(responseWrapper);
     }
 
+    public static <T> ResponseEntity<T> getErrorResponseEntityWithoutWrapper(
+            Exception exception, String flowErrorCode, HttpStatus status, MediaType contentType) {
+        String errorMessage = exception.getMessage();
+        String errorCode = flowErrorCode;
+
+        if (errorMessage.contains(DELIMITER)) {
+            String[] errorSections = errorMessage.split(DELIMITER);
+            errorCode = errorSections[0];
+            errorMessage = errorSections[1];
+        }
+
+        ResponseEntity.BodyBuilder responseEntity = ResponseEntity.status(status);
+        if (contentType != null) {
+            responseEntity.contentType(contentType);
+        }
+        return (ResponseEntity<T>) responseEntity.body(new ErrorDTO(errorCode, errorMessage));
+    }
+
     public static List<ErrorDTO> getErrors(String errorCode, String errorMessage) {
         ErrorDTO errorDTO = new ErrorDTO(errorCode, errorMessage);
         return Lists.newArrayList(errorDTO);

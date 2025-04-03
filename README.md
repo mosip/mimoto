@@ -8,16 +8,31 @@ This repository contains source code for backend service of Inji Mobile and Inji
 
 
 ## Build & run (for developers)
-The project requires JDK 21
+The project requires JDK 21, postgres, redis and google client credentials
 ### without docker-compose Build & install
-1. build the jar
-```
+1. Install pgadmin, redis and update application-local.properties file with values 
+   ```
+   spring.datasource.username=
+   spring.datasource.password=
+   spring.redis.password=
+   ```
+2. Create google client credentials from https://console.cloud.google.com/ and update below properties in application-local.properties 
+    ``` 
+    spring.security.oauth2.client.registration.google.client-id=
+    spring.security.oauth2.client.registration.google.client-secret=
+    ```
+3. Run the SQLs using <db name>/deploy.sh script. from [db_scripts folder](db_scripts/inji_mimoto)
+   ```
+   ./deploy.sh deploy.properties
+   ```
+4. Build the jar
+    ```
     mvn clean install -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true
-```
-2. Run following command
-```
+    ```
+5. Run following command 
+    ```
     mvn spring-boot:run -Dspring.profiles.active=local
-```
+    ```
 ### with docker-compose
 1. To simplify running mimoto in local for developers we have added [Docker Compose Setup](docker-compose/README.md). This docker-compose includes mimoto service and nginx service to server static data.
 2. Follow the below steps to use custom build image in docker-compose

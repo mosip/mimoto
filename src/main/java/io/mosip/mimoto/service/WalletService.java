@@ -1,5 +1,7 @@
 package io.mosip.mimoto.service;
 
+import io.mosip.mimoto.dto.WalletResponseDto;
+
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.UUID;
@@ -9,5 +11,5 @@ public interface WalletService {
 
     String getWalletKey(String userId, String walletId, String pin);
 
-    List<String> getWallets(String userId);
+    List<WalletResponseDto> getWallets(String userId);
 }

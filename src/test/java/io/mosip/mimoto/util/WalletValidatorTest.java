@@ -27,8 +27,8 @@ public class WalletValidatorTest {
 
     @BeforeEach
     void setUp() {
-        when(walletRequestDto.getPin()).thenReturn("1234");
-        when(walletRequestDto.getName()).thenReturn("My Wallet");
+        when(walletRequestDto.getWalletPin()).thenReturn("1234");
+        when(walletRequestDto.getWalletName()).thenReturn("My Wallet");
     }
 
     @Test
@@ -38,7 +38,7 @@ public class WalletValidatorTest {
 
     @Test
     void testValidatePin_invalidPin() {
-        when(walletRequestDto.getPin()).thenReturn("12");
+        when(walletRequestDto.getWalletPin()).thenReturn("12");
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             walletValidator.validateWalletRequest(walletRequestDto);
@@ -50,8 +50,8 @@ public class WalletValidatorTest {
     @Test
     void testValidateWalletName_invalidName() {
         // Ensure valid pin for wallet name test
-        when(walletRequestDto.getPin()).thenReturn("1234");
-        when(walletRequestDto.getName()).thenReturn("My Wallet!@");
+        when(walletRequestDto.getWalletPin()).thenReturn("1234");
+        when(walletRequestDto.getWalletName()).thenReturn("My Wallet!@");
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             walletValidator.validateWalletRequest(walletRequestDto);
@@ -63,8 +63,8 @@ public class WalletValidatorTest {
     @Test
     void testValidateWalletName_validName() {
         // Ensure valid pin for wallet name test
-        when(walletRequestDto.getPin()).thenReturn("123456");
-        when(walletRequestDto.getName()).thenReturn("Valid Wallet 123");
+        when(walletRequestDto.getWalletPin()).thenReturn("123456");
+        when(walletRequestDto.getWalletName()).thenReturn("Valid Wallet 123");
 
         walletValidator.validateWalletRequest(walletRequestDto);
     }

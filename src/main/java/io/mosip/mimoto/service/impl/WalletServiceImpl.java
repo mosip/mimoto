@@ -1,6 +1,7 @@
 package io.mosip.mimoto.service.impl;
 
 import io.mosip.mimoto.dbentity.Wallet;
+import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.WalletUtil;
@@ -12,6 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -37,7 +39,10 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public List<String> getWallets(String userId) {
-        return walletRepository.findWalletIdByUserId(userId);
+    public List<WalletResponseDto> getWallets(String userId) {
+        List<String> walletIds = walletRepository.findWalletIdByUserId(userId);
+        return walletIds.stream()
+                .map(walletId -> new WalletResponseDto(walletId))
+                .collect(Collectors.toList());
     }
 }
