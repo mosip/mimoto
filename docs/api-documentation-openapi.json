@@ -446,14 +446,6 @@
                                         "type": "string",
                                         "description": "The user requesting the credential. This could represent the application or system entity making the request on behalf of the individual."
                                     }
-                                },
-                                "x-examples": {
-                                    "Example 1": {
-                                        "individualId": "2057135194",
-                                        "otp": "111111",
-                                        "transactionID": "1234567890",
-                                        "user": "mono"
-                                    }
                                 }
                             },
                             "examples": {
@@ -531,20 +523,6 @@
                                                 }
                                             },
                                             "nullable": true
-                                        }
-                                    },
-                                    "x-examples": {
-                                        "Example 1": {
-                                            "id": "mosip.resident.vid",
-                                            "version": "v1",
-                                            "str": null,
-                                            "responsetime": "2022-10-31T05:08:14.846Z",
-                                            "metadata": null,
-                                            "response": {
-                                                "id": "2057135194",
-                                                "requestId": "2bc3bb7f-6156-46d1-ae03-bf7b76e0c257"
-                                            },
-                                            "errors": null
                                         }
                                     }
                                 },
@@ -632,16 +610,6 @@
                                                 "properties": {}
                                             },
                                             "description": "A list of errors encountered during the processing of the credential request, if any. This is empty if the request is successful."
-                                        }
-                                    },
-                                    "x-examples": {
-                                        "Example 1": {
-                                            "response": {
-                                                "id": "2057135194",
-                                                "requestId": "2bc3bb7f-6156-46d1-ae03-bf7b76e0c257",
-                                                "statusCode": "ISSUED"
-                                            },
-                                            "errors": []
                                         }
                                     }
                                 },
@@ -1201,24 +1169,6 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "x-examples": {
-                                    "Example 1": {
-                                        "requestTime": "{{$isoTimestamp}}",
-                                        "request": {
-                                            "authFactorType": "WLA",
-                                            "format": "jwt",
-                                            "individualId": "3816083254",
-                                            "publicKey": "-----BEGIN RSA PUBLIC KEY-----\nMIICCgKCAgEAxo8hdrLl6nXyPSeSJu8xgmBBwVutacZS57rmIlHeKJfjYhKLT51v\n0k2IQqN2v6A3HOZqzKXh41p3RrxdSndkqqHwS0BLEVPNpKqYoEbe0tUICDpDSFaa\n7w87Z/OSGrw8bKpxmUT0xZ70+DGPhnWlMvPV5xenG1bVtf/vEq7cwQei1iNbNQRb\nqw/57e9LgmXdmbh/v5XOllT7rlUFmVFm4V4J3u6NH9iOPGlIKTplBlYyxlx6ayaR\n09Z6z4RJICG1MIipCv5qJwuzzXXpBja6gEG4xsN5K4W6b5GLt3IuzMMaQmReseRR\n46s53vBp7aqq1wrjs/CZ1SZqZ5ZG/nUchjTv+Nir0vPR9acvPB5j5qDgfdVz2sT/\nYL1HoeFPOIgcY1ydz+tUBm9F4AMCMZa7GbEmtAIWvxlQp6emo50/opdb51B3Teh3\neVQ+JqYYhOpuTEv0uHfhonXEsNfpGyttjR0FSAH2c6mI6UULi/PfLgcvKuqkhE+7\nlB0SFd852C993GqsY7qfxW1GvJpXYRvo6oRoFO8sj+St36MkmzJbm56AQn/9KWd5\nRLh13xrIUVRnW48y/Blchw/C68Ez1bmCyDeVe1WBPwel0zPl62jCtKawzCQiZcTL\n/ejmlKFHKQd980MwWN18OVakKU52CkO0NT+9ovgi0TRfLKvG6PQ1qGECAwEAAQ==\n-----END RSA PUBLIC KEY-----\n",
-                                            "challengeList": [
-                                                {
-                                                    "authFactorType": "OTP",
-                                                    "challenge": "111111",
-                                                    "format": "alpha-numeric"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                },
                                 "properties": {
                                     "requestTime": {
                                         "type": "string",
@@ -1307,15 +1257,6 @@
                                     "transactionID": {
                                         "type": "string"
                                     }
-                                },
-                                "x-examples": {
-                                    "Example 1": {
-                                        "individualId": "2057135194",
-                                        "individualIdType": "UIN",
-                                        "otp": "111111",
-                                        "vidType": "PERPETUAL",
-                                        "transactionID": "1234567890"
-                                    }
                                 }
                             },
                             "examples": {
@@ -1357,23 +1298,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "object",
-                                    "x-examples": {
-                                        "Example 1": {
-                                            "id": null,
-                                            "version": null,
-                                            "str": null,
-                                            "responsetime": null,
-                                            "metadata": null,
-                                            "response": {
-                                                "certificate": "-----BEGIN CERTIFICATE-----\nMIIDqjCCApKgAwIBAgIGAYW+PCLUMA0GCSqGSIb3DQEBCwUAMBMxETAPBgNVBAMT\nCE1vY2stSURBMB4XDTIzMDExNzA1MzgxMFoXDTIzMDEyNzA1MzgxMFowGTEXMBUG\nA1UEAxMOTW9jay11c2VyLW5hbWUwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIK\nAoICAQDGjyF2suXqdfI9J5Im7zGCYEHBW61pxlLnuuYiUd4ol+NiEotPnW/STYhC\no3a/oDcc5mrMpeHjWndGvF1Kd2SqofBLQEsRU82kqpigRt7S1QgIOkNIVprvDztn\n85IavDxsqnGZRPTFnvT4MY+GdaUy89XnF6cbVtW1/+8SrtzBB6LWI1s1BFurD/nt\n70uCZd2ZuH+/lc6WVPuuVQWZUWbhXgne7o0f2I48aUgpOmUGVjLGXHprJpHT1nrP\nhEkgIbUwiKkK/monC7PNdekGNrqAQbjGw3krhbpvkYu3ci7MwxpCZF6x5FHjqzne\n8GntqqrXCuOz8JnVJmpnlkb+dRyGNO/42KvS89H1py88HmPmoOB91XPaxP9gvUeh\n4U84iBxjXJ3P61QGb0XgAwIxlrsZsSa0Aha/GVCnp6ajnT+il1vnUHdN6Hd5VD4m\nphiE6m5MS/S4d+GidcSw1+kbK22NHQVIAfZzqYjpRQuL898uBy8q6qSET7uUHRIV\n3znYL33caqxjup/FbUa8mldhG+jqhGgU7yyP5K3foySbMlubnoBCf/0pZ3lEuHXf\nGshRVGdbjzL8GVyHD8LrwTPVuYLIN5V7VYE/B6XTM+XraMK0prDMJCJlxMv96OaU\noUcpB33zQzBY3Xw5VqQpTnYKQ7Q1P72i+CLRNF8sq8bo9DWoYQIDAQABMA0GCSqG\nSIb3DQEBCwUAA4IBAQAmbgQcW22AnrP/GH5lzt+Fy6t20lxqpMDIc3rCO6dzXMCR\n9ocjwLj7E243jGFbhHzC8637qOC8b5bYLZL2ND9ZehSu0qdz/0U0Kwt81rj/lihk\nvhD6xgx8g966AMZcZ0iQncyTzbdEukq6jMAtYfWvAu41rL0H5qvIFvxLHGOoxOYV\n0XZslWTC8B8TB3hzQ+HHexxSZbLSbB+sHFShubOlqqxE/zMj2O+c2FGYSOKlbTXi\nTd4m1WY/eJ4+0XjvEAAMZqLSLtnF5U1POz2onnk0u/lzsRnpxiqJY2++1WmCnuAT\nwDIwNEeAPotfm6tM1TjWuwakYrbSY7Ru0YjaFC1S\n-----END CERTIFICATE-----\n",
-                                                "encryptedWalletBindingId": "qeCUuKEjRDUiDHfbYAsHv5L4RCiHe_KE7eKKjpw7jIo",
-                                                "expireDateTime": "2023-01-27T05:38:10.000Z",
-                                                "thumbprint": "rOe3ifBa0uIuKfArURKRKK5psE8YVdWxXbQoDXAvntk",
-                                                "keyId": "1673933890260"
-                                            },
-                                            "errors": []
-                                        }
-                                    },
                                     "properties": {
                                         "version": {
                                             "type": "string",
@@ -1642,60 +1566,6 @@
                                         }
                                     }
                                 },
-                                "x-examples": {
-                                    "Example 1": {
-                                        "id": "mosip.resident.vid",
-                                        "version": "v1",
-                                        "str": null,
-                                        "responsetime": "2022-10-31T05:08:14.846Z",
-                                        "metadata": null,
-                                        "response": {
-                                            "issuers": [
-                                                {
-                                                    "issuer_id": "MOSIPInsurance",
-                                                    "credential_issuer": "MOSIPInsurance",
-                                                    "credential_issuer_host": "https://injicertify-insurance.collab.mosip.net",
-                                                    "protocol": "OpenId4VCI",
-                                                    "display": [
-                                                        {
-                                                            "name": "MOSIP Insurance",
-                                                            "logo": {
-                                                                "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
-                                                                "alt_text": "MOSIP-Logo"
-                                                            },
-                                                            "title": "Download via LIC",
-                                                            "description": "This API provides data to populate the list of supported issuers in Inji Web, which is then displayed under the List of Issuers section on the Home page of Inji Web.",
-                                                            "language": "en"
-                                                        }
-                                                    ],
-                                                    "client_id": "3yz7-j3xRzU3SODdoNgSGvO_cD8UijH3AIWRDAg1x-M",
-                                                    "wellknown_endpoint": "http://localhost:8088/.well-known/openid-credential-issuer"
-                                                },
-                                                {
-                                                    "issuer_id": "MOSIPNationalID",
-                                                    "credential_issuer": "MOSIPNationalID",
-                                                    "credential_issuer_host": "https://injicertify-mosipid.released.mosip.net",
-                                                    "protocol": "OpenId4VCI",
-                                                    "display": [
-                                                        {
-                                                            "name": "MOSIP National ID",
-                                                            "logo": {
-                                                                "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
-                                                                "alt_text": "MOSIP-Logo"
-                                                            },
-                                                            "title": "Download via LIC",
-                                                            "description": "Enter your policy number to download your card.",
-                                                            "language": "en"
-                                                        }
-                                                    ],
-                                                    "client_id": "3yz7-j3xRzU3SODdoNgSGvO_cD8UijH3AIWRDAg1x-M",
-                                                    "wellknown_endpoint": "http://localhost:8088/.well-known/openid-credential-issuer"
-                                                }
-                                            ]
-                                        },
-                                        "errors": null
-                                    }
-                                },
                                 "examples": {
                                     "Success response": {
                                         "value": {
@@ -1916,68 +1786,6 @@
                                             }
                                         }
                                     }
-                                },
-                                "x-examples": {
-                                    "Example 1": {
-                                        "response": {
-                                            "issuer_id": "ESignet",
-                                            "protocol": "OpenId4VCI",
-                                            "display": [
-                                                {
-                                                    "name": "e-Signet",
-                                                    "logo": {
-                                                        "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
-                                                        "alt_text": "mosip-logo"
-                                                    },
-                                                    "title": "Download MOSIP Credentials",
-                                                    "description": "Download credentials by providing UIN or VID",
-                                                    "language": "en"
-                                                },
-                                                {
-                                                    "name": "e-Signet",
-                                                    "logo": {
-                                                        "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
-                                                        "alt_text": "شعار موسيب"
-                                                    },
-                                                    "title": "قم بتنزيل بيانات اعتماد MOSIP",
-                                                    "description": "توفير UIN أو VIDقم بتنزيل بيانات الاعتماد عن طريق",
-                                                    "language": "ar"
-                                                },
-                                                {
-                                                    "name": "e-Signet",
-                                                    "logo": {
-                                                        "url": "https://api.collab.mosip.net/inji/mosip-logo.png",
-                                                        "alt_text": "मोसिप लोगो"
-                                                    },
-                                                    "title": "MOSIP क्रेडेंशियल डाउनलोड करेंं",
-                                                    "description": "यूआईएन या वीआईडी प्रदान करके क्रेडेंशियल डाउनलोड करें",
-                                                    "language": "hi"
-                                                }
-                                            ],
-                                            "client_id": "*****",
-                                            "redirect_uri": "io.mosip.residentapp.inji://oauthredirect",
-                                            "scopes_supported": [
-                                                "mosip_identity_vc_ldp"
-                                            ],
-                                            "authorization_endpoint": "https://esignet.collab.mosip.net/authorize",
-                                            "authorization_audience": "https://esignet.collab.mosip.net/v1/esignet/oauth/v2/token",
-                                            "token_endpoint": "https://api.collab.mosip.net/v1/mimoto/get-token/ESignet",
-                                            "proxy_token_endpoint": "https://esignet.collab.mosip.net/v1/esignet/oauth/v2/token",
-                                            "credential_endpoint": "https://esignet.collab.mosip.net/v1/esignet/vci/credential",
-                                            "credential_type": [
-                                                "VerifiableCredential",
-                                                "MOSIPVerifiableCredential"
-                                            ],
-                                            "credential_audience": "https://esignet.collab.mosip.net",
-                                            "client_alias": "mpartner-default-mimotooidc",
-                                            "additional_headers": {
-                                                "Accept": "application/json"
-                                            },
-                                            "wellknown_endpoint": "https://esignet.collab.mosip.net/.well-known/openid-credential-issuer"
-                                        },
-                                        "errors": []
-                                    },
-                                    "errors": null
                                 },
                                 "examples": {
                                     "Success response": {
