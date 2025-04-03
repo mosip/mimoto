@@ -101,7 +101,7 @@ public class EncryptionDecryptionUtilTest {
         SecretKey aesKey = EncryptionDecryptionUtil.generateEncryptionKey("AES", 256);
         KeyPair keyPair = EncryptionDecryptionUtil.generateKeyPair("Ed25519");
 
-        String encryptedPrivateKey = EncryptionDecryptionUtil.encryptPrivateKeyWithAES(aesKey, keyPair.getPrivate());
+        String encryptedPrivateKey = EncryptionDecryptionUtil.encrypt(aesKey, keyPair.getPrivate().getEncoded());
 
         assertNotNull(encryptedPrivateKey);
         assertFalse(StringUtils.isBlank(encryptedPrivateKey));

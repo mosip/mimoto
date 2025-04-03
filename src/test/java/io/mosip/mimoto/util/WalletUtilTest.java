@@ -3,10 +3,9 @@ package io.mosip.mimoto.util;
 import io.mosip.kernel.cryptomanager.dto.CryptoWithPinRequestDto;
 import io.mosip.kernel.cryptomanager.dto.CryptoWithPinResponseDto;
 import io.mosip.kernel.cryptomanager.service.CryptomanagerService;
-import io.mosip.mimoto.dbentity.KeyMetadata;
 import io.mosip.mimoto.dbentity.Wallet;
-import io.mosip.mimoto.dbentity.WalletMetadata;
 import io.mosip.mimoto.repository.WalletRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,16 +16,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.crypto.SecretKey;
 import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Slf4j
 class WalletUtilTest {
 
     @Mock
@@ -43,7 +44,6 @@ class WalletUtilTest {
     private String userId;
     private KeyPair keyPair;
     private SecretKey encryptionKey;
-    private String encryptedPrivateKey;
     private String encryptedWalletKey;
     private String decryptedWalletKey;
     private String publicKeyBase64;
@@ -58,7 +58,6 @@ class WalletUtilTest {
         userId = UUID.randomUUID().toString();
         keyPair = EncryptionDecryptionUtil.generateKeyPair("Ed25519");
         encryptionKey = EncryptionDecryptionUtil.generateEncryptionKey("AES", 256);
-        encryptedPrivateKey = EncryptionDecryptionUtil.encryptPrivateKeyWithAES(encryptionKey, keyPair.getPrivate());
         encryptedWalletKey = "encryptedWalletKey";
         decryptedWalletKey = Base64.getEncoder().encodeToString(encryptionKey.getEncoded());
         publicKeyBase64 = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
@@ -111,9 +110,29 @@ class WalletUtilTest {
         assertEquals(userId, savedWallet.getUserId());
         assertEquals(keyPair.getPublic().getAlgorithm(), savedWallet.getProofSigningKeys().get(0).getKeyMetadata().getAlgorithmName());
         assertEquals(publicKeyBase64, savedWallet.getProofSigningKeys().get(0).getPublicKey());
-        assertEquals(encryptedPrivateKey, savedWallet.getProofSigningKeys().get(0).getSecretKey());
+        assertFalse(savedWallet.getProofSigningKeys().get(0).getSecretKey().isEmpty(), "Encrypted private key should not be empty");
         assertEquals(encryptedWalletKey, savedWallet.getWalletKey());
         assertEquals(encryptionAlgorithm, savedWallet.getWalletMetadata().getEncryptionAlgo());
         assertEquals(encryptionType, savedWallet.getWalletMetadata().getEncryptionType());
+    }
+
+    @Test
+    void testIVChangesButCiphertextRemainsSameForSameEncryptionKeyAndSecretKey() throws Exception {
+        String encryptedPrivateKey1 = EncryptionDecryptionUtil.encrypt(encryptionKey, keyPair.getPrivate().getEncoded());
+        String encryptedPrivateKey2 = EncryptionDecryptionUtil.encrypt(encryptionKey, keyPair.getPrivate().getEncoded());
+
+        byte[] encryptedBytes1 = Base64.getDecoder().decode(encryptedPrivateKey1);
+        byte[] encryptedBytes2 = Base64.getDecoder().decode(encryptedPrivateKey2);
+
+        byte[] iv1 = Arrays.copyOfRange(encryptedBytes1, 0, 12);
+        byte[] iv2 = Arrays.copyOfRange(encryptedBytes2, 0, 12);
+
+        byte[] decryptedPrivateKey1Bytes = EncryptionDecryptionUtil.decrypt(encryptionKey, encryptedPrivateKey1);
+        byte[] decryptedPrivateKey2Bytes = EncryptionDecryptionUtil.decrypt(encryptionKey, encryptedPrivateKey2);
+        PrivateKey decryptedPrivateKey1 = EncryptionDecryptionUtil.bytesToPrivateKey(decryptedPrivateKey1Bytes, "ed25519");
+        PrivateKey decryptedPrivateKey2 = EncryptionDecryptionUtil.bytesToPrivateKey(decryptedPrivateKey2Bytes,"ed25519");
+
+        assertFalse(Arrays.equals(iv1, iv2), "IVs should be different");
+        assertEquals(decryptedPrivateKey1, decryptedPrivateKey2);
     }
 }

@@ -26,7 +26,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -140,18 +142,16 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         );
     }
 
-    private String encryptCredential(String credentialData, String walletKey) {
-        CryptoWithPinRequestDto requestDto = new CryptoWithPinRequestDto();
-        requestDto.setUserPin(walletKey);
-        requestDto.setData(credentialData);
-        return cryptomanagerService.encryptWithPin(requestDto).getData();
+    private String encryptCredential(String credentialData, String base64EncodedWalletKey) throws Exception {
+        byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
+        SecretKey walletKey = EncryptionDecryptionUtil.bytesToSecretKey(decodedWalletKey);
+        return EncryptionDecryptionUtil.encrypt(walletKey, EncryptionDecryptionUtil.stringToBytes(credentialData));
     }
 
-    private String decryptCredential(String encryptedCredentialData, String walletKey) {
-        CryptoWithPinRequestDto requestDto = new CryptoWithPinRequestDto();
-        requestDto.setUserPin(walletKey);
-        requestDto.setData(encryptedCredentialData);
-        return cryptomanagerService.decryptWithPin(requestDto).getData();
+    private String decryptCredential(String encryptedCredentialData, String base64EncodedWalletKey) throws Exception {
+        byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
+        SecretKey walletKey = EncryptionDecryptionUtil.bytesToSecretKey(decodedWalletKey);
+        return EncryptionDecryptionUtil.bytesToString(EncryptionDecryptionUtil.decrypt(walletKey, encryptedCredentialData));
     }
 
     private VerifiableCredential saveCredential(String walletId, String encryptedCredential, boolean isVerified, String issuerId, String credentialType) {
@@ -171,7 +171,10 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
 
     private VerifiableCredentialResponseDTO buildCredentialResponseDTO(IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse,
                                                                        String locale, String credentialId) {
-        String issuerName = "", issuerLogo = "", credentialType = "", credentialTypeLogo = "";
+        String issuerName = "";
+        String issuerLogo = "";
+        String credentialType = "";
+        String credentialTypeLogo = "";
         DisplayDTO issuerDisplayDTO;
         CredentialSupportedDisplayResponse credentialTypeDisplayDTO;
 

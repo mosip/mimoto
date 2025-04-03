@@ -46,7 +46,7 @@ public class WalletUtil {
     public String createNewWallet(String userId, String walletName, String pin, KeyPair keyPair, SecretKey encryptionKey, String encryptionAlgorithm, String encryptionType) throws Exception {
 
         // Encrypt the private key with the encryption key
-        String encryptedPrivateKey = EncryptionDecryptionUtil.encryptPrivateKeyWithAES(encryptionKey, keyPair.getPrivate());
+        String encryptedPrivateKey = EncryptionDecryptionUtil.encrypt(encryptionKey, keyPair.getPrivate().getEncoded());
 
         // Create wallet record
         String walletId = UUID.randomUUID().toString();
