@@ -56,9 +56,9 @@ public class WalletServiceTest {
     }
 
     @Test
-    public void createWallet_shouldCreateWalletSuccessfully() throws Exception {
+    public void shouldCreateWalletSuccessfully() throws Exception {
         String newWalletId = UUID.randomUUID().toString();
-        when(walletHelper.createEd25519AlgoWallet(userId, name, pin)).thenReturn(newWalletId);
+        when(walletHelper.createWallet(userId, name, pin)).thenReturn(newWalletId);
 
         String result = walletService.createWallet(userId, name, pin);
 
@@ -66,7 +66,7 @@ public class WalletServiceTest {
     }
 
     @Test
-    public void getWalletKey_shouldDecryptWalletKeySuccessfully() {
+    public void shouldDecryptWalletKeySuccessfully() {
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
         when(walletHelper.decryptWalletKey(encryptedWalletKey, pin)).thenReturn(decryptedWalletKey);
 
@@ -76,7 +76,7 @@ public class WalletServiceTest {
     }
 
     @Test
-    public void getWalletKey_shouldReturnNullIfWalletNotFound() {
+    public void shouldReturnNullIfWalletNotFoundForGivenUserIdAndWalletId() {
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.empty());
 
         String result = walletService.getWalletKey(userId, walletId, pin);
@@ -85,7 +85,7 @@ public class WalletServiceTest {
     }
 
     @Test
-    public void getWallets_shouldReturnListOfWalletResponseDtos() {
+    public void shouldReturnListOfWalletResponseDtosForGivenUserId() {
         List<String> walletIds = Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString());
         when(walletRepository.findWalletIdByUserId(userId)).thenReturn(walletIds);
 
@@ -98,7 +98,7 @@ public class WalletServiceTest {
     }
 
     @Test
-    public void getWallets_shouldReturnEmptyListIfNoWalletsFound() {
+    public void shouldReturnEmptyListIfNoWalletsFoundForGivenUserId() {
         when(walletRepository.findWalletIdByUserId(userId)).thenReturn(List.of());
 
         List<WalletResponseDto> result = walletService.getWallets(userId);
@@ -107,8 +107,8 @@ public class WalletServiceTest {
     }
 
     @Test(expected = Exception.class)
-    public void createWallet_shouldThrowException() throws Exception {
-        when(walletHelper.createEd25519AlgoWallet(userId, name, pin)).thenThrow(new Exception("Test Exception"));
+    public void shouldThrowExceptionIfAnyErrorOccurredWhileCreatingWallet() throws Exception {
+        when(walletHelper.createWallet(userId, name, pin)).thenThrow(new Exception("Test Exception"));
 
         walletService.createWallet(userId, name, pin);
     }
