@@ -3,28 +3,18 @@
 #  repository: mosipdev/partner-onboarder
 #  tag: develop
 
-### If you are running Mimoto Onboarder in a separate inji cluster where PMS or Keycloak doesn't exist,
-### then uncomment lines 8 to 25 and update the values accordingly.
-#extraEnvVarsCM: []
-#extraEnvVarsSecret: []
-#extraEnvVars:
-#  - name: installation-domain
-#    value: dev.mosip.net
-#  - name: mosip-api-host
-#    value: api.dev.mosip.net
-    ##### pms domain
-#  - name: mosip-api-internal-host
-#    value: api-internal.dev.mosip.net
-#  - name: keycloak-external-url
-#    value: https://iam.dev.mosip.net
-#  - name: KEYCLOAK_ADMIN_USER
-#    value: admin
-#  - name: admin-password
-#    value: 5kPBi5DjET
-#  - name: mosip_pms_client_secret
-#    value: FvKNOiDSJm4yAjEB
-#  - name: mosip-esignet-host
-#    value: esignet.dev.mosip.net
+extraEnvVarsCM:
+  - global
+extraEnvVarsSecret: []
+extraEnvVars:
+  - name: keycloak-external-url
+    value: iam.sandbox.mosip.net
+  - name: KEYCLOAK_ADMIN_USER
+    value: admin
+  - name: admin-password
+    value: DKttMoRdu9
+  - name: mosip_pms_client_secret
+    value: TvPNOeVUJm1oAjYH
 
 onboarding:
   modules:
