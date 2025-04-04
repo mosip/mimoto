@@ -3,10 +3,10 @@ package io.mosip.mimoto.dbentity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.security.PrivateKey;
 import java.time.Instant;
 @Entity
 @Getter
@@ -24,8 +24,11 @@ public class ProofSigningKey {
     @Column(nullable = false)
     private String publicKey; // Public key for wallet
 
-    @Column(nullable = false)
-    private String secretKey; // Secret key, encrypted using walletKey
+    @Column(name = "secret_key", nullable = false)
+    private String encryptedSecretKey; // Secret key, encrypted using walletKey
+
+    @Transient
+    private PrivateKey secretKey;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")

@@ -1,15 +1,16 @@
 package io.mosip.mimoto.util;
 
+import io.mosip.kernel.core.util.CryptoUtil;
+import io.mosip.kernel.cryptomanager.dto.CryptoWithPinRequestDto;
+import io.mosip.kernel.cryptomanager.dto.CryptoWithPinResponseDto;
+import io.mosip.kernel.cryptomanager.dto.CryptomanagerRequestDto;
 import io.mosip.kernel.cryptomanager.service.CryptomanagerService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import io.mosip.kernel.cryptomanager.dto.CryptomanagerRequestDto;
-import io.mosip.kernel.core.util.CryptoUtil;
 
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import java.nio.charset.StandardCharsets;
@@ -60,19 +61,7 @@ public class EncryptionDecryptionUtil {
         return new String(CryptoUtil.decodeURLSafeBase64(cryptomanagerService.decrypt(request).getData()));
     }
 
-    public static SecretKey generateEncryptionKey(String algorithm, int keysize) throws NoSuchAlgorithmException {
-        KeyGenerator keyGenerator = KeyGenerator.getInstance(algorithm);
-        keyGenerator.init(keysize);
-        return keyGenerator.generateKey();
-    }
-
-    // Helper method to generate ED25519 key pair
-    public static KeyPair generateKeyPair(String algorithm) throws NoSuchAlgorithmException {
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(algorithm);
-        return keyPairGenerator.generateKeyPair();
-    }
-
-    /**
+     /**
      * Encrypts the given data using AES-GCM.
      *
      * @param aesKey The AES secret key
@@ -142,5 +131,21 @@ public class EncryptionDecryptionUtil {
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
         KeyFactory keyFactory = KeyFactory.getInstance(algorithmName);
         return keyFactory.generatePrivate(keySpec);
+    }
+    
+    public String decryptWithPin(String encryptedString, String pin) {
+        CryptoWithPinRequestDto requestDto = new CryptoWithPinRequestDto();
+        requestDto.setUserPin(pin);
+        requestDto.setData(encryptedString);
+        CryptoWithPinResponseDto responseDto = cryptomanagerService.decryptWithPin(requestDto);
+        return responseDto.getData();
+    }
+
+    public String encryptKeyWithPin(SecretKey encryptionKey, String pin) {
+        CryptoWithPinRequestDto requestDto = new CryptoWithPinRequestDto();
+        requestDto.setUserPin(pin);
+        String dataAsString = Base64.getEncoder().encodeToString(encryptionKey.getEncoded());
+        requestDto.setData(dataAsString);
+        return cryptomanagerService.encryptWithPin(requestDto).getData();
     }
 }

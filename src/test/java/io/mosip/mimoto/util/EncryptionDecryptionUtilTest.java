@@ -15,9 +15,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
+import java.security.*;
 import java.util.Arrays;
 import java.util.Base64;
 
@@ -46,15 +44,15 @@ public class EncryptionDecryptionUtilTest {
 
 
     @Before
-    public void setUp() throws NoSuchAlgorithmException {
+    public void setUp() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchProviderException {
         String appId = "MIMOTO";
         ReflectionTestUtils.setField(encryptionDecryptionUtil, "appId", appId);
-        encryptionKey = EncryptionDecryptionUtil.generateEncryptionKey("AES", 256);
-        keyPair = EncryptionDecryptionUtil.generateKeyPair("Ed25519");
+        encryptionKey = KeyGenerationUtil.generateEncryptionKey("AES", 256);
+        keyPair = KeyGenerationUtil.generateKeyPair("Ed25519");
     }
 
     @Test
-    public void encrypt_shouldEncryptData() {
+    public void shouldEncryptDataSuccessfully() {
         CryptomanagerResponseDto responseDto = new CryptomanagerResponseDto();
         responseDto.setData(encryptedData);
         when(cryptomanagerService.encrypt(any(CryptomanagerRequestDto.class))).thenReturn(responseDto);
@@ -66,14 +64,14 @@ public class EncryptionDecryptionUtilTest {
     }
 
     @Test
-    public void encrypt_shouldReturnNullForBlankData() {
+    public void shouldReturnNullIfDataToEncryptIsNull() {
         String result = encryptionDecryptionUtil.encrypt(null, refId, aad, salt);
 
         assertNull(result);
     }
 
     @Test
-    public void decrypt_shouldDecryptData() {
+    public void shouldDecryptDataSuccessfully() {
         CryptomanagerResponseDto responseDto = new CryptomanagerResponseDto();
         String decryptedData = "testData";
         responseDto.setData(CryptoUtil.encodeToURLSafeBase64(decryptedData.getBytes(StandardCharsets.UTF_8)));
@@ -85,32 +83,16 @@ public class EncryptionDecryptionUtilTest {
     }
 
     @Test
-    public void decrypt_shouldReturnNullForBlankData() {
+    public void shouldReturnNullIfDataToDecryptIsNull() {
         String result = encryptionDecryptionUtil.decrypt(null, refId, aad, salt);
-
         assertNull(result);
     }
 
-    @Test
-    public void generateEncryptionKey_shouldGenerateKey() throws Exception {
-        SecretKey key = EncryptionDecryptionUtil.generateEncryptionKey("AES", 256);
-
-        assertNotNull(key);
-        assertEquals("AES", key.getAlgorithm());
-    }
 
     @Test
-    public void generateKeyPair_shouldGenerateKeyPair() throws Exception {
-        KeyPair keyPair = EncryptionDecryptionUtil.generateKeyPair("Ed25519");
-
-        assertNotNull(keyPair);
-        assertEquals("EdDSA", keyPair.getPublic().getAlgorithm());
-    }
-
-    @Test
-    public void encryptPrivateKeyWithAES_shouldEncryptPrivateKey() throws Exception {
-        SecretKey aesKey = EncryptionDecryptionUtil.generateEncryptionKey("AES", 256);
-        KeyPair keyPair = EncryptionDecryptionUtil.generateKeyPair("Ed25519");
+    public void shouldEncryptPrivateKeyWithAESSuccessfully() throws Exception {
+        SecretKey aesKey = KeyGenerationUtil.generateEncryptionKey("AES", 256);
+        KeyPair keyPair = KeyGenerationUtil.generateKeyPair("Ed25519");
 
         String encryptedPrivateKey = encryptionDecryptionUtil.encryptWithAES(aesKey, keyPair.getPrivate().getEncoded());
 
