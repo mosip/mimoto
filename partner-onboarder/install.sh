@@ -106,9 +106,6 @@ fi
     $NFS_OPTION \
     $S3_OPTION \
     --set onboarding.variables.push_reports_to_s3=$push_reports_to_s3 \
-    --set extraEnvVarsCM[0]=global \
-    --set extraEnvVarsCM[1]=keycloak-env-vars \
-    --set extraEnvVarsCM[2]=keycloak-host \
     $ENABLE_INSECURE \
     -f values.yaml \
     --version $CHART_VERSION \

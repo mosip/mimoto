@@ -1,20 +1,18 @@
 #!/bin/bash
-# Uninstalls config server
-## Usage: ./delete.sh [kubeconfig]
+# Uninstalls artifactory
+# Usage: ./delete.sh [kubeconfig]
 
 if [ $# -ge 1 ] ; then
   export KUBECONFIG=$1
 fi
 
-function config_server() {
-  NS=config-server
+function deleting_artifactory() {
+  NS=injiweb
   while true; do
-      read -p "Are you sure you want to delete config-server helm charts?(Y/n) " yn
+      read -p "Are you sure you want to delete artifactory helm chart?(Y/n) " yn
       if [ $yn = "Y" ]
         then
-          kubectl -n $NS delete configmap inji-stack-config s3
-          kubectl -n $NS delete secret conf-secrets-various s3
-          helm -n $NS delete config-server
+          helm -n $NS delete artifactory
           break
         else
           break
@@ -29,4 +27,4 @@ set -o errexit   ## set -e : exit the script if any statement returns a non-true
 set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable
 set -o errtrace  # trace ERR through 'time command' and other functions
 set -o pipefail  # trace ERR through pipes
-config_server   # calling function
+deleting_artifactory   # calling function
