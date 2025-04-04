@@ -29,10 +29,9 @@ import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
-import static io.mosip.mimoto.util.LocaleUtils.getCredentialDisplayDTOBasedOnLocale;
-import static io.mosip.mimoto.util.LocaleUtils.getIssuerDisplayDTOBasedOnLocale;
 
 @Slf4j
 @Service
@@ -93,6 +92,8 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
             String issuerId, String credentialType, TokenResponseDTO response,
             String credentialValidity, String locale, String walletId, String walletKey) throws Exception {
 
+        shouldInitiateDownloadRequest(issuerId,credentialType);
+
         // Fetch issuer configuration
         IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = getIssuerWellKnownResponse(issuerId);
@@ -105,10 +106,21 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
 
         // Encrypt and store credential response into database
         String encryptedCredentialData = encryptCredential(vcCredentialResponse.toString(), walletKey);
-        VerifiableCredential savedCredential = saveCredential(walletId, encryptedCredentialData, verificationStatus, issuerId, credentialType );
+        VerifiableCredential savedCredential = saveCredential(walletId, encryptedCredentialData, verificationStatus, issuerId, credentialType);
 
         // Build and return response DTO
-        return buildCredentialResponseDTO(issuerDTO, credentialsSupportedResponse, locale, savedCredential.getId());
+        return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerDTO, credentialsSupportedResponse, locale, savedCredential.getId());
+    }
+
+    public void shouldInitiateDownloadRequest(String issuerId, String credentialType) {
+        Set<String> issuers = Set.of("Mosip");
+        if (issuers.contains(issuerId) && alreadyDownloaded(issuerId, credentialType)) {
+            throw new RuntimeException("A credential is already downloaded for the selected Issuer and Credential Type. Only one is allowed, so download will not be initiated");
+        }
+    }
+
+    private boolean alreadyDownloaded(String issuerId, String credentialType) {
+        return walletCredentialsRepository.existsByIssuerIdAndCredentialType(issuerId, credentialType);
     }
 
     @Override
@@ -124,11 +136,11 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
                         .getCredentialConfigurationsSupported()
                         .get(credentialRecord.getCredentialMetadata().getCredentialType());
 
-                return buildCredentialResponseDTO(issuerDTO, credentialsSupportedResponse, locale, credentialRecord.getId());
+                return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerDTO, credentialsSupportedResponse, locale, credentialRecord.getId());
             } catch (Exception e) {
                 log.info("Error occurred while fetching configuration of issuerId : {} for credentialId: {}",
                         credentialRecord.getCredentialMetadata().getIssuerId(), credentialRecord.getId(), e);
-                return buildCredentialResponseDTO(null, null, locale, credentialRecord.getId());
+                return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(null, null, locale, credentialRecord.getId());
             }
         }).toList();
     }
@@ -169,35 +181,5 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         verifiableCredential.setCredentialMetadata(credentialMetadata);
 
         return walletCredentialsRepository.save(verifiableCredential);
-    }
-
-    private VerifiableCredentialResponseDTO buildCredentialResponseDTO(IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse,
-                                                                       String locale, String credentialId) {
-        String issuerName = "";
-        String issuerLogo = "";
-        String credentialType = "";
-        String credentialTypeLogo = "";
-        DisplayDTO issuerDisplayDTO;
-        CredentialSupportedDisplayResponse credentialTypeDisplayDTO;
-
-        if (issuerDTO != null) {
-            issuerDisplayDTO = getIssuerDisplayDTOBasedOnLocale(issuerDTO.getDisplay(), locale);
-            issuerName = issuerDisplayDTO.getName();
-            issuerLogo = issuerDisplayDTO.getLogo().getUrl();
-        }
-        if (credentialsSupportedResponse != null) {
-            credentialTypeDisplayDTO = getCredentialDisplayDTOBasedOnLocale(
-                    credentialsSupportedResponse.getDisplay(), locale);
-            credentialType = credentialTypeDisplayDTO.getName();
-            credentialTypeLogo = credentialTypeDisplayDTO.getLogo().getUrl();
-        }
-
-        return VerifiableCredentialResponseDTO.builder()
-                .issuerName(issuerName)
-                .issuerLogo(issuerLogo)
-                .credentialType(credentialType)
-                .credentialTypeLogo(credentialTypeLogo)
-                .credentialId(credentialId)
-                .build();
     }
 }
