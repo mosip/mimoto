@@ -77,11 +77,12 @@ public class TestUtilities {
 
         CredentialDefinitionResponseDto credentialDefinitionResponseDto = new CredentialDefinitionResponseDto();
         credentialDefinitionResponseDto.setType(List.of("VerifiableCredential", credentialSupportedName));
-        credentialDefinitionResponseDto.setCredentialSubject(Map.of(
-                "name", createCredentialDisplayResponse("Given Name", "en"),
-                "email", createCredentialDisplayResponse("Given Email", "pt"),
-                "uin", createCredentialDisplayResponse("UIN", "en"),
-                "dob", createCredentialDisplayResponse("dob", "en")));
+        credentialDefinitionResponseDto.setCredentialSubject(new LinkedHashMap<>() {{
+            put("name", createCredentialDisplayResponse("Given Name", "en"));
+            put("email", createCredentialDisplayResponse("Given Email", "pt"));
+            put("uin", createCredentialDisplayResponse("UIN", "en"));
+            put("dob", createCredentialDisplayResponse("dob", "en"));
+        }});
         CredentialsSupportedResponse credentialsSupportedResponse = new CredentialsSupportedResponse();
         credentialsSupportedResponse.setFormat("ldp_vc");
         credentialsSupportedResponse.setScope(credentialSupportedName + "_vc_ldp");
@@ -432,3 +433,4 @@ public class TestUtilities {
                 .errors(Collections.singletonList(errorDTO)).build();
     }
 }
+

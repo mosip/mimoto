@@ -6,7 +6,12 @@
     "CredentialType1": {
       "format": "ldp_vc",
       "scope": "CredentialType1_vc_ldp",
-      "proof_types_supported": {},
+      "order": null,
+      "proof_types_supported": {
+        "jwt": {
+          "proof_signing_alg_values_supported": ["RS256"]
+        }
+      },
       "credential_definition": {
         "type": [
           "VerifiableCredential",
@@ -17,6 +22,30 @@
             "display": [
               {
                 "name": "Given Name",
+                "locale": "en"
+              }
+            ]
+          },
+          "email": {
+            "display": [
+              {
+                "name": "Given Email",
+                "locale": "pt"
+              }
+            ]
+          },
+          "uin": {
+            "display": [
+              {
+                "name": "UIN",
+                "locale": "en"
+              }
+            ]
+          },
+          "dob": {
+            "display": [
+              {
+                "name": "dob",
                 "locale": "en"
               }
             ]
