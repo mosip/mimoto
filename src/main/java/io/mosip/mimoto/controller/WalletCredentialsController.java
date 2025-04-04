@@ -37,13 +37,17 @@ public class WalletCredentialsController {
         params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
 
         try {
+            Object walletKeyObj = httpSession.getAttribute("wallet_key");
+            if (walletKeyObj == null) {
+                throw new RuntimeException("Wallet key is missing in session");
+            }
+            String walletKey = walletKeyObj.toString();
             String issuerId = params.get("issuer");
             String credentialType = params.get("credential");
             String credentialValidity = params.get("vcStorageExpiryLimitInTimes");
             String locale = params.get("locale");
             log.info("Initiated Token Call");
             TokenResponseDTO response = credentialUtilService.getTokenResponse(params, issuerId);
-            String walletKey = httpSession.getAttribute("wallet_key").toString();
 
             log.info("Initiated fetching Verifiable Credential and storing it in the database Call");
             VerifiableCredentialResponseDTO credentialResponseDTO = walletCredentialService.fetchAndStoreCredential(
@@ -67,7 +71,12 @@ public class WalletCredentialsController {
     public ResponseEntity<?> fetchAllCredentialsForGivenWallet(@PathVariable("walletId") String walletId, @RequestParam("locale") String locale, HttpSession httpSession) {
         try {
             log.info("Fetching all credentials for walletId: {}", walletId);
-            String walletKey = httpSession.getAttribute("wallet_key").toString();
+            Object walletKeyObj = httpSession.getAttribute("wallet_key");
+            if (walletKeyObj == null) {
+                throw new RuntimeException("Wallet key is missing in session");
+            }
+
+            String walletKey = walletKeyObj.toString();
             List<VerifiableCredentialResponseDTO> credentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, walletKey, locale);
             return ResponseEntity.status(HttpStatus.OK).body(credentials);
         } catch (DataAccessResourceFailureException exception) {
