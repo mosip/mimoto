@@ -1,11 +1,19 @@
 package io.mosip.mimoto.util;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
 
 public class KeyGenerationUtil {
+
+    static {
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+    }
 
     /**
      * Generates a key pair for the given algorithm.
