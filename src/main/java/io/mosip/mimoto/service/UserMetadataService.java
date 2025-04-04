@@ -41,15 +41,18 @@ public class UserMetadataService {
 
     private void updateUserMetadata(UserMetadata userMetadata, String displayName, String profilePictureUrl,
                                     String email, Timestamp now) {
+        boolean isUpdated = false;
 
         // Check and update fields if needed
-        checkAndUpdateEncryptedField(userMetadata::getDisplayName, userMetadata::setDisplayName, displayName);
-        checkAndUpdateEncryptedField(userMetadata::getProfilePictureUrl, userMetadata::setProfilePictureUrl, profilePictureUrl);
-        checkAndUpdateEncryptedField(userMetadata::getEmail, userMetadata::setEmail, email);
+        isUpdated |= checkAndUpdateEncryptedField(userMetadata::getDisplayName, userMetadata::setDisplayName, displayName);
+        isUpdated |= checkAndUpdateEncryptedField(userMetadata::getProfilePictureUrl, userMetadata::setProfilePictureUrl, profilePictureUrl);
+        isUpdated |= checkAndUpdateEncryptedField(userMetadata::getEmail, userMetadata::setEmail, email);
 
-        // update the timestamp even if there is no change in details as we want to track the last time the user has logged in
-        userMetadata.setUpdatedAt(now);
-        userMetadataRepository.save(userMetadata); // Save the updated record
+        // If any field was updated, save the updated record and set the updated timestamp
+        if (isUpdated) {
+            userMetadata.setUpdatedAt(now);
+            userMetadataRepository.save(userMetadata);
+        }
     }
 
     private boolean checkAndUpdateEncryptedField(Supplier<String> getter, Consumer<String> setter, String newValue) {

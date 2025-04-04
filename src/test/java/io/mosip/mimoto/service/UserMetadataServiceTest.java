@@ -1,6 +1,5 @@
 package io.mosip.mimoto.service;
 
-import io.mosip.mimoto.controller.UsersController;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
@@ -12,10 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.sql.Timestamp;
 import java.util.Optional;
@@ -65,7 +60,7 @@ public class UserMetadataServiceTest {
     }
 
     @Test
-    public void shouldUpdateUserMetadataForSameProviderSubjectIdAndDifferentDisplayName() {
+    public void shouldUpdateUserMetadataForSameProviderSubjectIdAndSameIdentityProviderButWithDifferentDisplayName() {
         String updatedDisplayName = "Name 124";
         when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider)).thenReturn(Optional.of(userMetadata));
         when(encryptionDecryptionUtil.decrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
@@ -79,41 +74,46 @@ public class UserMetadataServiceTest {
     }
 
     @Test
-    public void shouldCreateNewUserMetadataIfUserRecordIsNotAvailableForReceivedProviderSubjectId() {
+    public void shouldCreateNewUserMetadataForSameProviderSubjectIdAndDifferentIdentityProvider() {
+        String identityProvider = "facebook";
         when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider)).thenReturn(Optional.empty());
         when(encryptionDecryptionUtil.encrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
-        when(userMetadataRepository.save(any(UserMetadata.class))).thenAnswer(invocation -> {
-            UserMetadata savedUser = invocation.getArgument(0);
-            savedUser.setId(userId);
-            return savedUser;
-        });
+        when(userMetadataRepository.save(any(UserMetadata.class))).thenReturn(userMetadata);
 
-        storedUserId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
-
-        assertEquals(userId, storedUserId);
-        verify(userMetadataRepository, times(1)).save(any(UserMetadata.class));
-    }
-
-    @Test
-    public void shouldUpdateTheUpdatedFieldEvenIfNoChangesInMetadataObserved() throws InterruptedException {
-        Timestamp timestampBeforeUpdate = userMetadata.getUpdatedAt();
-        String updatedDisplayName = "Name 123";
-        String updatedProfilePictureUrl = "http://profile.pic";
-        String updatedEmail = "name.123@example.com";
-        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider)).thenReturn(Optional.of(userMetadata));
-        when(encryptionDecryptionUtil.decrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
-        Thread.sleep(1);
-        storedUserId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+        userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
 
         ArgumentCaptor<UserMetadata> userMetadataCaptor = ArgumentCaptor.forClass(UserMetadata.class);
         verify(userMetadataRepository).save(userMetadataCaptor.capture());
 
         UserMetadata capturedUserMetadata = userMetadataCaptor.getValue();
-        Timestamp after = capturedUserMetadata.getUpdatedAt();
-        assertEquals(updatedDisplayName, capturedUserMetadata.getDisplayName());
-        assertEquals(updatedProfilePictureUrl, capturedUserMetadata.getProfilePictureUrl());
-        assertEquals(updatedEmail, capturedUserMetadata.getEmail());
-        assertNotEquals(timestampBeforeUpdate, after);
-        assertEquals(userId, storedUserId);
+        String storedUserId = capturedUserMetadata.getId();
+        assertNotEquals(userId, storedUserId);
+    }
+
+    @Test
+    public void shouldCreateNewUserMetadataForDifferentProviderSubjectIdAndSameIdentityProvider() {
+        String providerSubjectId = "provider124";
+        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider)).thenReturn(Optional.empty());
+        when(encryptionDecryptionUtil.encrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
+        when(userMetadataRepository.save(any(UserMetadata.class))).thenReturn(userMetadata);
+
+        userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+
+        ArgumentCaptor<UserMetadata> userMetadataCaptor = ArgumentCaptor.forClass(UserMetadata.class);
+        verify(userMetadataRepository).save(userMetadataCaptor.capture());
+
+        UserMetadata capturedUserMetadata = userMetadataCaptor.getValue();
+        String storedUserId = capturedUserMetadata.getId();
+        assertNotEquals(userId, storedUserId);
+    }
+
+    @Test
+    public void shouldNotCreateNewUserMetadataForSameProviderSubjectIdAndSameIdentityProvider() {
+        when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider)).thenReturn(Optional.of(userMetadata));
+        when(encryptionDecryptionUtil.decrypt(anyString(), any(), any(), any())).thenReturn(displayName, profilePictureUrl, email);
+
+        userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+
+        verify(userMetadataRepository,times(0)).save(any(UserMetadata.class));
     }
 }
