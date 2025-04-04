@@ -17,7 +17,7 @@ function installing_minio() {
   helm -n minio install minio mosip/minio -f values.yaml --version 10.1.6
 
   echo Installing gateways and virtualservice
-  EXTERNAL_HOST=$(kubectl get cm global -o jsonpath={.data.mosip-minio-host})
+  EXTERNAL_HOST=$(kubectl get cm inji-stack-config -o jsonpath={.data.mosip-minio-host})
 
   echo host: $EXTERNAL_HOST
   helm -n $NS install istio-addons chart/istio-addons --set externalHost=$EXTERNAL_HOST

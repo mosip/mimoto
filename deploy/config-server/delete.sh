@@ -12,7 +12,7 @@ function config_server() {
       read -p "Are you sure you want to delete config-server helm charts?(Y/n) " yn
       if [ $yn = "Y" ]
         then
-          kubectl -n $NS delete configmap global s3
+          kubectl -n $NS delete configmap inji-stack-config s3
           kubectl -n $NS delete secret conf-secrets-various s3
           helm -n $NS delete config-server
           break

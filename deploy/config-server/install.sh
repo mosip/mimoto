@@ -25,7 +25,7 @@ CHART_VERSION=0.0.2-develop
 
     echo Copy configmaps
     COPY_UTIL=../copy_cm_func.sh
-    $COPY_UTIL configmap global default $NS
+    $COPY_UTIL configmap inji-stack-config default $NS
     $COPY_UTIL configmap s3 s3 $NS
 
     echo Copy secrets

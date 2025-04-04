@@ -1,4 +1,4 @@
-## The data here is of generic interest to modules in different namespaces hence this is marked as global.
+## The data here is of generic interest to modules in different namespaces hence this is marked as inji-stack-config.
 ## Replace your domain names here.
 ## mosip-api-host:  External public access. (Typically required only in production rollouts).
 ## mosip-api-internal-host: Internal secure access over Wireguard.
@@ -6,7 +6,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: global
+  name: inji-stack-config
   namespace: default
 data:
   mosip-version: develop

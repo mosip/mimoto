@@ -24,14 +24,14 @@ envVariables:
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_API_PUBLIC_HOST
     valueFrom:
       configMapKeyRef:
-        name: global
+        name: inji-stack-config
         key: mosip-api-host
     enabled: true
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_API_INTERNAL_HOST
     valueFrom:
       configMapKeyRef:
-        name: global
+        name: inji-stack-config
         key: mosip-api-internal-host
     enabled: true
 
@@ -74,28 +74,28 @@ envVariables:
     valueFrom:
       configMapKeyRef:
         key: mosip-esignet-host
-        name: global
+        name: inji-stack-config
     enabled: true
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_ESIGNET_INSURANCE_HOST
     valueFrom:
       configMapKeyRef:
         key: mosip-esignet-insurance-host
-        name: global
+        name: inji-stack-config
     enabled: false
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_INJIWEB_HOST
     valueFrom:
       configMapKeyRef:
         key: mosip-injiweb-host
-        name: global
+        name: inji-stack-config
     enabled: true
 
   - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_MOSIP_INJIVERIFY_HOST
     valueFrom:
       configMapKeyRef:
         key: mosip-injiverify-host
-        name: global
+        name: inji-stack-config
     enabled: true
 
 extraEnvVars:
