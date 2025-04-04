@@ -27,7 +27,7 @@
 ### Install Pre-requisites
 * `inji-stack-config` configmap: For inji K8's env, `inji-stack-config` configmap in `default` namespace contains Domain related information. Follow below steps to add domain details for `inji-stack-config` configmap.
     * Copy `inji-stack-cm.yaml.sample` to `inji-stack-cm.yaml`.
-    * Update the domain names in `inji-stack-cm.yaml` correctly for your environment, ensuring that only new domain names are added (remove existing domains).
+    * Update the domain names in `inji-stack-cm.yaml` correctly for your environment.
   ````
   kubectl -n default apply -f inji-stack-cm.yaml
   ````
