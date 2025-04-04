@@ -28,6 +28,9 @@ public class WalletUtil {
     @Autowired
     private CryptomanagerService cryptomanagerService;
 
+    @Autowired
+    private EncryptionDecryptionUtil encryptionDecryptionUtil;
+
 
     // Method to decrypt the wallet key using the PIN
     public String decryptWalletKey(String encryptedWalletKey, String pin) {
@@ -46,7 +49,7 @@ public class WalletUtil {
     public String createNewWallet(String userId, String walletName, String pin, KeyPair keyPair, SecretKey encryptionKey, String encryptionAlgorithm, String encryptionType) throws Exception {
 
         // Encrypt the private key with the encryption key
-        String encryptedPrivateKey = EncryptionDecryptionUtil.encrypt(encryptionKey, keyPair.getPrivate().getEncoded());
+        String encryptedPrivateKey = encryptionDecryptionUtil.encryptWithAES(encryptionKey, keyPair.getPrivate().getEncoded());
 
         // Create wallet record
         String walletId = UUID.randomUUID().toString();

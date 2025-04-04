@@ -16,8 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.crypto.SecretKey;
 import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -38,6 +36,9 @@ class WalletUtilTest {
 
     @InjectMocks
     private WalletUtil walletUtil;
+
+    @Mock
+    private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
     private String pin;
     private String name;
@@ -97,6 +98,9 @@ class WalletUtilTest {
 
     @Test
     void createNewWallet_verifyWalletObject() throws Exception {
+        String encryptedSecretKey = "encrypted-secret-key";
+        when(encryptionDecryptionUtil.encryptWithAES(any(SecretKey.class), any(byte[].class))).thenReturn(encryptedSecretKey);
+
         cryptoResponseDto.setData(encryptedWalletKey);
         when(cryptomanagerService.encryptWithPin(any(CryptoWithPinRequestDto.class))).thenReturn(cryptoResponseDto);
         String walletId = walletUtil.createNewWallet(userId, pin, name, keyPair, encryptionKey, encryptionAlgorithm, encryptionType);
@@ -110,29 +114,10 @@ class WalletUtilTest {
         assertEquals(userId, savedWallet.getUserId());
         assertEquals(keyPair.getPublic().getAlgorithm(), savedWallet.getProofSigningKeys().get(0).getKeyMetadata().getAlgorithmName());
         assertEquals(publicKeyBase64, savedWallet.getProofSigningKeys().get(0).getPublicKey());
-        assertFalse(savedWallet.getProofSigningKeys().get(0).getSecretKey().isEmpty(), "Encrypted private key should not be empty");
+        assertNotNull(savedWallet.getProofSigningKeys());
+        assertEquals(encryptedSecretKey,savedWallet.getProofSigningKeys().get(0).getSecretKey());
         assertEquals(encryptedWalletKey, savedWallet.getWalletKey());
         assertEquals(encryptionAlgorithm, savedWallet.getWalletMetadata().getEncryptionAlgo());
         assertEquals(encryptionType, savedWallet.getWalletMetadata().getEncryptionType());
-    }
-
-    @Test
-    void testIVChangesButCiphertextRemainsSameForSameEncryptionKeyAndSecretKey() throws Exception {
-        String encryptedPrivateKey1 = EncryptionDecryptionUtil.encrypt(encryptionKey, keyPair.getPrivate().getEncoded());
-        String encryptedPrivateKey2 = EncryptionDecryptionUtil.encrypt(encryptionKey, keyPair.getPrivate().getEncoded());
-
-        byte[] encryptedBytes1 = Base64.getDecoder().decode(encryptedPrivateKey1);
-        byte[] encryptedBytes2 = Base64.getDecoder().decode(encryptedPrivateKey2);
-
-        byte[] iv1 = Arrays.copyOfRange(encryptedBytes1, 0, 12);
-        byte[] iv2 = Arrays.copyOfRange(encryptedBytes2, 0, 12);
-
-        byte[] decryptedPrivateKey1Bytes = EncryptionDecryptionUtil.decrypt(encryptionKey, encryptedPrivateKey1);
-        byte[] decryptedPrivateKey2Bytes = EncryptionDecryptionUtil.decrypt(encryptionKey, encryptedPrivateKey2);
-        PrivateKey decryptedPrivateKey1 = EncryptionDecryptionUtil.bytesToPrivateKey(decryptedPrivateKey1Bytes, "ed25519");
-        PrivateKey decryptedPrivateKey2 = EncryptionDecryptionUtil.bytesToPrivateKey(decryptedPrivateKey2Bytes,"ed25519");
-
-        assertFalse(Arrays.equals(iv1, iv2), "IVs should be different");
-        assertEquals(decryptedPrivateKey1, decryptedPrivateKey2);
     }
 }

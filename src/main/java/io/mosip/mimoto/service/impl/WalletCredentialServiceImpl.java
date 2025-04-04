@@ -1,7 +1,6 @@
 package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mosip.kernel.cryptomanager.dto.CryptoWithPinRequestDto;
 import io.mosip.kernel.cryptomanager.service.CryptomanagerService;
 import io.mosip.mimoto.dbentity.CredentialMetadata;
 import io.mosip.mimoto.dbentity.VerifiableCredential;
@@ -77,6 +76,9 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     @Autowired
     private CredentialUtilService credentialUtilService;
 
+    @Autowired
+    private EncryptionDecryptionUtil encryptionDecryptionUtil;
+
     PixelPass pixelPass;
     CredentialsVerifier credentialsVerifier;
 
@@ -145,13 +147,13 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     private String encryptCredential(String credentialData, String base64EncodedWalletKey) throws Exception {
         byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
         SecretKey walletKey = EncryptionDecryptionUtil.bytesToSecretKey(decodedWalletKey);
-        return EncryptionDecryptionUtil.encrypt(walletKey, EncryptionDecryptionUtil.stringToBytes(credentialData));
+        return encryptionDecryptionUtil.encryptWithAES(walletKey, EncryptionDecryptionUtil.stringToBytes(credentialData));
     }
 
     private String decryptCredential(String encryptedCredentialData, String base64EncodedWalletKey) throws Exception {
         byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
         SecretKey walletKey = EncryptionDecryptionUtil.bytesToSecretKey(decodedWalletKey);
-        return EncryptionDecryptionUtil.bytesToString(EncryptionDecryptionUtil.decrypt(walletKey, encryptedCredentialData));
+        return EncryptionDecryptionUtil.bytesToString(encryptionDecryptionUtil.decryptWithAES(walletKey, encryptedCredentialData));
     }
 
     private VerifiableCredential saveCredential(String walletId, String encryptedCredential, boolean isVerified, String issuerId, String credentialType) {

@@ -79,7 +79,7 @@ public class EncryptionDecryptionUtil {
      * @param data   The data to encrypt (as byte[])
      * @return Base64 encoded string of (IV + encryptedData)
      */
-    public static String encrypt(SecretKey aesKey, byte[] data) throws Exception {
+    public String encryptWithAES(SecretKey aesKey, byte[] data) throws Exception {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
 
         // Generate a secure random IV
@@ -109,7 +109,7 @@ public class EncryptionDecryptionUtil {
      * @param base64EncodedData Base64 encoded string of (IV + encryptedData)
      * @return Decrypted data as byte[]
      */
-    public static byte[] decrypt(SecretKey aesKey, String base64EncodedData) throws Exception {
+    public byte[] decryptWithAES(SecretKey aesKey, String base64EncodedData) throws Exception {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         byte[] decodedData = Base64.getDecoder().decode(base64EncodedData);
 
