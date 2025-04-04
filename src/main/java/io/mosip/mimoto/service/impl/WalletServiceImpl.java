@@ -9,10 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 
@@ -28,7 +26,7 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public String createWallet(String userId, String walletName, String pin) throws Exception {
         // Create a new wallet for the user
-        return walletHelper.createEd25519AlgoWallet(userId, walletName, pin);
+        return walletHelper.createWallet(userId, walletName, pin);
     }
 
     @Override
