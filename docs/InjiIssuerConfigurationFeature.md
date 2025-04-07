@@ -44,7 +44,8 @@ sequenceDiagram
 
 ### Cache Configuration
 
-The caching mechanism used in this project is Caffeine. The cache timeout properties are defined in the `application-local.properties` file.
+The caching mechanism used in this project is Caffeine. Cache timeout properties are defined in the
+`application-local.properties` file for the local setup, and in the `mimoto-default.properties` file for the environment setup.
 
 #### Cache Timeout Properties
 
