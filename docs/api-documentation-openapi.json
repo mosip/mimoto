@@ -1550,8 +1550,6 @@
                                                 "issuers": [
                                                     {
                                                         "issuer_id": "MOSIPInsurance",
-                                                        "credential_issuer": "MOSIPInsurance",
-                                                        "credential_issuer_host": "https://injicertify-insurance.collab.mosip.net",
                                                         "protocol": "OpenId4VCI",
                                                         "display": [
                                                             {
@@ -1566,12 +1564,12 @@
                                                             }
                                                         ],
                                                         "client_id": "3yz7-j3xRzU3SODdoNgSGvO_cD8UijH3AIWRDAg1x-M",
-                                                        ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer"
+                                                        "wellknown_endpoint": "http://localhost:8088/.well-known/openid-credential-issuer",
+                                                        "credential_issuer": "MOSIPInsurance",
+                                                        "credential_issuer_host": "https://injicertify-insurance.collab.mosip.net"
                                                     },
                                                     {
                                                         "issuer_id": "MOSIPNationalID",
-                                                        "credential_issuer": "MOSIPNationalID",
-                                                        "credential_issuer_host": "https://injicertify-mosipid.released.mosip.net",
                                                         "protocol": "OpenId4VCI",
                                                         "display": [
                                                             {
@@ -1586,7 +1584,9 @@
                                                             }
                                                         ],
                                                         "client_id": "3yz7-j3xRzU3SODdoNgSGvO_cD8UijH3AIWRDAg1x-M",
-                                                        ".well-known": "http://localhost:8088/.well-known/openid-credential-issuer"
+                                                        "wellknown_endpoint": "http://localhost:8088/.well-known/openid-credential-issuer",
+                                                        "credential_issuer": "MOSIPNationalID",
+                                                        "credential_issuer_host": "https://injicertify-mosipid.released.mosip.net"
                                                     }
                                                 ]
                                             }
