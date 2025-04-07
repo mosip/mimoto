@@ -46,16 +46,17 @@ public class JwtGeneratorUtil {
     }
 
     private static JWTClaimsSet createClaims(String clientId, String audience, String accessToken) throws java.text.ParseException {
-        Date now = new Date();
-        Date expiry = new Date(now.getTime() + 120000000L);
+        long nowSeconds = System.currentTimeMillis() / 1000;
+        Date issuedAt = new Date(nowSeconds * 1000);
+        Date expiresAt = new Date((nowSeconds + 18000) * 1000);
         String nonce = SignedJWT.parse(accessToken).getJWTClaimsSet().getStringClaim("c_nonce");
 
         return new JWTClaimsSet.Builder()
                 .subject(clientId)
                 .audience(audience)
                 .issuer(clientId)
-                .issueTime(now)
-                .expirationTime(expiry)
+                .issueTime(issuedAt)
+                .expirationTime(expiresAt)
                 .claim("nonce", nonce)
                 .build();
     }
