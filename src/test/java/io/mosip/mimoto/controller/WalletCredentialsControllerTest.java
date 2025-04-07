@@ -4,7 +4,6 @@ import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.IdpException;
-import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.service.impl.WalletCredentialServiceImpl;
 import io.mosip.mimoto.util.CredentialUtilService;
 import jakarta.servlet.http.HttpSession;
@@ -85,7 +84,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldDownloadCredentialForValidWalletAndDetails() throws Exception {
         when(credentialUtilService.getTokenResponse(anyMap(), eq(issuer))).thenReturn(new TokenResponseDTO());
-        when(walletCredentialService.fetchAndStoreCredential(anyString(), anyString(), any(), anyString(), anyString(), anyString(), anyString(), any(SigningAlgorithm.class)))
+        when(walletCredentialService.fetchAndStoreCredential(anyString(), anyString(), any(), anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(verifiableCredentialResponseDTO);
 
         mockMvc.perform(post(String.format("/wallets/%s/credentials",walletId))
@@ -142,7 +141,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldThrowExceptionOnDatabaseConnectionFailureDuringCredentialDownload() throws Exception {
         when(credentialUtilService.getTokenResponse(anyMap(), eq(issuer))).thenReturn(new TokenResponseDTO());
-        when(walletCredentialService.fetchAndStoreCredential(anyString(), anyString(), any(), anyString(), anyString(), anyString(), anyString(), any()))
+        when(walletCredentialService.fetchAndStoreCredential(anyString(), anyString(), any(), anyString(), anyString(), anyString(), anyString()))
                 .thenThrow(new DataAccessResourceFailureException("Exception occurred when connecting to the database to store the credential response"));
 
         mockMvc.perform(post(String.format("/wallets/%s/credentials",walletId))

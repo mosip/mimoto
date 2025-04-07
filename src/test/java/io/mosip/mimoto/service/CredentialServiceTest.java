@@ -44,10 +44,10 @@ public class CredentialServiceTest {
 
     @Mock
     CredentialsVerifier credentialsVerifier;
-    
+
     @Mock
     ObjectMapper objectMapper;
-    
+
     @InjectMocks
     CredentialServiceImpl credentialService;
 
@@ -115,7 +115,7 @@ public class CredentialServiceTest {
         when(credentialUtilService.generateVCCredentialRequest(any(IssuerDTO.class),
                 any(CredentialIssuerWellKnownResponse.class),
                 any(CredentialsSupportedResponse.class),
-                any(String.class), any(SigningAlgorithm.class), any(), any())).thenReturn(getVCCredentialRequestDTO());
+                any(String.class), any(), any())).thenReturn(getVCCredentialRequestDTO());
         VCCredentialResponse vcCredentialResponse = getVCCredentialResponseDTO("CredentialType1");
         when(credentialUtilService.downloadCredential(any(String.class),
                 any(VCCredentialRequest.class),
@@ -134,7 +134,7 @@ public class CredentialServiceTest {
         when(credentialUtilService.generateVCCredentialRequest(any(IssuerDTO.class),
                 any(CredentialIssuerWellKnownResponse.class),
                 any(CredentialsSupportedResponse.class),
-                any(String.class), any(SigningAlgorithm.class),any(),any())).thenReturn(getVCCredentialRequestDTO());
+                any(String.class), any(), any())).thenReturn(getVCCredentialRequestDTO());
         VCCredentialResponse vcCredentialResponse = getVCCredentialResponseDTO("CredentialType1");
         when(credentialUtilService.downloadCredential(any(String.class),
                 any(VCCredentialRequest.class),

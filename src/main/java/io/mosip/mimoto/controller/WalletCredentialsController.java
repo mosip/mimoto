@@ -5,7 +5,6 @@ import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.model.DatabaseEntity;
 import io.mosip.mimoto.model.DatabaseOperation;
-import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.util.CredentialUtilService;
 import io.mosip.mimoto.util.Utilities;
@@ -52,13 +51,13 @@ public class WalletCredentialsController {
 
             log.info("Initiated fetching Verifiable Credential and storing it in the database Call");
             VerifiableCredentialResponseDTO credentialResponseDTO = walletCredentialService.fetchAndStoreCredential(
-                    issuerId, credentialType, response, credentialValidity, locale, walletId, base64EncodedWalletKey, SigningAlgorithm.fromString("es256k"));
+                    issuerId, credentialType, response, credentialValidity, locale, walletId, base64EncodedWalletKey);
 
             return ResponseEntity.status(HttpStatus.OK).body(credentialResponseDTO);
         } catch (ApiNotAccessibleException | IOException exception) {
             log.error("Exception occurred while fetching credential types ", exception);
             return Utilities.getErrorResponseEntityWithoutWrapper(exception, LOGIN_CREDENTIAL_DOWNLOAD_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
-        }  catch (DataAccessResourceFailureException exception) {
+        } catch (DataAccessResourceFailureException exception) {
             log.error("Exception occurred while connecting to the database to store downloaded Verifiable Credential:", exception);
             DatabaseConnectionException connectionException = new DatabaseConnectionException(DATABASE_CONNECTION_EXCEPTION.getCode(), DATABASE_CONNECTION_EXCEPTION.getMessage(), DatabaseEntity.VERIFIABLECREDENTIAL, DatabaseOperation.STORING, HttpStatus.INTERNAL_SERVER_ERROR);
             return Utilities.getErrorResponseEntityWithoutWrapper(connectionException, LOGIN_CREDENTIAL_DOWNLOAD_EXCEPTION.getCode(), connectionException.getStatus(), MediaType.APPLICATION_JSON);
