@@ -90,25 +90,21 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
 
         shouldInitiateDownloadRequest(issuerId,credentialType);
 
-        // Fetch issuer configuration
         IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = getIssuerWellKnownResponse(issuerId);
         CredentialsSupportedResponse credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported().get(credentialType);
 
-        // Generate credential request and download credential
         VCCredentialRequest vcCredentialRequest = credentialUtilService.generateVCCredentialRequest(issuerDTO, credentialIssuerWellKnownResponse, credentialsSupportedResponse, response.getAccess_token(), walletId, base64EncodedWalletKey, true);
         VCCredentialResponse vcCredentialResponse = credentialUtilService.downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
         boolean verificationStatus = issuerId.toLowerCase().contains("mock") || credentialUtilService.verifyCredential(vcCredentialResponse);
 
-        // Encrypt and store credential response into database
         String encryptedCredentialData = encryptCredential(vcCredentialResponse.toString(), base64EncodedWalletKey);
         VerifiableCredential savedCredential = saveCredential(walletId, encryptedCredentialData, verificationStatus, issuerId, credentialType);
 
-        // Build and return response DTO
         return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerDTO, credentialsSupportedResponse, locale, savedCredential.getId());
     }
 
-    public void shouldInitiateDownloadRequest(String issuerId, String credentialType) {
+    private void shouldInitiateDownloadRequest(String issuerId, String credentialType) {
         Set<String> issuers = Set.of("Mosip");
         if (issuers.contains(issuerId) && alreadyDownloaded(issuerId, credentialType)) {
             throw new RuntimeException("A credential is already downloaded for the selected Issuer and Credential Type. Only one is allowed, so download will not be initiated");
