@@ -5,6 +5,7 @@ import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.model.DatabaseEntity;
 import io.mosip.mimoto.model.DatabaseOperation;
+import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.util.CredentialUtilService;
 import io.mosip.mimoto.util.Utilities;
@@ -41,7 +42,7 @@ public class WalletCredentialsController {
             if (walletKeyObj == null) {
                 throw new RuntimeException("Wallet key is missing in session");
             }
-            String walletKey = walletKeyObj.toString();
+            String base64EncodedWalletKey = walletKeyObj.toString();
             String issuerId = params.get("issuer");
             String credentialType = params.get("credential");
             String credentialValidity = params.get("vcStorageExpiryLimitInTimes");
@@ -51,7 +52,7 @@ public class WalletCredentialsController {
 
             log.info("Initiated fetching Verifiable Credential and storing it in the database Call");
             VerifiableCredentialResponseDTO credentialResponseDTO = walletCredentialService.fetchAndStoreCredential(
-                    issuerId, credentialType, response, credentialValidity, locale, walletId, walletKey);
+                    issuerId, credentialType, response, credentialValidity, locale, walletId, base64EncodedWalletKey, SigningAlgorithm.fromString("es256k"));
 
             return ResponseEntity.status(HttpStatus.OK).body(credentialResponseDTO);
         } catch (ApiNotAccessibleException | IOException exception) {
@@ -63,7 +64,7 @@ public class WalletCredentialsController {
             return Utilities.getErrorResponseEntityWithoutWrapper(connectionException, LOGIN_CREDENTIAL_DOWNLOAD_EXCEPTION.getCode(), connectionException.getStatus(), MediaType.APPLICATION_JSON);
         } catch (Exception exception) {
             log.error("Exception occurred while downloading or saving the Verifiable Credential:", exception);
-            return Utilities.getErrorResponseEntityWithoutWrapper(exception, LOGIN_CREDENTIAL_DOWNLOAD_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, LOGIN_CREDENTIAL_DOWNLOAD_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
     }
 
@@ -85,7 +86,7 @@ public class WalletCredentialsController {
             return Utilities.getErrorResponseEntityWithoutWrapper(connectionException, DATABASE_CONNECTION_EXCEPTION.getCode(), connectionException.getStatus(), MediaType.APPLICATION_JSON);
         } catch (Exception exception) {
             log.error("Exception occurred while downloading or saving the Verifiable Credential:", exception);
-            return Utilities.getErrorResponseEntityWithoutWrapper(exception, CREDENTIALS_FETCH_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, CREDENTIALS_FETCH_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
     }
 }

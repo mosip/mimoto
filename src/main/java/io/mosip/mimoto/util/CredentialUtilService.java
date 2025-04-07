@@ -2,10 +2,13 @@ package io.mosip.mimoto.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.model.SigningAlgorithm;
+import io.mosip.mimoto.repository.ProofSigningKeyRepository;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.vercred.vcverifier.CredentialsVerifier;
@@ -19,9 +22,10 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
+import javax.crypto.SecretKey;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -40,6 +44,12 @@ public class CredentialUtilService {
 
     @Autowired
     JoseUtil joseUtil;
+
+    @Autowired
+    private EncryptionDecryptionUtil encryptionDecryptionUtil;
+
+    @Autowired
+    private ProofSigningKeyRepository proofSigningKeyRepository;
 
     CredentialsVerifier credentialsVerifier;
 
@@ -71,8 +81,20 @@ public class CredentialUtilService {
         return vcCredentialResponse;
     }
 
-    public VCCredentialRequest generateVCCredentialRequest(IssuerDTO issuerDTO, CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse, CredentialsSupportedResponse credentialsSupportedResponse, String accessToken) throws Exception {
-        String jwt = joseUtil.generateJwt(credentialIssuerWellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), accessToken);
+    public VCCredentialRequest generateVCCredentialRequest(IssuerDTO issuerDTO, CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse, CredentialsSupportedResponse credentialsSupportedResponse, String accessToken, SigningAlgorithm algorithm, String walletId, String base64EncodedWalletKey) throws Exception {
+        String jwt;
+
+        if (Objects.equals(algorithm, SigningAlgorithm.RS256)) {
+            jwt = joseUtil.generateJwt(credentialIssuerWellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), accessToken);
+        } else {
+            Optional<ProofSigningKey> proofSigningKey = proofSigningKeyRepository.findByWalletIdAndAlgorithm(walletId, algorithm.name());
+            byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
+            SecretKey walletKey = EncryptionDecryptionUtil.bytesToSecretKey(decodedWalletKey);
+            byte[] publicKeyBytes = Base64.getDecoder().decode(proofSigningKey.get().getPublicKey());
+            byte[] privateKeyInBytes = encryptionDecryptionUtil.decryptWithAES(walletKey, proofSigningKey.get().getEncryptedSecretKey());
+            jwt = JwtGeneratorUtil.generateJwtUsingDBKeys(algorithm, credentialIssuerWellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), accessToken, publicKeyBytes, privateKeyInBytes);
+        }
+
         return VCCredentialRequest.builder()
                 .format(credentialsSupportedResponse.getFormat())
                 .proof(VCCredentialRequestProof.builder()

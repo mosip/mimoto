@@ -3,6 +3,7 @@ package io.mosip.mimoto.util;
 import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dbentity.WalletMetadata;
+import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.repository.WalletRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -59,8 +60,8 @@ public class WalletUtil {
 
     private List<ProofSigningKey> createProofSigningKeys(SecretKey encryptionKey, Wallet wallet) throws Exception {
         List<ProofSigningKey> proofSigningKeys = new ArrayList<>();
-        List<String> algorithms = List.of("RS256", "ES256", "ES256K", "Ed25519");
-        for (String algorithm : algorithms) {
+        List<SigningAlgorithm> algorithms = List.of(SigningAlgorithm.RS256, SigningAlgorithm.ES256, SigningAlgorithm.ES256K, SigningAlgorithm.ED25519);
+        for (SigningAlgorithm algorithm : algorithms) {
             ProofSigningKey signingKey = ProofSigningKeyFactory.createProofSigningKey(algorithm);
             signingKey.setWallet(wallet);
             signingKey.setEncryptedSecretKey(encryptionDecryptionUtil.encryptWithAES(encryptionKey,

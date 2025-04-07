@@ -4,6 +4,7 @@ import io.mosip.kernel.cryptomanager.dto.CryptomanagerRequestDto;
 import io.mosip.kernel.cryptomanager.dto.CryptomanagerResponseDto;
 import io.mosip.kernel.cryptomanager.service.CryptomanagerService;
 import io.mosip.kernel.core.util.CryptoUtil;
+import io.mosip.mimoto.model.SigningAlgorithm;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +49,7 @@ public class EncryptionDecryptionUtilTest {
         String appId = "MIMOTO";
         ReflectionTestUtils.setField(encryptionDecryptionUtil, "appId", appId);
         encryptionKey = KeyGenerationUtil.generateEncryptionKey("AES", 256);
-        keyPair = KeyGenerationUtil.generateKeyPair("Ed25519");
+        keyPair = KeyGenerationUtil.generateKeyPair(SigningAlgorithm.ED25519);
     }
 
     @Test
@@ -92,7 +93,7 @@ public class EncryptionDecryptionUtilTest {
     @Test
     public void shouldEncryptPrivateKeyWithAESSuccessfully() throws Exception {
         SecretKey aesKey = KeyGenerationUtil.generateEncryptionKey("AES", 256);
-        KeyPair keyPair = KeyGenerationUtil.generateKeyPair("Ed25519");
+        KeyPair keyPair = KeyGenerationUtil.generateKeyPair(SigningAlgorithm.ED25519);
 
         String encryptedPrivateKey = encryptionDecryptionUtil.encryptWithAES(aesKey, keyPair.getPrivate().getEncoded());
 

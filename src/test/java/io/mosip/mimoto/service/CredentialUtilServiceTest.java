@@ -7,12 +7,10 @@ import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.IdpException;
 import io.mosip.mimoto.exception.VCVerificationException;
+import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
-import io.mosip.mimoto.util.CredentialUtilService;
-import io.mosip.mimoto.util.JoseUtil;
-import io.mosip.mimoto.util.RestApiClient;
-import io.mosip.mimoto.util.TestUtilities;
+import io.mosip.mimoto.util.*;
 import io.mosip.vercred.vcverifier.CredentialsVerifier;
 import io.mosip.vercred.vcverifier.constants.CredentialFormat;
 import io.mosip.vercred.vcverifier.data.VerificationResult;
@@ -148,7 +146,7 @@ public class CredentialUtilServiceTest {
         VCCredentialRequest expectedVCCredentialRequest = getVCCredentialRequestDTO();
         Mockito.when(joseUtil.generateJwt(any(String.class), any(String.class), any(String.class))).thenReturn("jwt");
 
-        VCCredentialRequest actualVCCredentialRequest = credentialUtilService.generateVCCredentialRequest(issuerDTO, issuerWellKnownResponse, credentialsSupportedResponse, "test-access-token");
+        VCCredentialRequest actualVCCredentialRequest = credentialUtilService.generateVCCredentialRequest(issuerDTO, issuerWellKnownResponse, credentialsSupportedResponse, "test-access-token", SigningAlgorithm.fromString("RS256"), "walletId","walletKey");
 
         assertEquals(expectedVCCredentialRequest, actualVCCredentialRequest);
     }
@@ -160,7 +158,7 @@ public class CredentialUtilServiceTest {
         Mockito.when(joseUtil.generateJwt(any(String.class), any(String.class), any(String.class))).thenThrow(new AssertionError("Unexpected algorithm type: dfs"));
 
         AssertionError actualError = assertThrows(AssertionError.class, () -> {
-            credentialUtilService.generateVCCredentialRequest(issuerDTO, issuerWellKnownResponse, credentialsSupportedResponse, "test-access-token");
+            credentialUtilService.generateVCCredentialRequest(issuerDTO, issuerWellKnownResponse, credentialsSupportedResponse, "test-access-token", SigningAlgorithm.fromString("RS256"), "walletId","walletKey");
         });
 
         assertEquals("Unexpected algorithm type: dfs", actualError.getMessage());

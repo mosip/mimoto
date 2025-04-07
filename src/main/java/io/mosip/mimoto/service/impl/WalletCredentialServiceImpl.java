@@ -4,13 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.kernel.cryptomanager.service.CryptomanagerService;
 import io.mosip.mimoto.dbentity.CredentialMetadata;
 import io.mosip.mimoto.dbentity.VerifiableCredential;
-import io.mosip.mimoto.dto.DisplayDTO;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
+import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
@@ -90,7 +90,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     @Override
     public VerifiableCredentialResponseDTO fetchAndStoreCredential(
             String issuerId, String credentialType, TokenResponseDTO response,
-            String credentialValidity, String locale, String walletId, String walletKey) throws Exception {
+            String credentialValidity, String locale, String walletId, String base64EncodedWalletKey, SigningAlgorithm algorithm) throws Exception {
 
         shouldInitiateDownloadRequest(issuerId,credentialType);
 
@@ -100,12 +100,12 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         CredentialsSupportedResponse credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported().get(credentialType);
 
         // Generate credential request and download credential
-        VCCredentialRequest vcCredentialRequest = credentialUtilService.generateVCCredentialRequest(issuerDTO, credentialIssuerWellKnownResponse, credentialsSupportedResponse, response.getAccess_token());
+        VCCredentialRequest vcCredentialRequest = credentialUtilService.generateVCCredentialRequest(issuerDTO, credentialIssuerWellKnownResponse, credentialsSupportedResponse, response.getAccess_token(), algorithm, walletId, base64EncodedWalletKey);
         VCCredentialResponse vcCredentialResponse = credentialUtilService.downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
         boolean verificationStatus = issuerId.toLowerCase().contains("mock") || credentialUtilService.verifyCredential(vcCredentialResponse);
 
         // Encrypt and store credential response into database
-        String encryptedCredentialData = encryptCredential(vcCredentialResponse.toString(), walletKey);
+        String encryptedCredentialData = encryptCredential(vcCredentialResponse.toString(), base64EncodedWalletKey);
         VerifiableCredential savedCredential = saveCredential(walletId, encryptedCredentialData, verificationStatus, issuerId, credentialType);
 
         // Build and return response DTO

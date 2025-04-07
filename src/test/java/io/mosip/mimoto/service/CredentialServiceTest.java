@@ -6,12 +6,12 @@ import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.model.QRCodeType;
+import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.*;
 import io.mosip.vercred.vcverifier.CredentialsVerifier;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.junit.Before;
@@ -20,7 +20,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpEntity;
@@ -41,7 +40,6 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 @SpringBootTest
-@Slf4j
 public class CredentialServiceTest {
 
     @Mock
@@ -117,7 +115,7 @@ public class CredentialServiceTest {
         when(credentialUtilService.generateVCCredentialRequest(any(IssuerDTO.class),
                 any(CredentialIssuerWellKnownResponse.class),
                 any(CredentialsSupportedResponse.class),
-                any(String.class))).thenReturn(getVCCredentialRequestDTO());
+                any(String.class), any(SigningAlgorithm.class), any(), any())).thenReturn(getVCCredentialRequestDTO());
         VCCredentialResponse vcCredentialResponse = getVCCredentialResponseDTO("CredentialType1");
         when(credentialUtilService.downloadCredential(any(String.class),
                 any(VCCredentialRequest.class),
@@ -136,7 +134,7 @@ public class CredentialServiceTest {
         when(credentialUtilService.generateVCCredentialRequest(any(IssuerDTO.class),
                 any(CredentialIssuerWellKnownResponse.class),
                 any(CredentialsSupportedResponse.class),
-                any(String.class))).thenReturn(getVCCredentialRequestDTO());
+                any(String.class), any(SigningAlgorithm.class),any(),any())).thenReturn(getVCCredentialRequestDTO());
         VCCredentialResponse vcCredentialResponse = getVCCredentialResponseDTO("CredentialType1");
         when(credentialUtilService.downloadCredential(any(String.class),
                 any(VCCredentialRequest.class),
