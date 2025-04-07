@@ -146,7 +146,7 @@ public class CredentialUtilServiceTest {
         VCCredentialRequest expectedVCCredentialRequest = getVCCredentialRequestDTO();
         Mockito.when(joseUtil.generateJwt(any(String.class), any(String.class), any(String.class))).thenReturn("jwt");
 
-        VCCredentialRequest actualVCCredentialRequest = credentialUtilService.generateVCCredentialRequest(issuerDTO, issuerWellKnownResponse, credentialsSupportedResponse, "test-access-token", "walletId", "walletKey");
+        VCCredentialRequest actualVCCredentialRequest = credentialUtilService.generateVCCredentialRequest(issuerDTO, issuerWellKnownResponse, credentialsSupportedResponse, "test-access-token", "walletId", "walletKey", false);
 
         assertEquals(expectedVCCredentialRequest, actualVCCredentialRequest);
     }
@@ -158,7 +158,7 @@ public class CredentialUtilServiceTest {
         Mockito.when(joseUtil.generateJwt(any(String.class), any(String.class), any(String.class))).thenThrow(new AssertionError("Unexpected algorithm type: dfs"));
 
         AssertionError actualError = assertThrows(AssertionError.class, () -> {
-            credentialUtilService.generateVCCredentialRequest(issuerDTO, issuerWellKnownResponse, credentialsSupportedResponse, "test-access-token", "walletId", "walletKey");
+            credentialUtilService.generateVCCredentialRequest(issuerDTO, issuerWellKnownResponse, credentialsSupportedResponse, "test-access-token", "walletId", "walletKey", false);
         });
 
         assertEquals("Unexpected algorithm type: dfs", actualError.getMessage());
@@ -200,7 +200,7 @@ public class CredentialUtilServiceTest {
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = getCredentialIssuerWellKnownResponseDto(issuerId, Map.of("CredentialType1", credentialsSupportedResponse));
 
         IllegalArgumentException actualError = assertThrows(IllegalArgumentException.class, () -> {
-            credentialUtilService.generateVCCredentialRequest(issuerDTO, issuerWellKnownResponse, credentialsSupportedResponse, "test-access-token", "walletId", "walletKey");
+            credentialUtilService.generateVCCredentialRequest(issuerDTO, issuerWellKnownResponse, credentialsSupportedResponse, "test-access-token", "walletId", "walletKey", true);
         });
 
         assertEquals("Unsupported signing algorithm: ps256", actualError.getMessage());

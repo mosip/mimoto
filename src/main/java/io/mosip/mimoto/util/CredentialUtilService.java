@@ -81,18 +81,18 @@ public class CredentialUtilService {
         return vcCredentialResponse;
     }
 
-    public VCCredentialRequest generateVCCredentialRequest(IssuerDTO issuerDTO, CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse, CredentialsSupportedResponse credentialsSupportedResponse, String accessToken, String walletId, String base64EncodedWalletKey) throws Exception {
+    public VCCredentialRequest generateVCCredentialRequest(IssuerDTO issuerDTO, CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse, CredentialsSupportedResponse credentialsSupportedResponse, String accessToken, String walletId, String base64EncodedWalletKey,Boolean isLoginFlow) throws Exception {
         String jwt;
 
         Map<String, ProofTypesSupported> proofTypesSupported = credentialsSupportedResponse.getProofTypesSupported();
         SigningAlgorithm algorithm;
-        if(proofTypesSupported.containsKey("jwt")){
+        if (proofTypesSupported.containsKey("jwt")) {
             algorithm = SigningAlgorithm.fromString(proofTypesSupported.get("jwt").getProofSigningAlgValuesSupported().get(0));
-        }else {
-            algorithm= SigningAlgorithm.RS256;
+        } else {
+            algorithm = SigningAlgorithm.RS256;
         }
 
-        if (Objects.equals(algorithm, SigningAlgorithm.RS256)) {
+        if (!isLoginFlow) {
             jwt = joseUtil.generateJwt(credentialIssuerWellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), accessToken);
         } else {
             Optional<ProofSigningKey> proofSigningKey = proofSigningKeyRepository.findByWalletIdAndAlgorithm(walletId, algorithm.name());
