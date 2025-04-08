@@ -106,7 +106,7 @@ public class WalletCredentialsControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(postRequestContent))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-052"))
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-053"))
                 .andExpect(jsonPath("$.errorMessage").value("Wallet key is missing in session"));
     }
 
@@ -163,7 +163,7 @@ public class WalletCredentialsControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(postRequestContent))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-052"))
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-053"))
                 .andExpect(jsonPath("$.errorMessage").value("Unexpected error occurred while downloading credential"));
     }
 
@@ -186,7 +186,7 @@ public class WalletCredentialsControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(getRequestContent))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-053"))
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-054"))
                 .andExpect(jsonPath("$.errorMessage").value("Wallet key is missing in session"));
     }
 
@@ -215,7 +215,7 @@ public class WalletCredentialsControllerTest {
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(getRequestContent))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-053"))
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-054"))
                 .andExpect(jsonPath("$.errorMessage").value("Unexpected error occurred while fetching wallet credentials"));
     }
 }

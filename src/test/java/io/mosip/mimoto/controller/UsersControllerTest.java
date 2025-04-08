@@ -98,7 +98,7 @@ public class UsersControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-049"))
-                .andExpect(jsonPath("$.errorMessage").value("User not found. Please check your credentials or register"));
+                .andExpect(jsonPath("$.errorMessage").value("User not found. Please check your credentials or login again"));
     }
 
     @Test

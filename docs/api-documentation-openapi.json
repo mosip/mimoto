@@ -2668,10 +2668,700 @@
                     }
                 ]
             }
+        },
+        "/users/me/db": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Retrieve user metadata from the database",
+                "description": "This API is secured using session-based authentication. When a request is made, the server retrieves the session ID from the Cookie header and uses it to fetch session details from Redis. From the session, it extracts the user's unique identifier (typically the sub field provided by the identity provider) along with the clientRegistrationId. These values are then used to retrieve the user's metadata from the database. If successful, the API returns the user's profile information. If any issue occurs such as missing user data or server error then an appropriate error response is returned.",
+                "operationId": "getUserProfileFromDB",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User profile retrieved successfully from the Database",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserMetadataDTO"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "display_name": "John Doe",
+                                            "profile_picture_url": "https://example.com/profile.jpg",
+                                            "email": "john.doe@example.com"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User not found in the Database": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-049",
+                                            "errorMessage": "User not found. Please check your credentials or login again"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-047",
+                                            "errorMessage": "Failed to connect to the shared database while fetching User Metadata data from the database"
+                                        }
+                                    },
+                                    "Unexpected server error": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-049",
+                                            "errorMessage": "An unexpected error occurred while downloading and storing user metadata into database"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me/cache": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Retrieve user metadata from the stored redis session",
+                "description": "This API is secured using session-based authentication. When a request is made, the server retrieves the session ID from the Cookie header and uses it to fetch session details from Redis. It then attempts to retrieve the user's metadata directly from the session. If the metadata is available, the API returns the user's profile information otherwise an appropriate error response is returned.",
+                "operationId": "getUserProfileFromCache",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User profile retrieved successfully from the session",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserMetadataDTO"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "display_name": "John Doe",
+                                            "profile_picture_url": "https://example.com/profile.jpg",
+                                            "email": "john.doe@example.com"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User metadata not found in session": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-052",
+                                            "errorMessage": "No user metadata present in cache"
+                                        }
+                                    },
+                                    "Unexpected server error": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-052",
+                                            "errorMessage": "An unexpected error occurred while retrieving user metadata from cache"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wallets/{walletId}/credentials": {
+            "post": {
+                "tags": [
+                    "Wallet Credentials"
+                ],
+                "summary": "Download and store a Verifiable Credential under a specific Wallet",
+                "description": "This API is secured using session-based authentication. Upon receiving a request, the session ID is extracted from the Cookie header and used to retrieve session details from Redis for authentication. It then retrieves the wallet key from the session and use it to decrypt the signing algorithm's secret key(which is used for signing the JWT in credential request) and encrypt the downloaded Verifiable Credential. If the process completes successfully, the credential is stored in the database and certain fields will be returned in the response. In case of any issues, an appropriate error response is returned.",
+                "operationId": "downloadCredential",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Unique identifier of the user's wallet where the credential will be stored"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "grant_type": {
+                                        "type": "string",
+                                        "description": "OAuth 2.0 grant type, typically 'authorization_code'"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "description": "Authorization code received from the identity provider"
+                                    },
+                                    "redirect_uri": {
+                                        "type": "string",
+                                        "description": "Redirect URI used in the OAuth 2.0 flow"
+                                    },
+                                    "code_verifier": {
+                                        "type": "string",
+                                        "description": "PKCE code verifier associated with the authorization code"
+                                    },
+                                    "issuer": {
+                                        "type": "string",
+                                        "description": "Unique identifier of the credential Issuer"
+                                    },
+                                    "credential": {
+                                        "type": "string",
+                                        "description": "Type of the credential to be downloaded"
+                                    },
+                                    "vcStorageExpiryLimitInTimes": {
+                                        "type": "string",
+                                        "description": "Optional limit for how many times the user is allowed to share the Verifiable Credential. If not provided, it defaults to -1"
+                                    },
+                                    "locale": {
+                                        "type": "string",
+                                        "description": "Language preference in which the user expects the Verifiable Credential to be rendered"
+                                    }
+                                },
+                                "required": [
+                                    "grant_type",
+                                    "code",
+                                    "redirect_uri",
+                                    "code_verifier",
+                                    "issuer",
+                                    "credential",
+                                    "locale"
+                                ]
+                            },
+                            "examples": {
+                                "Default Example": {
+                                    "value": {
+                                        "grant_type": "authorization_code",
+                                        "code": "abc123",
+                                        "redirect_uri": "https://example.com/redirect",
+                                        "code_verifier": "xyz-secret-verifier",
+                                        "issuer": "Mosip",
+                                        "credential": "MosipVerifiableCredential",
+                                        "vcStorageExpiryLimitInTimes": "1",
+                                        "locale": "en"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Verifiable Credential downloaded and stored successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VerifiableCredentialResponseDTO"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "issuer_name": "Mosip",
+                                            "issuer_logo": "https://example.com/logo.png",
+                                            "credential_type": "MosipVerifiableCredential",
+                                            "credential_type_logo": "https://example.com/credential-logo.png",
+                                            "credential_id": "1234567890"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - API not accessible or request parameters invalid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Invalid Auth Server Token API access": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-026",
+                                            "errorMessage": "Api not accessible failure"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Wallet Key missing in session": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-053",
+                                            "errorMessage": "Wallet key is missing in session"
+                                        }
+                                    },
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-047",
+                                            "errorMessage": "Failed to connect to the shared database while storing Verifiable Credential data into the database"
+                                        }
+                                    },
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-053",
+                                            "errorMessage": "Unexpected error occurred while downloading and storing Verifiable Credential"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Wallet Credentials"
+                ],
+                "summary": "Fetch all credentials for the given wallet",
+                "description": "This API is secured using session-based authentication. When a request is made, the session ID is extracted from the Cookie header and used to fetch session details from Redis for authentication. It then retrieves the wallet key from the session and uses it to decrypt all stored Verifiable Credentials for the given wallet. If successful, it returns a list of credentials otherwise an appropriate error is returned.",
+                "operationId": "fetchAllCredentialsForWallet",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Unique identifier of the user's wallet from where the credential will be fetched"
+                    },
+                    {
+                        "name": "locale",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Locale is used to determine the language in which credentials should be rendered"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Credentials retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/VerifiableCredentialResponseDTO"
+                                    }
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": [
+                                            {
+                                                "issuer_name": "Mosip",
+                                                "issuer_logo": "https://example.com/logo.png",
+                                                "credential_type": "MosipVerifiableCredential",
+                                                "credential_type_logo": "https://example.com/credential-logo.png",
+                                                "credential_id": "1234567890"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Wallet Key missing in session": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-054",
+                                            "errorMessage": "Wallet key is missing in session"
+                                        }
+                                    },
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-047",
+                                            "errorMessage": "Failed to connect to the shared database while fetching Verifiable Credential from the database"
+                                        }
+                                    },
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-054",
+                                            "errorMessage": "Unexpected error occurred while fetching Verifiable Credential"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wallets": {
+            "post": {
+                "tags": [
+                    "Wallets"
+                ],
+                "summary": "Create a new wallet",
+                "description": "This API is secured using session-based authentication. The session ID is extracted from the Cookie header and used to retrieve session details from Redis for authentication. The user ID is then obtained from the session and along with the provided wallet name and PIN is used to create a new wallet in the database. If the wallet is created successfully, a unique identifier for the wallet is returned otherwise an appropriate error response is provided.",
+                "operationId": "createWallet",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "description": "Wallet creation request containing the wallet name and wallet PIN",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WalletRequestDto"
+                            },
+                            "examples": {
+                                "Create wallet request": {
+                                    "value": {
+                                        "walletName": "wallet 123",
+                                        "walletPin": "1234"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Wallet created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Unique identifier of the Wallet stored in the database"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": "d94a2e70-1234-4f2f-9eae-98765"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid wallet creation request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Invalid request": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-050",
+                                            "errorMessage": "Pin should be numeric with 4 or 6 digits."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error while creating wallet",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Unexpected server error": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-050",
+                                            "errorMessage": "An unexpected error occurred while creating the wallet"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Wallets"
+                ],
+                "summary": "Retrieve all wallets for the user",
+                "description": "This API is secured using session-based authentication. Upon receiving a request, the session is first retrieved using the session ID extracted from the Cookie header to authenticate the user. Once authenticated, the user's ID is obtained from the session stored in Redis. Using this user ID, the API fetches all wallets associated with the user from the database and returns them. If an error occurs while retrieving the wallets, an appropriate error response is returned.",
+                "operationId": "getWallets",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of wallets retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/WalletResponseDto"
+                                    }
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": [
+                                            {
+                                                "walletId": "123e4567-e89b-12d3-a456-426614174000"
+                                            },
+                                            {
+                                                "walletId": "223e4567-e89b-12d3-a456-426614174001"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Unexpected server error": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-051",
+                                            "errorMessage": "An unexpected error occurred while retrieving user wallets"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wallets/{walletId}/unlock": {
+            "post": {
+                "tags": [
+                    "Wallets"
+                ],
+                "summary": "Unlock a Wallet",
+                "description": "This API is secured using session-based authentication. Upon receiving a request, the session is first retrieved using the session ID extracted from the Cookie header to authenticate the user. Once authenticated, the user's ID is obtained from the session stored in Redis. Using this user ID along with the provided wallet ID and PIN, the corresponding wallet key is fetched and stored in the session. If successful then the API returns a response containing the wallet ID otherwise an appropriate error response is returned.",
+                "operationId": "unlockWallet",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Unique identifier of the wallet to be unlocked"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WalletRequestDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Wallet unlocked successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WalletResponseDto"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "walletId": "123e4567-e89b-12d3-a456-426614174000"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Unexpected server error": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-051",
+                                            "errorMessage": "An unexpected error occurred while retrieving the wallet details"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
+        "securitySchemes": {
+            "SessionAuth": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "SESSION",
+                "description": "Session-based authentication using a session ID stored in the cookie. The client must send the 'SESSION' cookie (e.g., SESSION=<session-id>) with each request."
+            }
+        },
         "schemas": {
+            "UserMetadataDTO": {
+                "type": "object",
+                "properties": {
+                    "display_name": {
+                        "type": "string",
+                        "description": "The display name of the user provided by the Identity Provider"
+                    },
+                    "profile_picture_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "The URL of the user's profile picture provided by the Identity Provider"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "The email address of the user provided by the Identity Provider"
+                    }
+                }
+            },
+            "VerifiableCredentialResponseDTO": {
+                "type": "object",
+                "properties": {
+                    "issuer_name": {
+                        "type": "string",
+                        "description": "Name of the Issuer"
+                    },
+                    "issuer_logo": {
+                        "type": "string",
+                        "description": "Logo of the Issuer"
+                    },
+                    "credential_type": {
+                        "type": "string",
+                        "description": "The name of the Credential Type issued by the Issuer"
+                    },
+                    "credential_type_logo": {
+                        "type": "string",
+                        "description": "Logo of the Credential Type"
+                    },
+                    "credential_id": {
+                        "type": "string",
+                        "description": "Unique Identifier of the Credential in the database"
+                    }
+                }
+            },
+            "WalletRequestDto": {
+                "type": "object",
+                "properties": {
+                    "walletName": {
+                        "type": "string",
+                        "description": "Name of the Wallet"
+                    },
+                    "walletPin": {
+                        "type": "string",
+                        "description": "PIN used to unlock the Wallet"
+                    }
+                },
+                "required": [
+                    "walletPin",
+                    "walletName"
+                ]
+            },
+            "WalletResponseDto": {
+                "type": "object",
+                "properties": {
+                    "walletId": {
+                        "type": "string",
+                        "description": "Unique identifier of the Wallet"
+                    }
+                }
+            },
             "IssuerConfigurationSuccessResponse": {
                 "type": "object",
                 "properties": {
@@ -2755,13 +3445,16 @@
                 "type": "object",
                 "properties": {
                     "errorCode": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "It represents the type or category of the error"
                     },
                     "errorMessage": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "A human-readable message providing more details about the error"
                     }
                 }
             },
+
             "AppVIDGenerateRequestDTO": {
                 "type": "object",
                 "properties": {
