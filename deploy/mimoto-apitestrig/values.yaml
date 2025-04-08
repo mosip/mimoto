@@ -2,8 +2,8 @@ modules:
   mimoto:
     enabled: true
     image:
-      repository: mosipqa/apitest-mimoto
-      tag: develop
+      repository: mosipid/apitest-mimoto
+      tag: 0.17.0
       pullPolicy: Always
   masterdata:
     enabled: false
