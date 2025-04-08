@@ -2668,10 +2668,175 @@
                     }
                 ]
             }
+        },
+        "/users/me/db": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Retrieve user metadata from the database",
+                "description": "This API is secured using session-based authentication. When a request is made, the server retrieves the session ID from the Cookie header and uses it to fetch session details from Redis. From the session, it extracts the user's unique identifier (typically the sub field provided by the identity provider) along with the clientRegistrationId. These values are then used to retrieve the user's metadata from the database. If successful, the API returns the user's profile information. If any issue occurs such as an invalid session, missing user data, or server error then an appropriate error response is returned.",
+                "operationId": "getUserProfileFromDB",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User profile retrieved successfully from the Database",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserMetadataDTO"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "display_name": "John Doe",
+                                            "profile_picture_url": "https://example.com/profile.jpg",
+                                            "email": "john.doe@example.com"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User not found in the Database": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-049",
+                                            "errorMessage": "User not found. Please check your credentials or login again"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-047",
+                                            "errorMessage": "Failed to connect to the shared database while fetching User Metadata data from the database"
+                                        }
+                                    },
+                                    "Unexpected server error": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-049",
+                                            "errorMessage": "An unexpected error occurred while downloading and storing user metadata into database"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me/cache": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Retrieve user metadata from the stored redis session",
+                "description": "This API is secured using session-based authentication. When a request is made, the server retrieves the session ID from the Cookie header and uses it to fetch session details from Redis. It then attempts to retrieve the user's metadata directly from the session. If the metadata is available, the API returns the user's profile information otherwise an appropriate error response is returned.",
+                "operationId": "getUserProfileFromCache",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User profile retrieved successfully from the session",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserMetadataDTO"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "display_name": "John Doe",
+                                            "profile_picture_url": "https://example.com/profile.jpg",
+                                            "email": "john.doe@example.com"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User metadata not found in cache": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-052",
+                                            "errorMessage": "No user metadata present in cache"
+                                        }
+                                    },
+                                    "Unexpected server error": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-052",
+                                            "errorMessage": "An unexpected error occurred while retrieving user metadata from cache"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
+        "securitySchemes": {
+            "SessionAuth": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "JSESSIONID",
+                "description": "Session ID for authentication, provided within the cookie (e.g., JSESSIONID=<session-id>"
+            }
+        },
         "schemas": {
+            "UserMetadataDTO": {
+                "type": "object",
+                "properties": {
+                    "displayName": {
+                        "type": "string",
+                        "description": "The display name of the user provided by the Identity Provider"
+                    },
+                    "profilePictureUrl": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "The URL of the user's profile picture provided by the Identity Provider"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "The email address of the user provided by the Identity Provider"
+                    }
+                }
+            },
             "IssuerConfigurationSuccessResponse": {
                 "type": "object",
                 "properties": {
