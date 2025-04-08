@@ -1,5 +1,6 @@
 package io.mosip.mimoto.util;
 
+import io.mosip.mimoto.model.SigningAlgorithm;
 import org.junit.Test;
 
 import javax.crypto.SecretKey;
@@ -21,7 +22,7 @@ public class KeyGenerationUtilTest {
 
     @Test
     public void shouldGenerateKeyPairSuccessfully() throws Exception {
-        KeyPair keyPair = KeyGenerationUtil.generateKeyPair("Ed25519");
+        KeyPair keyPair = KeyGenerationUtil.generateKeyPair(SigningAlgorithm.ED25519);
 
         assertNotNull(keyPair);
         assertEquals("EdDSA", keyPair.getPublic().getAlgorithm());
@@ -29,7 +30,7 @@ public class KeyGenerationUtilTest {
 
     @Test
     public void shouldGenerateRSAKeyPairSuccessfully() throws Exception {
-        KeyPair keyPair = KeyGenerationUtil.generateKeyPair("RS256");
+        KeyPair keyPair = KeyGenerationUtil.generateKeyPair(SigningAlgorithm.RS256);
 
         assertNotNull(keyPair);
         assertEquals("RSA", keyPair.getPublic().getAlgorithm());
@@ -37,7 +38,7 @@ public class KeyGenerationUtilTest {
 
     @Test
     public void shouldGenerateECKeyPairWithP256Successfully() throws Exception {
-        KeyPair keyPair = KeyGenerationUtil.generateKeyPair("ES256");
+        KeyPair keyPair = KeyGenerationUtil.generateKeyPair(SigningAlgorithm.ES256);
 
         assertNotNull(keyPair);
         assertEquals("EC", keyPair.getPublic().getAlgorithm());
@@ -45,7 +46,7 @@ public class KeyGenerationUtilTest {
 
     @Test
     public void shouldGenerateECKeyPairWithSecp256k1Successfully() throws Exception {
-        KeyPair keyPair = KeyGenerationUtil.generateKeyPair("ES256K");
+        KeyPair keyPair = KeyGenerationUtil.generateKeyPair(SigningAlgorithm.ES256K);
 
         assertNotNull(keyPair);
         assertEquals("EC", keyPair.getPublic().getAlgorithm());
@@ -53,7 +54,7 @@ public class KeyGenerationUtilTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionForUnsupportedAlgorithm() throws Exception {
-        KeyGenerationUtil.generateKeyPair("unsupportedAlgorithm");
+        KeyGenerationUtil.generateKeyPair(SigningAlgorithm.fromString("unsupportedAlgorithm"));
     }
 
     @Test(expected = NoSuchAlgorithmException.class)

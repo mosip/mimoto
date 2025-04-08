@@ -8,6 +8,8 @@ import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
+import io.mosip.mimoto.dbentity.CredentialMetadata;
+import io.mosip.mimoto.dbentity.VerifiableCredential;
 import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.openid.VerifierDTO;
@@ -413,5 +415,28 @@ public class TestUtilities {
                 .responsetime("test-responsetime")
                 .dataShare(dataShareResponseDTO)
                 .errors(Collections.singletonList(errorDTO)).build();
+    }
+
+    public static VerifiableCredential getVerifiableCredential(String id, String walletId, String credential, String issuerId, String credentialType) {
+        VerifiableCredential verifiableCredential = new VerifiableCredential();
+        verifiableCredential.setId(id);
+        verifiableCredential.setWalletId(walletId);
+        verifiableCredential.setCredential(credential);
+
+        CredentialMetadata metadata = new CredentialMetadata();
+        metadata.setIssuerId(issuerId);
+        metadata.setCredentialType(credentialType);
+        verifiableCredential.setCredentialMetadata(metadata);
+        return verifiableCredential;
+    }
+
+    public static VerifiableCredentialResponseDTO getVerifiableCredentialResponseDTO(String issuerName, String issuerLogo, String credentialType, String credentialTypeLogo, String credentialId) {
+        return VerifiableCredentialResponseDTO.builder()
+                .issuerName(issuerName)
+                .issuerLogo(issuerLogo)
+                .credentialType(credentialType)
+                .credentialTypeLogo(credentialTypeLogo)
+                .credentialId(credentialId)
+                .build();
     }
 }

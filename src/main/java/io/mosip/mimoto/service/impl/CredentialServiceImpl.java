@@ -16,18 +16,13 @@ import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.service.CredentialService;
-import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
-import io.mosip.mimoto.util.JoseUtil;
-import io.mosip.mimoto.util.LocaleUtils;
-import io.mosip.mimoto.util.RestApiClient;
-import io.mosip.mimoto.util.Utilities;
+import io.mosip.mimoto.util.*;
 import io.mosip.pixelpass.PixelPass;
 import io.mosip.vercred.vcverifier.CredentialsVerifier;
-import io.mosip.vercred.vcverifier.constants.CredentialFormat;
-import io.mosip.vercred.vcverifier.data.VerificationResult;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.VelocityContext;
@@ -35,12 +30,8 @@ import org.apache.velocity.app.Velocity;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -50,7 +41,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import static io.mosip.mimoto.exception.ErrorConstants.*;
 
 @Slf4j
@@ -60,11 +50,6 @@ public class CredentialServiceImpl implements CredentialService {
     @Autowired
     private Utilities utilities;
 
-    @Autowired
-    private JoseUtil joseUtil;
-
-    @Autowired
-    private RestApiClient restApiClient;
 
     @Autowired
     IssuersService issuersService;
@@ -74,9 +59,6 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Autowired
     ObjectMapper objectMapper;
-
-    @Autowired
-    IdpService idpService;
 
     @Autowired
     RestTemplate restTemplate;
@@ -99,23 +81,13 @@ public class CredentialServiceImpl implements CredentialService {
     PixelPass pixelPass;
     CredentialsVerifier credentialsVerifier;
 
+    @Autowired
+    private CredentialUtilService credentialUtilService;
+
     @PostConstruct
     public void init() {
         pixelPass = new PixelPass();
         credentialsVerifier = new CredentialsVerifier();
-    }
-
-    @Override
-    public TokenResponseDTO getTokenResponse(Map<String, String> params, String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
-        IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
-        CredentialIssuerConfiguration credentialIssuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
-        String tokenEndpoint = idpService.getTokenEndpoint(credentialIssuerConfiguration);
-        HttpEntity<MultiValueMap<String, String>> request = idpService.constructGetTokenRequest(params, issuerDTO, tokenEndpoint);
-        TokenResponseDTO response = restTemplate.postForObject(tokenEndpoint, request, TokenResponseDTO.class);
-        if (response == null) {
-            throw new IdpException("Exception occurred while performing the authorization");
-        }
-        return response;
     }
 
     @Override
@@ -128,9 +100,10 @@ public class CredentialServiceImpl implements CredentialService {
                 credentialIssuerConfiguration.getCredentialEndPoint(),
                 credentialIssuerConfiguration.getCredentialConfigurationsSupported());
         CredentialsSupportedResponse credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported().get(credentialType);
-        VCCredentialRequest vcCredentialRequest = generateVCCredentialRequest(issuerDTO, credentialIssuerWellKnownResponse, credentialsSupportedResponse, response.getAccess_token());
-        VCCredentialResponse vcCredentialResponse = downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
-        boolean verificationStatus = issuerId.toLowerCase().contains("mock") || verifyCredential(vcCredentialResponse);
+        VCCredentialRequest vcCredentialRequest = credentialUtilService.generateVCCredentialRequest(issuerDTO, credentialIssuerWellKnownResponse, credentialsSupportedResponse, response.getAccess_token(), null, null, false
+        );
+        VCCredentialResponse vcCredentialResponse = credentialUtilService.downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
+        boolean verificationStatus = issuerId.toLowerCase().contains("mock") || credentialUtilService.verifyCredential(vcCredentialResponse);
         if (verificationStatus) {
             String dataShareUrl = QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type()) ? dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse), credentialValidity) : "";
             return generatePdfForVerifiableCredentials(credentialType, vcCredentialResponse, issuerDTO, credentialsSupportedResponse, dataShareUrl, credentialValidity, locale);
@@ -139,44 +112,10 @@ public class CredentialServiceImpl implements CredentialService {
                 SIGNATURE_VERIFICATION_EXCEPTION.getErrorMessage());
     }
 
-    public VCCredentialResponse downloadCredential(String credentialEndpoint, VCCredentialRequest vcCredentialRequest, String accessToken) throws InvalidCredentialResourceException {
-        VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialEndpoint, MediaType.APPLICATION_JSON,
-                vcCredentialRequest, VCCredentialResponse.class, accessToken);
-        log.debug("VC Credential Response is -> " + vcCredentialResponse);
-        if (vcCredentialResponse == null) throw new RuntimeException("VC Credential Issue API not accessible");
-        return vcCredentialResponse;
-    }
-
-    public VCCredentialRequest generateVCCredentialRequest(IssuerDTO issuerDTO, CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse, CredentialsSupportedResponse credentialsSupportedResponse, String accessToken) throws Exception {
-        String jwt = joseUtil.generateJwt(credentialIssuerWellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), accessToken);
-        return VCCredentialRequest.builder()
-                .format(credentialsSupportedResponse.getFormat())
-                .proof(VCCredentialRequestProof.builder()
-                        .proofType(credentialsSupportedResponse.getProofTypesSupported().keySet().stream().findFirst().get())
-                        .jwt(jwt)
-                        .build())
-                .credentialDefinition(VCCredentialDefinition.builder()
-                        .type(credentialsSupportedResponse.getCredentialDefinition().getType())
-                        .context(List.of("https://www.w3.org/2018/credentials/v1"))
-                        .build())
-                .build();
-    }
-
     public ByteArrayInputStream generatePdfForVerifiableCredentials(String credentialType, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
         LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties = loadDisplayPropertiesFromWellknown(vcCredentialResponse, credentialsSupportedResponse, locale);
         Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse, vcCredentialResponse, issuerDTO, dataShareUrl, credentialValidity);
         return renderVCInCredentialTemplate(data, issuerDTO.getIssuer_id(), credentialType);
-    }
-
-    public Boolean verifyCredential(VCCredentialResponse vcCredentialResponse) throws VCVerificationException, JsonProcessingException {
-        log.info("Initiated the VC Verification : Started");
-        String credentialString = objectMapper.writeValueAsString(vcCredentialResponse.getCredential());
-        VerificationResult verificationResult = credentialsVerifier.verify(credentialString, CredentialFormat.LDP_VC);
-        if (!verificationResult.getVerificationStatus()) {
-            throw new VCVerificationException(verificationResult.getVerificationErrorCode().toLowerCase(), verificationResult.getVerificationMessage());
-        }
-        log.info("Completed the VC Verification : Completed -> result : " + verificationResult);
-        return true;
     }
 
     @NotNull

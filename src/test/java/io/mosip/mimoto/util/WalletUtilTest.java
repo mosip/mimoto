@@ -2,6 +2,7 @@ package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.repository.WalletRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,19 +12,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.crypto.SecretKey;
-import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Slf4j
 class WalletUtilTest {
 
     @Mock
@@ -70,7 +70,7 @@ class WalletUtilTest {
     @Test
     void shouldCreateNewWalletSuccessfully() throws Exception {
         when(encryptionDecryptionUtil.encryptKeyWithPin(any(SecretKey.class), any(String.class))).thenReturn(encryptedWalletKey);
-        when(encryptionDecryptionUtil.encryptPrivateKeyWithAES(any(SecretKey.class), any(java.security.PrivateKey.class))).thenReturn(encryptedPrivateKey);
+        when(encryptionDecryptionUtil.encryptWithAES(any(SecretKey.class), any(byte[].class))).thenReturn(encryptedPrivateKey);
 
         String walletId = walletUtil.saveWallet(userId, name, pin, encryptionKey, encryptionAlgorithm, encryptionType);
 
@@ -80,7 +80,7 @@ class WalletUtilTest {
     @Test
     void shouldCreateEd25519WalletSuccessfully() throws Exception {
         when(encryptionDecryptionUtil.encryptKeyWithPin(any(SecretKey.class), any(String.class))).thenReturn(encryptedWalletKey);
-        when(encryptionDecryptionUtil.encryptPrivateKeyWithAES(any(SecretKey.class), any(java.security.PrivateKey.class))).thenReturn(encryptedPrivateKey);
+        when(encryptionDecryptionUtil.encryptWithAES(any(SecretKey.class), any(byte[].class))).thenReturn(encryptedPrivateKey);
 
         String walletId = walletUtil.createWallet(userId, name, pin);
 
@@ -90,7 +90,7 @@ class WalletUtilTest {
     @Test
     void shouldVerifyWalletObjectOnCreateNewWallet() throws Exception {
         when(encryptionDecryptionUtil.encryptKeyWithPin(any(SecretKey.class), any(String.class))).thenReturn(encryptedWalletKey);
-        when(encryptionDecryptionUtil.encryptPrivateKeyWithAES(any(SecretKey.class), any(java.security.PrivateKey.class))).thenReturn(encryptedPrivateKey);
+        when(encryptionDecryptionUtil.encryptWithAES(any(SecretKey.class), any(byte[].class))).thenReturn(encryptedPrivateKey);
 
         String walletId = walletUtil.saveWallet(userId, name, pin, encryptionKey, encryptionAlgorithm, encryptionType);
 
