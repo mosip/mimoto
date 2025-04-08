@@ -11,13 +11,11 @@ import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.exception.*;
-import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.*;
 import io.mosip.pixelpass.PixelPass;
-import io.mosip.pixelpass.exception.QrDataOverflowException;
 import io.mosip.pixelpass.types.ECC;
 import io.mosip.vercred.vcverifier.CredentialsVerifier;
 import jakarta.annotation.PostConstruct;
@@ -29,7 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -255,13 +252,7 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     private String constructQRCodeWithVCData(VCCredentialResponse vcCredentialResponse) throws JsonProcessingException {
-        try {
-            String qrData = objectMapper.writeValueAsString(vcCredentialResponse.getCredential());
-            return pixelPass.generateQRCodeWithinLimit(allowedQRDataSizeLimit, qrData, DEFAULT_ECC_LEVEL, "");
-        } catch (QrDataOverflowException e) {
-            log.warn("QR data exceeds the allowed limit", allowedQRDataSizeLimit);
-            return "";
-        }
+        return pixelPass.generateQRCode(objectMapper.writeValueAsString(vcCredentialResponse.getCredential()), DEFAULT_ECC_LEVEL, "");
     }
 
     private String constructQRCodeWithAuthorizeRequest(VCCredentialResponse vcCredentialResponse, String dataShareUrl) throws JsonProcessingException {
