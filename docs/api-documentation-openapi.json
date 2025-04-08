@@ -2806,6 +2806,261 @@
                     }
                 }
             }
+        },
+        "/wallets/{walletId}/credentials": {
+            "post": {
+                "tags": [
+                    "Wallet Credentials"
+                ],
+                "summary": "Download and store a Verifiable Credential under a specific Wallet",
+                "description": "This API is secured using session-based authentication. Upon receiving a request, the session ID is extracted from the Cookie header and used to retrieve session details from Redis for authentication. It then retrieves the wallet key from the session and use it to decrypt the signing algorithm's secret key and encrypt the downloaded Verifiable Credential. If the process completes successfully, the credential is stored in the database and returned in the response. In case of any issues, an appropriate error response is returned.",
+                "operationId": "downloadCredential",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Unique identifier of the user's wallet where the credential will be stored"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "grant_type": {
+                                        "type": "string",
+                                        "description": "OAuth 2.0 grant type, typically 'authorization_code'"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "description": "Authorization code received from the identity provider"
+                                    },
+                                    "redirect_uri": {
+                                        "type": "string",
+                                        "description": "Redirect URI used in the OAuth 2.0 flow"
+                                    },
+                                    "code_verifier": {
+                                        "type": "string",
+                                        "description": "PKCE code verifier associated with the authorization code"
+                                    },
+                                    "issuer": {
+                                        "type": "string",
+                                        "description": "Unique identifier of the credential Issuer"
+                                    },
+                                    "credential": {
+                                        "type": "string",
+                                        "description": "Type of the credential to be downloaded"
+                                    },
+                                    "vcStorageExpiryLimitInTimes": {
+                                        "type": "string",
+                                        "description": "Optional limit for how many times the user is allowed to share the Verifiable Credential. If not provided, it defaults to -1"
+                                    },
+                                    "locale": {
+                                        "type": "string",
+                                        "description": "Language preference in which the user expects the Verifiable Credential to be rendered"
+                                    }
+                                },
+                                "required": [
+                                    "grant_type",
+                                    "code",
+                                    "redirect_uri",
+                                    "code_verifier",
+                                    "issuer",
+                                    "credential",
+                                    "locale"
+                                ]
+                            },
+                            "examples": {
+                                "Default Example": {
+                                    "value": {
+                                        "grant_type": "authorization_code",
+                                        "code": "abc123",
+                                        "redirect_uri": "https://example.com/redirect",
+                                        "code_verifier": "xyz-secret-verifier",
+                                        "issuer": "Mosip",
+                                        "credential": "MosipVerifiableCredential",
+                                        "vcStorageExpiryLimitInTimes": "1",
+                                        "locale": "en"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Verifiable Credential downloaded and stored successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VerifiableCredentialResponseDTO"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "issuer_name": "Mosip",
+                                            "issuer_logo": "https://example.com/logo.png",
+                                            "credential_type": "MosipVerifiableCredential",
+                                            "credential_type_logo": "https://example.com/credential-logo.png",
+                                            "credential_id": "1234567890"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - API not accessible or request parameters invalid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Invalid Auth Server Token API access": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-026",
+                                            "errorMessage": "Api not accessible failure"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Wallet Key missing in session": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-053",
+                                            "errorMessage": "Wallet key is missing in session"
+                                        }
+                                    },
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-047",
+                                            "errorMessage": "Failed to connect to the shared database while storing Verifiable Credential data into the database"
+                                        }
+                                    },
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-053",
+                                            "errorMessage": "Unexpected error occurred while downloading and storing Verifiable Credential"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Wallet Credentials"
+                ],
+                "summary": "Fetch all credentials for the given wallet",
+                "description": "This API is secured using session-based authentication. When a request is made, the session ID is extracted from the Cookie header and used to fetch session details from Redis for authentication. It then retrieves the wallet key from the session and uses it to decrypt all stored Verifiable Credentials for the given wallet. If successful, it returns a list of credentials; otherwise, an appropriate error is returned.",
+                "operationId": "fetchAllCredentialsForWallet",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Unique identifier of the user's wallet from where the credential will be fetched"
+                    },
+                    {
+                        "name": "locale",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Locale to determine the language in which credentials should be rendered"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Credentials retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/VerifiableCredentialResponseDTO"
+                                    }
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": [
+                                            {
+                                                "issuer_name": "Mosip",
+                                                "issuer_logo": "https://example.com/logo.png",
+                                                "credential_type": "MosipVerifiableCredential",
+                                                "credential_type_logo": "https://example.com/credential-logo.png",
+                                                "credential_id": "1234567890"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Wallet Key missing in session": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-053",
+                                            "errorMessage": "Wallet key is missing in session"
+                                        }
+                                    },
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-047",
+                                            "errorMessage": "Failed to connect to the shared database while fetching Verifiable Credential from the database"
+                                        }
+                                    },
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-054",
+                                            "errorMessage": "Unexpected error occurred while fetching Verifiable Credential"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -2821,11 +3076,11 @@
             "UserMetadataDTO": {
                 "type": "object",
                 "properties": {
-                    "displayName": {
+                    "display_name": {
                         "type": "string",
                         "description": "The display name of the user provided by the Identity Provider"
                     },
-                    "profilePictureUrl": {
+                    "profile_picture_url": {
                         "type": "string",
                         "format": "uri",
                         "description": "The URL of the user's profile picture provided by the Identity Provider"
@@ -2834,6 +3089,31 @@
                         "type": "string",
                         "format": "email",
                         "description": "The email address of the user provided by the Identity Provider"
+                    }
+                }
+            },
+            "VerifiableCredentialResponseDTO": {
+                "type": "object",
+                "properties": {
+                    "issuer_name": {
+                        "type": "string",
+                        "description": "Name of the Issuer"
+                    },
+                    "issuer_logo": {
+                        "type": "string",
+                        "description": "Logo of the Issuer"
+                    },
+                    "credential_type": {
+                        "type": "string",
+                        "description": "The name of the Credential Type issued by the Issuer"
+                    },
+                    "credential_type_logo": {
+                        "type": "string",
+                        "description": "Logo of the Credential Type"
+                    },
+                    "credential_id": {
+                        "type": "string",
+                        "description": "Unique Identifier of the Credential in the database"
                     }
                 }
             },
