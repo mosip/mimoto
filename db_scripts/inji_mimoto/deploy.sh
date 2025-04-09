@@ -6,7 +6,7 @@ echo `date "+%m/%d/%Y %H:%M:%S"` ": $properties_file"
 if [ -f "$properties_file" ]
 then
      echo `date "+%m/%d/%Y %H:%M:%S"` ": Property file \"$properties_file\" found."
-    while IFS='=' read -r key value
+    while IFS='=' read -r key value || [ -n "$key" ]
     do
         key=$(echo $key | tr '.' '_')
          eval ${key}=\${value}
