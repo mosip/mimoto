@@ -23,11 +23,14 @@ This is the docker-compose setup to run mimoto which act as BFF for Inji mobile 
 Refer [here](https://docs.mosip.io/inji/inji-mobile-wallet/customization-overview/credential_providers) to create client
 * Update client_id and client_alias as per onboarding in mimoto-issuers-config.json file.
 
-5. Start the docker-compose file
+6. Create google client credentials from https://console.cloud.google.com/ and replace
+   GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET properties in docker-compose.yml
+
+7. Start the docker-compose file
 
 > docker-compose up
 
-7. Access Apis as
+8. Access Apis as
    * http://localhost:8099/v1/mimoto/allProperties
    * http://localhost:8099/v1/mimoto/issuers
    * http://localhost:8099/v1/mimoto/issuers/StayProtected
