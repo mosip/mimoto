@@ -13,7 +13,6 @@ public interface WalletCredentialsRepository extends JpaRepository<VerifiableCre
     List<VerifiableCredential> findByWalletId(String walletId);
     Optional<VerifiableCredential> findById(String id);
 
-    @Query(value = "SELECT EXISTS (SELECT 1 FROM verifiable_credentials WHERE credential_metadata->>'issuerId' = :issuerId AND credential_metadata->>'credentialType' = :credentialType)", nativeQuery = true)
-    boolean existsByIssuerIdAndCredentialType(@Param("issuerId") String issuerId, @Param("credentialType") String credentialType);
-
+    @Query(value = "SELECT EXISTS (SELECT 1 FROM verifiable_credentials WHERE credential_metadata->>'issuerId' = :issuerId AND credential_metadata->>'credentialType' = :credentialType AND wallet_id = :walletId)", nativeQuery = true)
+    boolean existsByIssuerIdAndCredentialTypeAndWalletId(@Param("issuerId") String issuerId, @Param("credentialType") String credentialType, @Param("walletId") String walletId);
 }

@@ -110,7 +110,7 @@ public class WalletCredentialServiceTest {
 
     @Test
     public void shouldThrowExceptionWhenDuplicateCredentialExists() {
-        when(walletCredentialsRepository.existsByIssuerIdAndCredentialType("Mosip", credentialType)).thenReturn(true);
+        when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId("Mosip", credentialType, walletId)).thenReturn(true);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () ->
                 walletCredentialService.fetchAndStoreCredential("Mosip", credentialType, tokenResponse, "1", "en", walletId, base64Key)

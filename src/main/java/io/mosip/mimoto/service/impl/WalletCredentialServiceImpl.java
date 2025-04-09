@@ -88,7 +88,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
             String issuerId, String credentialType, TokenResponseDTO response,
             String credentialValidity, String locale, String walletId, String base64EncodedWalletKey) throws Exception {
 
-        shouldInitiateDownloadRequest(issuerId,credentialType);
+        shouldInitiateDownloadRequest(issuerId, credentialType, walletId);
 
         IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = getIssuerWellKnownResponse(issuerId);
@@ -104,15 +104,15 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerDTO, credentialsSupportedResponse, locale, savedCredential.getId());
     }
 
-    private void shouldInitiateDownloadRequest(String issuerId, String credentialType) {
+    private void shouldInitiateDownloadRequest(String issuerId, String credentialType, String walletId) {
         Set<String> issuers = Set.of("Mosip");
-        if (issuers.contains(issuerId) && alreadyDownloaded(issuerId, credentialType)) {
+        if (issuers.contains(issuerId) && alreadyDownloaded(issuerId, credentialType, walletId)) {
             throw new RuntimeException("A credential is already downloaded for the selected Issuer and Credential Type. Only one is allowed, so download will not be initiated");
         }
     }
 
-    private boolean alreadyDownloaded(String issuerId, String credentialType) {
-        return walletCredentialsRepository.existsByIssuerIdAndCredentialType(issuerId, credentialType);
+    private boolean alreadyDownloaded(String issuerId, String credentialType, String walletId) {
+        return walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId(issuerId, credentialType, walletId);
     }
 
     @Override
