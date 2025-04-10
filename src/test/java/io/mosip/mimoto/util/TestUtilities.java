@@ -33,11 +33,17 @@ import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor;
 public class TestUtilities {
 
     public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName) {
+        return getCredentialSupportedResponse(credentialSupportedName, true);
+    }
+
+    public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName, boolean includeBackgroundImage) {
         LogoDTO logo = new LogoDTO();
         logo.setUrl("https://logo");
         logo.setAlt_text("logo-url");
         CredentialSupportedDisplayResponse credentialSupportedDisplay = new CredentialSupportedDisplayResponse();
-        credentialSupportedDisplay.setBackgroundImage(new BackgroundImageDTO("https://bgimage"));
+        if (includeBackgroundImage) {
+            credentialSupportedDisplay.setBackgroundImage(new BackgroundImageDTO("https://bgimage"));
+        }
         credentialSupportedDisplay.setLogo(logo);
         credentialSupportedDisplay.setName(credentialSupportedName);
         credentialSupportedDisplay.setLocale("en");
@@ -71,11 +77,12 @@ public class TestUtilities {
 
         CredentialDefinitionResponseDto credentialDefinitionResponseDto = new CredentialDefinitionResponseDto();
         credentialDefinitionResponseDto.setType(List.of("VerifiableCredential", credentialSupportedName));
-        credentialDefinitionResponseDto.setCredentialSubject(Map.of(
-                "name", createCredentialDisplayResponse("Given Name", "en"),
-                "email", createCredentialDisplayResponse("Given Email", "pt"),
-                "uin", createCredentialDisplayResponse("UIN", "en"),
-                "dob", createCredentialDisplayResponse("dob", "en")));
+        credentialDefinitionResponseDto.setCredentialSubject(new LinkedHashMap<>() {{
+            put("name", createCredentialDisplayResponse("Given Name", "en"));
+            put("email", createCredentialDisplayResponse("Given Email", "pt"));
+            put("uin", createCredentialDisplayResponse("UIN", "en"));
+            put("dob", createCredentialDisplayResponse("dob", "en"));
+        }});
         CredentialsSupportedResponse credentialsSupportedResponse = new CredentialsSupportedResponse();
         credentialsSupportedResponse.setFormat("ldp_vc");
         credentialsSupportedResponse.setScope(credentialSupportedName + "_vc_ldp");
@@ -101,6 +108,10 @@ public class TestUtilities {
     }
 
     public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName, String format) {
+        return getCredentialSupportedResponse(credentialSupportedName, format, true);
+    }
+
+    public static CredentialsSupportedResponse getCredentialSupportedResponse(String credentialSupportedName, String format, boolean includeBackgroundImage) {
         LogoDTO logo = new LogoDTO();
         logo.setUrl("https://logo");
         logo.setAlt_text("logo-url");
@@ -110,7 +121,9 @@ public class TestUtilities {
         credentialSupportedDisplay.setLocale("en");
         credentialSupportedDisplay.setTextColor("#FFFFFF");
         credentialSupportedDisplay.setBackgroundColor("#B34622");
-        credentialSupportedDisplay.setBackgroundImage(new BackgroundImageDTO("https://bgimage"));
+        if (includeBackgroundImage) {
+            credentialSupportedDisplay.setBackgroundImage(new BackgroundImageDTO("https://bgimage"));
+        }
         CredentialIssuerDisplayResponse credentialIssuerDisplayResponse = new CredentialIssuerDisplayResponse();
         credentialIssuerDisplayResponse.setName("Given Name");
         credentialIssuerDisplayResponse.setLocale("en");
@@ -244,7 +257,12 @@ public class TestUtilities {
     }
 
     public static String getExpectedWellKnownJson() throws IOException {
-        return new String(Files.readAllBytes(ResourceUtils.getFile(ResourceUtils.CLASSPATH_URL_PREFIX + "responses/expectedWellknown.json").toPath())).trim();
+        return getExpectedWellKnownJson(true);
+    }
+
+    public static String getExpectedWellKnownJson(boolean includeBackgroundImage) throws IOException {
+        String fileName = includeBackgroundImage ? "expectedWellknown.json" : "expectedWellknownWithoutBackground.json";
+        return new String(Files.readAllBytes(ResourceUtils.getFile(ResourceUtils.CLASSPATH_URL_PREFIX + "responses/" + fileName).toPath())).trim();
     }
 
     public static String getExpectedIssuersConfigJson() throws IOException {

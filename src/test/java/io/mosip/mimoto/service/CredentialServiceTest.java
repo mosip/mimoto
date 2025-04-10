@@ -90,7 +90,7 @@ public class CredentialServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        issuerId = "issuer1";
+        issuerId = "Issuer1";
         issuerDTO = getIssuerConfigDTO(issuerId);
         issuerConfig = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
 
@@ -155,7 +155,7 @@ public class CredentialServiceTest {
     @Test
     public void shouldReturnTokenResponseForValidTokenEndpoint() throws Exception {
 
-        TokenResponseDTO actualTokenResponse = credentialService.getTokenResponse(tokenRequestParams, "issuer1");
+        TokenResponseDTO actualTokenResponse = credentialService.getTokenResponse(tokenRequestParams, "Issuer1");
 
         assertEquals(expectedTokenResponse, actualTokenResponse);
     }
@@ -166,7 +166,7 @@ public class CredentialServiceTest {
                 .thenReturn(null);
 
         IdpException actualException = assertThrows(IdpException.class, () -> {
-            credentialService.getTokenResponse(tokenRequestParams, "issuer1");
+            credentialService.getTokenResponse(tokenRequestParams, "Issuer1");
         });
 
         assertEquals("RESIDENT-APP-034 --> Exception occurred while performing the authorization", actualException.getMessage());

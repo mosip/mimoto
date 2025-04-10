@@ -169,7 +169,7 @@ public class IssuersControllerTest {
 
     @Test
     public void getIssuerWellknownTest() throws Exception {
-        String issuerId = "issuer1";
+        String issuerId = "Issuer1";
         String expectedCredentialIssuerWellknownResponse = getExpectedWellKnownJson();
         CredentialIssuerConfiguration expectedCredentialIssuerConfiguration = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
         Mockito.when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(expectedCredentialIssuerConfiguration);

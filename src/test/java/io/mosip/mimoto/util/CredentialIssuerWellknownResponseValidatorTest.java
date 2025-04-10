@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,6 +23,9 @@ import static io.mosip.mimoto.util.TestUtilities.getCredentialSupportedResponse;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class CredentialIssuerWellknownResponseValidatorTest {
 
@@ -146,6 +149,24 @@ public class CredentialIssuerWellknownResponseValidatorTest {
     }
 
     @Test
+    public void shouldAcceptNullBackgroundImage() throws IOException {
+        // Creating a response with a null background image
+        response = getCredentialIssuerWellKnownResponseDto("Issuer1",
+                Map.of("CredentialType1", getCredentialSupportedResponse("CredentialType1", false)));
+
+        CredentialIssuerWellknownResponseValidator credentialIssuerWellknownResponseValidator = new CredentialIssuerWellknownResponseValidator();
+
+        // Should not throw any exception
+        assertDoesNotThrow(() -> credentialIssuerWellknownResponseValidator.validate(response, validator));
+
+        // Verifying the response matches the expected format
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode expectedJson = mapper.readTree(TestUtilities.getExpectedWellKnownJson(false));
+        JsonNode actualJson = mapper.valueToTree(response);
+        assertEquals(expectedJson, actualJson);
+    }
+
+    @Test
     public void shouldDetectMissingMandatoryFields() {
         response.setCredentialEndPoint(null);
         response.setCredentialConfigurationsSupported(null);
@@ -221,7 +242,6 @@ public class CredentialIssuerWellknownResponseValidatorTest {
                 Validation failed:
                 credentialConfigurationsSupported[CredentialType1].display[0].backgroundColor: must not be blank
                 credentialConfigurationsSupported[CredentialType1].display[0].textColor: must not be blank
-                credentialConfigurationsSupported[CredentialType1].display[0].backgroundImage: must not be null
                 credentialConfigurationsSupported[CredentialType1].display[0].name: must not be blank
                 credentialConfigurationsSupported[CredentialType1].display[0].locale: must not be blank
                 credentialConfigurationsSupported[CredentialType1].display[0].logo: must not be null""".split("\n")).toList()));

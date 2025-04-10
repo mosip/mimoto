@@ -13,6 +13,5 @@ import org.hibernate.validator.constraints.URL;
 public class BackgroundImageDTO {
     @Expose
     @URL
-    @NotBlank
     String uri;
 }
