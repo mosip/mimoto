@@ -16,20 +16,26 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+
 import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 
 @Slf4j
 @RestController
 @RequestMapping(value = "/wallets/{walletId}/credentials")
 public class WalletCredentialsController {
-    @Autowired
-    WalletCredentialService walletCredentialService;
+
+    private static final String SESSION_WALLET_KEY = "wallet_key";
+    private static final String SESSION_WALLET_ID = "wallet_id";
 
     @Autowired
-    CredentialUtilService credentialUtilService;
+    private WalletCredentialService walletCredentialService;
+
+    @Autowired
+    private CredentialUtilService credentialUtilService;
 
     @PostMapping
     public ResponseEntity<?> downloadCredential(@PathVariable("walletId") String walletId, @RequestParam Map<String, String> params, HttpSession httpSession) {
@@ -37,11 +43,9 @@ public class WalletCredentialsController {
         params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
 
         try {
-            Object walletKeyObj = httpSession.getAttribute("wallet_key");
-            if (walletKeyObj == null) {
-                throw new RuntimeException("Wallet key is missing in session");
-            }
-            String base64EncodedWalletKey = walletKeyObj.toString();
+            validateWalletId(httpSession, walletId);
+            String base64EncodedWalletKey = getSessionWalletKey(httpSession);
+
             String issuerId = params.get("issuer");
             String credentialType = params.get("credential");
             String credentialValidity = params.get("vcStorageExpiryLimitInTimes");
@@ -49,7 +53,7 @@ public class WalletCredentialsController {
             log.info("Initiated Token Call");
             TokenResponseDTO response = credentialUtilService.getTokenResponse(params, issuerId);
 
-            log.info("Initiated fetching Verifiable Credential and storing it in the database Call");
+            log.info("Initiated call for fetching and storing Verifiable Credential in the database for walletId: {}", walletId);
             VerifiableCredentialResponseDTO credentialResponseDTO = walletCredentialService.fetchAndStoreCredential(
                     issuerId, credentialType, response, credentialValidity, locale, walletId, base64EncodedWalletKey);
 
@@ -71,13 +75,11 @@ public class WalletCredentialsController {
     public ResponseEntity<?> fetchAllCredentialsForGivenWallet(@PathVariable("walletId") String walletId, @RequestParam("locale") String locale, HttpSession httpSession) {
         try {
             log.info("Fetching all credentials for walletId: {}", walletId);
-            Object walletKeyObj = httpSession.getAttribute("wallet_key");
-            if (walletKeyObj == null) {
-                throw new RuntimeException("Wallet key is missing in session");
-            }
 
-            String walletKey = walletKeyObj.toString();
-            List<VerifiableCredentialResponseDTO> credentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, walletKey, locale);
+            validateWalletId(httpSession, walletId);
+            String base64EncodedWalletKey = getSessionWalletKey(httpSession);
+
+            List<VerifiableCredentialResponseDTO> credentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64EncodedWalletKey, locale);
             return ResponseEntity.status(HttpStatus.OK).body(credentials);
         } catch (DataAccessResourceFailureException exception) {
             log.error("Exception occurred while connecting to the database to fetch all credentials for walletId: {}", walletId, exception);
@@ -86,6 +88,22 @@ public class WalletCredentialsController {
         } catch (Exception exception) {
             log.error("Exception occurred while downloading or saving the Verifiable Credential:", exception);
             return Utilities.getErrorResponseEntityWithoutWrapper(exception, CREDENTIALS_FETCH_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
+        }
+    }
+
+    private String getSessionWalletKey(HttpSession session) {
+        Object key = session.getAttribute(SESSION_WALLET_KEY);
+        if (key == null) throw new RuntimeException("Wallet Key is missing in session");
+        return key.toString();
+    }
+
+    private void validateWalletId(HttpSession session, String walletIdFromRequest) {
+        Object sessionWalletId = session.getAttribute(SESSION_WALLET_ID);
+        if (sessionWalletId == null) throw new RuntimeException("Wallet Id is missing in session");
+
+        String walletIdInSession = sessionWalletId.toString();
+        if (!walletIdInSession.equals(walletIdFromRequest)) {
+            throw new RuntimeException("Invalid Wallet Id. Session and request Wallet Id do not match");
         }
     }
 }

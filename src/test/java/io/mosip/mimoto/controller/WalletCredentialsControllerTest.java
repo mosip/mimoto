@@ -90,6 +90,7 @@ public class WalletCredentialsControllerTest {
         mockMvc.perform(post(String.format("/wallets/%s/credentials",walletId))
                         .accept(MediaType.APPLICATION_JSON)
                         .sessionAttr("wallet_key", "mockWalletKey")
+                        .sessionAttr("wallet_id", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(postRequestContent))
                 .andExpect(status().isOk())
@@ -101,14 +102,37 @@ public class WalletCredentialsControllerTest {
     }
 
     @Test
-    public void shouldThrowMissingWalletKeyWhileDownloadingCredentialsIfWalletKeyIsMissing() throws Exception {
+    public void shouldThrowExceptionIfWalletIdIsMissingWhileDownloadingCredential() throws Exception {
+        mockMvc.perform(get(String.format("/wallets/%s/credentials",walletId))
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .content(getRequestContent))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-054"))
+                .andExpect(jsonPath("$.errorMessage").value("Wallet Id is missing in session"));
+    }
+
+    @Test
+    public void shouldThrowExceptionIfReceivedWalletIdAndSessionWalletIdMismatchWhileDownloadCredential() throws Exception {
+        mockMvc.perform(get(String.format("/wallets/%s/credentials",walletId))
+                        .sessionAttr("wallet_id", "wallet124")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .content(getRequestContent))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-054"))
+                .andExpect(jsonPath("$.errorMessage").value("Invalid Wallet Id. Session and request Wallet Id do not match"));
+    }
+
+    @Test
+    public void shouldThrowExceptionIfWalletKeyIsMissingWhileDownloadingCredential() throws Exception {
         mockMvc.perform(post(String.format("/wallets/%s/credentials",walletId))
+                        .sessionAttr("wallet_id", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(postRequestContent))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-053"))
-                .andExpect(jsonPath("$.errorMessage").value("Wallet key is missing in session"));
+                .andExpect(jsonPath("$.errorMessage").value("Wallet Key is missing in session"));
     }
+
 
     @Test
     public void shouldThrowExceptionOnFetchingTokenResponseFailure() throws Exception {
@@ -117,6 +141,7 @@ public class WalletCredentialsControllerTest {
 
         mockMvc.perform(post(String.format("/wallets/%s/credentials",walletId))
                         .sessionAttr("wallet_key", mockWalletKey)
+                        .sessionAttr("wallet_id", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(postRequestContent))
                 .andExpect(status().isInternalServerError())
@@ -131,6 +156,7 @@ public class WalletCredentialsControllerTest {
 
         mockMvc.perform(post(String.format("/wallets/%s/credentials",walletId))
                         .sessionAttr("wallet_key", mockWalletKey)
+                        .sessionAttr("wallet_id", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(postRequestContent))
                 .andExpect(status().isBadRequest())
@@ -146,6 +172,7 @@ public class WalletCredentialsControllerTest {
 
         mockMvc.perform(post(String.format("/wallets/%s/credentials",walletId))
                         .sessionAttr("wallet_key", mockWalletKey)
+                        .sessionAttr("wallet_id", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(postRequestContent))
                 .andExpect(status().isInternalServerError())
@@ -160,6 +187,7 @@ public class WalletCredentialsControllerTest {
 
         mockMvc.perform(post(String.format("/wallets/%s/credentials",walletId))
                         .sessionAttr("wallet_key", mockWalletKey)
+                        .sessionAttr("wallet_id", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(postRequestContent))
                 .andExpect(status().isInternalServerError())
@@ -175,21 +203,43 @@ public class WalletCredentialsControllerTest {
 
         mockMvc.perform(get(String.format("/wallets/%s/credentials",walletId))
                         .sessionAttr("wallet_key", mockWalletKey)
+                        .sessionAttr("wallet_id", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(getRequestContent))
                 .andExpect(status().isOk());
     }
 
     @Test
-    public void shouldThrowMissingWalletKeyWhileFetchingAllCredentialsIfWalletKeyIsMissing() throws Exception {
+    public void shouldThrowExceptionIfWalletIdIsMissingWhileFetchingAllCredentials() throws Exception {
         mockMvc.perform(get(String.format("/wallets/%s/credentials",walletId))
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(getRequestContent))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-054"))
-                .andExpect(jsonPath("$.errorMessage").value("Wallet key is missing in session"));
+                .andExpect(jsonPath("$.errorMessage").value("Wallet Id is missing in session"));
     }
 
+    @Test
+    public void shouldThrowExceptionIfReceivedWalletIdAndSessionWalletIdMismatchWhileFetchingAllCredentials() throws Exception {
+        mockMvc.perform(get(String.format("/wallets/%s/credentials",walletId))
+                        .sessionAttr("wallet_id", "wallet124")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .content(getRequestContent))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-054"))
+                .andExpect(jsonPath("$.errorMessage").value("Invalid Wallet Id. Session and request Wallet Id do not match"));
+    }
+
+    @Test
+    public void shouldThrowExceptionIfWalletKeyIsMissingWhileFetchingAllCredentials() throws Exception {
+        mockMvc.perform(get(String.format("/wallets/%s/credentials",walletId))
+                        .sessionAttr("wallet_id", walletId)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .content(getRequestContent))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-054"))
+                .andExpect(jsonPath("$.errorMessage").value("Wallet Key is missing in session"));
+    }
     @Test
     public void shouldThrowExceptionOnDatabaseConnectionFailureWhileFetchingCredentials() throws Exception {
         when(walletCredentialService.fetchAllCredentialsForWallet(walletId, mockWalletKey, locale))
@@ -197,6 +247,7 @@ public class WalletCredentialsControllerTest {
 
         mockMvc.perform(get(String.format("/wallets/%s/credentials",walletId))
                         .sessionAttr("wallet_key", mockWalletKey)
+                        .sessionAttr("wallet_id", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(getRequestContent))
                 .andExpect(status().isInternalServerError())
@@ -212,6 +263,7 @@ public class WalletCredentialsControllerTest {
 
         mockMvc.perform(get(String.format("/wallets/%s/credentials",walletId))
                         .sessionAttr("wallet_key", "mockWalletKey")
+                        .sessionAttr("wallet_id", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content(getRequestContent))
                 .andExpect(status().isInternalServerError())
