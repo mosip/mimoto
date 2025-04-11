@@ -136,20 +136,6 @@ jobs:
       GPG_SECRET: ${{ secrets.GPG_SECRET }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
 
-  publish_to_nexus_apitest_mimoto:
-    if: "${{ !contains(github.ref, 'master') && github.event_name != 'pull_request' && github.event_name != 'release' && github.event_name != 'prerelease' && github.event_name != 'publish' }}"
-    needs: build-maven-apitest-mimoto
-    uses: mosip/kattu/.github/workflows/maven-publish-to-nexus.yml@master-java21
-    with:
-      SERVICE_LOCATION: ./api-test
-    secrets:
-      OSSRH_USER: ${{ secrets.OSSRH_USER }}
-      OSSRH_SECRET: ${{ secrets.OSSRH_SECRET }}
-      OSSRH_URL: ${{ secrets.OSSRH_SNAPSHOT_URL }}
-      OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
-      GPG_SECRET: ${{ secrets.GPG_SECRET }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_INJI_TEAM }}
-
   build-apitest-mimoto-local:
     needs: build-maven-apitest-mimoto
     runs-on: ubuntu-latest
