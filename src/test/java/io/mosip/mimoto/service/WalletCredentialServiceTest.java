@@ -18,6 +18,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+
+import static io.mosip.mimoto.exception.ErrorConstants.SIGNATURE_VERIFICATION_EXCEPTION;
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -150,12 +152,12 @@ public class WalletCredentialServiceTest {
     }
 
     @Test
-    public void shouldNotThrowExceptionOnVerificationFailureDuringVCDownloaded() throws Exception {
+    public void shouldThrowExceptionOnVerificationFailureDuringVCDownloaded() throws Exception {
         VCCredentialResponse vcResponse = new VCCredentialResponse();
         String encryptedCredential = "encryptedCredential";
-
+        VCVerificationException expectedException = new VCVerificationException(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(),
+                SIGNATURE_VERIFICATION_EXCEPTION.getErrorMessage());
         VerifiableCredential vc = getVerifiableCredential("vc-id-123", walletId, "encryptedCredential", issuerId, credentialType);
-        VerifiableCredentialResponseDTO expectedVerifiableCredentialResponseDTO = getVerifiableCredentialResponseDTO("issuer name", "https://issuer_logo_url", credentialType, "https://logo", "vc-id-123");
 
         when(issuersService.getIssuerDetails(issuerId)).thenReturn(getMockIssuerDTO());
         when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
@@ -165,16 +167,11 @@ public class WalletCredentialServiceTest {
         when(encryptionDecryptionUtil.encryptWithAES(any(), any())).thenReturn(encryptedCredential);
         when(walletCredentialsRepository.save(any())).thenReturn(vc);
 
-        VerifiableCredentialResponseDTO actualVerifiableCredentialResponseDTO = walletCredentialService.fetchAndStoreCredential(
+        VCVerificationException actualException = assertThrows(VCVerificationException.class, () -> walletCredentialService.fetchAndStoreCredential(
                 issuerId, credentialType, tokenResponse, "1", "en", walletId, base64Key
-        );
+        ));
 
-        ArgumentCaptor<VerifiableCredential> verifiableCredentialArgumentCaptor = ArgumentCaptor.forClass(VerifiableCredential.class);
-        verify(walletCredentialsRepository).save(verifiableCredentialArgumentCaptor.capture());
-
-        VerifiableCredential captureVerifiableCredential = verifiableCredentialArgumentCaptor.getValue();
-
-        assertEquals(expectedVerifiableCredentialResponseDTO, actualVerifiableCredentialResponseDTO);
-        assertEquals(false, captureVerifiableCredential.getCredentialMetadata().getIsVerified());
+        assertEquals(expectedException.getErrorCode(), actualException.getErrorCode());
+        assertEquals(expectedException.getErrorText(), actualException.getErrorText());
     }
 }

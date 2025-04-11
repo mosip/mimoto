@@ -6,8 +6,8 @@ import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.model.QRCodeType;
-import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.service.impl.CredentialServiceImpl;
+import io.mosip.mimoto.service.impl.DataShareServiceImpl;
 import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.*;
@@ -72,6 +72,9 @@ public class CredentialServiceTest {
     @Mock
     Utilities utilities;
 
+    @Mock
+    DataShareServiceImpl dataShareService;
+
     TokenResponseDTO expectedTokenResponse;
     String tokenEndpoint, issuerId, expectedExceptionMsg;
     IssuerDTO issuerDTO;
@@ -134,22 +137,20 @@ public class CredentialServiceTest {
         when(credentialUtilService.generateVCCredentialRequest(any(IssuerDTO.class),
                 any(CredentialIssuerWellKnownResponse.class),
                 any(CredentialsSupportedResponse.class),
-                any(String.class), any(), any(),eq(false))).thenReturn(getVCCredentialRequestDTO());
+                any(String.class), any(), any(), eq(false))).thenReturn(getVCCredentialRequestDTO());
         VCCredentialResponse vcCredentialResponse = getVCCredentialResponseDTO("CredentialType1");
         when(credentialUtilService.downloadCredential(any(String.class),
                 any(VCCredentialRequest.class),
                 any(String.class))).thenReturn(vcCredentialResponse);
         when(credentialUtilService.verifyCredential(vcCredentialResponse)).thenReturn(true);
         issuerDTO.setQr_code_type(QRCodeType.None);
-        Mockito.when(utilities.getCredentialSupportedTemplateString(issuerDTO.getIssuer_id(), "CredentialType1")).thenReturn("<html><body><h1>PDF</h1></body></html>");
+
         ByteArrayInputStream expectedPDFByteArray = generatePdfFromHTML();
+        Mockito.when(credentialUtilService.generatePdfForVerifiableCredentials("CredentialType1", vcCredentialResponse, issuerDTO, issuerConfig.getCredentialConfigurationsSupported().get("CredentialType1"), "", "once", "en")).thenReturn(expectedPDFByteArray);
 
         ByteArrayInputStream actualPDFByteArray =
                 credentialService.downloadCredentialAsPDF(issuerId, "CredentialType1", expectedTokenResponse, "once", "en");
 
-        String expectedText = extractTextFromPdf(expectedPDFByteArray);
-        String actualText = extractTextFromPdf(actualPDFByteArray);
-
-        assertEquals(expectedText, actualText);
+        assertEquals(expectedPDFByteArray, actualPDFByteArray);
     }
 }

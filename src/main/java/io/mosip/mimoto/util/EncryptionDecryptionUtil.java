@@ -148,4 +148,18 @@ public class EncryptionDecryptionUtil {
         requestDto.setData(dataAsString);
         return cryptomanagerService.encryptWithPin(requestDto).getData();
     }
+
+   public String encryptCredential(String credentialData, String base64EncodedWalletKey) throws Exception {
+        byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
+        SecretKey walletKey = bytesToSecretKey(decodedWalletKey);
+        return encryptWithAES(walletKey, stringToBytes(credentialData));
+    }
+
+    public String decryptCredential(String encryptedCredentialData, String base64EncodedWalletKey) throws Exception {
+        byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
+        SecretKey walletKey = bytesToSecretKey(decodedWalletKey);
+        return bytesToString(decryptWithAES(walletKey, encryptedCredentialData));
+    }
+
+
 }

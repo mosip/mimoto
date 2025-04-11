@@ -10,6 +10,8 @@ import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
+import io.mosip.mimoto.exception.VCVerificationException;
+import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
@@ -24,9 +26,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.util.*;
+
+import static io.mosip.mimoto.exception.ErrorConstants.SIGNATURE_VERIFICATION_EXCEPTION;
 
 
 @Slf4j
@@ -98,8 +101,15 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         VCCredentialResponse vcCredentialResponse = credentialUtilService.downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
         boolean verificationStatus = issuerId.toLowerCase().contains("mock") || credentialUtilService.verifyCredential(vcCredentialResponse);
 
-        String encryptedCredentialData = encryptCredential(vcCredentialResponse.toString(), base64EncodedWalletKey);
-        VerifiableCredential savedCredential = saveCredential(walletId, encryptedCredentialData, verificationStatus, issuerId, credentialType);
+        if (!verificationStatus) {
+            throw new VCVerificationException(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(),
+                    SIGNATURE_VERIFICATION_EXCEPTION.getErrorMessage());
+        }
+
+        String dataShareUrl = QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type()) ? dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse), credentialValidity) : "";
+        String vcResponseAsJsonString = objectMapper.writeValueAsString(vcCredentialResponse);
+        String encryptedCredentialData = encryptionDecryptionUtil.encryptCredential(vcResponseAsJsonString, base64EncodedWalletKey);
+        VerifiableCredential savedCredential = saveCredential(walletId, encryptedCredentialData, issuerId, credentialType, dataShareUrl, credentialValidity);
 
         return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerDTO, credentialsSupportedResponse, locale, savedCredential.getId());
     }
@@ -148,23 +158,12 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         );
     }
 
-    private String encryptCredential(String credentialData, String base64EncodedWalletKey) throws Exception {
-        byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
-        SecretKey walletKey = EncryptionDecryptionUtil.bytesToSecretKey(decodedWalletKey);
-        return encryptionDecryptionUtil.encryptWithAES(walletKey, EncryptionDecryptionUtil.stringToBytes(credentialData));
-    }
-
-    private String decryptCredential(String encryptedCredentialData, String base64EncodedWalletKey) throws Exception {
-        byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
-        SecretKey walletKey = EncryptionDecryptionUtil.bytesToSecretKey(decodedWalletKey);
-        return EncryptionDecryptionUtil.bytesToString(encryptionDecryptionUtil.decryptWithAES(walletKey, encryptedCredentialData));
-    }
-
-    private VerifiableCredential saveCredential(String walletId, String encryptedCredential, boolean isVerified, String issuerId, String credentialType) {
+    private VerifiableCredential saveCredential(String walletId, String encryptedCredential, String issuerId, String credentialType, String dataShareUrl, String credentialValidity) {
         CredentialMetadata credentialMetadata = new CredentialMetadata();
-        credentialMetadata.setIsVerified(isVerified);
         credentialMetadata.setIssuerId(issuerId);
         credentialMetadata.setCredentialType(credentialType);
+        credentialMetadata.setDataShareUrl(dataShareUrl);
+        credentialMetadata.setCredentialValidity(credentialValidity);
 
         VerifiableCredential verifiableCredential = new VerifiableCredential();
         verifiableCredential.setId(UUID.randomUUID().toString());
