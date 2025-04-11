@@ -40,6 +40,7 @@ public class WalletCredentialViewController {
             return ResponseEntity.ok()
                     .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
                     .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                    .contentType(MediaType.APPLICATION_PDF)
                     .body(walletCredentialResponseDTO.getFileContentStream());
 
         } catch (DataAccessResourceFailureException exception) {
