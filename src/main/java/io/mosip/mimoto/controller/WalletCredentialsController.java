@@ -2,16 +2,19 @@ package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
+import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.model.DatabaseEntity;
 import io.mosip.mimoto.model.DatabaseOperation;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.util.CredentialUtilService;
 import io.mosip.mimoto.util.Utilities;
+import io.mosip.mimoto.util.WalletUtil;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,10 +30,6 @@ import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 @RestController
 @RequestMapping(value = "/wallets/{walletId}/credentials")
 public class WalletCredentialsController {
-
-    private static final String SESSION_WALLET_KEY = "wallet_key";
-    private static final String SESSION_WALLET_ID = "wallet_id";
-
     @Autowired
     private WalletCredentialService walletCredentialService;
 
@@ -43,8 +42,8 @@ public class WalletCredentialsController {
         params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
 
         try {
-            validateWalletId(httpSession, walletId);
-            String base64EncodedWalletKey = getSessionWalletKey(httpSession);
+            WalletUtil.validateWalletId(httpSession, walletId);
+            String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
             String issuerId = params.get("issuer");
             String credentialType = params.get("credential");
@@ -76,8 +75,8 @@ public class WalletCredentialsController {
         try {
             log.info("Fetching all credentials for walletId: {}", walletId);
 
-            validateWalletId(httpSession, walletId);
-            String base64EncodedWalletKey = getSessionWalletKey(httpSession);
+            WalletUtil.validateWalletId(httpSession, walletId);
+            String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
             List<VerifiableCredentialResponseDTO> credentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64EncodedWalletKey, locale);
             return ResponseEntity.status(HttpStatus.OK).body(credentials);
@@ -91,19 +90,34 @@ public class WalletCredentialsController {
         }
     }
 
-    private String getSessionWalletKey(HttpSession session) {
-        Object key = session.getAttribute(SESSION_WALLET_KEY);
-        if (key == null) throw new RuntimeException("Wallet Key is missing in session");
-        return key.toString();
-    }
+    @GetMapping("/{credentialId}")
+    public ResponseEntity<?> getVerifiableCredential(@PathVariable("walletId") String walletId, @PathVariable("credentialId") String credentialId, @RequestParam("locale") String locale, @RequestParam(value = "action", defaultValue = "inline") String action, HttpSession httpSession) {
+        try {
+            log.info("Fetching credentialId: {} from walletId: {}", credentialId, walletId);
 
-    private void validateWalletId(HttpSession session, String walletIdFromRequest) {
-        Object sessionWalletId = session.getAttribute(SESSION_WALLET_ID);
-        if (sessionWalletId == null) throw new RuntimeException("Wallet Id is missing in session");
+            WalletUtil.validateWalletId(httpSession, walletId);
+            String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
-        String walletIdInSession = sessionWalletId.toString();
-        if (!walletIdInSession.equals(walletIdFromRequest)) {
-            throw new RuntimeException("Invalid Wallet Id. Session and request Wallet Id do not match");
+            WalletCredentialResponseDTO walletCredentialResponseDTO = walletCredentialService.fetchVerifiableCredential(
+                    credentialId, base64EncodedWalletKey, locale);
+
+            String dispositionType = "download".equalsIgnoreCase(action) ? "attachment" : "inline";
+            String contentDisposition = String.format("%s; filename=\"%s\"",
+                    dispositionType, walletCredentialResponseDTO.getFileName());
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(walletCredentialResponseDTO.getFileContentStream());
+
+        } catch (DataAccessResourceFailureException exception) {
+            log.error("Exception occurred while connecting to the database to fetch the Verifiable Credential:", exception);
+            DatabaseConnectionException connectionException = new DatabaseConnectionException(DATABASE_CONNECTION_EXCEPTION.getCode(), DATABASE_CONNECTION_EXCEPTION.getMessage(), DatabaseEntity.VERIFIABLECREDENTIAL, DatabaseOperation.FETCHING, HttpStatus.INTERNAL_SERVER_ERROR);
+            return Utilities.getErrorResponseEntityWithoutWrapper(connectionException, LOGIN_CREDENTIAL_DOWNLOAD_EXCEPTION.getCode(), connectionException.getStatus(), MediaType.APPLICATION_JSON);
+        } catch (Exception exception) {
+            log.error("Error occurred while fetching the Verifiable Credential : ", exception);
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, CREDENTIAL_FETCH_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
     }
 }

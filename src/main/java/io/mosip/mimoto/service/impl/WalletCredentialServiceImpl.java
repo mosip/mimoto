@@ -7,6 +7,7 @@ import io.mosip.mimoto.dbentity.VerifiableCredential;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
+import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
@@ -23,13 +24,16 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.*;
 
 import static io.mosip.mimoto.exception.ErrorConstants.SIGNATURE_VERIFICATION_EXCEPTION;
+import static io.mosip.mimoto.util.LocaleUtils.getCredentialDisplayDTOBasedOnLocale;
 
 
 @Slf4j
@@ -147,6 +151,36 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         }).toList();
     }
 
+    @Override
+    public WalletCredentialResponseDTO fetchVerifiableCredential(String credentialId, String base64EncodedWalletKey, String locale) throws Exception {
+        Optional<VerifiableCredential> verifiableCredentialObj = walletCredentialsRepository.findById(credentialId);
+        VerifiableCredential verifiableCredential;
+        if (verifiableCredentialObj.isPresent()) {
+            verifiableCredential = verifiableCredentialObj.get();
+        } else {
+            throw new RuntimeException("Credential not found");
+        }
+
+        String decryptCredentialResponse = encryptionDecryptionUtil.decryptCredential(verifiableCredential.getCredential(), base64EncodedWalletKey);
+        String issuerId = verifiableCredential.getCredentialMetadata().getIssuerId();
+        String credentialType = verifiableCredential.getCredentialMetadata().getCredentialType();
+        String dataShareUrl = verifiableCredential.getCredentialMetadata().getDataShareUrl();
+        String credentialValidity = verifiableCredential.getCredentialMetadata().getCredentialValidity();
+        IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
+        CredentialIssuerConfiguration credentialIssuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
+        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse(
+                credentialIssuerConfiguration.getCredentialIssuer(),
+                credentialIssuerConfiguration.getAuthorizationServers(),
+                credentialIssuerConfiguration.getCredentialEndPoint(),
+                credentialIssuerConfiguration.getCredentialConfigurationsSupported());
+        CredentialsSupportedResponse credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported().get(credentialType);
+
+        VCCredentialResponse vcCredentialResponse = objectMapper.readValue(decryptCredentialResponse, VCCredentialResponse.class);
+        ByteArrayInputStream byteArrayInputStream = credentialUtilService.generatePdfForVerifiableCredentials(credentialType, vcCredentialResponse, issuerDTO, credentialsSupportedResponse, dataShareUrl, credentialValidity, locale);
+        String fileName = getCredentialDisplayDTOBasedOnLocale(credentialsSupportedResponse.getDisplay(), locale).getName();
+
+        return new WalletCredentialResponseDTO(new InputStreamResource(byteArrayInputStream), fileName);
+    }
 
     private CredentialIssuerWellKnownResponse getIssuerWellKnownResponse(String issuerId) throws AuthorizationServerWellknownResponseException, ApiNotAccessibleException, IOException, InvalidWellknownResponseException {
         CredentialIssuerConfiguration credentialIssuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
