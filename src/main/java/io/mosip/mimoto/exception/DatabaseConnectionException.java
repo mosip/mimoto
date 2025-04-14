@@ -8,7 +8,7 @@ public class DatabaseConnectionException extends BaseCheckedException {
     private final HttpStatus status;
 
     public DatabaseConnectionException(String code, String message, DatabaseEntity entity, DatabaseOperation flow, HttpStatus status) {
-        super(code, String.format("%s while %s %s data %s the database", message, flow.getValue(), entity.getValue(), flow.getValue()=="fetching"? "from" : "into"));
+        super(code, String.format("%s while %s %s data %s the database", message, flow.getValue(), entity.getValue(), "fetching".equals(flow.getValue()) ? "from" : "into"));
         this.status = status;
     }
 
