@@ -283,7 +283,7 @@ public class WalletCredentialsControllerTest {
 
     @Test
     public void shouldReturnPDFByteStreamWithInlineContentDispositionInHeaderForValidRequestWithActionAsPreview() throws Exception {
-        Mockito.when(walletCredentialService.fetchVerifiableCredential(credentialId, mockWalletKey, "en"))
+        Mockito.when(walletCredentialService.fetchVerifiableCredential(walletId, credentialId, mockWalletKey, "en"))
                 .thenReturn(responseDTO);
 
         mockMvc.perform(get(String.format("/wallets/%s/credentials/%s", walletId, credentialId))
@@ -298,7 +298,7 @@ public class WalletCredentialsControllerTest {
 
     @Test
     public void shouldReturnPDFByteStreamWithAttachmentContentDispositionInHeaderForValidRequestWithActionAsDownload() throws Exception {
-        Mockito.when(walletCredentialService.fetchVerifiableCredential(credentialId, mockWalletKey, "en"))
+        Mockito.when(walletCredentialService.fetchVerifiableCredential(walletId, credentialId, mockWalletKey, "en"))
                 .thenReturn(responseDTO);
 
         mockMvc.perform(get(String.format("/wallets/%s/credentials/%s", walletId, credentialId))
@@ -345,7 +345,7 @@ public class WalletCredentialsControllerTest {
 
     @Test
     public void shouldThrowExceptionOnDatabaseConnectionFailureWhileFetchingCredential() throws Exception {
-        Mockito.when(walletCredentialService.fetchVerifiableCredential(eq(credentialId), anyString(), anyString()))
+        Mockito.when(walletCredentialService.fetchVerifiableCredential(walletId, eq(credentialId), anyString(), anyString()))
                 .thenThrow(new DataAccessResourceFailureException("Exception occurred when connecting to the database to fetch the Verifiable credential"));
 
         mockMvc.perform(get(String.format("/wallets/%s/credentials/%s", walletId, credentialId))
@@ -361,7 +361,7 @@ public class WalletCredentialsControllerTest {
 
     @Test
     public void shouldThrowExceptionOnAnyErrorOccurredWhileFetchingCredential() throws Exception {
-        Mockito.when(walletCredentialService.fetchVerifiableCredential(eq(credentialId), anyString(), anyString()))
+        Mockito.when(walletCredentialService.fetchVerifiableCredential(walletId, eq(credentialId), anyString(), anyString()))
                 .thenThrow(new RuntimeException("Unexpected error occurred while fetching wallet credentials"));
 
         mockMvc.perform(get(String.format("/wallets/%s/credentials/%s", walletId, credentialId))

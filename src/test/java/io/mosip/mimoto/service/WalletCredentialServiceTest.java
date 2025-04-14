@@ -227,7 +227,7 @@ public class WalletCredentialServiceTest {
                 anyString()  // locale
         )).thenReturn(inputStream);
 
-        WalletCredentialResponseDTO response = walletCredentialService.fetchVerifiableCredential(credentialId, base64Key, locale);
+        WalletCredentialResponseDTO response = walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale);
 
         assertNotNull(response);
         assertNotNull(response.getFileContentStream());
@@ -243,7 +243,7 @@ public class WalletCredentialServiceTest {
         when(walletCredentialsRepository.findById(credentialId)).thenReturn(Optional.empty());
 
         RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                walletCredentialService.fetchVerifiableCredential(credentialId, base64Key, locale)
+                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale)
         );
 
         assertEquals("Credential not found", exception.getMessage());
@@ -263,7 +263,7 @@ public class WalletCredentialServiceTest {
                 .thenThrow(new RuntimeException("Decryption failed"));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                walletCredentialService.fetchVerifiableCredential(credentialId, base64Key, locale)
+                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale)
         );
 
         assertEquals("Decryption failed", exception.getMessage());
@@ -284,7 +284,7 @@ public class WalletCredentialServiceTest {
         when(issuersService.getIssuerDetails(issuerId)).thenThrow(new ApiNotAccessibleException());
 
         ApiNotAccessibleException exception = assertThrows(ApiNotAccessibleException.class, () ->
-                walletCredentialService.fetchVerifiableCredential(credentialId, base64Key, locale)
+                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale)
         );
 
         assertNotNull(exception);
@@ -325,7 +325,7 @@ public class WalletCredentialServiceTest {
         )).thenThrow(new RuntimeException("PDF generation failed"));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                walletCredentialService.fetchVerifiableCredential(credentialId, base64Key, locale)
+                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale)
         );
 
         assertEquals("PDF generation failed", exception.getMessage());

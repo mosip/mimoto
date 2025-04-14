@@ -11,5 +11,5 @@ public interface WalletCredentialService {
 
     List<VerifiableCredentialResponseDTO> fetchAllCredentialsForWallet(String walletId, String walletKey, String locale);
 
-    WalletCredentialResponseDTO fetchVerifiableCredential(String credentialId, String base64EncodedWalletKey, String locale) throws Exception;
+    WalletCredentialResponseDTO fetchVerifiableCredential(String walletId, String credentialId, String base64EncodedWalletKey, String locale) throws Exception;
 }

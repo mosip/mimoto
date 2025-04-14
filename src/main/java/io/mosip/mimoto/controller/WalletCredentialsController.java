@@ -98,7 +98,7 @@ public class WalletCredentialsController {
             WalletUtil.validateWalletId(httpSession, walletId);
             String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
-            WalletCredentialResponseDTO walletCredentialResponseDTO = walletCredentialService.fetchVerifiableCredential(
+            WalletCredentialResponseDTO walletCredentialResponseDTO = walletCredentialService.fetchVerifiableCredential(walletId,
                     credentialId, base64EncodedWalletKey, locale);
 
             String dispositionType = "download".equalsIgnoreCase(action) ? "attachment" : "inline";

@@ -152,8 +152,8 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     }
 
     @Override
-    public WalletCredentialResponseDTO fetchVerifiableCredential(String credentialId, String base64EncodedWalletKey, String locale) throws Exception {
-        Optional<VerifiableCredential> verifiableCredentialObj = walletCredentialsRepository.findById(credentialId);
+    public WalletCredentialResponseDTO fetchVerifiableCredential(String walletId, String credentialId, String base64EncodedWalletKey, String locale) throws Exception {
+        Optional<VerifiableCredential> verifiableCredentialObj = walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId);
         VerifiableCredential verifiableCredential;
         if (verifiableCredentialObj.isPresent()) {
             verifiableCredential = verifiableCredentialObj.get();
