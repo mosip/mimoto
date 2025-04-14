@@ -62,10 +62,14 @@ public class WalletsController {
         try {
             // If wallet_key does not exist in the session, fetch it and set it in the session
             String walletKey = walletService.getWalletKey((String) httpSession.getAttribute("userId"), walletId, wallet.getWalletPin());
-            httpSession.setAttribute("wallet_key", walletKey);
-            httpSession.setAttribute("wallet_id", walletId);
-            WalletResponseDto response = new WalletResponseDto(walletId);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+
+            if (null != walletKey) {
+                httpSession.setAttribute("wallet_key", walletKey);
+                httpSession.setAttribute("wallet_id", walletId);
+                WalletResponseDto response = new WalletResponseDto(walletId);
+                return ResponseEntity.status(HttpStatus.OK).body(response);
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         } catch (Exception exception) {
             log.error("Error occurred while retrieving user wallet ", exception);
             return Utilities.getErrorResponseEntityWithoutWrapper(exception, USER_WALLET_RETRIEVAL_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,MediaType.APPLICATION_JSON);

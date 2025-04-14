@@ -9,6 +9,7 @@ import io.mosip.mimoto.util.Utilities;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -24,6 +25,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.session.SessionRepository;
 import org.springframework.web.cors.CorsConfiguration;
@@ -152,7 +155,7 @@ public class Config {
                                 "/credentialshare/**","/binding-otp","/wallet-binding","/get-token/**",
                                 "/issuers","/issuers/**","/authorize","/req/otp","/vid","/req/auth/**",
                                 "/req/individualId/otp","/aid/get-individual-id","/session/status",
-                                "/verifiers").permitAll()
+                                "/verifiers", "/auth/*/token-login").permitAll()
                         // Apply the default authorization rule to all other requests, ensuring authentication is required.
                         .anyRequest().authenticated()
                 ).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
@@ -169,6 +172,12 @@ public class Config {
         corsConfiguration.setAllowCredentials(true);// Allow cookies to be sent
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;
+    }
+
+    @Bean
+    @Qualifier("googleJwtDecoder")
+    public JwtDecoder googleIdTokenDecoder(@Value("${spring.security.oauth2.client.provider.google.jwk-set-uri}") String jwkSetUri) {
+        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
     }
 
 }

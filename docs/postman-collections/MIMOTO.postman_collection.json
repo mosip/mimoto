@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "070c5a99-ffc3-48fb-9259-d9170916c728",
+		"_postman_id": "a2fb8c1d-d7ac-42a5-9587-aeae9a216ba0",
 		"name": "MIMOTO",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "26539037"
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "10750965"
 	},
 	"item": [
 		{
@@ -14,16 +14,7 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": {
-							"raw": "{{HOST}}/issuers",
-							"host": [
-								"{{HOST}}"
-							],
-							"path": [
-								"issuers",
-								""
-							]
-						}
+						"url": "{{HOST}}/issuers/"
 					},
 					"response": []
 				},
@@ -32,16 +23,7 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": {
-							"raw": "{{HOST}}/issuers/StayProtected",
-							"host": [
-								"{{HOST}}"
-							],
-							"path": [
-								"issuers",
-								"StayProtected"
-							]
-						}
+						"url": "{{HOST}}/issuers/StayProtected"
 					},
 					"response": []
 				},
@@ -50,17 +32,7 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": {
-							"raw": "{{HOST}}/issuers/StayProtected/well-known-proxy",
-							"host": [
-								"{{HOST}}"
-							],
-							"path": [
-								"issuers",
-								"StayProtected",
-								"well-known-proxy"
-							]
-						}
+						"url": "{{HOST}}/issuers/StayProtected/well-known-proxy"
 					},
 					"response": []
 				},
@@ -69,17 +41,7 @@
 					"request": {
 						"method": "GET",
 						"header": [],
-						"url": {
-							"raw": "{{HOST}}/issuers/StayProtected/configuration",
-							"host": [
-								"{{HOST}}"
-							],
-							"path": [
-								"issuers",
-								"StayProtected",
-								"configuration"
-							]
-						}
+						"url": "{{HOST}}/issuers/StayProtected/configuration"
 					},
 					"response": []
 				},
@@ -156,16 +118,7 @@
 								}
 							]
 						},
-						"url": {
-							"raw": "{{HOST}}/credentials/download",
-							"host": [
-								"{{HOST}}"
-							],
-							"path": [
-								"credentials",
-								"download"
-							]
-						}
+						"url": "{{HOST}}/credentials/download"
 					},
 					"response": []
 				},
@@ -227,16 +180,7 @@
 								}
 							}
 						},
-						"url": {
-							"raw": "{{HOST}}/req/otp",
-							"host": [
-								"{{HOST}}"
-							],
-							"path": [
-								"req",
-								"otp"
-							]
-						}
+						"url": "{{HOST}}/req/otp"
 					},
 					"response": []
 				},
@@ -265,16 +209,7 @@
 								}
 							}
 						},
-						"url": {
-							"raw": "{{HOST}}/credentialshare/request",
-							"host": [
-								"{{HOST}}"
-							],
-							"path": [
-								"credentialshare",
-								"request"
-							]
-						}
+						"url": "{{HOST}}/credentialshare/request"
 					},
 					"response": []
 				},
@@ -295,18 +230,7 @@
 								}
 							}
 						},
-						"url": {
-							"raw": "{{HOST}}/credentialshare/request/status/c0fc00ae-6fc7-4e9f-b818-f51827582c2f",
-							"host": [
-								"{{HOST}}"
-							],
-							"path": [
-								"credentialshare",
-								"request",
-								"status",
-								"c0fc00ae-6fc7-4e9f-b818-f51827582c2f"
-							]
-						}
+						"url": "{{HOST}}/credentialshare/request/status/c0fc00ae-6fc7-4e9f-b818-f51827582c2f"
 					},
 					"response": []
 				},
@@ -335,16 +259,7 @@
 								}
 							}
 						},
-						"url": {
-							"raw": "{{HOST}}/credentialshare/download",
-							"host": [
-								"{{HOST}}"
-							],
-							"path": [
-								"credentialshare",
-								"download"
-							]
-						}
+						"url": "{{HOST}}/credentialshare/download"
 					},
 					"response": []
 				}
@@ -371,15 +286,7 @@
 							"mode": "raw",
 							"raw": "{\n    \"requestTime\": \"{{$isoTimestamp}}\",\n    \"request\": {\n        \"individualId\": \"4536710485\",\n        \"otpChannels\": [\n            \"EMAIL\",\n            \"PHONE\"\n        ]\n    }\n}"
 						},
-						"url": {
-							"raw": "{{HOST}}/binding-otp",
-							"host": [
-								"{{HOST}}"
-							],
-							"path": [
-								"binding-otp"
-							]
-						}
+						"url": "{{HOST}}/binding-otp"
 					},
 					"response": []
 				},
@@ -401,15 +308,7 @@
 							"mode": "raw",
 							"raw": "{\n    \"requestTime\": \"{{$isoTimestamp}}\",\n    \"request\": {\n        \"individualId\": \"6148072053\",\n        \"challengeList\": [\n            {\n                \"authFactorType\": \"OTP\",\n                \"challenge\": \"111111\",\n                \"format\": \"alpha-numeric\"\n            }\n        ],\n        \"publicKey\": \"-----BEGIN RSA PUBLIC KEY-----\\nMIICCgKCAgEArk/N6Us8TkfH+r1UGCqTGWegJ3UzqHXmj49uE3l9ygIPrTB7Hee8\\ntiVnlNKcQR/7EipumAcNzOFzaysUUIX8rh/QSdlwYYXvC4OT9fLg5tmToYc5x3pN\\nO1k7qg9fnMb/Ksr4D95xUUxQjMLlbojBNWjLhvdP4da1gWUeAdfjIfyLjZGYiD8r\\nUqsVqOfmrec9Y0nLsIsUq735NVl2WIP9mMfjXuRId4MgEE3mN6x/Gj9Ov0AWfb48\\n22wLgybggTdIJZlCBAnPn/n+oiowqUdXADAB4CIaVH8hDJ1fz3Ag2RetriqwrcLF\\nVSK+PyVuLD261BhIeQrgyHdKC6qilVBOYIMqtXjazCdjGICNFoEa1nVP6mu85RN1\\ny8TTS+4ATUTm44++TFSNfsEEpagvd6O/BWlj6mJNGB9dmtEohowwR5fcSHgKbGtP\\ng5J49fKeSDapEln2A/xL7Ubk8KFzzgcQvPWttGaazs7tqdOE4iOMkI72XFbyvIVz\\nzwQEB7vOuRJRclP30SkcR81u694vCtXJ2t2pFUMQVJXat9ypg5BtiZMwBtAnc0Pz\\nDWdGCR5LIpJIaDISmPumHGAzeeRfREbsoVaCdi99vORoxBjuscpEOa5+MgYDKM3S\\nsJZWl2E2/7Kt9KCRVJoqeEkFFKq696zKVD3qbhbZJG3TjBcgYfbN2jMCAwEAAQ==\\n-----END RSA PUBLIC KEY-----\\n\",\n        \"authFactorType\": \"WLA\",\n        \"format\": \"jwt\"\n    }\n}"
 						},
-						"url": {
-							"raw": "{{HOST}}/wallet-binding",
-							"host": [
-								"{{HOST}}"
-							],
-							"path": [
-								"wallet-binding"
-							]
-						}
+						"url": "{{HOST}}/wallet-binding"
 					},
 					"response": []
 				}
@@ -423,15 +322,242 @@
 					"request": {
 						"method": "GET",
 						"header": [],
+						"url": "{{HOST}}/verifiers"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Wallets",
+			"item": [
+				{
+					"name": "Create Wallet",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"walletName\" : \"default\",\n\"walletPin\":123456}"
+						},
+						"url": "{{HOST}}/wallets"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Wallets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{HOST}}/wallets"
+					},
+					"response": []
+				},
+				{
+					"name": "Unlock Wallet",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"walletPin\": \"<wallet_pin>\"\n}"
+						},
+						"url": "{{HOST}}/wallets/<walletId>/unlock"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get User Profile (DB)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{HOST}}/users/me/db"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Profile (Cache)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "SESSION={{SESSION_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"url": "{{HOST}}/users/me/cache"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Wallet Credentials",
+			"item": [
+				{
+					"name": "Save Credential",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "grant_type",
+									"value": "authorization_code",
+									"type": "text"
+								},
+								{
+									"key": "code",
+									"value": "GL9N1V-zW_OFgLSa2VBANv8qz6XOxh3yBkoaonjplms",
+									"type": "text"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://injiweb.dev1.mosip.net/redirect",
+									"type": "text"
+								},
+								{
+									"key": "code_verifier",
+									"value": "Sq6nZNToevtx8LX-H2LI_~_Ds9vZGAImDKYjXw70LCJ",
+									"type": "text"
+								},
+								{
+									"key": "issuer",
+									"value": "StayProtected",
+									"type": "text"
+								},
+								{
+									"key": "credential",
+									"value": "InsuranceCredential",
+									"type": "text"
+								},
+								{
+									"key": "vcStorageExpiryLimitInTimes",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "locale",
+									"value": "en",
+									"type": "text"
+								}
+							]
+						},
+						"url": "{{HOST}}/wallets/<walletId>/credentials"
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch All Credentials",
+					"request": {
+						"method": "GET",
+						"header": [],
 						"url": {
-							"raw": "{{HOST}}/verifiers",
+							"raw": "{{HOST}}/wallets/2c72ae02-14ea-4fea-a280-2adc2588cb8b/credentials?locale=<locale>",
 							"host": [
 								"{{HOST}}"
 							],
 							"path": [
-								"verifiers"
+								"wallets",
+								"2c72ae02-14ea-4fea-a280-2adc2588cb8b",
+								"credentials"
+							],
+							"query": [
+								{
+									"key": "locale",
+									"value": "<locale>"
+								}
 							]
 						}
+					},
+					"response": []
+				},
+				{
+					"name": "View or Save Credential",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{HOST}}/wallets/<walletId>/credentials/<credentialId>?locale=en&action=inline",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"wallets",
+								"<walletId>",
+								"credentials",
+								"<credentialId>"
+							],
+							"query": [
+								{
+									"key": "locale",
+									"value": "en"
+								},
+								{
+									"key": "action",
+									"value": "inline"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Token login",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": {
+								"accessTokenUrl": "https://oauth2.googleapis.com/token",
+								"scope": "profile email",
+								"clientSecret": "<client-secret>",
+								"clientId": "<client-id>",
+								"redirect_uri": "http://localhost:8099/v1/mimoto/oauth2/callback/google",
+								"useBrowser": false,
+								"authUrl": "https://accounts.google.com/o/oauth2/auth?prompt=select_account",
+								"tokenName": "AuthToken",
+								"addTokenTo": "header"
+							}
+						},
+						"method": "POST",
+						"header": [],
+						"url": "{{HOST}}/auth/google/token-login"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": "{{HOST}}/logout"
 					},
 					"response": []
 				}
@@ -442,15 +568,7 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": {
-					"raw": "{{HOST}}/allProperties",
-					"host": [
-						"{{HOST}}"
-					],
-					"path": [
-						"allProperties"
-					]
-				}
+				"url": "{{HOST}}/allProperties"
 			},
 			"response": []
 		},
@@ -468,17 +586,7 @@
 						}
 					}
 				},
-				"url": {
-					"raw": "{{HOST}}/req/individualId/otp",
-					"host": [
-						"{{HOST}}"
-					],
-					"path": [
-						"req",
-						"individualId",
-						"otp"
-					]
-				}
+				"url": "{{HOST}}/req/individualId/otp"
 			},
 			"response": []
 		}
