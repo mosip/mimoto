@@ -3062,7 +3062,111 @@
                 }
             }
         },
-        "/wallets": {
+    "/wallets/{walletId}/credentials/{credentialId}": {
+        "get": {
+            "tags": ["Wallet Credentials"],
+            "summary": "Fetch a Verifiable Credential by ID",
+            "description": "This API retrieves a specific Verifiable Credential for the provided wallet ID and credential ID. It uses session-based authentication. The session ID is extracted from the Cookie header and used to validate the session and retrieve the wallet encryption key. Depending on the action (inline or download), the response disposition will change. On success, it returns a PDF file as response content.",
+            "operationId": "fetchCredentialById",
+            "security": [
+                {
+                    "SessionAuth": []
+                }
+            ],
+            "parameters": [
+                {
+                    "name": "walletId",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    },
+                    "description": "Unique identifier of the user's wallet"
+                },
+                {
+                    "name": "credentialId",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    },
+                    "description": "Unique identifier of the credential to be retrieved"
+                },
+                {
+                    "name": "locale",
+                    "in": "query",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    },
+                    "description": "Language preference for rendering the Verifiable Credential"
+                },
+                {
+                    "name": "action",
+                    "in": "query",
+                    "required": false,
+                    "schema": {
+                        "type": "string",
+                        "enum": ["inline", "download"],
+                        "default": "inline"
+                    },
+                    "description": "Controls how the credential should be displayed (inline or as a download)"
+                }
+            ],
+            "responses": {
+                "200": {
+                    "description": "Verifiable Credential fetched successfully",
+                    "headers": {
+                        "Content-Disposition": {
+                            "description": "Indicates if the file is displayed inline or downloaded",
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "content": {
+                        "application/pdf": {
+                            "schema": {
+                                "type": "string",
+                                "format": "binary"
+                            }
+                        }
+                    }
+                },
+                "500": {
+                    "description": "Internal server error",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Error"
+                            },
+                            "examples": {
+                                "Wallet Key missing in session": {
+                                    "value": {
+                                        "errorCode": "RESIDENT-APP-054",
+                                        "errorMessage": "Wallet key is missing in session"
+                                    }
+                                },
+                                "Database connection failure": {
+                                    "value": {
+                                        "errorCode": "RESIDENT-APP-047",
+                                        "errorMessage": "Failed to connect to the shared database while fetching Verifiable Credential from the database"
+                                    }
+                                },
+                                "Unexpected Server Error": {
+                                    "value": {
+                                        "errorCode": "RESIDENT-APP-054",
+                                        "errorMessage": "Unexpected error occurred while fetching Verifiable Credential"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+"/wallets": {
             "post": {
                 "tags": [
                     "Wallets"
