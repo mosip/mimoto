@@ -133,10 +133,9 @@ public class OAuth2LoginTests {
     }
 
     @Test
-    public void shouldBeRedirectedToRedirectEndpointOnUnauthenticatedAccessToProtectedEndpoint() throws Exception {
+    public void shouldReturn401OnUnauthenticatedAccessToProtectedEndpoint() throws Exception {
         mockMvc.perform(get("/users/me"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl(injiWebUrl + "/login"));
+                .andExpect(status().is4xxClientError());
     }
 
     @Test
