@@ -212,7 +212,7 @@ public class WalletCredentialServiceTest {
         configs.put(credentialType, credentialsSupportedResponse);
         wellKnownResponse.setCredentialConfigurationsSupported(configs);
 
-        when(walletCredentialsRepository.findById(credentialId)).thenReturn(Optional.of(verifiableCredential));
+        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
         when(encryptionDecryptionUtil.decryptCredential(encryptedCredential, base64Key)).thenReturn(decryptedCredential);
         when(issuersService.getIssuerDetails(issuerId)).thenReturn(getMockIssuerDTO());
         when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
@@ -258,7 +258,7 @@ public class WalletCredentialServiceTest {
 
         VerifiableCredential verifiableCredential = getVerifiableCredential(credentialId, walletId, encryptedCredential, issuerId, credentialType);
 
-        when(walletCredentialsRepository.findById(credentialId)).thenReturn(Optional.of(verifiableCredential));
+        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
         when(encryptionDecryptionUtil.decryptCredential(encryptedCredential, base64Key))
                 .thenThrow(new RuntimeException("Decryption failed"));
 
@@ -279,7 +279,7 @@ public class WalletCredentialServiceTest {
 
         VerifiableCredential verifiableCredential = getVerifiableCredential(credentialId, walletId, encryptedCredential, issuerId, credentialType);
 
-        when(walletCredentialsRepository.findById(credentialId)).thenReturn(Optional.of(verifiableCredential));
+        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
         when(encryptionDecryptionUtil.decryptCredential(encryptedCredential, base64Key)).thenReturn(decryptedCredential);
         when(issuersService.getIssuerDetails(issuerId)).thenThrow(new ApiNotAccessibleException());
 
@@ -309,7 +309,7 @@ public class WalletCredentialServiceTest {
         VCCredentialResponse vcResponse = new VCCredentialResponse();
         CredentialIssuerConfiguration issuerConfig = getCredentialIssuerConfigurationResponseDto(issuerId, credentialType, List.of());
 
-        when(walletCredentialsRepository.findById(credentialId)).thenReturn(Optional.of(verifiableCredential));
+        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
         when(encryptionDecryptionUtil.decryptCredential(encryptedCredential, base64Key)).thenReturn(decryptedCredential);
         when(issuersService.getIssuerDetails(issuerId)).thenReturn(getMockIssuerDTO());
         when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
