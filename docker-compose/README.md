@@ -36,6 +36,41 @@ Refer [here](https://docs.mosip.io/inji/inji-mobile-wallet/customization-overvie
    * http://localhost:8099/v1/mimoto/issuers/StayProtected
    * http://localhost:8099/v1/mimoto/issuers/StayProtected/well-known-proxy
 
+## How to create Google Client Credentials
+
+To enable Google OAuth2.0 authentication, follow these steps:
+
+1. **Go to the Google Cloud Console**:
+   - Visit [Google Cloud Console](https://console.cloud.google.com/).
+
+2. **Create a New Project**:
+   - If you don’t already have a project, create a new one by clicking on the project dropdown and selecting "New Project".
+
+3. **Enable the OAuth Consent Screen**:
+   - Navigate to "APIs & Services" > "OAuth consent screen".
+   - Select "External" for the user type and configure the required fields (e.g., app name, support email, etc.).
+   - Save the changes.
+4. **Create OAuth 2.0 Credentials**:
+   - Navigate to "APIs & Services" > "Credentials".
+   - Click "Create Credentials" > "OAuth 2.0 Client IDs".
+   - Select "Web application" as the application type.
+
+5. **Configure Authorized JavaScript Origins**:
+   - Add `http://localhost:8099` to the "Authorized JavaScript origins".
+
+6. **Configure Authorized Redirect URIs**:
+   - Add `http://localhost:8099/v1/mimoto/oauth2/callback/google` to the "Authorized redirect URIs".
+
+7. **Save and Retrieve Client Credentials**:
+   - After saving, you will receive a `Client ID` and `Client Secret`.
+
+8. **Update `docker-compose.yml`**:
+   - Replace the placeholders in the `docker-compose.yml` file with the generated credentials:
+
+   ```yaml
+       environment:
+         - GOOGLE_OAUTH_CLIENT_ID=<your-client-id>
+         - GOOGLE_OAUTH_CLIENT_SECRET=<your-client-secret>
 
 Note:
 - Replace mosipbox.public.url, mosip.api.public.url with your public accessible domain. For dev or local env [ngrok](https://ngrok.com/docs/getting-started/) is recommended.
