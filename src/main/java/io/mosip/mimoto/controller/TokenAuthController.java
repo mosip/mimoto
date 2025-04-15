@@ -31,7 +31,7 @@ public class TokenAuthController {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Unsupported provider: " + provider);
                 }
                 tokenService.processToken(idTokenString, provider, request, response);
-                return ResponseEntity.ok(provider + " session created.");
+                return ResponseEntity.ok(" Session created.");
             } catch (Exception e) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired ID token: " + e.getMessage());
             }

@@ -1,5 +1,7 @@
 package io.mosip.mimoto.controller;
 
+import io.mosip.kernel.core.crypto.exception.InvalidDataException;
+import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.WalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.service.WalletService;
@@ -70,9 +72,12 @@ public class WalletsController {
                 return ResponseEntity.status(HttpStatus.OK).body(response);
             }
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        } catch (InvalidDataException exception) {
+            log.error("Incorrect pin to unlock the wallet ", exception);
+            return Utilities.getErrorResponseEntityFromPlatformErrorMessage(USER_WALLET_RETRIEVAL_EXCEPTION, HttpStatus.UNAUTHORIZED, MediaType.APPLICATION_JSON);
         } catch (Exception exception) {
             log.error("Error occurred while retrieving user wallet ", exception);
-            return Utilities.getErrorResponseEntityWithoutWrapper(exception, USER_WALLET_RETRIEVAL_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,MediaType.APPLICATION_JSON);
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, USER_WALLET_RETRIEVAL_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
     }
 }
