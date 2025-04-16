@@ -148,7 +148,7 @@ public class Config {
                 )
                 .authorizeHttpRequests(authz -> authz
                         // make existing endpoints public
-                        .requestMatchers("/safetynet/**", "/allProperties", "/credentials/**",
+                        .requestMatchers("/safetynet/**", "/actuator/**", "/allProperties", "/credentials/**",
                                 "/credentialshare/**","/binding-otp","/wallet-binding","/get-token/**",
                                 "/issuers","/issuers/**","/authorize","/req/otp","/vid","/req/auth/**",
                                 "/req/individualId/otp","/aid/get-individual-id","/session/status",
