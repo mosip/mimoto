@@ -65,6 +65,9 @@ WORKDIR /home/${container_user}
 
 ENV work_dir=/home/${container_user}
 
+# create directory - data under working directory to store JSON files in OTP flow credential download
+RUN mkdir -p ${work_dir}/data
+
 # change volume to whichever storage directory you want to use for this container.
 VOLUME ${work_dir}/logs ${work_dir}/Glowroot
 
