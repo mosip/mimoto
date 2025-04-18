@@ -258,6 +258,18 @@ public class Utilities {
         return (ResponseEntity<T>) responseEntity.body(new ErrorDTO(errorCode, errorMessage));
     }
 
+    public static <T> ResponseEntity<T> getErrorResponseEntityFromPlatformErrorMessage(
+            PlatformErrorMessages message, HttpStatus status, MediaType contentType) {
+        String errorMessage = message.getMessage();
+        String errorCode = message.getCode();
+
+        ResponseEntity.BodyBuilder responseEntity = ResponseEntity.status(status);
+        if (contentType != null) {
+            responseEntity.contentType(contentType);
+        }
+        return (ResponseEntity<T>) responseEntity.body(new ErrorDTO(errorCode, errorMessage));
+    }
+
     public static List<ErrorDTO> getErrors(String errorCode, String errorMessage) {
         ErrorDTO errorDTO = new ErrorDTO(errorCode, errorMessage);
         return Lists.newArrayList(errorDTO);

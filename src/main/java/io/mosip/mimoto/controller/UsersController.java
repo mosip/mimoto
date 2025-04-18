@@ -69,7 +69,7 @@ public class UsersController {
         try {
             UserMetadataDTO userMetadataDTO = (UserMetadataDTO) session.getAttribute("userMetadata");
             if (userMetadataDTO == null) {
-                throw new LoginSessionException(USER_METADATA_CACHE_FETCH_EXCEPTION.getCode(), "No user metadata present in cache", HttpStatus.INTERNAL_SERVER_ERROR);
+                throw new LoginSessionException(USER_METADATA_CACHE_FETCH_EXCEPTION.getCode(), "No user metadata present in cache", HttpStatus.UNAUTHORIZED);
             }
             return ResponseEntity.status(HttpStatus.OK).body(userMetadataDTO);
         }  catch (Exception exception) {
