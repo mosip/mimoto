@@ -63,6 +63,7 @@ public class WalletsController {
             // If wallet_key does not exist in the session, fetch it and set it in the session
             String walletKey = walletService.getWalletKey((String) httpSession.getAttribute("userId"), walletId, wallet.getWalletPin());
             httpSession.setAttribute("wallet_key", walletKey);
+            httpSession.setAttribute("wallet_id", walletId);
             WalletResponseDto response = new WalletResponseDto(walletId);
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception exception) {

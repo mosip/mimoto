@@ -5,6 +5,7 @@ import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dbentity.WalletMetadata;
 import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.repository.WalletRepository;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,8 @@ import java.util.UUID;
 
 @Component
 public class WalletUtil {
+    private static final String SESSION_WALLET_KEY = "wallet_key";
+    private static final String SESSION_WALLET_ID = "wallet_id";
 
     @Autowired
     private WalletRepository walletRepository;
@@ -69,5 +72,21 @@ public class WalletUtil {
             proofSigningKeys.add(signingKey);
         }
         return proofSigningKeys;
+    }
+
+    public static String getSessionWalletKey(HttpSession session) {
+        Object key = session.getAttribute(SESSION_WALLET_KEY);
+        if (key == null) throw new RuntimeException("Wallet Key is missing in session");
+        return key.toString();
+    }
+
+    public static void validateWalletId(HttpSession session, String walletIdFromRequest) {
+        Object sessionWalletId = session.getAttribute(SESSION_WALLET_ID);
+        if (sessionWalletId == null) throw new RuntimeException("Wallet Id is missing in session");
+
+        String walletIdInSession = sessionWalletId.toString();
+        if (!walletIdInSession.equals(walletIdFromRequest)) {
+            throw new RuntimeException("Invalid Wallet Id. Session and request Wallet Id do not match");
+        }
     }
 }

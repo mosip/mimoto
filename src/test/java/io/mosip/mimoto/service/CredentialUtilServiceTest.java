@@ -7,7 +7,7 @@ import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.IdpException;
 import io.mosip.mimoto.exception.VCVerificationException;
-import io.mosip.mimoto.model.SigningAlgorithm;
+import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.*;
@@ -28,8 +28,11 @@ import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
+import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.Map;
+
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,7 +43,7 @@ import static org.mockito.ArgumentMatchers.eq;
 @Slf4j
 public class CredentialUtilServiceTest {
     @InjectMocks
-    private CredentialUtilService credentialUtilService;
+    CredentialUtilService credentialUtilService;
     @Mock
     RestTemplate restTemplate;
     @Mock
@@ -55,6 +58,9 @@ public class CredentialUtilServiceTest {
     CredentialsVerifier credentialsVerifier;
     @Mock
     ObjectMapper objectMapper;
+
+    @Mock
+    Utilities utilities;
 
     private Map<String, String> tokenRequestParams = Map.of(
             "grant_type", "client_credentials",
@@ -204,5 +210,21 @@ public class CredentialUtilServiceTest {
         });
 
         assertEquals("Unsupported signing algorithm: ps256", actualError.getMessage());
+    }
+
+    @Test
+    public void shouldSuccessfullyGeneratePdfForVerifiableCredential() throws Exception {
+        VCCredentialResponse vcCredentialResponse = getVCCredentialResponseDTO("CredentialType1");
+        issuerDTO.setQr_code_type(QRCodeType.None);
+        Mockito.when(utilities.getCredentialSupportedTemplateString(issuerDTO.getIssuer_id(), "CredentialType1")).thenReturn("<html><body><h1>PDF</h1></body></html>");
+        ByteArrayInputStream expectedPDFByteArray = generatePdfFromHTML();
+
+        ByteArrayInputStream actualPDFByteArray =
+                credentialUtilService.generatePdfForVerifiableCredentials("CredentialType1", vcCredentialResponse, issuerDTO, issuerConfig.getCredentialConfigurationsSupported().get("CredentialType1"), "https://datashare_url", "once", "en");
+        
+        String expectedText = extractTextFromPdf(expectedPDFByteArray);
+        String actualText = extractTextFromPdf(actualPDFByteArray);
+
+        assertEquals(expectedText, actualText);
     }
 }
