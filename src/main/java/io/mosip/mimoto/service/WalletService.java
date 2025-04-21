@@ -12,4 +12,6 @@ public interface WalletService {
     String getWalletKey(String userId, String walletId, String pin);
 
     List<WalletResponseDto> getWallets(String userId);
+
+    void deleteWallet(String userId, String walletId) throws Exception;
 }

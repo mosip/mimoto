@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -88,5 +89,27 @@ public class WalletUtil {
         if (!walletIdInSession.equals(walletIdFromRequest)) {
             throw new RuntimeException("Invalid Wallet Id. Session and request Wallet Id do not match");
         }
+    }
+
+    public void deleteWalletAndCredentials(Wallet wallet){
+        //delete proof signing keys
+        if(wallet.getProofSigningKeys() != null){
+            wallet.getProofSigningKeys().clear();
+        }
+
+        //delete wallet meta data
+        if(wallet.getWalletMetadata() != null){
+            wallet.setWalletMetadata(null);
+        }
+
+        //clear wallet key
+        wallet.setWalletKey(null);
+
+        //remove cached data
+//        try{
+//            removeCacheData(wallet.getId());
+//        } catch (IOException e){
+//            log.error("Error removing cached wallet data", e);
+//        }
     }
 }

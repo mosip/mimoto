@@ -43,4 +43,17 @@ public class WalletServiceImpl implements WalletService {
                 .map(walletId -> new WalletResponseDto(walletId))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public void deleteWallet(String userId, String walletId) throws Exception{
+        Optional<Wallet> existingWallet = walletRepository.findByUserIdAndId(userId, walletId);
+        if(existingWallet.isEmpty()){
+            throw new IllegalArgumentException("Wallet not found or unauthorized access");
+        }
+        Wallet wallet = existingWallet.get();
+        //Clean related data
+        walletHelper.deleteWalletAndCredentials(wallet);
+        //Delete wallet
+        walletRepository.delete(wallet);
+    }
 }

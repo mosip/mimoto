@@ -71,4 +71,23 @@ public class WalletsController {
             return Utilities.getErrorResponseEntityWithoutWrapper(exception, USER_WALLET_RETRIEVAL_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,MediaType.APPLICATION_JSON);
         }
     }
+
+    @DeleteMapping("/{walletId}")
+    public ResponseEntity<Void> deleteWallet(@PathVariable("walletId") String walletId, HttpSession httpSession){
+        try{
+            walletService.deleteWallet((String) httpSession.getAttribute("userId"), walletId);
+
+            // Clear wallet-specific session attributes
+            httpSession.removeAttribute("wallet_key");
+
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException exception) {
+            log.error("Error occurred while deleting wallet: ", exception);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception exception) {
+            log.error("Error occurred while deleting wallet: ", exception);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 }

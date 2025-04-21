@@ -19,6 +19,8 @@ import java.util.UUID;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WalletServiceTest {
@@ -111,5 +113,37 @@ public class WalletServiceTest {
         when(walletHelper.createWallet(userId, name, pin)).thenThrow(new Exception("Test Exception"));
 
         walletService.createWallet(userId, name, pin);
+    }
+
+    @Test
+    public void shouldDeleteWalletSuccessfully() throws Exception {
+        when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
+
+        walletService.deleteWallet(userId, walletId);
+
+        verify(walletHelper).deleteWalletAndCredentials(wallet);
+        verify(walletRepository).delete(wallet);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowIllegalArgumentExceptionWhenWalletNotFound() throws Exception {
+        when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.empty());
+
+        walletService.deleteWallet(userId, walletId);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowIllegalArgumentExceptionWhenUserIdDoesNotMatch() throws Exception {
+        String differentUserId = UUID.randomUUID().toString();
+
+        walletService.deleteWallet(differentUserId, walletId);
+    }
+
+    @Test(expected = Exception.class)
+    public void shouldPropagateExceptionWhenErrorOccursDuringDeletion() throws Exception {
+        when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
+        doThrow(new RuntimeException("Database error")).when(walletRepository).delete(any(Wallet.class));
+
+        walletService.deleteWallet(userId, walletId);
     }
 }

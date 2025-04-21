@@ -30,6 +30,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = WalletsController.class)
 @AutoConfigureMockMvc
@@ -159,5 +163,48 @@ public class WalletsControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-051"))
                 .andExpect(jsonPath("$.errorMessage").value("Exception occurred when fetching the wallet data for given walletId and userId"));
+    }
+
+    @Test
+    public void shouldDeleteWalletSuccessfully() throws Exception {
+        // Set up session with wallet_key attribute
+        mockSession.setAttribute("wallet_key", "test-wallet-key");
+
+        doNothing().when(walletService).deleteWallet(userId, "walletId123");
+
+        MvcResult result = mockMvc.perform(delete("/wallets/walletId123")
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // Verify that wallet_key attribute is removed from session
+        assertNull(result.getRequest().getSession().getAttribute("wallet_key"));
+        verify(walletService).deleteWallet(userId, "walletId123");
+    }
+
+    @Test
+    public void shouldReturnNotFoundWhenWalletDoesNotExist() throws Exception {
+        doThrow(new IllegalArgumentException("Wallet not found or unauthorized access"))
+                .when(walletService).deleteWallet(userId, "nonExistentWalletId");
+
+        mockMvc.perform(delete("/wallets/nonExistentWalletId")
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturnInternalServerErrorWhenExceptionOccursDuringDeletion() throws Exception {
+        doThrow(new RuntimeException("Database error"))
+                .when(walletService).deleteWallet(userId, "walletId123");
+
+        mockMvc.perform(delete("/wallets/walletId123")
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isInternalServerError());
     }
 }

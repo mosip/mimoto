@@ -1,6 +1,8 @@
 package io.mosip.mimoto.util;
 
+import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dbentity.Wallet;
+import io.mosip.mimoto.dbentity.WalletMetadata;
 import io.mosip.mimoto.repository.WalletRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -107,5 +109,87 @@ class WalletUtilTest {
         assertEquals(encryptionType, savedWallet.getWalletMetadata().getEncryptionType());
         assertNotNull(savedWallet.getProofSigningKeys());
         assertEquals(4, savedWallet.getProofSigningKeys().size());
+    }
+
+    @Test
+    void shouldClearProofSigningKeysWhenDeletingWallet() {
+        // Create a wallet with proof signing keys
+        Wallet wallet = new Wallet();
+        List<ProofSigningKey> proofSigningKeys = new ArrayList<>();
+        ProofSigningKey key1 = new ProofSigningKey();
+        key1.setId(UUID.randomUUID().toString());
+        ProofSigningKey key2 = new ProofSigningKey();
+        key2.setId(UUID.randomUUID().toString());
+        proofSigningKeys.add(key1);
+        proofSigningKeys.add(key2);
+        wallet.setProofSigningKeys(proofSigningKeys);
+
+        // Set wallet metadata
+        WalletMetadata metadata = new WalletMetadata();
+        metadata.setName("Test Wallet");
+        metadata.setEncryptionAlgo("AES");
+        metadata.setEncryptionType("encryptWithPin");
+        wallet.setWalletMetadata(metadata);
+
+        // Set wallet key
+        wallet.setWalletKey("encrypted-wallet-key");
+
+        // Call the method under test
+        walletUtil.deleteWalletAndCredentials(wallet);
+
+        // Verify that proof signing keys are cleared
+        assertTrue(wallet.getProofSigningKeys().isEmpty());
+        // Verify that wallet metadata is set to null
+        assertNull(wallet.getWalletMetadata());
+        // Verify that wallet key is set to null
+        assertNull(wallet.getWalletKey());
+    }
+
+    @Test
+    void shouldHandleNullProofSigningKeysWhenDeletingWallet() {
+        // Create a wallet without proof signing keys
+        Wallet wallet = new Wallet();
+        wallet.setProofSigningKeys(null);
+
+        // Set wallet metadata
+        WalletMetadata metadata = new WalletMetadata();
+        metadata.setName("Test Wallet");
+        wallet.setWalletMetadata(metadata);
+
+        // Set wallet key
+        wallet.setWalletKey("encrypted-wallet-key");
+
+        // Call the method under test
+        walletUtil.deleteWalletAndCredentials(wallet);
+
+        // Verify that wallet metadata is set to null
+        assertNull(wallet.getWalletMetadata());
+        // Verify that wallet key is set to null
+        assertNull(wallet.getWalletKey());
+    }
+
+    @Test
+    void shouldHandleNullWalletMetadataWhenDeletingWallet() {
+        // Create a wallet without metadata
+        Wallet wallet = new Wallet();
+        wallet.setWalletMetadata(null);
+
+        // Set proof signing keys
+        List<ProofSigningKey> proofSigningKeys = new ArrayList<>();
+        ProofSigningKey key = new ProofSigningKey();
+        key.setId(UUID.randomUUID().toString());
+        proofSigningKeys.add(key);
+        wallet.setProofSigningKeys(proofSigningKeys);
+
+        // Set wallet key
+        wallet.setWalletKey("encrypted-wallet-key");
+
+        // Call the method under test
+        walletUtil.deleteWalletAndCredentials(wallet);
+
+        // Verify that proof signing keys are cleared
+        assertTrue(wallet.getProofSigningKeys().isEmpty());
+        // Verify that wallet key is set to null
+        assertNull(wallet.getWalletKey());
     }
 }
