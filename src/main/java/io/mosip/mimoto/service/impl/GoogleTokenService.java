@@ -2,15 +2,18 @@ package io.mosip.mimoto.service.impl;
 
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
+import io.mosip.mimoto.exception.OAuth2AuthenticationException;
 import io.mosip.mimoto.service.SecurityContextService;
 import io.mosip.mimoto.service.TokenService;
 import io.mosip.mimoto.service.UserMetadataService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -25,7 +28,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.mosip.mimoto.exception.PlatformErrorMessages.OAUTH2_AUTHENTICATION_EXCEPTION;
+
 @Service("google")
+@Slf4j
 public class GoogleTokenService implements TokenService {
 
     @Autowired
@@ -42,7 +48,7 @@ public class GoogleTokenService implements TokenService {
     private String googleClientId;
 
     @Override
-    public void processToken(String idToken, String provider, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public void processToken(String idToken, String provider, HttpServletRequest request, HttpServletResponse response) throws OAuth2AuthenticationException {
         Jwt jwt = decodeAndValidateToken(idToken);
 
         String email = extractClaim(jwt, "email");
@@ -55,21 +61,24 @@ public class GoogleTokenService implements TokenService {
             setupSession(request, provider, name, picture, email, userId);
             setupSecurityContext(provider, sub, name, picture, email, request, response);
         } else {
-            throw new Exception("Could not extract user information from ID token.");
+            log.error("Could not extract user information from ID token ");
+            throw new OAuth2AuthenticationException(OAUTH2_AUTHENTICATION_EXCEPTION.getCode(),OAUTH2_AUTHENTICATION_EXCEPTION.getMessage(), HttpStatus.UNAUTHORIZED);
         }
     }
 
-    private Jwt decodeAndValidateToken(String idToken) throws Exception {
+    private Jwt decodeAndValidateToken(String idToken) throws OAuth2AuthenticationException {
         Jwt jwt = googleIdTokenDecoder.decode(idToken);
 
         String issuer = jwt.getIssuer().toString();
         if (!issuer.equals("https://accounts.google.com") && !issuer.equals("accounts.google.com")) {
-            throw new Exception("Invalid ID token issuer: " + issuer);
+            log.error("Invalid ID token issuer: " + issuer);
+            throw new OAuth2AuthenticationException(OAUTH2_AUTHENTICATION_EXCEPTION.getCode(),OAUTH2_AUTHENTICATION_EXCEPTION.getMessage(), HttpStatus.UNAUTHORIZED);
         }
 
         String audience = jwt.getAudience().stream().findFirst().orElse(null);
         if (!googleClientId.equals(audience)) {
-            throw new Exception("Invalid ID token audience: " + audience);
+            log.error("Invalid ID token audience: " + audience);
+            throw new OAuth2AuthenticationException(OAUTH2_AUTHENTICATION_EXCEPTION.getCode(),OAUTH2_AUTHENTICATION_EXCEPTION.getMessage(), HttpStatus.UNAUTHORIZED);
         }
 
         return jwt;
