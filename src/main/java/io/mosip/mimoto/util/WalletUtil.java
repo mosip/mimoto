@@ -1,5 +1,6 @@
 package io.mosip.mimoto.util;
 
+import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dbentity.WalletMetadata;
@@ -17,8 +18,6 @@ import java.util.UUID;
 
 @Component
 public class WalletUtil {
-    private static final String SESSION_WALLET_KEY = "wallet_key";
-    private static final String SESSION_WALLET_ID = "wallet_id";
 
     @Autowired
     private WalletRepository walletRepository;
@@ -76,13 +75,13 @@ public class WalletUtil {
     }
 
     public static String getSessionWalletKey(HttpSession session) {
-        Object key = session.getAttribute(SESSION_WALLET_KEY);
+        Object key = session.getAttribute(SessionKeys.WALLET_KEY);
         if (key == null) throw new RuntimeException("Wallet Key is missing in session");
         return key.toString();
     }
 
     public static void validateWalletId(HttpSession session, String walletIdFromRequest) {
-        Object sessionWalletId = session.getAttribute(SESSION_WALLET_ID);
+        Object sessionWalletId = session.getAttribute(SessionKeys.WALLET_ID);
         if (sessionWalletId == null) throw new RuntimeException("Wallet Id is missing in session");
 
         String walletIdInSession = sessionWalletId.toString();

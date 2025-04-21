@@ -27,6 +27,8 @@ public class EncryptionDecryptionUtil {
     private static final int GCM_IV_LENGTH = 12;   // 12-byte IV for GCM
     private static final int GCM_TAG_LENGTH = 128; // 128-bit authentication tag
 
+    public static final String USER_PII_KEY_REFERENCE_ID = "user_pii";
+
     @Autowired
     private CryptomanagerService cryptomanagerService;
     private

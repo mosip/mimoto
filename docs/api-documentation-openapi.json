@@ -2780,8 +2780,8 @@
                             }
                         }
                     },
-                    "500": {
-                        "description": "Internal server error",
+                    "401": {
+                        "description": "Unauthorized",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2793,7 +2793,19 @@
                                             "errorCode": "RESIDENT-APP-052",
                                             "errorMessage": "No user metadata present in cache"
                                         }
-                                    },
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
                                     "Unexpected server error": {
                                         "value": {
                                             "errorCode": "RESIDENT-APP-052",
@@ -3062,101 +3074,109 @@
                 }
             }
         },
-    "/wallets/{walletId}/credentials/{credentialId}": {
-        "get": {
-            "tags": ["Wallet Credentials"],
-            "summary": "Fetch a Verifiable Credential by ID",
-            "description": "This API retrieves a specific Verifiable Credential for the provided wallet ID and credential ID. It uses session-based authentication. The session ID is extracted from the Cookie header and used to validate the session and retrieve the wallet encryption key. Depending on the action (inline or download), the response disposition will change. On success, it returns a PDF file as response content.",
-            "operationId": "fetchCredentialById",
-            "security": [
-                {
-                    "SessionAuth": []
-                }
-            ],
-            "parameters": [
-                {
-                    "name": "walletId",
-                    "in": "path",
-                    "required": true,
-                    "schema": {
-                        "type": "string"
-                    },
-                    "description": "Unique identifier of the user's wallet"
-                },
-                {
-                    "name": "credentialId",
-                    "in": "path",
-                    "required": true,
-                    "schema": {
-                        "type": "string"
-                    },
-                    "description": "Unique identifier of the credential to be retrieved"
-                },
-                {
-                    "name": "locale",
-                    "in": "query",
-                    "required": true,
-                    "schema": {
-                        "type": "string"
-                    },
-                    "description": "Language preference for rendering the Verifiable Credential"
-                },
-                {
-                    "name": "action",
-                    "in": "query",
-                    "required": false,
-                    "schema": {
-                        "type": "string",
-                        "enum": ["inline", "download"],
-                        "default": "inline"
-                    },
-                    "description": "Controls how the credential should be displayed (inline or as a download)"
-                }
-            ],
-            "responses": {
-                "200": {
-                    "description": "Verifiable Credential fetched successfully",
-                    "headers": {
-                        "Content-Disposition": {
-                            "description": "Indicates if the file is displayed inline or downloaded",
-                            "schema": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "content": {
-                        "application/pdf": {
-                            "schema": {
-                                "type": "string",
-                                "format": "binary"
-                            }
-                        }
+        "/wallets/{walletId}/credentials/{credentialId}": {
+            "get": {
+                "tags": [
+                    "Wallet Credentials"
+                ],
+                "summary": "Fetch a Verifiable Credential by ID to either preview it or download it based on the requirement",
+                "description": "This API is protected using session-based authentication. When a request is received, the session ID is extracted from the Cookie header and used to fetch session data from Redis for user authentication. Upon successful authentication, the wallet key is retrieved from the session and used to decrypt the credential data obtained from the database.\n\nThe API retrieves a specific Verifiable Credential based on the provided wallet ID and credential ID. Depending on the action query parameter (inline or download) received in the request, the Content-Disposition header in the response is adjusted to either display the credential in the browser or prompt a file download. On success, the API returns the credential as a PDF byte stream. In case of any errors, an appropriate error response is returned.",
+                "operationId": "fetchVerifiableCredentialById",
+                "security": [
+                    {
+                        "SessionAuth": []
                     }
-                },
-                "500": {
-                    "description": "Internal server error",
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/Error"
-                            },
-                            "examples": {
-                                "Wallet Key missing in session": {
-                                    "value": {
-                                        "errorCode": "RESIDENT-APP-054",
-                                        "errorMessage": "Wallet key is missing in session"
-                                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Unique identifier of the user's wallet"
+                    },
+                    {
+                        "name": "credentialId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Unique identifier of the Verifiable Credential to be retrieved"
+                    },
+                    {
+                        "name": "locale",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Language preference in which the user expects the Verifiable Credential to be rendered"
+                    },
+                    {
+                        "name": "action",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "inline"
+                        },
+                        "description": "Controls how the credential should be displayed. If it is sent as download, the response will include a header to download the file. For any other value or if not provided, it defaults to inline to preview the file in the browser."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Verifiable Credential fetched successfully",
+                        "headers": {
+                            "Content-Disposition": {
+                                "description": "Indicates if the verifiable credential is displayed inline or downloaded",
+                                "schema": {
+                                    "type": "string",
+                                    "example": "inline; filename=\"credential.pdf\""
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
                                 },
-                                "Database connection failure": {
-                                    "value": {
-                                        "errorCode": "RESIDENT-APP-047",
-                                        "errorMessage": "Failed to connect to the shared database while fetching Verifiable Credential from the database"
+                                "examples": {
+                                    "Success response": {
+                                        "value": "PDF content in Binary Format"
                                     }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
                                 },
-                                "Unexpected Server Error": {
-                                    "value": {
-                                        "errorCode": "RESIDENT-APP-054",
-                                        "errorMessage": "Unexpected error occurred while fetching Verifiable Credential"
+                                "examples": {
+                                    "Wallet Key missing in session": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-055",
+                                            "errorMessage": "Wallet key is missing in session"
+                                        }
+                                    },
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-047",
+                                            "errorMessage": "Failed to connect to the shared database while fetching Verifiable Credential from the database"
+                                        }
+                                    },
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-055",
+                                            "errorMessage": "Unexpected error occurred while fetching Verifiable Credential"
+                                        }
                                     }
                                 }
                             }
@@ -3164,9 +3184,8 @@
                     }
                 }
             }
-        }
-    },
-"/wallets": {
+        },
+        "/wallets": {
             "post": {
                 "tags": [
                     "Wallets"
@@ -3364,6 +3383,24 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Invalid PIN": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-051",
+                                            "errorMessage": "Exception occurred due to an incorrect pin to unlock the wallet"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "content": {
@@ -3384,6 +3421,94 @@
                     }
                 }
             }
+        },
+        "/auth/{provider}/token-login": {
+            "post": {
+                "tags": ["OAuth2 Authentication"],
+                "summary": "Login and create session using OAuth2 ID token",
+                "description": "Accepts an OAuth2 ID token in the Authorization header and establishes a session by populating Spring Security context.\n\nFetch the ID token from a supported OAuth2 provider (such as Google or Microsoft) and provide it in the request as a Bearer token.",
+                "operationId": "loginWithOAuth2IdToken",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "google"
+                        },
+                        "description": "The OAuth2 provider to use for login. Example values: 'google', 'microsoft', 'facebook'."
+                    },
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "Bearer <id-token>"
+                        },
+                        "description": "The OAuth2 ID token that must be provided in the 'Authorization' header, prefixed with 'Bearer '."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully logged in and session created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Success message indicating that the session has been created"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": "Session created."
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - invalid or expired token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Error message explaining why the session is not created"
+                                },
+                                "examples": {
+                                    "Invalid token response": {
+                                        "value": "Invalid or expired ID token: please provide a valid token"
+                                    },
+                                    "Token not provided": {
+                                        "value": "Bearer ID token required"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Unsupported provider",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Error message explaining why the session is not created"
+                                },
+                                "examples": {
+                                    "Unsupported provider response": {
+                                        "value": "Unsupported provider: provider123"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -3393,6 +3518,12 @@
                 "in": "cookie",
                 "name": "SESSION",
                 "description": "Session-based authentication using a session ID stored in the cookie. The client must send the 'SESSION' cookie (e.g., SESSION=<session-id>) with each request."
+            },
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "JWT-based authentication. Use a valid OAuth2 ID token (e.g., from Google or Microsoft) in the Authorization header as a Bearer token. Example: 'Authorization: Bearer eyJhbGciOi...'. This token will be used to authenticate the user and establish a session."
             }
         },
         "schemas": {
