@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.kernel.biometrics.spi.CbeffUtil;
 import io.mosip.kernel.cbeffutil.impl.CbeffImpl;
 import io.mosip.kernel.keygenerator.bouncycastle.KeyGenerator;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONObject;
 import org.springframework.boot.SpringApplication;
@@ -34,11 +37,18 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 }, exclude = {
         SecurityAutoConfiguration.class
 })
-@EntityScan(basePackages = {"io.mosip.mimoto.dbentity","io.mosip.kernel.keymanagerservice.entity"})
-@EnableJpaRepositories(basePackages = {"io.mosip.mimoto.repository","io.mosip.kernel.keymanagerservice.repository"})
+@EntityScan(basePackages = {"io.mosip.mimoto.dbentity", "io.mosip.kernel.keymanagerservice.entity"})
+@EnableJpaRepositories(basePackages = {"io.mosip.mimoto.repository", "io.mosip.kernel.keymanagerservice.repository"})
 @Slf4j
 @EnableScheduling
 @EnableAsync
+@SecurityScheme(
+        name = "SessionAuth",
+        type = SecuritySchemeType.APIKEY,
+        in = SecuritySchemeIn.COOKIE,
+        paramName = "SESSION",
+        description = "Session-based authentication using a session ID stored in the cookie. The client must send the 'SESSION' cookie (e.g., SESSION=<session-id>) with each request."
+)
 public class MimotoServiceApplication {
 
     @Bean

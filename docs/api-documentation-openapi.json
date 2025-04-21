@@ -3336,7 +3336,7 @@
                 "tags": [
                     "Wallets"
                 ],
-                "summary": "Unlock a Wallet",
+                "summary": "Unlock an existing Wallet",
                 "description": "This API is secured using session-based authentication. Upon receiving a request, the session is first retrieved using the session ID extracted from the Cookie header to authenticate the user. Once authenticated, the user's ID is obtained from the session stored in Redis. Using this user ID along with the provided wallet ID and PIN, the corresponding wallet key is fetched and stored in the session. If successful then the API returns a response containing the wallet ID otherwise an appropriate error response is returned.",
                 "operationId": "unlockWallet",
                 "security": [
