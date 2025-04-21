@@ -13,6 +13,7 @@ import io.mosip.mimoto.util.WalletUtil;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -37,7 +38,7 @@ public class WalletCredentialsController {
     private CredentialUtilService credentialUtilService;
 
     @PostMapping
-    public ResponseEntity<?> downloadCredential(@PathVariable("walletId") String walletId, @RequestParam Map<String, String> params, HttpSession httpSession) {
+    public ResponseEntity<VerifiableCredentialResponseDTO> downloadCredential(@PathVariable("walletId") String walletId, @RequestParam Map<String, String> params, HttpSession httpSession) {
         //TODO: remove this default value after the apitest is updated
         params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
 
@@ -71,7 +72,7 @@ public class WalletCredentialsController {
     }
 
     @GetMapping
-    public ResponseEntity<?> fetchAllCredentialsForGivenWallet(@PathVariable("walletId") String walletId, @RequestParam("locale") String locale, HttpSession httpSession) {
+    public ResponseEntity<List<VerifiableCredentialResponseDTO>> fetchAllCredentialsForGivenWallet(@PathVariable("walletId") String walletId, @RequestParam("locale") String locale, HttpSession httpSession) {
         try {
             log.info("Fetching all credentials for walletId: {}", walletId);
 
@@ -91,7 +92,7 @@ public class WalletCredentialsController {
     }
 
     @GetMapping("/{credentialId}")
-    public ResponseEntity<?> getVerifiableCredential(@PathVariable("walletId") String walletId, @PathVariable("credentialId") String credentialId, @RequestParam("locale") String locale, @RequestParam(value = "action", defaultValue = "inline") String action, HttpSession httpSession) {
+    public ResponseEntity<InputStreamResource> getVerifiableCredential(@PathVariable("walletId") String walletId, @PathVariable("credentialId") String credentialId, @RequestParam("locale") String locale, @RequestParam(value = "action", defaultValue = "inline") String action, HttpSession httpSession) {
         try {
             log.info("Fetching credentialId: {} from walletId: {}", credentialId, walletId);
 

@@ -1,5 +1,6 @@
 package io.mosip.mimoto.controller;
 
+import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.exception.LoginSessionException;
@@ -27,6 +28,8 @@ import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 @RequestMapping(value = "/users/me")
 public class UsersController {
 
+
+
     @Autowired
     private UserMetadataRepository userMetadataRepository;
 
@@ -40,9 +43,12 @@ public class UsersController {
 
             UserMetadata userMetadata = fetchUserMetadata(authentication.getName(), identityProvider);
 
-            UserMetadataDTO userMetadataDTO = new UserMetadataDTO(encryptionDecryptionUtill.decrypt(userMetadata.getDisplayName(), "user_pii", "", ""),
-                    encryptionDecryptionUtill.decrypt(userMetadata.getProfilePictureUrl(), "user_pii", "", ""),
-                    encryptionDecryptionUtill.decrypt(userMetadata.getEmail(), "user_pii", "", ""));
+            UserMetadataDTO userMetadataDTO = new UserMetadataDTO(encryptionDecryptionUtill.decrypt(userMetadata.getDisplayName(),
+                    EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""),
+                    encryptionDecryptionUtill.decrypt(userMetadata.getProfilePictureUrl(),
+                            EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""),
+                    encryptionDecryptionUtill.decrypt(userMetadata.getEmail(), EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID,
+                            "", ""));
 
             return ResponseEntity.status(HttpStatus.OK).body(userMetadataDTO);
         } catch (OAuth2AuthenticationException exception) {
@@ -67,7 +73,7 @@ public class UsersController {
     @GetMapping("/cache")
     public ResponseEntity<UserMetadataDTO> getUserProfileFromCache(Authentication authentication, HttpSession session) {
         try {
-            UserMetadataDTO userMetadataDTO = (UserMetadataDTO) session.getAttribute("userMetadata");
+            UserMetadataDTO userMetadataDTO = (UserMetadataDTO) session.getAttribute(SessionKeys.USER_METADATA);
             if (userMetadataDTO == null) {
                 throw new LoginSessionException(USER_METADATA_CACHE_FETCH_EXCEPTION.getCode(), "No user metadata present in cache", HttpStatus.UNAUTHORIZED);
             }

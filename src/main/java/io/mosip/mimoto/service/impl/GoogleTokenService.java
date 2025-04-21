@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service.impl;
 
+import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.service.SecurityContextService;
 import io.mosip.mimoto.service.TokenService;
@@ -82,8 +83,8 @@ public class GoogleTokenService implements TokenService {
         HttpSession session = request.getSession(true);
         UserMetadataDTO userMetadataDTO = new UserMetadataDTO(name, picture, email);
         session.setAttribute("clientRegistrationId", provider);
-        session.setAttribute("userMetadata", userMetadataDTO);
-        session.setAttribute("userId", userId);
+        session.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
+        session.setAttribute(SessionKeys.USER_ID, userId);
     }
 
     private void setupSecurityContext(String provider, String sub, String name, String picture, String email, HttpServletRequest request, HttpServletResponse response) {
