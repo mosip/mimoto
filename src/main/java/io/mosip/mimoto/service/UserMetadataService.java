@@ -56,9 +56,9 @@ public class UserMetadataService {
     }
 
     private boolean checkAndUpdateEncryptedField(Supplier<String> getter, Consumer<String> setter, String newValue) {
-        String decryptedValue = encryptionDecryptionUtil.decrypt(getter.get(), "user_pii", "", "");
+        String decryptedValue = encryptionDecryptionUtil.decrypt(getter.get(), EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", "");
         if (!decryptedValue.equals(newValue)) {
-            setter.accept(encryptionDecryptionUtil.encrypt(newValue, "user_pii", "", ""));
+            setter.accept(encryptionDecryptionUtil.encrypt(newValue, EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""));
             return true;
         }
         return false;
@@ -71,9 +71,9 @@ public class UserMetadataService {
         userMetadata.setId(userId);
         userMetadata.setProviderSubjectId(providerSubjectId);
         userMetadata.setIdentityProvider(identityProvider);
-        userMetadata.setDisplayName(encryptionDecryptionUtil.encrypt(displayName, "user_pii", "", ""));
-        userMetadata.setProfilePictureUrl(encryptionDecryptionUtil.encrypt(profilePictureUrl, "user_pii", "", ""));
-        userMetadata.setEmail(encryptionDecryptionUtil.encrypt(email, "user_pii", "", ""));
+        userMetadata.setDisplayName(encryptionDecryptionUtil.encrypt(displayName, EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""));
+        userMetadata.setProfilePictureUrl(encryptionDecryptionUtil.encrypt(profilePictureUrl, EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""));
+        userMetadata.setEmail(encryptionDecryptionUtil.encrypt(email, EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""));
         userMetadata.setCreatedAt(now);
         userMetadata.setUpdatedAt(now);
 

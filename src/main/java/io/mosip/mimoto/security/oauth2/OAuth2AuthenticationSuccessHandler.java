@@ -1,5 +1,6 @@
 package io.mosip.mimoto.security.oauth2;
 
+import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.service.UserMetadataService;
 import jakarta.servlet.ServletException;
@@ -55,8 +56,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             UserMetadataDTO userMetadataDTO = new UserMetadataDTO(displayName,
                     profilePictureUrl,
                     email);
-            session.setAttribute("userMetadata", userMetadataDTO);
-            session.setAttribute("userId", userId);
+            session.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
+            session.setAttribute(SessionKeys.USER_ID, userId);
             response.sendRedirect(injiWebUrl + "/login?status=success");
         } catch (DataAccessResourceFailureException exception) {
             log.error("Exception occurred while connecting to the database to store user data:", exception);

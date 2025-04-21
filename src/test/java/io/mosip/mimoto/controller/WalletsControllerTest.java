@@ -1,6 +1,7 @@
 package io.mosip.mimoto.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.WalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.service.WalletService;
@@ -58,8 +59,8 @@ public class WalletsControllerTest {
         walletRequestDto.setWalletPin("1234");
         mockSession = new MockHttpSession();
         mockSession.setAttribute("clientRegistrationId", "google");
-        mockSession.setAttribute("userId", "user123");
-        userId = (String) mockSession.getAttribute("userId");
+        mockSession.setAttribute(SessionKeys.USER_ID, "user123");
+        userId = (String) mockSession.getAttribute(SessionKeys.USER_ID);
     }
 
     @Test
