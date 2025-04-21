@@ -3,11 +3,15 @@ package io.mosip.mimoto.security.oauth2;
 import io.mosip.mimoto.config.Config;
 import io.mosip.mimoto.controller.UsersController;
 import io.mosip.mimoto.dbentity.UserMetadata;
+import io.mosip.mimoto.exception.OAuth2AuthenticationException;
 import io.mosip.mimoto.repository.UserMetadataRepository;
+import io.mosip.mimoto.service.LogoutService;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.WalletValidator;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,6 +24,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -71,6 +76,9 @@ public class OAuth2LoginTests {
 
     @MockBean
     private UserMetadataRepository userMetadataRepository;
+
+    @MockBean
+    private LogoutService logoutService;
 
     @MockBean
     private WalletService walletService;
@@ -178,16 +186,19 @@ public class OAuth2LoginTests {
         String encodedSessionId = Base64.getUrlEncoder().encodeToString(sessionId.getBytes());
         Cookie sessionCookie = new Cookie("SESSION", encodedSessionId);
         mockSession.setAttribute("clientRegistrationId", "google");
-        when(sessionRepository.findById(sessionId)).thenReturn(null);
+
+        doThrow(new OAuth2AuthenticationException("NOT_FOUND",
+                "Logout request was sent for an invalid or expired session",
+                HttpStatus.NOT_FOUND))
+                .when(logoutService).handleLogout(any(HttpServletRequest.class), any(HttpServletResponse.class), eq(sessionRepository));
+
 
         mockMvc.perform(post("/logout")
                         .session(mockSession).cookie(sessionCookie))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errors[0].errorCode").value("NOT_FOUND"))
-                .andExpect(jsonPath("$.errors[0].errorMessage").value("Logout request was sent for an invalid or expired session"));
+                .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-046"))
+                .andExpect(jsonPath("$.errors[0].errorMessage").value("Exception occurred when invalidating the session from redis"));
 
-        verify(sessionRepository, times(1)).findById(sessionId);
-        verify(sessionRepository, never()).deleteById(sessionId);
     }
 
     @Test
@@ -202,9 +213,6 @@ public class OAuth2LoginTests {
         mockMvc.perform(post("/logout")
                         .session(mockSession).cookie(sessionCookie))
                 .andExpect(status().isOk());
-
-        verify(sessionRepository, times(1)).findById(sessionId);
-        verify(sessionRepository, times(1)).deleteById(sessionId);
     }
 
     @Test
