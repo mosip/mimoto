@@ -1,5 +1,6 @@
 package io.mosip.mimoto.controller;
 
+import io.mosip.mimoto.exception.OAuth2AuthenticationException;
 import io.mosip.mimoto.service.TokenService;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -42,7 +43,7 @@ public class TokenAuthController {
                 }
                 tokenService.processToken(idTokenString, provider, request, response);
                 return ResponseEntity.ok(" Session created.");
-            } catch (Exception e) {
+            } catch (OAuth2AuthenticationException e) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired ID token: " + e.getMessage());
             }
         }

@@ -50,6 +50,10 @@ public class KeyGenerationUtil {
                 break;
         }
 
+        if (keyPairGenerator == null) {
+            throw new IllegalArgumentException("Unsupported algorithm: " + algorithm);
+        }
+
         return keyPairGenerator.generateKeyPair();
     }
 

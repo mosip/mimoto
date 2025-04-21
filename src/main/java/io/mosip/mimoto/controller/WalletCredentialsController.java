@@ -14,6 +14,7 @@ import io.mosip.mimoto.util.WalletUtil;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -53,7 +54,7 @@ public class WalletCredentialsController {
     @ApiResponse(responseCode = "400", description = "Bad Request - Invalid parameters or session", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Error.class), examples = @ExampleObject(value = "{\"errorCode\": \"RESIDENT-APP-052\", \"errorMessage\": \"Exception occurred while fetching credential types\"}")))
     @ApiResponse(responseCode = "500", description = "Internal Server Error - Error occurred while fetching or storing the credential", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Error.class), examples = @ExampleObject(value = "{\"errorCode\": \"RESIDENT-APP-052\", \"errorMessage\": \"Exception occurred while saving the credential\"}")))
     @PostMapping
-    public ResponseEntity<?> downloadCredential(@PathVariable("walletId") String walletId, @RequestParam Map<String, String> params, HttpSession httpSession) {
+    public ResponseEntity<VerifiableCredentialResponseDTO> downloadCredential(@PathVariable("walletId") String walletId, @RequestParam Map<String, String> params, HttpSession httpSession) {
         //TODO: remove this default value after the apitest is updated
         params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
 
@@ -90,7 +91,7 @@ public class WalletCredentialsController {
     @ApiResponse(responseCode = "400", description = "Bad Request - Invalid wallet ID or missing parameters", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Error.class), examples = @ExampleObject(value = "{\"errorCode\": \"RESIDENT-APP-053\", \"errorMessage\": \"Invalid wallet ID or missing parameters\"}")))
     @ApiResponse(responseCode = "500", description = "Internal Server Error - Error occurred while fetching credentials from the database", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Error.class), examples = @ExampleObject(value = "{\"errorCode\": \"RESIDENT-APP-054\", \"errorMessage\": \"Error occurred while fetching credentials for wallet\"}")))
     @GetMapping
-    public ResponseEntity<?> fetchAllCredentialsForGivenWallet(@PathVariable("walletId") String walletId, @RequestParam("locale") String locale, HttpSession httpSession) {
+    public ResponseEntity<List<VerifiableCredentialResponseDTO>> fetchAllCredentialsForGivenWallet(@PathVariable("walletId") String walletId, @RequestParam("locale") String locale, HttpSession httpSession) {
         try {
             log.info("Fetching all credentials for walletId: {}", walletId);
 
@@ -114,7 +115,7 @@ public class WalletCredentialsController {
     @ApiResponse(responseCode = "400", description = "Bad Request - Invalid wallet ID, credential ID or missing parameters", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Error.class), examples = @ExampleObject(value = "{\"errorCode\": \"RESIDENT-APP-053\", \"errorMessage\": \"Invalid wallet or credential ID\"}")))
     @ApiResponse(responseCode = "500", description = "Internal Server Error - Error occurred while fetching the Verifiable Credential", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Error.class), examples = @ExampleObject(value = "{\"errorCode\": \"RESIDENT-APP-054\", \"errorMessage\": \"Error occurred while fetching the Verifiable Credential\"}")))
     @GetMapping("/{credentialId}")
-    public ResponseEntity<?> getVerifiableCredential(@PathVariable("walletId") String walletId, @PathVariable("credentialId") String credentialId, @RequestParam("locale") String locale, @RequestParam(value = "action", defaultValue = "inline") String action, HttpSession httpSession) {
+    public ResponseEntity<InputStreamResource> getVerifiableCredential(@PathVariable("walletId") String walletId, @PathVariable("credentialId") String credentialId, @RequestParam("locale") String locale, @RequestParam(value = "action", defaultValue = "inline") String action, HttpSession httpSession) {
         try {
             log.info("Fetching credentialId: {} from walletId: {}", credentialId, walletId);
 

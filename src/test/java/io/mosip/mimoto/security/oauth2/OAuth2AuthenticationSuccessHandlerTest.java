@@ -1,12 +1,8 @@
 package io.mosip.mimoto.security.oauth2;
 
 import io.mosip.mimoto.config.Config;
-import io.mosip.mimoto.controller.UsersController;
-import io.mosip.mimoto.repository.UserMetadataRepository;
+import io.mosip.mimoto.service.LogoutService;
 import io.mosip.mimoto.service.UserMetadataService;
-import io.mosip.mimoto.service.WalletService;
-import io.mosip.mimoto.util.EncryptionDecryptionUtil;
-import io.mosip.mimoto.util.WalletValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +17,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -40,17 +35,22 @@ import org.springframework.session.SessionRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import java.util.*;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.UUID;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = Config.class)
+@ContextConfiguration(classes = {Config.class})
 @WebMvcTest(Config.class)
 @AutoConfigureMockMvc
-@Import({UsersController.class, OAuth2AuthenticationSuccessHandler.class})
+@Import({OAuth2AuthenticationSuccessHandler.class})
 @Slf4j
 public class OAuth2AuthenticationSuccessHandlerTest {
     @Autowired
@@ -65,28 +65,16 @@ public class OAuth2AuthenticationSuccessHandlerTest {
     private SessionRepository sessionRepository;
 
     @MockBean
-    private UserMetadataRepository userMetadataRepository;
+    private LogoutService logoutService;
 
     @MockBean
-    private EncryptionDecryptionUtil encryptionDecryptionUtil;
-
-    @MockBean
-    private WalletService walletService;
-
-    @MockBean
-    private WalletValidator walletValidator;
-
-    @MockBean
-    private OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
+    private UserMetadataService userMetadataService;
 
     @MockBean
     private ClientRegistrationRepository clientRegistrationRepository;
 
     @MockBean
     private OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService;
-
-    @MockBean
-    private UserMetadataService userMetadataService;
 
     private String providerSubjectId, identityProvider, displayName, profilePictureUrl, email, userId;
 
@@ -160,8 +148,8 @@ public class OAuth2AuthenticationSuccessHandlerTest {
 
     @Test
     public void shouldSendCustomErrorInRedirectUrlWhenLoginIsSuccessfulButAnErrorOccurredInAuthenticationSuccessHandler() throws Exception {
-        when(userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl,
-                email)).thenThrow(new RuntimeException("Failed to store the user metadata"));
+        when(userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email))
+                .thenThrow(new RuntimeException("Failed to store the user metadata"));
 
         mockMvc.perform(get("/oauth2/callback/google")
                         .session(mockSession)
@@ -169,12 +157,14 @@ public class OAuth2AuthenticationSuccessHandlerTest {
                         .param("state", "test-state"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("https://injiweb.dev1.mosip.net/login?status=error&error_code=RESIDENT-APP-048&error_message=Failed+to+store+the+User+metadata+into+database"));
+
+        verify(userMetadataService, times(1)).updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
     }
 
     @Test
     public void shouldSendCustomErrorInRedirectUrlWhenLoginIsSuccessfulButDatabaseIsNotConnectedToStoreUserData() throws Exception {
-        when(userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl,
-                email)).thenThrow(new DataAccessResourceFailureException("Failed to connect to the database"));
+        when(userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email))
+                .thenThrow(new DataAccessResourceFailureException("Failed to connect to the database"));
 
         mockMvc.perform(get("/oauth2/callback/google")
                         .session(mockSession)
@@ -182,6 +172,8 @@ public class OAuth2AuthenticationSuccessHandlerTest {
                         .param("state", "test-state"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("https://injiweb.dev1.mosip.net/login?status=error&error_code=RESIDENT-APP-047&error_message=Failed+to+connect+to+the+shared+database"));
+
+        verify(userMetadataService, times(1)).updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
     }
 }
 
