@@ -2780,8 +2780,8 @@
                             }
                         }
                     },
-                    "500": {
-                        "description": "Internal server error",
+                    "401": {
+                        "description": "Unauthorized",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2793,7 +2793,19 @@
                                             "errorCode": "RESIDENT-APP-052",
                                             "errorMessage": "No user metadata present in cache"
                                         }
-                                    },
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
                                     "Unexpected server error": {
                                         "value": {
                                             "errorCode": "RESIDENT-APP-052",
@@ -3365,6 +3377,24 @@
                                     "Success response": {
                                         "value": {
                                             "walletId": "123e4567-e89b-12d3-a456-426614174000"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Invalid PIN": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-051",
+                                            "errorMessage": "Exception occurred due to an incorrect pin to unlock the wallet"
                                         }
                                     }
                                 }
