@@ -3336,7 +3336,7 @@
                 "tags": [
                     "Wallets"
                 ],
-                "summary": "Unlock a Wallet",
+                "summary": "Unlock an existing Wallet",
                 "description": "This API is secured using session-based authentication. Upon receiving a request, the session is first retrieved using the session ID extracted from the Cookie header to authenticate the user. Once authenticated, the user's ID is obtained from the session stored in Redis. Using this user ID along with the provided wallet ID and PIN, the corresponding wallet key is fetched and stored in the session. If successful then the API returns a response containing the wallet ID otherwise an appropriate error response is returned.",
                 "operationId": "unlockWallet",
                 "security": [
@@ -3426,7 +3426,7 @@
             "post": {
                 "tags": ["OAuth2 Authentication"],
                 "summary": "Login and create session using OAuth2 ID token",
-                "description": "Accepts an OAuth2 ID token in the Authorization header and establishes a session by populating Spring Security context.\n\nFetch the ID token from a supported OAuth2 provider (such as Google or Microsoft) and provide it in the request as a Bearer token.",
+                "description": "This API accepts an OAuth2 ID token in the Authorization header and establishes a session by populating Spring Security context.\n\nFetch the ID token from a supported OAuth2 provider (such as Google or Microsoft) and provide it in the request as a Bearer token.",
                 "operationId": "loginWithOAuth2IdToken",
                 "security": [
                     {
