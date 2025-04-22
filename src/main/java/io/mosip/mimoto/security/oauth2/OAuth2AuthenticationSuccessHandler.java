@@ -1,38 +1,34 @@
 package io.mosip.mimoto.security.oauth2;
 
+import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.service.UserMetadataService;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.UUID;
-import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
+
+import static io.mosip.mimoto.exception.PlatformErrorMessages.DATABASE_CONNECTION_EXCEPTION;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.USER_METADATA_STORAGE_EXCEPTION;
 
 @Component
 @Slf4j
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     @Autowired
     private UserMetadataService userMetadataService;
-
-    @Autowired
-    private OAuth2AuthorizedClientService authorizedClientService;
 
     @Value("${mosip.inji.web.url}")
     private String injiWebUrl;
@@ -60,8 +56,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             UserMetadataDTO userMetadataDTO = new UserMetadataDTO(displayName,
                     profilePictureUrl,
                     email);
-            session.setAttribute("userMetadata", userMetadataDTO);
-            session.setAttribute("userId", userId);
+            session.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
+            session.setAttribute(SessionKeys.USER_ID, userId);
             response.sendRedirect(injiWebUrl + "/login?status=success");
         } catch (DataAccessResourceFailureException exception) {
             log.error("Exception occurred while connecting to the database to store user data:", exception);

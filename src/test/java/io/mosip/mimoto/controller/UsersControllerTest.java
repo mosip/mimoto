@@ -1,5 +1,6 @@
 package io.mosip.mimoto.controller;
 
+import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.repository.UserMetadataRepository;
@@ -68,8 +69,8 @@ public class UsersControllerTest {
                 .build();
         mockSession = new MockHttpSession();
         mockSession.setAttribute("clientRegistrationId", "google");
-        mockSession.setAttribute("userId", "user123");
-        userId = (String) mockSession.getAttribute("userId");
+        mockSession.setAttribute(SessionKeys.USER_ID, "user123");
+        userId = (String) mockSession.getAttribute(SessionKeys.USER_ID);
         when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider("user123", identityProvider)).thenReturn(Optional.of(userMetadata));
         when(encryptionDecryptionUtil.decrypt("encryptedName", "user_pii", "", "")).thenReturn("Name 123");
         when(encryptionDecryptionUtil.decrypt("encryptedUrl", "user_pii", "", "")).thenReturn("https://profile.com/pic.jpg");
@@ -98,7 +99,7 @@ public class UsersControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-049"))
-                .andExpect(jsonPath("$.errorMessage").value("User not found. Please check your credentials or register"));
+                .andExpect(jsonPath("$.errorMessage").value("User not found. Please check your credentials or login again"));
     }
 
     @Test
@@ -117,7 +118,7 @@ public class UsersControllerTest {
     @Test
     public void shouldReturnUserProfileFromCacheForValidSession() throws Exception {
         UserMetadataDTO userMetadataDTO = new UserMetadataDTO("Name 123", "https://profile.com/pic.jpg", "name123@gmail.com");
-        mockSession.setAttribute("userMetadata", userMetadataDTO);
+        mockSession.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
 
         mockMvc.perform(get("/users/me/cache")
                         .accept(MediaType.APPLICATION_JSON)
@@ -131,7 +132,7 @@ public class UsersControllerTest {
 
     @Test
     public void shouldReturnInternalServerErrorForCacheError() throws Exception {
-        mockSession.setAttribute("userMetadata", null);
+        mockSession.setAttribute(SessionKeys.USER_METADATA, null);
 
         mockMvc.perform(get("/users/me/cache")
                         .accept(MediaType.APPLICATION_JSON)

@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.mosip</groupId>
     <artifactId>mimoto</artifactId>
-    <version>0.17.0-SNAPSHOT</version>
+    <version>0.18.0-SNAPSHOT</version>
     <name>mimoto</name>
     <url>https://github.com/mosip/mimoto</url>
     <description>Mobile server backend supporting Inji.</description>
@@ -490,11 +490,16 @@
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
         </dependency>
-     <dependency>
+        <dependency>
             <groupId>io.mosip.kernel</groupId>
             <artifactId>kernel-keymanager-service</artifactId>
             <version>1.3.0-beta.2</version>
             <classifier>lib</classifier>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web</artifactId>
+            <version>3.9.13</version>
         </dependency>
     </dependencies>
 

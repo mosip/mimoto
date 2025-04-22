@@ -1,7 +1,9 @@
 package io.mosip.mimoto.util;
 
+import io.mosip.mimoto.dto.DisplayDTO;
 import io.mosip.mimoto.dto.mimoto.CredentialDisplayResponseDto;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerDisplayResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialSupportedDisplayResponse;
 
 import java.util.List;
 import java.util.Locale;
@@ -44,4 +46,26 @@ public class LocaleUtils {
         return selectedLocale;
     }
 
+
+    public static DisplayDTO getIssuerDisplayDTOBasedOnLocale(List<DisplayDTO> displayDTOList, String locale) {
+        if (displayDTOList == null || displayDTOList.isEmpty()) {
+            return null;
+        }
+
+        return displayDTOList.stream()
+                .filter(obj -> matchesLocale(obj.getLanguage(), locale))
+                .findFirst()
+                .orElse(displayDTOList.get(0)); // Return first display object if no match is found for the received locale
+    }
+
+    public static CredentialSupportedDisplayResponse getCredentialDisplayDTOBasedOnLocale(List<CredentialSupportedDisplayResponse> displayDTOList, String locale) {
+        if (displayDTOList == null || displayDTOList.isEmpty()) {
+            return null;
+        }
+
+        return displayDTOList.stream()
+                .filter(obj -> matchesLocale(obj.getLocale(), locale))
+                .findFirst()
+                .orElse(displayDTOList.get(0)); // Return first display object if no match is found for the received locale
+    }
 }
