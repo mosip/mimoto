@@ -121,4 +121,41 @@ public class WalletCredentialsController {
             return Utilities.getErrorResponseEntityWithoutWrapper(exception, CREDENTIAL_FETCH_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
     }
+    @DeleteMapping("/{credentialId}")
+    public ResponseEntity<?> deleteCredential(@PathVariable("walletId") String walletId,
+                                              @PathVariable("credentialId") String credentialId) {
+        try {
+            log.info("Deleting credential with ID: {} for walletId: {}", credentialId, walletId);
+
+            boolean deleted = walletCredentialService.deleteCredential(credentialId, walletId);
+
+            if (deleted) {
+                return ResponseEntity.status(HttpStatus.OK).build();
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+        } catch (DataAccessResourceFailureException exception) {
+            log.error("Exception occurred while connecting to the database to delete credential with ID: {} for walletId: {}",
+                    credentialId, walletId, exception);
+            DatabaseConnectionException connectionException = new DatabaseConnectionException(
+                    DATABASE_CONNECTION_EXCEPTION.getCode(),
+                    DATABASE_CONNECTION_EXCEPTION.getMessage(),
+                    DatabaseEntity.VERIFIABLECREDENTIAL,
+                    DatabaseOperation.DELETING,
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    connectionException,
+                    DATABASE_CONNECTION_EXCEPTION.getCode(),
+                    connectionException.getStatus(),
+                    MediaType.APPLICATION_JSON);
+        } catch (Exception exception) {
+            log.error("Exception occurred while deleting credential with ID: {} for walletId: {}",
+                    credentialId, walletId, exception);
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    exception,
+                    CREDENTIAL_DELETE_EXCEPTION.getCode(),
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    MediaType.APPLICATION_JSON);
+        }
+    }
 }

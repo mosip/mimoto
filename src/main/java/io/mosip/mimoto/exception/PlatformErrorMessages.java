@@ -102,7 +102,8 @@ public enum PlatformErrorMessages {
     USER_METADATA_CACHE_FETCH_EXCEPTION(PlatformConstants.PREFIX + "052", "Failed to fetch the User metadata from cache"),
     LOGIN_CREDENTIAL_DOWNLOAD_EXCEPTION(PlatformConstants.PREFIX + "053", "Failed to download and store the credential"),
     CREDENTIALS_FETCH_EXCEPTION(PlatformConstants.PREFIX + "054", "Exception occurred when fetching credentials for the specified wallet"),
-    CREDENTIAL_FETCH_EXCEPTION(PlatformConstants.PREFIX + "055", "Exception occurred when fetching Verifiable Credential");
+    CREDENTIAL_FETCH_EXCEPTION(PlatformConstants.PREFIX + "055", "Exception occurred when fetching Verifiable Credential"),
+    CREDENTIAL_DELETE_EXCEPTION(PlatformConstants.PREFIX + "056", "Exception occurred when deleting credential");
 
     /** The error message. */
     private final String errorMessage;

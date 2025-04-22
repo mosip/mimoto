@@ -330,4 +330,49 @@ public class WalletCredentialServiceTest {
 
         assertEquals("PDF generation failed", exception.getMessage());
     }
+
+    @Test
+    public void shouldDeleteCredentialSuccessfully() {
+        // Arrange
+        String credentialId = "credential123";
+        VerifiableCredential credential = getVerifiableCredential(credentialId, walletId, "encryptedCredential", issuerId, credentialType);
+        when(walletCredentialsRepository.findById(credentialId)).thenReturn(Optional.of(credential));
+
+        // Act
+        boolean result = walletCredentialService.deleteCredential(credentialId, walletId);
+
+        // Assert
+        assertTrue(result);
+        verify(walletCredentialsRepository).deleteById(credentialId);
+    }
+
+    @Test
+    public void shouldReturnFalseWhenCredentialNotFound() {
+        // Arrange
+        String credentialId = "nonexistent-credential";
+        when(walletCredentialsRepository.findById(credentialId)).thenReturn(Optional.empty());
+
+        // Act
+        boolean result = walletCredentialService.deleteCredential(credentialId, walletId);
+
+        // Assert
+        assertFalse(result);
+        verify(walletCredentialsRepository, never()).deleteById(anyString());
+    }
+
+    @Test
+    public void shouldReturnFalseWhenCredentialBelongsToDifferentWallet() {
+        // Arrange
+        String credentialId = "credential123";
+        String differentWalletId = "wallet456";
+        VerifiableCredential credential = getVerifiableCredential(credentialId, walletId, "encryptedCredential", issuerId, credentialType);
+        when(walletCredentialsRepository.findById(credentialId)).thenReturn(Optional.of(credential));
+
+        // Act
+        boolean result = walletCredentialService.deleteCredential(credentialId, differentWalletId);
+
+        // Assert
+        assertFalse(result);
+        verify(walletCredentialsRepository, never()).deleteById(anyString());
+    }
 }

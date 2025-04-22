@@ -374,4 +374,64 @@ public class WalletCredentialsControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-055"))
                 .andExpect(jsonPath("$.errorMessage").value("Unexpected error occurred while fetching wallet credentials"));
     }
+
+    @Test
+    public void shouldDeleteCredentialSuccessfully() throws Exception {
+        // Arrange
+        String credentialId = "credential123";
+        when(walletCredentialService.deleteCredential(credentialId, walletId)).thenReturn(true);
+
+        // Act & Assert
+        mockMvc.perform(delete(String.format("/wallets/%s/credentials/%s", walletId, credentialId))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        verify(walletCredentialService).deleteCredential(credentialId, walletId);
+    }
+
+    @Test
+    public void shouldReturnNotFoundWhenCredentialDoesNotExist() throws Exception {
+        // Arrange
+        String credentialId = "nonexistent-credential";
+        when(walletCredentialService.deleteCredential(credentialId, walletId)).thenReturn(false);
+
+        // Act & Assert
+        mockMvc.perform(delete(String.format("/wallets/%s/credentials/%s", walletId, credentialId))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+
+        verify(walletCredentialService).deleteCredential(credentialId, walletId);
+    }
+
+    @Test
+    public void shouldHandleDatabaseConnectionExceptionWhenDeletingCredential() throws Exception {
+        // Arrange
+        String credentialId = "credential123";
+        when(walletCredentialService.deleteCredential(credentialId, walletId))
+                .thenThrow(new DataAccessResourceFailureException("Database connection error"));
+
+        // Act & Assert
+        mockMvc.perform(delete(String.format("/wallets/%s/credentials/%s", walletId, credentialId))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-047"));
+
+        verify(walletCredentialService).deleteCredential(credentialId, walletId);
+    }
+
+    @Test
+    public void shouldHandleGenericExceptionWhenDeletingCredential() throws Exception {
+        // Arrange
+        String credentialId = "credential123";
+        when(walletCredentialService.deleteCredential(credentialId, walletId))
+                .thenThrow(new RuntimeException("Unexpected error"));
+
+        // Act & Assert
+        mockMvc.perform(delete(String.format("/wallets/%s/credentials/%s", walletId, credentialId))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-055"));
+
+        verify(walletCredentialService).deleteCredential(credentialId, walletId);
+    }
 }

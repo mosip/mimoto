@@ -2,7 +2,8 @@ package io.mosip.mimoto.model;
 
 public enum DatabaseOperation {
     FETCHING("Fetching"),
-    STORING("Storing");
+    STORING("Storing"),
+    DELETING("Deleting");
     private final String operation;
 
     DatabaseOperation(String operation) {
