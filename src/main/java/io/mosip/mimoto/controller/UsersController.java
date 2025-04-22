@@ -39,9 +39,6 @@ import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 @RequestMapping(value = "/users/me")
 @Tag(name = SwaggerLiteralConstants.USERS_NAME, description = SwaggerLiteralConstants.USERS_DESCRIPTION)
 public class UsersController {
-
-
-
     @Autowired
     private UserMetadataRepository userMetadataRepository;
 
@@ -87,7 +84,7 @@ public class UsersController {
 
     @Operation(summary = "Retrieve user metadata from the stored redis session", description = "This API is secured using session-based authentication. When a request is made, the server retrieves the session ID from the Cookie header and uses it to fetch session details from Redis. It then attempts to retrieve the user's metadata directly from the session. If the metadata is available, the API returns the user's profile information otherwise an appropriate error response is returned.", operationId = "getUserProfileFromCache", security = @SecurityRequirement(name = "SessionAuth"))
     @ApiResponse(responseCode = "200", description = "User profile retrieved successfully from the session", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserMetadataDTO.class), examples = @ExampleObject(name = "Success response", value = SwaggerExampleConstants.FETCH_USER_PROFILE_SUCCESS)))
-    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User metadata not found in session",value = "{\"errorCode\": \"RESIDENT-APP-052\", \"errorMessage\": \"No user metadata present in cache\"}")))
+    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User metadata not found in session", value = "{\"errorCode\": \"RESIDENT-APP-052\", \"errorMessage\": \"No user metadata present in cache\"}")))
     @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected server error", value = "{\"errorCode\": \"RESIDENT-APP-052\", \"errorMessage\": \"An unexpected error occurred while retrieving user metadata from cache\"}")))
     @GetMapping("/cache")
     public ResponseEntity<UserMetadataDTO> getUserProfileFromCache(Authentication authentication, HttpSession session) {

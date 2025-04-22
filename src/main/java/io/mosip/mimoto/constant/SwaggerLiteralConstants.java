@@ -87,4 +87,8 @@ public class SwaggerLiteralConstants {
     /*  Wallet Credentials Controller */
     public static final String WALLET_CREDENTIALS_NAME = "Wallet Credentials" ;
     public static final String WALLET_CREDENTIALS_DESCRIPTION = "All the Wallet Credentials related endpoints" ;
+
+    /*  OAuth2 ID Token Authentication Controller */
+    public static final String ID_TOKEN_AUTHENTICATION_NAME = "OAuth2 ID Token Authentication" ;
+    public static final String ID_TOKEN_AUTHENTICATION_DESCRIPTION = "All the OAuth2 ID Token Authentication related endpoints" ;
 }

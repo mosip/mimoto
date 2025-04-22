@@ -3426,7 +3426,7 @@
             "post": {
                 "tags": ["OAuth2 Authentication"],
                 "summary": "Login and create session using OAuth2 ID token",
-                "description": "Accepts an OAuth2 ID token in the Authorization header and establishes a session by populating Spring Security context.\n\nFetch the ID token from a supported OAuth2 provider (such as Google or Microsoft) and provide it in the request as a Bearer token.",
+                "description": "This API accepts an OAuth2 ID token in the Authorization header and establishes a session by populating Spring Security context.\n\nFetch the ID token from a supported OAuth2 provider (such as Google or Microsoft) and provide it in the request as a Bearer token.",
                 "operationId": "loginWithOAuth2IdToken",
                 "security": [
                     {
