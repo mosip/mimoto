@@ -148,7 +148,6 @@ containerSecurityContext:
   enabled: false
   runAsUser: mosip
   runAsNonRoot: true
-## Allows raising system limits
 
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
 

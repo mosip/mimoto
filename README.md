@@ -68,9 +68,8 @@ cd partner-onboarder
 * Once the job is completed, log in to S3 and check the reports. There should not be any failures.
 
 4. Execute mimoto install script
-
 ```
-cd helm/mimoto
+cd deploy/mimoto
 ./install.sh
 ```
 * During the execution of the `install.sh` script, a prompt appears requesting information regarding the presence of a public domain and a valid SSL certificate on the server.
