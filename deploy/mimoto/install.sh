@@ -20,7 +20,7 @@ function installing_mimoto() {
   helm repo update
 
   echo Copy Configmaps
-  $COPY_UTIL=../copy_cm_func.sh
+  COPY_UTIL=../copy_cm_func.sh
   $COPY_UTIL configmap global default $NS
   $COPY_UTIL configmap artifactory-share artifactory $NS
   $COPY_UTIL configmap config-server-share config-server $NS
@@ -45,6 +45,12 @@ function installing_mimoto() {
   fi
 
   echo  "Copy secrets to config-server namespace"
+  ../copy_cm_func.sh secret mimoto-wallet-binding-partner-api-key injiweb config-server
+  ../copy_cm_func.sh secret mimoto-oidc-partner-clientid injiweb config-server
+
+  echo Updating mimoto-oidc-keystore-password value
+  ../copy_cm_func.sh secret mimoto-oidc-keystore-password injiweb config-server
+
   kubectl -n config-server set env --keys=mimoto-wallet-binding-partner-api-key --from secret/mimoto-wallet-binding-partner-api-key deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
   kubectl -n config-server set env --keys=mimoto-oidc-partner-clientid --from secret/mimoto-oidc-partner-clientid deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
   kubectl -n config-server set env --keys=mimoto-oidc-keystore-password --from secret/mimoto-oidc-keystore-password deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
@@ -117,8 +123,8 @@ function installing_mimoto() {
 
 # set commands for error handling.
 set -e
-set -o errexit
-set -o nounset
-set -o errtrace
-set -o pipefail
-installing_mimoto
+set -o errexit   ## set -e : exit the script if any statement returns a non-true return value
+set -o nounset   ## set -u : exit the script if you try to use an uninitialised variable
+set -o errtrace  # trace ERR through 'time command' and other functions
+set -o pipefail  # trace ERR through pipes
+installing_mimoto   # calling function
