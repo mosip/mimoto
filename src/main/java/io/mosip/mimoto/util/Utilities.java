@@ -89,7 +89,7 @@ public class Utilities {
 
     @PostConstruct
     public void setUp() throws IOException {
-        if(activeProfile.equals("local")) {
+        if(activeProfile.contains("local")) {
             Resource resource = new ClassPathResource(issuersConfigPath);
             Resource trustedVerifiersResource = new ClassPathResource(trustedVerifiersPath);
             Resource credentialTemplateResource = new ClassPathResource("templates/"+ credentialTemplatePath);
@@ -188,7 +188,7 @@ public class Utilities {
     }
     public String getCredentialSupportedTemplateString(String issuerId, String credentialType) {
         String templateFileName = String.format("%s-%s-template.html", issuerId, credentialType);
-        if(activeProfile.equals("local")) {
+        if(activeProfile.contains("local")) {
             Path basePath = Paths.get("templates").toAbsolutePath().normalize();
             Path resolvedPath = basePath.resolve(templateFileName).normalize();
 
