@@ -114,6 +114,7 @@ fi
     --set extraEnvVarsCM[0]=global \
     --set extraEnvVarsCM[1]=keycloak-env-vars \
     --set extraEnvVarsCM[2]=keycloak-host \
+    --set extraEnvVars[0].value=$NS \
     $ENABLE_INSECURE \
     -f values.yaml \
     --version $CHART_VERSION \
