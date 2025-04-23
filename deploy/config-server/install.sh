@@ -26,10 +26,12 @@ CHART_VERSION=0.0.1-develop
     echo Copy configmaps
     COPY_UTIL=../copy_cm_func.sh
     $COPY_UTIL configmap global default $NS
+    $COPY_UTIL configmap redis-config redis $NS
 
     echo Copy secrets
     $COPY_UTIL secret db-common-secrets postgres $NS
     $COPY_UTIL secret conf-secrets-various conf-secrets $NS
+    $COPY_UTIL secret redis redis $NS
 
     echo Installing config-server
     helm -n $NS install config-server mosip/config-server -f values.yaml --wait --version $CHART_VERSION

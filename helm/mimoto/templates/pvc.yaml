@@ -10,17 +10,17 @@ metadata:
     {{- end }}
   annotations:
     {{- if .Values.commonAnnotations }}
-    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
-    {{- end }}
-    "helm.sh/resource-policy": keep 
+      {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+      {{- end }}
+      "helm.sh/resource-policy": keep
 spec:
   accessModes:
   {{- if not (empty .Values.persistence.accessModes) }}
   {{- range .Values.persistence.accessModes }}
-    - {{ . | quote }}
+  - {{ . | quote }}
   {{- end }}
   {{- else }}
-    - {{ .Values.persistence.accessMode | quote }}
+  - {{ .Values.persistence.accessMode | quote }}
   {{- end }}
   resources:
     requests:
@@ -30,3 +30,31 @@ spec:
   dataSource: {{- include "common.tplvalues.render" (dict "value" .Values.persistence.dataSource "context" $) | nindent 4 }}
   {{- end }}
 {{- end }}
+  {{- if .Values.extraVolumes }}
+  {{- range .Values.extraVolumes }}
+  {{- if and (eq .kind "persistentVolumeClaim") (eq .name "mimoto-encryption-volume") (not .persistentVolumeClaim.claimName) }}
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mimoto-keygen-keymanager
+  namespace: {{ $.Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" $ | nindent 4 }}
+    {{- if $.Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" $.Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- if $.Values.commonAnnotations }}
+      {{- include "common.tplvalues.render" ( dict "value" $.Values.commonAnnotations "context" $ ) | nindent 4 }}
+      {{- end }}
+      "helm.sh/resource-policy": keep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ $.Values.encryption.volume.size | default "1Gi" | quote }}
+  {{- include "common.storage.class" (dict "persistence" $.Values.persistence "global" $.Values.global) | nindent 2 }}
+  {{- end }}
+  {{- end }}
+  {{- end }}

@@ -46,14 +46,20 @@ The project requires JDK 21, postgres, redis and google client credentials
 
 ### Install
 
-1. Execute config-server install script
+1. Execute redis install script
+```
+cd deploy/redis
+./install.sh
+```
+
+2. Execute config-server install script
 ```
 cd deploy/config-server
 ./install.sh
 ```
 * Review values.yaml and make sure git repository parameters are as per your installation.
 
-2. Execute Onboarder install script
+3. Execute Onboarder install script
 ```
 cd partner-onboarder
 ./install.sh
@@ -61,7 +67,7 @@ cd partner-onboarder
 * During the execution of the `install.sh` script, a prompt appears requesting information for the S3 bucket, including its name and URL.
 * Once the job is completed, log in to S3 and check the reports. There should not be any failures.
 
-3. Execute mimoto install script
+4. Execute mimoto install script
 
 ```
 cd helm/mimoto

@@ -124,3 +124,15 @@ envVariables:
       configMapKeyRef:
         key: mosip-injiverify-host
         name: global
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_REDIS_HOST
+    valueFrom:
+      configMapKeyRef:
+        key: redis-host
+        name: redis-config
+
+  - name: SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_REDIS_PORT
+    valueFrom:
+      configMapKeyRef:
+        key: redis-port
+        name: redis-config
