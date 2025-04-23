@@ -3,6 +3,9 @@ package io.mosip.mimoto.service;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
+import io.mosip.mimoto.exception.CorruptedEncryptedDataException;
+import io.mosip.mimoto.exception.DecryptionException;
+import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 
 import java.util.List;
 
@@ -11,5 +14,5 @@ public interface WalletCredentialService {
 
     List<VerifiableCredentialResponseDTO> fetchAllCredentialsForWallet(String walletId, String walletKey, String locale);
 
-    WalletCredentialResponseDTO fetchVerifiableCredential(String walletId, String credentialId, String base64EncodedWalletKey, String locale) throws Exception;
+    WalletCredentialResponseDTO fetchVerifiableCredential(String walletId, String credentialId, String base64EncodedWalletKey, String locale) throws DecryptionException, CorruptedEncryptedDataException;
 }

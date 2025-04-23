@@ -1,17 +1,10 @@
 package io.mosip.mimoto.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.exception.OAuth2AuthenticationException;
 import io.mosip.mimoto.security.oauth2.OAuth2AuthenticationFailureHandler;
 import io.mosip.mimoto.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import io.mosip.mimoto.service.LogoutService;
-import io.mosip.mimoto.util.Utilities;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -19,7 +12,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,8 +19,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.session.SessionRepository;
@@ -37,10 +27,9 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import static io.mosip.mimoto.exception.PlatformErrorMessages.LOGIN_SESSION_INVALIDATE_EXCEPTION;
+import static io.mosip.mimoto.exception.ErrorConstants.LOGIN_SESSION_INVALIDATE_EXCEPTION;
 
 @Configuration
 @EnableWebSecurity
@@ -137,8 +126,8 @@ public class Config {
                         response.setStatus(e.getStatus().value());
                         response.setContentType("application/json");
                         String jsonResponse = String.format("{\"errors\":[{\"errorCode\":\"%s\",\"errorMessage\":\"%s\"}]}",
-                                LOGIN_SESSION_INVALIDATE_EXCEPTION.getCode(),
-                                LOGIN_SESSION_INVALIDATE_EXCEPTION.getMessage());
+                                LOGIN_SESSION_INVALIDATE_EXCEPTION.getErrorCode(),
+                                LOGIN_SESSION_INVALIDATE_EXCEPTION.getErrorMessage());
                         response.getWriter().write(jsonResponse);
                     }
                 })

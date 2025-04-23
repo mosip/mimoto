@@ -24,7 +24,7 @@ public class WalletServiceImpl implements WalletService {
     @Autowired
     private WalletUtil walletHelper;
     @Override
-    public String createWallet(String userId, String walletName, String pin) throws Exception {
+    public String createWallet(String userId, String walletName, String pin)  {
         // Create a new wallet for the user
         return walletHelper.createWallet(userId, walletName, pin);
     }
@@ -40,7 +40,7 @@ public class WalletServiceImpl implements WalletService {
     public List<WalletResponseDto> getWallets(String userId) {
         List<String> walletIds = walletRepository.findWalletIdByUserId(userId);
         return walletIds.stream()
-                .map(walletId -> new WalletResponseDto(walletId))
+                .map(WalletResponseDto::new)
                 .collect(Collectors.toList());
     }
 }

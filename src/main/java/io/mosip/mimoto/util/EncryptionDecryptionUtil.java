@@ -5,18 +5,23 @@ import io.mosip.kernel.cryptomanager.dto.CryptoWithPinRequestDto;
 import io.mosip.kernel.cryptomanager.dto.CryptoWithPinResponseDto;
 import io.mosip.kernel.cryptomanager.dto.CryptomanagerRequestDto;
 import io.mosip.kernel.cryptomanager.service.CryptomanagerService;
+import io.mosip.mimoto.exception.DecryptionException;
+import io.mosip.mimoto.exception.EncryptionException;
 import org.apache.commons.lang3.StringUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
+import javax.crypto.*;
 import javax.crypto.spec.GCMParameterSpec;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
+
+import static io.mosip.mimoto.exception.ErrorConstants.DECRYPTION_FAILED;
+import static io.mosip.mimoto.exception.ErrorConstants.ENCRYPTION_FAILED;
 
 @Component
 public class EncryptionDecryptionUtil {
@@ -70,7 +75,8 @@ public class EncryptionDecryptionUtil {
      * @param data   The data to encrypt (as byte[])
      * @return Base64 encoded string of (IV + encryptedData)
      */
-    public String encryptWithAES(SecretKey aesKey, byte[] data) throws Exception {
+    public String encryptWithAES(SecretKey aesKey, byte[] data) throws EncryptionException {
+        try {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
 
         // Generate a secure random IV
@@ -91,6 +97,11 @@ public class EncryptionDecryptionUtil {
         System.arraycopy(encryptedData, 0, finalEncryptedData, GCM_IV_LENGTH, encryptedData.length);
 
         return Base64.getEncoder().encodeToString(finalEncryptedData);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException |
+                 InvalidKeyException | InvalidAlgorithmParameterException |
+                 IllegalBlockSizeException | BadPaddingException e) {
+            throw new EncryptionException(ENCRYPTION_FAILED.getErrorCode(), ENCRYPTION_FAILED.getErrorMessage(), e);
+        }
     }
 
     /**
@@ -100,22 +111,28 @@ public class EncryptionDecryptionUtil {
      * @param base64EncodedData Base64 encoded string of (IV + encryptedData)
      * @return Decrypted data as byte[]
      */
-    public byte[] decryptWithAES(SecretKey aesKey, String base64EncodedData) throws Exception {
-        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        byte[] decodedData = Base64.getDecoder().decode(base64EncodedData);
+    public byte[] decryptWithAES(SecretKey aesKey, String base64EncodedData) throws DecryptionException {
+        try {
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            byte[] decodedData = Base64.getDecoder().decode(base64EncodedData);
 
-        // Extract IV and Encrypted Data
-        byte[] iv = new byte[GCM_IV_LENGTH];
-        byte[] encryptedData = new byte[decodedData.length - GCM_IV_LENGTH];
+            // Extract IV and Encrypted Data
+            byte[] iv = new byte[GCM_IV_LENGTH];
+            byte[] encryptedData = new byte[decodedData.length - GCM_IV_LENGTH];
 
-        System.arraycopy(decodedData, 0, iv, 0, GCM_IV_LENGTH);
-        System.arraycopy(decodedData, GCM_IV_LENGTH, encryptedData, 0, encryptedData.length);
+            System.arraycopy(decodedData, 0, iv, 0, GCM_IV_LENGTH);
+            System.arraycopy(decodedData, GCM_IV_LENGTH, encryptedData, 0, encryptedData.length);
 
-        // Initialize cipher with AES key & extracted IV
-        GCMParameterSpec gcmSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
-        cipher.init(Cipher.DECRYPT_MODE, aesKey, gcmSpec);
+            // Initialize cipher with AES key & extracted IV
+            GCMParameterSpec gcmSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
+            cipher.init(Cipher.DECRYPT_MODE, aesKey, gcmSpec);
 
-        return cipher.doFinal(encryptedData);
+            return cipher.doFinal(encryptedData);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException |
+                 InvalidKeyException | InvalidAlgorithmParameterException |
+                 IllegalBlockSizeException | BadPaddingException e) {
+            throw new DecryptionException(DECRYPTION_FAILED.getErrorCode(), DECRYPTION_FAILED.getErrorMessage(), e);
+        }
     }
 
     public static byte[] stringToBytes(String data) {
@@ -151,13 +168,13 @@ public class EncryptionDecryptionUtil {
         return cryptomanagerService.encryptWithPin(requestDto).getData();
     }
 
-   public String encryptCredential(String credentialData, String base64EncodedWalletKey) throws Exception {
+   public String encryptCredential(String credentialData, String base64EncodedWalletKey) throws EncryptionException {
         byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
         SecretKey walletKey = bytesToSecretKey(decodedWalletKey);
         return encryptWithAES(walletKey, stringToBytes(credentialData));
     }
 
-    public String decryptCredential(String encryptedCredentialData, String base64EncodedWalletKey) throws Exception {
+    public String decryptCredential(String encryptedCredentialData, String base64EncodedWalletKey) throws DecryptionException {
         byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
         SecretKey walletKey = bytesToSecretKey(decodedWalletKey);
         return bytesToString(decryptWithAES(walletKey, encryptedCredentialData));

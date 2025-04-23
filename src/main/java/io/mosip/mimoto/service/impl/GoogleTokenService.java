@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.mosip.mimoto.exception.PlatformErrorMessages.OAUTH2_AUTHENTICATION_EXCEPTION;
+import static io.mosip.mimoto.exception.ErrorConstants.OAUTH2_AUTHENTICATION_EXCEPTION;
 
 @Service("google")
 @Slf4j
@@ -62,7 +62,7 @@ public class GoogleTokenService implements TokenService {
             setupSecurityContext(provider, sub, name, picture, email, request, response);
         } else {
             log.error("Could not extract user information from ID token ");
-            throw new OAuth2AuthenticationException(OAUTH2_AUTHENTICATION_EXCEPTION.getCode(),OAUTH2_AUTHENTICATION_EXCEPTION.getMessage(), HttpStatus.UNAUTHORIZED);
+            throw new OAuth2AuthenticationException(OAUTH2_AUTHENTICATION_EXCEPTION.getErrorCode(),OAUTH2_AUTHENTICATION_EXCEPTION.getErrorMessage(), HttpStatus.UNAUTHORIZED);
         }
     }
 
@@ -72,13 +72,13 @@ public class GoogleTokenService implements TokenService {
         String issuer = jwt.getIssuer().toString();
         if (!issuer.equals("https://accounts.google.com") && !issuer.equals("accounts.google.com")) {
             log.error("Invalid ID token issuer: " + issuer);
-            throw new OAuth2AuthenticationException(OAUTH2_AUTHENTICATION_EXCEPTION.getCode(),OAUTH2_AUTHENTICATION_EXCEPTION.getMessage(), HttpStatus.UNAUTHORIZED);
+            throw new OAuth2AuthenticationException(OAUTH2_AUTHENTICATION_EXCEPTION.getErrorCode(),OAUTH2_AUTHENTICATION_EXCEPTION.getErrorMessage(), HttpStatus.UNAUTHORIZED);
         }
 
         String audience = jwt.getAudience().stream().findFirst().orElse(null);
         if (!googleClientId.equals(audience)) {
             log.error("Invalid ID token audience: " + audience);
-            throw new OAuth2AuthenticationException(OAUTH2_AUTHENTICATION_EXCEPTION.getCode(),OAUTH2_AUTHENTICATION_EXCEPTION.getMessage(), HttpStatus.UNAUTHORIZED);
+            throw new OAuth2AuthenticationException(OAUTH2_AUTHENTICATION_EXCEPTION.getErrorCode(),OAUTH2_AUTHENTICATION_EXCEPTION.getErrorMessage(), HttpStatus.UNAUTHORIZED);
         }
 
         return jwt;

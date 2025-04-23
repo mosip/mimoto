@@ -6,11 +6,8 @@ import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
-import io.mosip.mimoto.exception.LoginSessionException;
-import io.mosip.mimoto.exception.DatabaseConnectionException;
+import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.OAuth2AuthenticationException;
-import io.mosip.mimoto.model.DatabaseEntity;
-import io.mosip.mimoto.model.DatabaseOperation;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.Utilities;
@@ -24,15 +21,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
+import static io.mosip.mimoto.exception.ErrorConstants.SESSION_EXPIRED_OR_INVALID;
+import static io.mosip.mimoto.util.Utilities.getErrorResponseEntityFromPlatformErrorMessage;
 
 @Slf4j
 @RestController
@@ -51,35 +49,29 @@ public class UsersController {
     @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "Database connection failure", value = "{\"errorCode\": \"RESIDENT-APP-047\", \"errorMessage\": \"Failed to connect to the shared database while fetching User Metadata data from the database\"}"), @ExampleObject(name = "Unexpected server error", value = "{\"errorCode\": \"RESIDENT-APP-049\", \"errorMessage\": \"An unexpected error occurred while retrieving user profile from the database\"}"), @ExampleObject(name = "User metadata not found in the Database", value = "{\"errorCode\": \"RESIDENT-APP-049\", \"errorMessage\": \"An unexpected error occurred while downloading and storing user metadata into database\"}")}))
     @GetMapping("/db")
     public ResponseEntity<UserMetadataDTO> getUserProfile(Authentication authentication, HttpSession session) {
+
+        String identityProvider = (String) session.getAttribute("clientRegistrationId");
+        UserMetadata userMetadata = null;
         try {
-            String identityProvider = (String) session.getAttribute("clientRegistrationId");
-
-            UserMetadata userMetadata = fetchUserMetadata(authentication.getName(), identityProvider);
-
-            UserMetadataDTO userMetadataDTO = new UserMetadataDTO(encryptionDecryptionUtill.decrypt(userMetadata.getDisplayName(),
-                    EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""),
-                    encryptionDecryptionUtill.decrypt(userMetadata.getProfilePictureUrl(),
-                            EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""),
-                    encryptionDecryptionUtill.decrypt(userMetadata.getEmail(), EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID,
-                            "", ""));
-
-            return ResponseEntity.status(HttpStatus.OK).body(userMetadataDTO);
+            userMetadata = fetchUserMetadata(authentication.getName(), identityProvider);
         } catch (OAuth2AuthenticationException exception) {
             log.error("Error occurred while retrieving user profile : ", exception);
-            return Utilities.getErrorResponseEntityWithoutWrapper(exception, USER_METADATA_FETCH_EXCEPTION.getCode(), exception.getStatus(), null);
-        } catch (DataAccessResourceFailureException exception) {
-            log.error("Error occurred while connecting to the database : ", exception);
-            DatabaseConnectionException connectionException = new DatabaseConnectionException(DATABASE_CONNECTION_EXCEPTION.getCode(), DATABASE_CONNECTION_EXCEPTION.getMessage(), DatabaseEntity.USERMETADATA, DatabaseOperation.FETCHING, HttpStatus.INTERNAL_SERVER_ERROR);
-            return Utilities.getErrorResponseEntityWithoutWrapper(connectionException, USER_METADATA_FETCH_EXCEPTION.getCode(), connectionException.getStatus(), null);
-        } catch (Exception exception) {
-            log.error("Error occurred while retrieving user profile : ", exception);
-            OAuth2AuthenticationException authenticationException = new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), USER_METADATA_FETCH_EXCEPTION.getMessage() + " due to : " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-            return Utilities.getErrorResponseEntityWithoutWrapper(authenticationException, USER_METADATA_FETCH_EXCEPTION.getCode(), authenticationException.getStatus(), null);
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, ErrorConstants.INVALID_USER.getErrorCode(), exception.getStatus(), null);
         }
+
+        UserMetadataDTO userMetadataDTO = new UserMetadataDTO(encryptionDecryptionUtill.decrypt(userMetadata.getDisplayName(),
+                EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""),
+                encryptionDecryptionUtill.decrypt(userMetadata.getProfilePictureUrl(),
+                        EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""),
+                encryptionDecryptionUtill.decrypt(userMetadata.getEmail(), EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID,
+                        "", ""));
+
+        return ResponseEntity.status(HttpStatus.OK).body(userMetadataDTO);
+
     }
 
     private UserMetadata fetchUserMetadata(String providerSubjectId, String identityProvider) throws OAuth2AuthenticationException {
-        return userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider).orElseThrow(() -> new OAuth2AuthenticationException(USER_METADATA_FETCH_EXCEPTION.getCode(), "User not found. Please check your credentials or login again", HttpStatus.NOT_FOUND));
+        return userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider).orElseThrow(() -> new OAuth2AuthenticationException(ErrorConstants.INVALID_USER.getErrorCode(), "User not found. Please check your credentials or login again", HttpStatus.NOT_FOUND));
     }
 
     @Operation(summary = "Retrieve user metadata from the stored redis session", description = "This API is secured using session-based authentication. When a request is made, the server retrieves the session ID from the Cookie header and uses it to fetch session details from Redis. It then attempts to retrieve the user's metadata directly from the session. If the metadata is available, the API returns the user's profile information otherwise an appropriate error response is returned.", operationId = "getUserProfileFromCache", security = @SecurityRequirement(name = "SessionAuth"))
@@ -87,17 +79,15 @@ public class UsersController {
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User metadata not found in session", value = "{\"errorCode\": \"RESIDENT-APP-052\", \"errorMessage\": \"No user metadata present in cache\"}")))
     @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected server error", value = "{\"errorCode\": \"RESIDENT-APP-052\", \"errorMessage\": \"An unexpected error occurred while retrieving user metadata from cache\"}")))
     @GetMapping("/cache")
-    public ResponseEntity<UserMetadataDTO> getUserProfileFromCache(Authentication authentication, HttpSession session) {
-        try {
-            UserMetadataDTO userMetadataDTO = (UserMetadataDTO) session.getAttribute(SessionKeys.USER_METADATA);
-            if (userMetadataDTO == null) {
-                throw new LoginSessionException(USER_METADATA_CACHE_FETCH_EXCEPTION.getCode(), "No user metadata present in cache", HttpStatus.UNAUTHORIZED);
-            }
-            return ResponseEntity.status(HttpStatus.OK).body(userMetadataDTO);
-        } catch (Exception exception) {
-            log.error("Error occurred while retrieving user profile from cache : ", exception);
-            return Utilities.getErrorResponseEntityWithoutWrapper(exception, USER_METADATA_CACHE_FETCH_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+    public ResponseEntity<UserMetadataDTO> getUserProfileFromCache(HttpSession session) {
+
+        UserMetadataDTO userMetadataDTO = (UserMetadataDTO) session.getAttribute(SessionKeys.USER_METADATA);
+        if (userMetadataDTO == null) {
+            log.error("User info is not present in the session");
+            return  getErrorResponseEntityFromPlatformErrorMessage(SESSION_EXPIRED_OR_INVALID, HttpStatus.UNAUTHORIZED, MediaType.APPLICATION_JSON);
         }
+        return ResponseEntity.status(HttpStatus.OK).body(userMetadataDTO);
+
     }
 
 }

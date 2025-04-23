@@ -24,8 +24,16 @@ public enum ErrorConstants {
     JSON_PARSING_EXCEPTION("json_parsing_failed", "Given data couldn't be parsed to JSON string" ),
     UNKNOWN_EXCEPTION("unknown_exception", "Error while doing verification of verifiable credential" ),
     PROOF_DOCUMENT_NOT_FOUND_EXCEPTION("proof_document_not_found", "Proof document is not available in the received credentials" ),
-    PUBLIC_KEY_NOT_FOUND_EXCEPTION("public_key_not_found", "Proof document is not available in the received credentials");
-
+    PUBLIC_KEY_NOT_FOUND_EXCEPTION("public_key_not_found", "Proof document is not available in the received credentials"),
+    OAUTH2_AUTHENTICATION_EXCEPTION( "user_authentication_error", "Failed to authenticate user via OAuth Identity Provider during login"),
+    LOGIN_SESSION_INVALIDATE_EXCEPTION("user_logout_error", "Exception occurred when invalidating the session of a user"),
+    SESSION_EXPIRED_OR_INVALID( "session_invalid_or_expired", "User session is missing or expired. Please log in again."),
+    DATABASE_CONNECTION_EXCEPTION( "database_unavailable", "Failed to connect to the database"),
+    ENCRYPTION_FAILED( "encryption_failed", "Failed to encrypt the data"),
+    DECRYPTION_FAILED( "decryption_failed", "Failed to decrypt the data"),
+    SCHEMA_MISMATCH( "schema_mismatch", "Failed to restored the stored data"),
+    INVALID_USER("invalid_user", "User does not exist in database"),
+    CREDENTIAL_DOWNLOAD_EXCEPTION( "credential_download_error", "Failed to download and store the credential");
 
     private final String errorCode;
     private final String errorMessage;
