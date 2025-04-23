@@ -68,7 +68,12 @@ fi
         echo "Invalid input. Please respond with Y (yes) or N (no)."
       fi
     done
-
+  echo "Choose the namespace to run the onboarder in:"
+      read -p "Enter the custom namespace: " custom_ns
+            if [[ -z "$custom_ns" ]]; then
+              echo "No namespace provided; EXITING."
+              exit 1;
+            fi
   echo "Do you have public domain & valid SSL? (Y/n) "
   echo "Y: if you have public domain & valid ssl certificate"
   echo "n: if you don't have a public domain and a valid SSL certificate. It will add an ssl certificate in onboarder docker. Only recommended in testing env."
@@ -83,7 +88,7 @@ fi
     ENABLE_INSECURE='--set onboarding.configmaps.onboarding.ENABLE_INSECURE=true';
   fi
 
-  NS=injiweb
+  NS=$custom_ns
   CHART_VERSION=0.0.1-develop
 
   echo Create $NS namespace
@@ -109,6 +114,7 @@ fi
     --set extraEnvVarsCM[0]=global \
     --set extraEnvVarsCM[1]=keycloak-env-vars \
     --set extraEnvVarsCM[2]=keycloak-host \
+    --set extraEnvVars[0].value=$NS \
     $ENABLE_INSECURE \
     -f values.yaml \
     --version $CHART_VERSION \
