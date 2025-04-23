@@ -57,7 +57,7 @@ services:
       - redis-data:/data
   mimoto-service:
     container_name: 'Mimoto-Service'
-    image: 'mosipdev/mimoto:release-0.17.x'
+    image: 'mosipdev/mimoto:develop'
     user: root
     ports:
       - '8099:8099'

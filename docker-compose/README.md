@@ -24,7 +24,13 @@ Refer [here](https://docs.mosip.io/inji/inji-mobile-wallet/customization-overvie
 * Update client_id and client_alias as per onboarding in mimoto-issuers-config.json file.
 
 6. Refer to the [How to create Google Client Credentials](#how-to-create-google-client-credentials) section to create 
-    Google client credentials and replace the `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_CLIENT_SECRET` properties in `docker-compose.yml`.
+    Google client credentials.
+   - Replace the placeholders in the `docker-compose.yml` file with the generated credentials:
+
+   ```yaml
+       environment:
+         - GOOGLE_OAUTH_CLIENT_ID=<your-client-id>
+         - GOOGLE_OAUTH_CLIENT_SECRET=<your-client-secret>
 
 7. Start the docker-compose file
 
@@ -56,21 +62,28 @@ To enable Google OAuth2.0 authentication, follow these steps:
    - Select "Web application" as the application type.
 
 5. **Configure Authorized JavaScript Origins**:
-   - Add `http://localhost:8099` to the "Authorized JavaScript origins".
+   Depending on your environment, use the following values:
+
+   - **Local or Docker**:
+     ```
+     http://localhost:8099
+     ```
+   - **Deployed domain (e.g., collab.mosip.net)**:
+     ```
+     https://collab.mosip.net
 
 6. **Configure Authorized Redirect URIs**:
-   - Add `http://localhost:8099/v1/mimoto/oauth2/callback/google` to the "Authorized redirect URIs".
+   - **Local or Docker**:
+     ```
+     http://localhost:8099/v1/mimoto/oauth2/callback/google
+     ```
+   - **Deployed domain (e.g., collab.mosip.net)**:
+     ```
+     https://collab.mosip.net/v1/mimoto/oauth2/callback/google
+     ```
 
 7. **Save and Retrieve Client Credentials**:
    - After saving, you will receive a `Client ID` and `Client Secret`.
-
-8. **Update `docker-compose.yml`**:
-   - Replace the placeholders in the `docker-compose.yml` file with the generated credentials:
-
-   ```yaml
-       environment:
-         - GOOGLE_OAUTH_CLIENT_ID=<your-client-id>
-         - GOOGLE_OAUTH_CLIENT_SECRET=<your-client-secret>
 
 Note:
 - Replace mosipbox.public.url, mosip.api.public.url with your public accessible domain. For dev or local env [ngrok](https://ngrok.com/docs/getting-started/) is recommended.
