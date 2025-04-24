@@ -3,6 +3,7 @@ package io.mosip.mimoto.controller;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
+import io.mosip.mimoto.exception.GlobalExceptionHandler;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import org.junit.Before;
@@ -19,20 +20,18 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.util.Optional;
 
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = UsersController.class)
+@SpringBootTest(classes = {UsersController.class, GlobalExceptionHandler.class})
 @AutoConfigureMockMvc
 @EnableWebMvc
 @EnableWebSecurity
@@ -64,9 +63,6 @@ public class UsersControllerTest {
         userMetadata.setDisplayName("encryptedName");
         userMetadata.setProfilePictureUrl("encryptedUrl");
         userMetadata.setEmail("encryptedEmail");
-        mockMvc = MockMvcBuilders.webAppContextSetup(context)
-                .apply(springSecurity())
-                .build();
         mockSession = new MockHttpSession();
         mockSession.setAttribute("clientRegistrationId", "google");
         mockSession.setAttribute(SessionKeys.USER_ID, "user123");
@@ -75,7 +71,6 @@ public class UsersControllerTest {
         when(encryptionDecryptionUtil.decrypt("encryptedName", "user_pii", "", "")).thenReturn("Name 123");
         when(encryptionDecryptionUtil.decrypt("encryptedUrl", "user_pii", "", "")).thenReturn("https://profile.com/pic.jpg");
         when(encryptionDecryptionUtil.decrypt("encryptedEmail", "user_pii", "", "")).thenReturn("name123@gmail.com");
-
     }
 
     @Test
@@ -98,7 +93,7 @@ public class UsersControllerTest {
                         .session(mockSession)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-049"))
+                .andExpect(jsonPath("$.errorCode").value("invalid_user"))
                 .andExpect(jsonPath("$.errorMessage").value("User not found. Please check your credentials or login again"));
     }
 
@@ -111,8 +106,8 @@ public class UsersControllerTest {
                         .session(mockSession)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER")).session(mockSession))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-049"))
-                .andExpect(jsonPath("$.errorMessage").value("Failed to fetch the User metadata from database due to : Failure occurred while decrypting the name"));
+                .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
+                .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
     }
 
     @Test
@@ -138,9 +133,9 @@ public class UsersControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
                         .session(mockSession))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-052"))
-                .andExpect(jsonPath("$.errorMessage").value("No user metadata present in cache"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value("session_invalid_or_expired"))
+                .andExpect(jsonPath("$.errorMessage").value("User session is missing or expired. Please log in again."));
     }
 
 }

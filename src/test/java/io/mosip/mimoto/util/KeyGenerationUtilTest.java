@@ -1,5 +1,6 @@
 package io.mosip.mimoto.util;
 
+import io.mosip.mimoto.exception.KeyGenerationException;
 import io.mosip.mimoto.model.SigningAlgorithm;
 import org.junit.Test;
 
@@ -13,7 +14,7 @@ import static org.junit.Assert.assertNotNull;
 public class KeyGenerationUtilTest {
 
     @Test
-    public void shouldGenerateEncryptionKeySuccessfully() throws Exception {
+    public void shouldGenerateEncryptionKeySuccessfully() {
         SecretKey key = KeyGenerationUtil.generateEncryptionKey("AES", 256);
 
         assertNotNull(key);
@@ -57,8 +58,8 @@ public class KeyGenerationUtilTest {
         KeyGenerationUtil.generateKeyPair(SigningAlgorithm.fromString("unsupportedAlgorithm"));
     }
 
-    @Test(expected = NoSuchAlgorithmException.class)
-    public void shouldThrowExceptionForUnsupportedEncryptionAlgorithm() throws Exception {
+    @Test(expected = KeyGenerationException.class)
+    public void shouldThrowExceptionForUnsupportedEncryptionAlgorithm() {
         KeyGenerationUtil.generateEncryptionKey("unsupportedAlgorithm", 256);
     }
 }

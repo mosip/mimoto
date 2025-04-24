@@ -1,179 +1,183 @@
 package io.mosip.mimoto.security.oauth2;
 
-import io.mosip.mimoto.config.Config;
-import io.mosip.mimoto.service.LogoutService;
+import io.mosip.mimoto.constant.SessionKeys;
+import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.service.UserMetadataService;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
-import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.mock.web.MockHttpSession;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
-import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
-import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
-import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.session.SessionRepository;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.UUID;
+import java.io.IOException;
+import java.lang.reflect.Field;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {Config.class})
-@WebMvcTest(Config.class)
-@AutoConfigureMockMvc
-@Import({OAuth2AuthenticationSuccessHandler.class})
-@Slf4j
+@RunWith(MockitoJUnitRunner.class)
 public class OAuth2AuthenticationSuccessHandlerTest {
-    @Autowired
-    private MockMvc mockMvc;
-    @MockBean
-    private OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient;
 
-    @MockBean
-    private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
+    @InjectMocks
+    private OAuth2AuthenticationSuccessHandler successHandler;
 
-    @MockBean
-    private SessionRepository sessionRepository;
-
-    @MockBean
-    private LogoutService logoutService;
-
-    @MockBean
+    @Mock
     private UserMetadataService userMetadataService;
 
-    @MockBean
-    private ClientRegistrationRepository clientRegistrationRepository;
+    @Mock
+    private HttpServletRequest request;
 
-    @MockBean
-    private OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService;
+    @Mock
+    private HttpServletResponse response;
 
-    private String providerSubjectId, identityProvider, displayName, profilePictureUrl, email, userId;
+    @Mock
+    private HttpSession session;
 
-    MockHttpSession mockSession;
+    @Mock
+    private OAuth2AuthenticationToken oauth2Token;
+
+    @Mock
+    private OAuth2User oauth2User;
+
+    private static final String INJI_WEB_URL = "https://example.com";
+    private static final String CLIENT_REGISTRATION_ID = "google";
+    private static final String PROVIDER_SUBJECT_ID = "sub123";
+    private static final String DISPLAY_NAME = "John Doe";
+    private static final String PROFILE_PICTURE_URL = "https://example.com/profile.jpg";
+    private static final String EMAIL = "john.doe@example.com";
+    private static final String USER_ID = "user456";
 
     @Before
-    public void setUp() {
-        MockitoAnnotations.initMocks(this);
-        providerSubjectId = "123456789";
-        identityProvider = "google";
-        displayName = "user_123";
-        profilePictureUrl = "https://example.com/profile.jpg";
-        email = "user.123@example.com";
-        userId = UUID.randomUUID().toString();
+    public void setUp() throws Exception {
+        // Set the injiWebUrl field using reflection to simulate @Value injection
+        Field injiWebUrlField = OAuth2AuthenticationSuccessHandler.class.getDeclaredField("injiWebUrl");
+        injiWebUrlField.setAccessible(true);
+        injiWebUrlField.set(successHandler, INJI_WEB_URL);
 
-        ClientRegistration googleClient = ClientRegistration.withRegistrationId("google")
-                .clientId("test-client-id")
-                .clientSecret("test-client-secret")
-                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("https://injiweb.dev1.mosip.net/login/oauth2/callback/google")
-                .tokenUri("https://oauth2.googleapis.com/token")
-                .authorizationUri("https://accounts.google.com/o/oauth2/auth")
-                .userInfoUri("https://www.googleapis.com/oauth2/v3/userinfo")
-                .clientName("Google")
-                .build();
-
-        when(clientRegistrationRepository.findByRegistrationId("google")).thenReturn(googleClient);
-
-        OAuth2AuthorizationCodeGrantRequest grantRequest = Mockito.any();
-        OAuth2AccessTokenResponse tokenResponse = OAuth2AccessTokenResponse.withToken("mock-access-token")
-                .tokenType(OAuth2AccessToken.TokenType.BEARER)
-                .expiresIn(3600)
-                .build();
-
-        when(accessTokenResponseClient.getTokenResponse(grantRequest)).thenReturn(tokenResponse);
-        OAuth2User mockOAuth2User = new DefaultOAuth2User(
-                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-                Map.of(
-                        "sub", providerSubjectId,
-                        "name", displayName,
-                        "email", email,
-                        "picture", profilePictureUrl
-                ),
-                "sub"
-        );
-        when(oauth2UserService.loadUser(any(OAuth2UserRequest.class)))
-                .thenReturn(mockOAuth2User);
-
-        OAuth2AuthorizationRequest authRequest = OAuth2AuthorizationRequest.authorizationCode()
-                .authorizationUri("https://accounts.google.com/o/oauth2/auth")
-                .clientId("test-client-id")
-                .redirectUri("https://yourapp.com/oauth2/callback/google")
-                .scopes(Collections.singleton("profile"))
-                .state("test-state")
-                .attributes(Map.of(OAuth2ParameterNames.REGISTRATION_ID, "google"))
-                .build();
-
-        mockSession = new MockHttpSession();
-        mockSession.setAttribute(HttpSessionOAuth2AuthorizationRequestRepository.class.getName() + ".AUTHORIZATION_REQUEST", authRequest);
+        // Mock session behavior
+        when(request.getSession(false)).thenReturn(session);
     }
 
     @Test
-    public void shouldReturnRedirectUrlWithSuccessStatusQueryParamIfLoginIsSuccessful() throws Exception {
-        mockMvc.perform(get("/oauth2/callback/google")
-                        .session(mockSession)
-                        .param("code", "test-authorization-code")
-                        .param("state", "test-state"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("https://injiweb.dev1.mosip.net/login?status=success"));
+    public void onAuthenticationSuccessSetsSessionAttributesAndRedirects() throws IOException, ServletException {
+        // Arrange
+        when(oauth2Token.getAuthorizedClientRegistrationId()).thenReturn(CLIENT_REGISTRATION_ID);
+        when(oauth2Token.getPrincipal()).thenReturn(oauth2User);
+        when(oauth2User.getAttribute("sub")).thenReturn(PROVIDER_SUBJECT_ID);
+        when(oauth2User.getAttribute("name")).thenReturn(DISPLAY_NAME);
+        when(oauth2User.getAttribute("picture")).thenReturn(PROFILE_PICTURE_URL);
+        when(oauth2User.getAttribute("email")).thenReturn(EMAIL);
+        when(userMetadataService.updateOrInsertUserMetadata(
+                eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), eq(DISPLAY_NAME),
+                eq(PROFILE_PICTURE_URL), eq(EMAIL)))
+                .thenReturn(USER_ID);
+
+        // Act
+        successHandler.onAuthenticationSuccess(request, response, oauth2Token);
+
+        // Assert
+        verify(session).setAttribute(eq("clientRegistrationId"), eq(CLIENT_REGISTRATION_ID));
+        verify(session).setAttribute(eq(SessionKeys.USER_ID), eq(USER_ID));
+        verify(response).sendRedirect(eq(INJI_WEB_URL + "/login?status=success"));
+        verify(userMetadataService).updateOrInsertUserMetadata(
+                eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), eq(DISPLAY_NAME),
+                eq(PROFILE_PICTURE_URL), eq(EMAIL));
+
+        // Verify UserMetadataDTO using ArgumentCaptor
+        ArgumentCaptor<UserMetadataDTO> captor = ArgumentCaptor.forClass(UserMetadataDTO.class);
+        verify(session).setAttribute(eq(SessionKeys.USER_METADATA), captor.capture());
+        UserMetadataDTO userMetadataDTO = captor.getValue();
+        assertEquals(DISPLAY_NAME, userMetadataDTO.getDisplayName());
+        assertEquals(PROFILE_PICTURE_URL, userMetadataDTO.getProfilePictureUrl());
+        assertEquals(EMAIL, userMetadataDTO.getEmail());
     }
 
     @Test
-    public void shouldSendCustomErrorInRedirectUrlWhenLoginIsSuccessfulButAnErrorOccurredInAuthenticationSuccessHandler() throws Exception {
-        when(userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email))
-                .thenThrow(new RuntimeException("Failed to store the user metadata"));
+    public void onAuthenticationSuccessWithNullAttributesSetsSessionAttributesAndRedirects() throws IOException, ServletException {
+        // Arrange
+        when(oauth2Token.getAuthorizedClientRegistrationId()).thenReturn(CLIENT_REGISTRATION_ID);
+        when(oauth2Token.getPrincipal()).thenReturn(oauth2User);
+        when(oauth2User.getAttribute("sub")).thenReturn(PROVIDER_SUBJECT_ID);
+        when(oauth2User.getAttribute("name")).thenReturn(null);
+        when(oauth2User.getAttribute("picture")).thenReturn(null);
+        when(oauth2User.getAttribute("email")).thenReturn(null);
+        when(userMetadataService.updateOrInsertUserMetadata(
+                eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), isNull(),
+                isNull(), isNull()))
+                .thenReturn(USER_ID);
 
-        mockMvc.perform(get("/oauth2/callback/google")
-                        .session(mockSession)
-                        .param("code", "test-authorization-code")
-                        .param("state", "test-state"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("https://injiweb.dev1.mosip.net/login?status=error&error_code=RESIDENT-APP-048&error_message=Failed+to+store+the+User+metadata+into+database"));
+        // Act
+        successHandler.onAuthenticationSuccess(request, response, oauth2Token);
 
-        verify(userMetadataService, times(1)).updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+        // Assert
+        verify(session).setAttribute(eq("clientRegistrationId"), eq(CLIENT_REGISTRATION_ID));
+        verify(session).setAttribute(eq(SessionKeys.USER_ID), eq(USER_ID));
+        verify(response).sendRedirect(eq(INJI_WEB_URL + "/login?status=success"));
+        verify(userMetadataService).updateOrInsertUserMetadata(
+                eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), isNull(),
+                isNull(), isNull());
+
+        // Verify UserMetadataDTO using ArgumentCaptor
+        ArgumentCaptor<UserMetadataDTO> captor = ArgumentCaptor.forClass(UserMetadataDTO.class);
+        verify(session).setAttribute(eq(SessionKeys.USER_METADATA), captor.capture());
+        UserMetadataDTO userMetadataDTO = captor.getValue();
+        assertNull(userMetadataDTO.getDisplayName());
+        assertNull(userMetadataDTO.getProfilePictureUrl());
+        assertNull(userMetadataDTO.getEmail());
     }
 
     @Test
-    public void shouldSendCustomErrorInRedirectUrlWhenLoginIsSuccessfulButDatabaseIsNotConnectedToStoreUserData() throws Exception {
-        when(userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email))
-                .thenThrow(new DataAccessResourceFailureException("Failed to connect to the database"));
+    public void onAuthenticationSuccessWithNullSessionThrowsServletException() throws IOException {
+        // Arrange
+        when(request.getSession(false)).thenReturn(null);
 
-        mockMvc.perform(get("/oauth2/callback/google")
-                        .session(mockSession)
-                        .param("code", "test-authorization-code")
-                        .param("state", "test-state"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("https://injiweb.dev1.mosip.net/login?status=error&error_code=RESIDENT-APP-047&error_message=Failed+to+connect+to+the+shared+database"));
+        // Act & Assert
+        try {
+            successHandler.onAuthenticationSuccess(request, response, oauth2Token);
+            fail("Expected ServletException");
+        } catch (ServletException e) {
+            assertEquals("Session not available", e.getMessage());
+        }
+        verifyNoInteractions(userMetadataService, session);
+        verify(response, never()).sendRedirect(anyString());
+    }
 
-        verify(userMetadataService, times(1)).updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+    @Test
+    public void onAuthenticationSuccessWithServiceFailureThrowsIOException() throws IOException, ServletException {
+        // Arrange
+        when(oauth2Token.getAuthorizedClientRegistrationId()).thenReturn(CLIENT_REGISTRATION_ID);
+        when(oauth2Token.getPrincipal()).thenReturn(oauth2User);
+        when(oauth2User.getAttribute("sub")).thenReturn(PROVIDER_SUBJECT_ID);
+        when(oauth2User.getAttribute("name")).thenReturn(DISPLAY_NAME);
+        when(oauth2User.getAttribute("picture")).thenReturn(PROFILE_PICTURE_URL);
+        when(oauth2User.getAttribute("email")).thenReturn(EMAIL);
+        when(userMetadataService.updateOrInsertUserMetadata(
+                eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), eq(DISPLAY_NAME),
+                eq(PROFILE_PICTURE_URL), eq(EMAIL)))
+                .thenThrow(new RuntimeException("Service failure"));
+
+        // Act & Assert
+        try {
+            successHandler.onAuthenticationSuccess(request, response, oauth2Token);
+            fail("Expected IOException");
+        } catch (RuntimeException e) {
+            assertEquals("Service failure", e.getMessage());
+        }
+        verify(session).setAttribute(eq("clientRegistrationId"), eq(CLIENT_REGISTRATION_ID));
+        verify(userMetadataService).updateOrInsertUserMetadata(
+                eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), eq(DISPLAY_NAME),
+                eq(PROFILE_PICTURE_URL), eq(EMAIL));
+        verify(session, never()).setAttribute(eq(SessionKeys.USER_METADATA), any());
+        verify(session, never()).setAttribute(eq(SessionKeys.USER_ID), any());
+        verify(response, never()).sendRedirect(anyString());
     }
 }
-

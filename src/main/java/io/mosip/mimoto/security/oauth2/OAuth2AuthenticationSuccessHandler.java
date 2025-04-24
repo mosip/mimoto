@@ -32,6 +32,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2AuthenticationToken oauth2Token = (OAuth2AuthenticationToken) authentication;
         OAuth2User oAuth2User = oauth2Token.getPrincipal();
         HttpSession session = request.getSession(false);
+        if (session == null) {
+            log.error("Session not available");
+            throw new ServletException("Session not available");
+        }
 
         // Storing clientRegistrationId in the Redis session to verify it against the one in user metadata during profile retrieval
         String clientRegistrationId = oauth2Token.getAuthorizedClientRegistrationId();

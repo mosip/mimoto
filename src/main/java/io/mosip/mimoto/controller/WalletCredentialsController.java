@@ -112,6 +112,8 @@ public class WalletCredentialsController {
         WalletCredentialResponseDTO walletCredentialResponseDTO = null;
         try {
             walletCredentialResponseDTO = walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64EncodedWalletKey, locale);
+        } catch (CredentialNotFoundException e) {
+            return Utilities.getErrorResponseEntityWithoutWrapper(e, e.getErrorCode(), HttpStatus.NOT_FOUND, MediaType.APPLICATION_JSON);
         } catch (DecryptionException e) {
             return Utilities.getErrorResponseEntityWithoutWrapper(e, e.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
         } catch (CorruptedEncryptedDataException e) {

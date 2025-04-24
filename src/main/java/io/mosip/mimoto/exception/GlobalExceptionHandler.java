@@ -34,10 +34,10 @@ public class GlobalExceptionHandler {
         return new ErrorDTO(ex.getErrorCode(), ex.getMessage());
     }
 
-    @ExceptionHandler(InvalidInputException.class)
+    @ExceptionHandler(InvalidRequestException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorDTO handleExternalServiceUnavailable(InvalidInputException ex) {
-        log.error("Connection to external service failed: {}", ex.getMessage(), ex);
+    public ErrorDTO handleInvalidRequest(InvalidRequestException ex) {
+        log.error("Invalid request parameters: {}", ex.getMessage(), ex);
         return new ErrorDTO(ex.getErrorCode(), ex.getMessage());
     }
 

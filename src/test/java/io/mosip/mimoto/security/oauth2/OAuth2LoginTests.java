@@ -196,8 +196,8 @@ public class OAuth2LoginTests {
         mockMvc.perform(post("/logout")
                         .session(mockSession).cookie(sessionCookie))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errors[0].errorCode").value("RESIDENT-APP-046"))
-                .andExpect(jsonPath("$.errors[0].errorMessage").value("Exception occurred when invalidating the session from redis"));
+                .andExpect(jsonPath("$.errors[0].errorCode").value("user_logout_error"))
+                .andExpect(jsonPath("$.errors[0].errorMessage").value("Exception occurred when invalidating the session of a user"));
 
     }
 

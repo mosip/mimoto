@@ -156,7 +156,8 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         if (verifiableCredentialObj.isPresent()) {
             verifiableCredential = verifiableCredentialObj.get();
         } else {
-            throw new InvalidInputException(INVALID_REQUEST.getErrorCode(), "Credential not found");
+            log.error("Credential not found for walletId: {} and credentialId: {}", walletId, credentialId);
+            throw new CredentialNotFoundException(RESOURCE_NOT_FOUND.getErrorCode(), RESOURCE_NOT_FOUND.getErrorMessage());
         }
 
         String decryptCredentialResponse = encryptionDecryptionUtil.decryptCredential(verifiableCredential.getCredential(), base64EncodedWalletKey);
@@ -189,6 +190,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         try {
             vcCredentialResponse = objectMapper.readValue(decryptCredentialResponse, VCCredentialResponse.class);
         } catch (JsonProcessingException e) {
+            log.error("Error occurred while parsing the decrypted credential response", e);
             throw new CorruptedEncryptedDataException(SCHEMA_MISMATCH.getErrorCode(), SCHEMA_MISMATCH.getErrorMessage(), e);
         }
         ByteArrayInputStream byteArrayInputStream = null;

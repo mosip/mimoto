@@ -4,7 +4,7 @@ import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dbentity.WalletMetadata;
-import io.mosip.mimoto.exception.InvalidInputException;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.repository.WalletRepository;
 import jakarta.servlet.http.HttpSession;
@@ -78,17 +78,17 @@ public class WalletUtil {
 
     public static String getSessionWalletKey(HttpSession session) {
         Object key = session.getAttribute(SessionKeys.WALLET_KEY);
-        if (key == null) throw new InvalidInputException(INVALID_REQUEST.getErrorCode(), "Wallet Key is missing in session");
+        if (key == null) throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet Key is missing in session");
         return key.toString();
     }
 
     public static void validateWalletId(HttpSession session, String walletIdFromRequest) {
         Object sessionWalletId = session.getAttribute(SessionKeys.WALLET_ID);
-        if (sessionWalletId == null) throw new InvalidInputException(INVALID_REQUEST.getErrorCode(), "Wallet Id is missing in session");
+        if (sessionWalletId == null) throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet Id is missing in session");
 
         String walletIdInSession = sessionWalletId.toString();
         if (!walletIdInSession.equals(walletIdFromRequest)) {
-            throw new InvalidInputException(INVALID_REQUEST.getErrorCode(), "Invalid Wallet Id. Session and request Wallet Id do not match");
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Invalid Wallet Id. Session and request Wallet Id do not match");
         }
     }
 }

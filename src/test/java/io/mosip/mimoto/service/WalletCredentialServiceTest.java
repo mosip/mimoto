@@ -246,7 +246,7 @@ public class WalletCredentialServiceTest {
                 walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale)
         );
 
-        assertEquals("Credential not found", exception.getMessage());
+        assertEquals("resource_not_found --> The requested resource doesn’t exist.", exception.getMessage());
     }
 
     @Test
@@ -283,7 +283,7 @@ public class WalletCredentialServiceTest {
         when(encryptionDecryptionUtil.decryptCredential(encryptedCredential, base64Key)).thenReturn(decryptedCredential);
         when(issuersService.getIssuerDetails(issuerId)).thenThrow(new ApiNotAccessibleException());
 
-        ApiNotAccessibleException exception = assertThrows(ApiNotAccessibleException.class, () ->
+        ExternalServiceUnavailableException exception = assertThrows(ExternalServiceUnavailableException.class, () ->
                 walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale)
         );
 
@@ -328,6 +328,6 @@ public class WalletCredentialServiceTest {
                 walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale)
         );
 
-        assertEquals("PDF generation failed", exception.getMessage());
+        assertEquals("server_unavailable --> The server is not reachable right now.", exception.getMessage());
     }
 }
