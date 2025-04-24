@@ -87,13 +87,13 @@ public class WalletCredentialsController {
     @ApiResponse(responseCode = "500", description = "Internal Server Error - Error occurred while fetching credentials from the database", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Error.class), examples = @ExampleObject(value = "{\"errorCode\": \"RESIDENT-APP-054\", \"errorMessage\": \"Error occurred while fetching credentials for wallet\"}")))
     @GetMapping
     public ResponseEntity<List<VerifiableCredentialResponseDTO>> fetchAllCredentialsForGivenWallet(@PathVariable("walletId") String walletId, @RequestParam("locale") String locale, HttpSession httpSession) {
-            log.info("Fetching all credentials for walletId: {}", walletId);
+        log.info("Fetching all credentials for walletId: {}", walletId);
 
-            WalletUtil.validateWalletId(httpSession, walletId);
-            String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
+        WalletUtil.validateWalletId(httpSession, walletId);
+        String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
-            List<VerifiableCredentialResponseDTO> credentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64EncodedWalletKey, locale);
-            return ResponseEntity.status(HttpStatus.OK).body(credentials);
+        List<VerifiableCredentialResponseDTO> credentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64EncodedWalletKey, locale);
+        return ResponseEntity.status(HttpStatus.OK).body(credentials);
 
     }
 
@@ -115,7 +115,7 @@ public class WalletCredentialsController {
         } catch (CredentialNotFoundException e) {
             return Utilities.getErrorResponseEntityWithoutWrapper(e, e.getErrorCode(), HttpStatus.NOT_FOUND, MediaType.APPLICATION_JSON);
         } catch (DecryptionException e) {
-            return Utilities.getErrorResponseEntityWithoutWrapper(e, e.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+            return Utilities.getErrorResponseEntityWithoutWrapper(e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         } catch (CorruptedEncryptedDataException e) {
             return Utilities.getErrorResponseEntityWithoutWrapper(e, e.getErrorCode(), HttpStatus.UNPROCESSABLE_ENTITY, MediaType.APPLICATION_JSON);
         }

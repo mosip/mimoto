@@ -239,7 +239,7 @@ public class WalletCredentialsControllerTest {
                     .getVerifiableCredential(WALLET_ID, CREDENTIAL_ID, LOCALE, "inline", httpSession);
 
             
-            assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+            assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
             assertEquals(MediaType.APPLICATION_JSON, response.getHeaders().getContentType());
             walletUtilMock.verify(() -> WalletUtil.validateWalletId(httpSession, WALLET_ID));
             walletUtilMock.verify(() -> WalletUtil.getSessionWalletKey(httpSession));
