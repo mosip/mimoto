@@ -88,7 +88,7 @@ fi
     ENABLE_INSECURE='--set onboarding.configmaps.onboarding.ENABLE_INSECURE=true';
   fi
 
-  NS=$custom_ns
+  export NS=$custom_ns
   CHART_VERSION=0.0.1-develop
 
   echo Create $NS namespace
@@ -111,10 +111,10 @@ fi
     $NFS_OPTION \
     $S3_OPTION \
     --set onboarding.variables.push_reports_to_s3=$push_reports_to_s3 \
+    --set extraEnvVars[0].name=customnamespace,extraEnvVars[0].value=$NS \
     --set extraEnvVarsCM[0]=global \
     --set extraEnvVarsCM[1]=keycloak-env-vars \
     --set extraEnvVarsCM[2]=keycloak-host \
-    --set extraEnvVars[0].value=$NS \
     $ENABLE_INSECURE \
     -f values.yaml \
     --version $CHART_VERSION \
