@@ -259,7 +259,6 @@ extraEnvVars: []
 #        key: db-dbuser-password
 #  - name: MOSIP_MIMOTO_DATABASE_HOSTNAME
 #    value: postgres-postgresql.postgres
-      
 
 ## ConfigMap with extra environment variables that used
 ##
