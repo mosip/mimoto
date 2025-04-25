@@ -17,7 +17,7 @@ cd ../partner-onboarder
 
 # Install mimoto
 * Execute mimoto install script
-* Before installing Mimoto, please ensure that the database host and port are correctly configured in the values.yaml file.
+* Before installing Mimoto, please ensure that the database host and port are correctly configured in the [values.yaml](mimoto/values.yaml) file.
 ```
 cd mimoto
 ./install.sh
