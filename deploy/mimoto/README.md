@@ -11,7 +11,9 @@ $ helm install my-release mosip/mimoto
 ```console
 ./install.sh
 ```
-```
 ```console
 ./delete.sh
+```
+```console
+./restart.sh
 ```
