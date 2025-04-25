@@ -66,19 +66,19 @@ public class WalletCredentialsController {
         } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
                  InvalidWellknownResponseException e) {
             log.error("Error occurred while fetching token response: {}", issuerId, e);
-            throw new ExternalServiceUnavailableException(
-                    ErrorConstants.SERVER_UNAVAILABLE.getErrorCode(),
-                    ErrorConstants.SERVER_UNAVAILABLE.getErrorMessage());
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    e, ErrorConstants.SERVER_UNAVAILABLE.getErrorCode(), HttpStatus.SERVICE_UNAVAILABLE, MediaType.APPLICATION_JSON);
         }
-         try {
-             log.info("Initiated call for fetching and storing Verifiable Credential in the database for walletId: {}", walletId);
-             VerifiableCredentialResponseDTO credentialResponseDTO = walletCredentialService.fetchAndStoreCredential(issuerId, credentialType, response, credentialValidity, locale, walletId, base64EncodedWalletKey);
 
-             return ResponseEntity.status(HttpStatus.OK).body(credentialResponseDTO);
-         } catch (Exception ex) {
-            log.error("Exception occurred while saving the credential ", ex);
-            return Utilities.getErrorResponseEntityWithoutWrapper(ex, ErrorConstants.CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
+        log.info("Initiated call for fetching and storing Verifiable Credential in the database for walletId: {}", walletId);
+        try {
+            VerifiableCredentialResponseDTO credentialResponseDTO = walletCredentialService.fetchAndStoreCredential(issuerId, credentialType, response, credentialValidity, locale, walletId, base64EncodedWalletKey);
+            return ResponseEntity.status(HttpStatus.OK).body(credentialResponseDTO);
+        } catch (ExternalServiceUnavailableException e) {
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    e, e.getErrorCode(), HttpStatus.SERVICE_UNAVAILABLE, MediaType.APPLICATION_JSON);
         }
+
     }
 
     @Operation(summary = "Fetch all credentials for a given wallet", description = "This API retrieves all credentials associated with the specified wallet. The wallet is identified using its unique wallet ID, and the credentials are returned based on the provided locale. The user's session is authenticated to ensure access to the wallet. If successful, the API returns a list of Verifiable Credentials. Otherwise, an appropriate error response is returned.", operationId = "fetchAllCredentialsForGivenWallet", security = @SecurityRequirement(name = "SessionAuth"), parameters = {@Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the wallet for which credentials will be fetched", schema = @Schema(type = "string")), @Parameter(name = "locale", in = ParameterIn.QUERY, required = true, description = "The locale to be used for credential retrieval", schema = @Schema(type = "string"))})
@@ -118,6 +118,9 @@ public class WalletCredentialsController {
             return Utilities.getErrorResponseEntityWithoutWrapper(e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         } catch (CorruptedEncryptedDataException e) {
             return Utilities.getErrorResponseEntityWithoutWrapper(e, e.getErrorCode(), HttpStatus.UNPROCESSABLE_ENTITY, MediaType.APPLICATION_JSON);
+        } catch (ExternalServiceUnavailableException e) {
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    e, e.getErrorCode(), HttpStatus.SERVICE_UNAVAILABLE, MediaType.APPLICATION_JSON);
         }
 
         String dispositionType = "download".equalsIgnoreCase(action) ? "attachment" : "inline";

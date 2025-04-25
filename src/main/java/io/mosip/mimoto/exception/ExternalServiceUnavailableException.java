@@ -1,6 +1,6 @@
 package io.mosip.mimoto.exception;
 
-public class ExternalServiceUnavailableException extends BaseUncheckedException {
+public class ExternalServiceUnavailableException extends BaseCheckedException {
     /** The Constant serialVersionUID. */
     private static final long serialVersionUID = 1L;
 

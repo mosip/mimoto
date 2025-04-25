@@ -15,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 
@@ -25,6 +26,7 @@ import static io.mosip.mimoto.exception.ErrorConstants.SIGNATURE_VERIFICATION_EX
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 public class WalletCredentialServiceTest {
@@ -35,7 +37,8 @@ public class WalletCredentialServiceTest {
     @Mock
     private IssuersService issuersService;
     @Mock
-    private DataShareServiceImpl dataShareService;
+    private CredentialProcessor credentialProcessor;
+
     @Mock
     private ObjectMapper objectMapper;
     @Mock
@@ -65,7 +68,6 @@ public class WalletCredentialServiceTest {
 
     @Before
     public void setUp() {
-        walletCredentialService.init();
         issuerConfig = getCredentialIssuerConfigurationResponseDto(issuerId, credentialType, List.of());
         vcRequest = getVCCredentialRequestDTO();
         tokenResponse = new TokenResponseDTO();
@@ -104,6 +106,7 @@ public class WalletCredentialServiceTest {
         when(credentialUtilService.verifyCredential(any())).thenReturn(true);
         when(encryptionDecryptionUtil.encryptWithAES(any(), any())).thenReturn(encryptedCredential);
         when(walletCredentialsRepository.save(any())).thenReturn(vc);
+        when(credentialProcessor.processAndStoreCredential(any(),eq(accessToken), eq(credentialType), eq(walletId), eq(base64Key), any(), eq(issuerId))).thenReturn(vc);
 
         VerifiableCredentialResponseDTO actualVerifiableCredentialResponseDTO = walletCredentialService.fetchAndStoreCredential(
                 issuerId, credentialType, tokenResponse, "1", "en", walletId, base64Key
@@ -120,7 +123,7 @@ public class WalletCredentialServiceTest {
                 walletCredentialService.fetchAndStoreCredential("Mosip", credentialType, tokenResponse, "1", "en", walletId, base64Key)
         );
 
-        assertEquals("A credential is already downloaded for the selected Issuer and Credential Type. Only one is allowed, so download will not be initiated", exception.getMessage());
+        assertEquals("invalid_request --> A credential is already downloaded for the selected Issuer and Credential Type. Only one is allowed", exception.getMessage());
     }
 
     @Test
@@ -151,30 +154,6 @@ public class WalletCredentialServiceTest {
 
         assertEquals(2, actualCredentialList.size());
         assertEquals(expectedCredentialsList, actualCredentialList);
-    }
-
-    @Test
-    public void shouldThrowExceptionOnVerificationFailureDuringVCDownloaded() throws Exception {
-        VCCredentialResponse vcResponse = new VCCredentialResponse();
-        String encryptedCredential = "encryptedCredential";
-        VCVerificationException expectedException = new VCVerificationException(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(),
-                SIGNATURE_VERIFICATION_EXCEPTION.getErrorMessage());
-        VerifiableCredential vc = getVerifiableCredential("vc-id-123", walletId, "encryptedCredential", issuerId, credentialType);
-
-        when(issuersService.getIssuerDetails(issuerId)).thenReturn(getMockIssuerDTO());
-        when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
-        when(credentialUtilService.generateVCCredentialRequest(any(), any(), any(), eq(accessToken), eq(walletId), eq(base64Key), eq(true))).thenReturn(vcRequest);
-        when(credentialUtilService.downloadCredential(anyString(), eq(vcRequest), eq(accessToken))).thenReturn(vcResponse);
-        when(credentialUtilService.verifyCredential(any())).thenReturn(false);
-        when(encryptionDecryptionUtil.encryptWithAES(any(), any())).thenReturn(encryptedCredential);
-        when(walletCredentialsRepository.save(any())).thenReturn(vc);
-
-        VCVerificationException actualException = assertThrows(VCVerificationException.class, () -> walletCredentialService.fetchAndStoreCredential(
-                issuerId, credentialType, tokenResponse, "1", "en", walletId, base64Key
-        ));
-
-        assertEquals(expectedException.getErrorCode(), actualException.getErrorCode());
-        assertEquals(expectedException.getErrorText(), actualException.getErrorText());
     }
 
     @Test

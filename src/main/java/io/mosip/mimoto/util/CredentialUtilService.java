@@ -121,7 +121,7 @@ public class CredentialUtilService {
         VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialEndpoint, MediaType.APPLICATION_JSON,
                 vcCredentialRequest, VCCredentialResponse.class, accessToken);
         log.debug("VC Credential Response is -> " + vcCredentialResponse);
-        if (vcCredentialResponse == null) throw new RuntimeException("VC Credential Issue API not accessible");
+        if (vcCredentialResponse == null) throw new InvalidCredentialResourceException("VC Credential Issue API not accessible");
         return vcCredentialResponse;
     }
 

@@ -122,7 +122,7 @@ public class CredentialUtilServiceTest {
         VCCredentialRequest vcCredentialRequest = getVCCredentialRequestDTO();
         Mockito.when(restApiClient.postApi(issuerWellKnownResponse.getCredentialEndPoint(), MediaType.APPLICATION_JSON, vcCredentialRequest, VCCredentialResponse.class, "test-access-token")).thenReturn(null);
         String credentialEndpoint = issuerWellKnownResponse.getCredentialEndPoint();
-        expectedExceptionMsg = "VC Credential Issue API not accessible";
+        expectedExceptionMsg = "resource_not_found --> VC Credential Issue API not accessible";
 
 
         RuntimeException actualException = assertThrows(RuntimeException.class, () -> {
