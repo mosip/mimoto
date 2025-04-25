@@ -1,8 +1,14 @@
 
 # Install Onboarder
+
+* Execute redis install script
+```
+cd ../redis
+./install.sh
+```
 * Execute Onboarder install script
   ```
-  cd ../partner-onboarder
+  cd partner-onboarder
   ./install.sh
   ```
 * During the execution of the `install.sh` script, a prompt appears requesting information for the S3 bucket, including its name and URL.

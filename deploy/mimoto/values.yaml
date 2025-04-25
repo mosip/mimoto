@@ -1,0 +1,25 @@
+extraEnvVars:
+  - name: REDIS_HOST
+    valueFrom:
+      configMapKeyRef:
+        name: redis-config
+        key: redis-host
+  - name: REDIS_PORT
+    valueFrom:
+      configMapKeyRef:
+        name: redis-config
+        key: redis-port
+  - name: REDIS_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: redis
+        key: redis-password
+  - name: DB_DBUSER_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: db-common-secrets
+        key: db-dbuser-password
+  - name: MOSIP_MIMOTO_DATABASE_HOSTNAME
+    value: postgres-postgresql.postgres
+  - name: MOSIP_MIMOTO_DATABASE_PORT
+    value: "5432"

@@ -8,4 +8,7 @@ Helm chart for installing MOSIP mimoto Application.
 $ helm repo add mosip https://mosip.github.io
 $ helm install my-release mosip/mimoto
 ```
-
+* Before installing Mimoto, please ensure that the database host and port are correctly configured in the values.yaml file.
+```console
+install.sh
+```
