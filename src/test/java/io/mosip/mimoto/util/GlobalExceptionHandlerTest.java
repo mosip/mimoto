@@ -4,6 +4,8 @@ import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
 import io.mosip.mimoto.exception.InvalidRequestException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.apache.struts.mock.MockHttpServletRequest;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -11,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.lang.reflect.Method;
@@ -111,4 +115,26 @@ public class GlobalExceptionHandlerTest {
         assertNotNull(responseStatus);
         assertEquals(HttpStatus.BAD_REQUEST, responseStatus.value());
     }
+
+    @Test
+    public void handleHttpMessageNotReadableExceptionReturnsBadRequest() throws Exception {
+        // Arrange
+        HttpMessageNotReadableException ex = new HttpMessageNotReadableException("Invalid JSON format");
+        String expectedErrorCode = ErrorConstants.INVALID_REQUEST.getErrorCode();
+        String expectedErrorMessage = "Unable to process request body";
+
+        // Act
+        ErrorDTO result = globalExceptionHandler.handleHttpMessageNotReadableException(ex);
+
+        // Assert
+        assertEquals(expectedErrorCode, result.getErrorCode());
+        assertEquals(expectedErrorMessage, result.getErrorMessage());
+
+        // Verify ResponseStatus annotation
+        Method method = GlobalExceptionHandler.class.getMethod("handleHttpMessageNotReadableException", HttpMessageNotReadableException.class);
+        ResponseStatus responseStatus = method.getAnnotation(ResponseStatus.class);
+        assertNotNull(responseStatus);
+        assertEquals(HttpStatus.BAD_REQUEST, responseStatus.value());
+    }
+
 }
