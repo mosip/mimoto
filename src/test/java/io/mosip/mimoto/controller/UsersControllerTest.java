@@ -3,7 +3,7 @@ package io.mosip.mimoto.controller;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
-import io.mosip.mimoto.exception.GlobalExceptionHandler;
+import io.mosip.mimoto.util.GlobalExceptionHandler;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import org.junit.Before;

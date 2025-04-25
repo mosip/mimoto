@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.WalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
-import io.mosip.mimoto.exception.GlobalExceptionHandler;
+import io.mosip.mimoto.util.GlobalExceptionHandler;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.WalletValidator;
 import org.junit.Before;

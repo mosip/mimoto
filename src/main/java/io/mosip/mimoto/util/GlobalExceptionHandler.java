@@ -1,6 +1,9 @@
-package io.mosip.mimoto.exception;
+package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.dto.ErrorDTO;
+import io.mosip.mimoto.exception.ErrorConstants;
+import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.redis.RedisConnectionFailureException;
@@ -26,13 +29,6 @@ public class GlobalExceptionHandler {
     public ErrorDTO handleDatabaseException(Exception ex) {
         log.error("Database error occurred:", ex);
         return new ErrorDTO(ErrorConstants.DATABASE_CONNECTION_EXCEPTION.getErrorCode(), ErrorConstants.DATABASE_CONNECTION_EXCEPTION.getErrorMessage());
-    }
-
-    @ExceptionHandler(RedisConnectionFailureException.class)
-    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
-    public ErrorDTO handleRedisConnectionException(Exception ex) {
-        log.error("Redis error occurred: ", ex);
-        return new ErrorDTO(ErrorConstants.REDIS_CONNECTION_EXCEPTION.getErrorCode(), ErrorConstants.REDIS_CONNECTION_EXCEPTION.getErrorMessage());
     }
 
     @ExceptionHandler(ExternalServiceUnavailableException.class)

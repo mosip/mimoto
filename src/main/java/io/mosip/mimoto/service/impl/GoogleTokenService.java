@@ -2,6 +2,7 @@ package io.mosip.mimoto.service.impl;
 
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.OAuth2AuthenticationException;
 import io.mosip.mimoto.service.SecurityContextService;
 import io.mosip.mimoto.service.TokenService;
@@ -21,6 +22,7 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -28,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
 import static io.mosip.mimoto.exception.ErrorConstants.OAUTH2_AUTHENTICATION_EXCEPTION;
 
 @Service("google")
@@ -67,7 +70,12 @@ public class GoogleTokenService implements TokenService {
     }
 
     private Jwt decodeAndValidateToken(String idToken) throws OAuth2AuthenticationException {
-        Jwt jwt = googleIdTokenDecoder.decode(idToken);
+        Jwt jwt = null;
+        try {
+            jwt = googleIdTokenDecoder.decode(idToken);
+        } catch (JwtException e) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), e.getMessage(), e);
+        }
 
         String issuer = jwt.getIssuer().toString();
         if (!issuer.equals("https://accounts.google.com") && !issuer.equals("accounts.google.com")) {

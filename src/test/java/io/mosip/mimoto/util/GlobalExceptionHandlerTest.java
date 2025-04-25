@@ -1,6 +1,9 @@
-package io.mosip.mimoto.exception;
+package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.dto.ErrorDTO;
+import io.mosip.mimoto.exception.ErrorConstants;
+import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,7 +16,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import java.lang.reflect.Method;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GlobalExceptionHandlerTest {
