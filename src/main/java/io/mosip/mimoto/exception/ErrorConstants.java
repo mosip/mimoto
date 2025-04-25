@@ -29,6 +29,7 @@ public enum ErrorConstants {
     LOGIN_SESSION_INVALIDATE_EXCEPTION("user_logout_error", "Exception occurred when invalidating the session of a user"),
     SESSION_EXPIRED_OR_INVALID( "session_invalid_or_expired", "User session is missing or expired. Please log in again."),
     DATABASE_CONNECTION_EXCEPTION( "database_unavailable", "Failed to connect to the database"),
+    REDIS_CONNECTION_EXCEPTION( "redis_unavailable", "Failed to connect to the redis"),
     ENCRYPTION_FAILED( "encryption_failed", "Failed to encrypt the data"),
     DECRYPTION_FAILED( "decryption_failed", "Failed to decrypt the data"),
     SCHEMA_MISMATCH( "schema_mismatch", "Failed to restored the stored data"),
