@@ -2,6 +2,8 @@ package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dto.WalletResponseDto;
+import io.mosip.mimoto.exception.UnauthorizedWalletAccessException;
+import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.service.impl.WalletServiceImpl;
 import io.mosip.mimoto.util.WalletUtil;
