@@ -6,11 +6,11 @@ import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
+import io.mosip.mimoto.dto.mimoto.IssuerConfig;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
-import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.IssuerConfigUtil;
 import io.mosip.mimoto.util.Utilities;
@@ -29,20 +29,15 @@ import java.util.List;
 import java.util.Map;
 
 import static io.mosip.mimoto.util.TestUtilities.*;
-import static io.mosip.mimoto.util.TestUtilities.getCredentialSupportedResponse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class IssuersServiceTest {
 
     @InjectMocks
-    IssuersServiceImpl issuersService = new IssuersServiceImpl();
-
-    @InjectMocks
-    CredentialServiceImpl credentialService = new CredentialServiceImpl();
+    IssuersServiceImpl issuersService;
 
     @Mock
     Utilities utilities;
@@ -202,5 +197,104 @@ public class IssuersServiceTest {
         assertEquals("RESIDENT-APP-042 --> Invalid Authorization Server well-known from server:\n" +
                 "well-known api is not accessible", actualException.getMessage());
         verify(issuersConfigUtil, times(1)).getAuthServerWellknown(authServerWellknownUrl);
+    }
+
+    // Existing imports and class setup remain unchanged
+// Add these test cases to the existing IssuersServiceTest class
+
+    @Test
+    public void shouldReturnIssuerConfigForValidIssuerIdAndCredentialType() throws ApiNotAccessibleException, IOException, InvalidIssuerIdException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+        // Arrange
+        String issuerId = "Issuer3id";
+        String credentialType = "CredentialType1";
+        IssuerDTO expectedIssuerDTO = getIssuerConfigDTO("Issuer3");
+        CredentialIssuerWellKnownResponse wellKnownResponse = getCredentialIssuerWellKnownResponseDto(
+                issuerId, Map.of(credentialType, getCredentialSupportedResponse(credentialType)));
+        IssuerConfig expectedIssuerConfig = new IssuerConfig(
+                expectedIssuerDTO,
+                wellKnownResponse,
+                wellKnownResponse.getCredentialConfigurationsSupported().get(credentialType)
+        );
+
+        // Act
+        IssuerConfig actualIssuerConfig = issuersService.getIssuerConfig(issuerId, credentialType);
+
+        // Assert
+        assertEquals(expectedIssuerConfig, actualIssuerConfig);
+        assertEquals(expectedIssuerDTO, actualIssuerConfig.getIssuerDTO());
+        assertEquals(wellKnownResponse, actualIssuerConfig.getWellKnownResponse());
+        assertEquals(wellKnownResponse.getCredentialConfigurationsSupported().get(credentialType),
+                actualIssuerConfig.getCredentialsSupportedResponse());
+        verify(issuersConfigUtil, times(1)).getIssuerWellknown(credentialIssuerHostUrl);
+        verify(utilities, times(1)).getIssuersConfigJsonValue();
+    }
+
+    @Test
+    public void shouldThrowInvalidIssuerIdExceptionForNonExistentIssuerId() throws ApiNotAccessibleException, IOException, InvalidWellknownResponseException {
+        // Arrange
+        String issuerId = "InvalidIssuerId";
+        String credentialType = "CredentialType1";
+
+        // Act & Assert
+        InvalidIssuerIdException exception = assertThrows(InvalidIssuerIdException.class,
+                () -> issuersService.getIssuerConfig(issuerId, credentialType));
+
+        assertEquals("RESIDENT-APP-035 --> Invalid issuer ID", exception.getMessage());
+        verify(utilities, times(1)).getIssuersConfigJsonValue();
+        verify(issuersConfigUtil, never()).getIssuerWellknown(anyString());
+    }
+
+    @Test
+    public void shouldThrowApiNotAccessibleExceptionWhenIssuersConfigJsonIsNull() throws ApiNotAccessibleException, IOException, InvalidWellknownResponseException {
+        // Arrange
+        String issuerId = "Issuer3id";
+        String credentialType = "CredentialType1";
+        Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(null);
+
+        // Act & Assert
+        ApiNotAccessibleException exception = assertThrows(ApiNotAccessibleException.class,
+                () -> issuersService.getIssuerConfig(issuerId, credentialType));
+
+        assertEquals("RESIDENT-APP-026 --> Unable to fetch issuer configuration for issuerId: Issuer3id; \n" +
+                "nested exception is io.mosip.mimoto.exception.ApiNotAccessibleException: RESIDENT-APP-026 --> Api not accessible failure", exception.getMessage());
+        verify(utilities, times(1)).getIssuersConfigJsonValue();
+        verify(issuersConfigUtil, never()).getIssuerWellknown(anyString());
+    }
+
+    @Test
+    public void shouldThrowApiNotAccessibleExceptionWhenGetIssuerWellknownFails() throws IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException, ApiNotAccessibleException {
+        // Arrange
+        String issuerId = "Issuer3id";
+        String credentialType = "CredentialType1";
+        Mockito.when(issuersConfigUtil.getIssuerWellknown(credentialIssuerHostUrl))
+                .thenThrow(new ApiNotAccessibleException("Well-known endpoint inaccessible"));
+
+        // Act & Assert
+        ApiNotAccessibleException exception = assertThrows(ApiNotAccessibleException.class,
+                () -> issuersService.getIssuerConfig(issuerId, credentialType));
+
+        assertEquals("RESIDENT-APP-026 --> Unable to fetch issuer configuration for issuerId: Issuer3id; \n" +
+                "nested exception is io.mosip.mimoto.exception.ApiNotAccessibleException: RESIDENT-APP-026 --> Well-known endpoint inaccessible", exception.getMessage());
+        verify(utilities, times(1)).getIssuersConfigJsonValue();
+        verify(issuersConfigUtil, times(1)).getIssuerWellknown(credentialIssuerHostUrl);
+    }
+
+    @Test
+    public void shouldLogErrorWhenApiNotAccessibleExceptionOccurs() throws IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException, ApiNotAccessibleException {
+        // Arrange
+        String issuerId = "Issuer3id";
+        String credentialType = "CredentialType1";
+        ApiNotAccessibleException apiException = new ApiNotAccessibleException("Well-known endpoint inaccessible");
+        Mockito.when(issuersConfigUtil.getIssuerWellknown(credentialIssuerHostUrl)).thenThrow(apiException);
+
+        // Act & Assert
+        ApiNotAccessibleException exception = assertThrows(ApiNotAccessibleException.class,
+                () -> issuersService.getIssuerConfig(issuerId, credentialType));
+
+        assertEquals("RESIDENT-APP-026 --> Unable to fetch issuer configuration for issuerId: Issuer3id; \n" +
+                "nested exception is io.mosip.mimoto.exception.ApiNotAccessibleException: RESIDENT-APP-026 --> Well-known endpoint inaccessible", exception.getMessage());
+        verify(utilities, times(1)).getIssuersConfigJsonValue();
+        verify(issuersConfigUtil, times(1)).getIssuerWellknown(credentialIssuerHostUrl);
+        // Note: Logging verification requires a logging framework setup (e.g., Logback with ListAppender)
     }
 }

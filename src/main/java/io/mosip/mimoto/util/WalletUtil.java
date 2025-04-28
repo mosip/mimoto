@@ -79,7 +79,7 @@ public class WalletUtil {
 
     public static String getSessionWalletKey(HttpSession session) {
         Object key = session.getAttribute(SessionKeys.WALLET_KEY);
-        if (key == null) throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet Key is missing in session");
+        if (key == null) throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet key not found in session");
         return key.toString();
     }
 
