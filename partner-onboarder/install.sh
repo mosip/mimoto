@@ -122,11 +122,11 @@ fi
 
     echo Updating mimoto-oidc-keystore-password value
     kubectl -n $NS create secret generic mimoto-oidc-keystore-password --from-literal=mimoto-oidc-keystore-password='mosip123' --dry-run=client -o yaml | kubectl apply -f -
-    ./copy_cm_func.sh secret mimoto-oidc-keystore-password injiweb config-server
+    ./copy_cm_func.sh secret mimoto-oidc-keystore-password $NS config-server
 
     echo Updating Mimoto wallet binding partner api key and Mimoto OIDC Partner Client ID
-    ./copy_cm_func.sh secret mimoto-wallet-binding-partner-api-key injiweb config-server
-    ./copy_cm_func.sh secret mimoto-oidc-partner-clientid injiweb config-server
+    ./copy_cm_func.sh secret mimoto-wallet-binding-partner-api-key $NS config-server
+    ./copy_cm_func.sh secret mimoto-oidc-partner-clientid $NS config-server
     kubectl -n config-server set env --keys=mimoto-wallet-binding-partner-api-key --from secret/mimoto-wallet-binding-partner-api-key deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
     kubectl -n config-server set env --keys=mimoto-oidc-partner-clientid --from secret/mimoto-oidc-partner-clientid deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
     kubectl -n config-server set env --keys=mimoto-oidc-keystore-password --from secret/mimoto-oidc-keystore-password deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
