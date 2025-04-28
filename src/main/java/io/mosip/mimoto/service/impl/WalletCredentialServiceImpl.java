@@ -76,7 +76,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     }
 
     @Override
-    public List<VerifiableCredentialResponseDTO> fetchAllCredentialsForWallet(String walletId, String base64Key, String locale) throws CredentialProcessingException {
+    public List<VerifiableCredentialResponseDTO> fetchAllCredentialsForWallet(String walletId, String base64Key, String locale) {
         log.info("Fetching all credentials for wallet: {}", walletId);
 
         List<VerifiableCredential> credentials = repository.findByWalletId(walletId);

@@ -151,15 +151,11 @@ public class WalletCredentialsController {
         String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
         log.info("Fetching all credentials for walletId: {}", walletId);
-        try {
-            List<VerifiableCredentialResponseDTO> credentials = walletCredentialService.fetchAllCredentialsForWallet(
-                    walletId, base64EncodedWalletKey, locale);
-            return ResponseEntity.status(HttpStatus.OK).body(credentials);
-        } catch (CredentialProcessingException e) {
-            log.error("Error processing credentials for walletId: {}", walletId, e);
-            return Utilities.getErrorResponseEntityWithoutWrapper(
-                    e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
-        }
+
+        List<VerifiableCredentialResponseDTO> credentials = walletCredentialService.fetchAllCredentialsForWallet(
+                walletId, base64EncodedWalletKey, locale);
+        return ResponseEntity.status(HttpStatus.OK).body(credentials);
+
     }
 
     /**

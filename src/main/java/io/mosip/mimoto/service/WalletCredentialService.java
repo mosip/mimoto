@@ -37,10 +37,8 @@ public interface WalletCredentialService {
      * @param base64Key The base64-encoded key for decryption.
      * @param locale    The locale for display purposes.
      * @return List of credential responses.
-     * @throws CredentialProcessingException If processing fails.
      */
-    List<VerifiableCredentialResponseDTO> fetchAllCredentialsForWallet(String walletId, String base64Key, String locale)
-            throws CredentialProcessingException;
+    List<VerifiableCredentialResponseDTO> fetchAllCredentialsForWallet(String walletId, String base64Key, String locale);
 
     /**
      * Fetches a single verifiable credential by ID.
