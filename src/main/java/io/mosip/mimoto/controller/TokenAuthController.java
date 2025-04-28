@@ -49,12 +49,10 @@ public class TokenAuthController {
     @PostMapping("/auth/{provider}/token-login")
     public ResponseEntity<String> createSessionFromIdToken(@RequestHeader("Authorization") String authorization, @PathVariable("provider") String provider, HttpServletRequest request, HttpServletResponse response) {
         if (!tokenServiceFactory.isSupportedProvider(provider)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(String.format(UNSUPPORTED_PROVIDER_MESSAGE, provider));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(String.format(UNSUPPORTED_PROVIDER_MESSAGE, provider));
         }
         if (authorization == null || !authorization.startsWith(BEARER_PREFIX)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(INVALID_TOKEN_MESSAGE);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(INVALID_TOKEN_MESSAGE);
         }
 
         String idToken = authorization.substring(BEARER_PREFIX.length());
@@ -63,8 +61,7 @@ public class TokenAuthController {
             tokenService.processToken(idToken, provider, request, response);
             return ResponseEntity.ok(SESSION_CREATED);
         } catch (OAuth2AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(String.format(INVALID_TOKEN_ERROR, e.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(String.format(INVALID_TOKEN_ERROR, e.getMessage()));
         }
     }
 }

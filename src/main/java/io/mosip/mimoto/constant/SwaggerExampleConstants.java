@@ -34,21 +34,33 @@ public class SwaggerExampleConstants {
             """;
 
     public static final String FETCH_USER_PROFILE_SUCCESS = """
-                {
-                    "display_name": "John Doe",
-                    "profile_picture_url": "https://example.com/profile.jpg",
-                    "email": "john.doe@example.com"
-                }
+            {
+                "display_name": "John Doe",
+                "profile_picture_url": "https://example.com/profile.jpg",
+                "email": "john.doe@example.com"
+            }
             """;
 
     public static final String FETCH_ALL_WALLETS_OF_USER_SUCCESS = """
-                [
-                    {
-                        "walletId": "123e4567-e89b-12d3-a456-426614174000"
-                    },
-                    {
-                        "walletId": "223e4567-e89b-12d3-a456-426614174001"
-                    }
-                ] 
+            [
+                {
+                    "walletId": "123e4567-e89b-12d3-a456-426614174000"
+                },
+                {
+                    "walletId": "223e4567-e89b-12d3-a456-426614174001"
+                }
+            ]
+            """;
+
+    public static final String FETCH_ALL_CREDENTIALS_OF_WALLET_SUCCESS = """
+            [
+                {
+                    "issuer_name": "Mosip",
+                    "issuer_logo": "https://example.com/logo.png",
+                    "credential_type": "MosipVerifiableCredential",
+                    "credential_type_logo": "https://example.com/credential-logo.png",
+                    "credential_id": "1234567890"
+                }
+            ]
             """;
 }

@@ -2703,7 +2703,7 @@
                         }
                     },
                     "404": {
-                        "description": "User not found",
+                        "description": "User data not found in the database",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2712,7 +2712,7 @@
                                 "examples": {
                                     "User not found in the Database": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-049",
+                                            "errorCode": "invalid_user",
                                             "errorMessage": "User not found. Please check your credentials or login again"
                                         }
                                     }
@@ -2790,8 +2790,8 @@
                                 "examples": {
                                     "User metadata not found in session": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-052",
-                                            "errorMessage": "No user metadata present in cache"
+                                            "errorCode": "session_invalid_or_expired",
+                                            "errorMessage": "User session is missing or expired. Please log in again."
                                         }
                                     }
                                 }
@@ -2806,10 +2806,10 @@
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "Unexpected server error": {
+                                    "Unexpected Server Error": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-052",
-                                            "errorMessage": "An unexpected error occurred while retrieving user metadata from cache"
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
                                         }
                                     }
                                 }
@@ -2933,17 +2933,41 @@
                         }
                     },
                     "400": {
-                        "description": "Bad request - API not accessible or request parameters invalid",
+                        "description": "Bad request - Wallet key is null / blank or Wallet ID is null / blank / mismatch with session Wallet ID or required params are missing / invalid",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "Invalid Auth Server Token API access": {
+                                    "Invalid Wallet Id": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-026",
-                                            "errorMessage": "Api not accessible failure"
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                        }
+                                    },
+                                    "Wallet key not found in session": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Wallet key not found in session"
+                                        }
+                                    },
+                                    "Missing required params": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Issuer and credential type are required"
+                                        }
+                                    },
+                                    "Wallet ID is null or blank": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Wallet ID cannot be null or blank"
+                                        }
+                                    },
+                                    "Issuer ID is null or blank": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Issuer ID cannot be null or blank"
                                         }
                                     }
                                 }
@@ -2951,29 +2975,71 @@
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error - along with below examples it will return this status code when error occurred while serializing the VC response or unable to store the response in data share or unable to encrypt the credential",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "Wallet Key missing in session": {
+                                    "Credential already exists for given Issuer and Credential Type": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-053",
-                                            "errorMessage": "Wallet key is missing in session"
+                                            "errorCode": "credential_download_error",
+                                            "errorMessage": "Duplicate credential for issuer and type"
                                         }
                                     },
-                                    "Database connection failure": {
+                                    "Exception occurred while fetching Issuer config": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-047",
-                                            "errorMessage": "Failed to connect to the shared database while storing Verifiable Credential data into the database"
+                                            "errorCode": "credential_download_error",
+                                            "errorMessage": "Unable to fetch issuer configuration"
+                                        }
+                                    },
+                                    "Failed to generate VC Credential request": {
+                                        "value": {
+                                            "errorCode": "credential_download_error",
+                                            "errorMessage": "Unable to generate credential request"
+                                        }
+                                    },
+                                    "Signature verification failed for downloaded Credential": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
                                         }
                                     },
                                     "Unexpected Server Error": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-053",
-                                            "errorMessage": "Unexpected error occurred while downloading and storing Verifiable Credential"
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable - along with below examples it will return this status code when any error occurred while fetching Issuer wellknown or Auth Server wellknown",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "API is not accessible": {
+                                        "value": {
+                                            "errorCode": "credential_download_error",
+                                            "errorMessage": "Failed to download and store the credential"
+                                        }
+                                    },
+                                    "Failed to download credential from Issuer": {
+                                        "value": {
+                                            "errorCode": "server_unavailable",
+                                            "errorMessage": "Unable to download credential from issuer"
+                                        }
+                                    },
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "database_unavailable",
+                                            "errorMessage": "Failed to connect to the database"
                                         }
                                     }
                                 }
@@ -3041,6 +3107,30 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Bad request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Invalid Wallet Id": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                        }
+                                    },
+                                    "Wallet key not found in session": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Wallet key not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "content": {
@@ -3049,22 +3139,28 @@
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "Wallet Key missing in session": {
-                                        "value": {
-                                            "errorCode": "RESIDENT-APP-054",
-                                            "errorMessage": "Wallet key is missing in session"
-                                        }
-                                    },
-                                    "Database connection failure": {
-                                        "value": {
-                                            "errorCode": "RESIDENT-APP-047",
-                                            "errorMessage": "Failed to connect to the shared database while fetching Verifiable Credential from the database"
-                                        }
-                                    },
                                     "Unexpected Server Error": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-054",
-                                            "errorMessage": "Unexpected error occurred while fetching Verifiable Credential"
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "database_unavailable",
+                                            "errorMessage": "Failed to connect to the database"
                                         }
                                     }
                                 }
@@ -3152,6 +3248,48 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Bad request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Invalid Wallet Id": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                        }
+                                    },
+                                    "Wallet key not found in session": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Wallet key not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - Credential not found for given Wallet ID and Credential ID",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "No credentials found for the given Credential ID and Wallet ID": {
+                                        "value": {
+                                            "errorCode": "resource_not_found",
+                                            "errorMessage": "The requested resource doesn’t exist."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "content": {
@@ -3160,22 +3298,52 @@
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "Wallet Key missing in session": {
+                                    "Failed to decrypt the Credential": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-055",
-                                            "errorMessage": "Wallet key is missing in session"
+                                            "errorCode": "credential_fetch_error",
+                                            "errorMessage": "Decryption failed"
                                         }
                                     },
-                                    "Database connection failure": {
+                                    "Credential Type is invalid": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-047",
-                                            "errorMessage": "Failed to connect to the shared database while fetching Verifiable Credential from the database"
+                                            "errorCode": "credential_fetch_error",
+                                            "errorMessage": "Invalid credential type configuration"
+                                        }
+                                    },
+                                    "Exception occurred while fetching Issuer config": {
+                                        "value": {
+                                            "errorCode": "credential_download_error",
+                                            "errorMessage": "Unable to fetch issuer configuration"
+                                        }
+                                    },
+                                    "Exception occurred when generating PDF": {
+                                        "value": {
+                                            "errorCode": "credential_download_error",
+                                            "errorMessage": "Failed to generate credential PDF"
                                         }
                                     },
                                     "Unexpected Server Error": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-055",
-                                            "errorMessage": "Unexpected error occurred while fetching Verifiable Credential"
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "database_unavailable",
+                                            "errorMessage": "Failed to connect to the database"
                                         }
                                     }
                                 }
@@ -3242,10 +3410,28 @@
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "Invalid request": {
+                                    "User ID is not present in session": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-050",
-                                            "errorMessage": "Pin should be numeric with 4 or 6 digits."
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "User ID not found in session"
+                                        }
+                                    },
+                                    "Invalid User ID": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "User ID cannot be null or empty"
+                                        }
+                                    },
+                                    "Invalid Wallet name": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Wallet name must be alphanumeric with allowed special characters"
+                                        }
+                                    },
+                                    "Invalid Wallet Pin": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "PIN must be numeric with 4 or 6 digits"
                                         }
                                     }
                                 }
@@ -3253,17 +3439,35 @@
                         }
                     },
                     "500": {
-                        "description": "Internal server error while creating wallet",
+                        "description": "Internal server error while creating Wallet - error occurred while generating Wallet key or encrypting it with Wallet PIN",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "Unexpected server error": {
+                                    "Unexpected Server Error": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-050",
-                                            "errorMessage": "An unexpected error occurred while creating the wallet"
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "database_unavailable",
+                                            "errorMessage": "Failed to connect to the database"
                                         }
                                     }
                                 }
@@ -3310,6 +3514,24 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Invalid Wallets fetching request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User ID is not present in session": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "User ID not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "content": {
@@ -3318,10 +3540,28 @@
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "Unexpected server error": {
+                                    "Unexpected Server Error": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-051",
-                                            "errorMessage": "An unexpected error occurred while retrieving user wallets"
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "database_unavailable",
+                                            "errorMessage": "Failed to connect to the database"
                                         }
                                     }
                                 }
@@ -3383,6 +3623,30 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Invalid Wallets fetching request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User ID is not present in session": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "User ID not found in session"
+                                        }
+                                    },
+                                    "Wallet not found": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Wallet not found"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "content": {
@@ -3402,17 +3666,35 @@
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "Unexpected server error": {
+                                    "Unexpected Server Error": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-051",
-                                            "errorMessage": "An unexpected error occurred while retrieving the wallet details"
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "database_unavailable",
+                                            "errorMessage": "Failed to connect to the database"
                                         }
                                     }
                                 }
