@@ -1,6 +1,5 @@
 package io.mosip.mimoto.controller;
 
-import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
@@ -10,6 +9,7 @@ import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.util.CredentialUtilService;
 import io.mosip.mimoto.util.Utilities;
+import io.mosip.mimoto.util.WalletUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -85,16 +85,8 @@ public class WalletCredentialsController {
         params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
         params.putIfAbsent("locale", "en");
 
-        String storedWalletId = (String) httpSession.getAttribute(SessionKeys.WALLET_ID);
-        if (!walletId.equals(storedWalletId)) {
-            log.error("Wallet ID mismatch: provided {}, stored {}", walletId, storedWalletId);
-            throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet ID mismatch");
-        }
-        String base64EncodedWalletKey = (String) httpSession.getAttribute(SessionKeys.WALLET_KEY);
-        if (base64EncodedWalletKey == null) {
-            log.error("Wallet key not found in session");
-            throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet key not found in session");
-        }
+        WalletUtil.validateWalletId(httpSession, walletId);
+        String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
         String issuerId = params.get("issuer");
         String credentialType = params.get("credential");
@@ -118,19 +110,19 @@ public class WalletCredentialsController {
         }
 
         log.info("Fetching and storing Verifiable Credential for walletId: {}", walletId);
-        VerifiableCredentialResponseDTO credentialResponseDTO = null;
+
         try {
-            credentialResponseDTO = walletCredentialService.fetchAndStoreCredential(
+            VerifiableCredentialResponseDTO credentialResponseDTO = walletCredentialService.fetchAndStoreCredential(
                     issuerId, credentialType, tokenResponse, credentialValidity, locale, walletId, base64EncodedWalletKey);
+            return ResponseEntity.status(HttpStatus.OK).body(credentialResponseDTO);
         } catch (ExternalServiceUnavailableException e) {
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     e, e.getErrorCode(), HttpStatus.SERVICE_UNAVAILABLE, MediaType.APPLICATION_JSON);
-        }  catch (CredentialProcessingException e) {
-            log.error("Error processing credential download for walletId: {} ", walletId, e);
+        } catch (CredentialProcessingException e) {
+            log.error("Error processing credential download for walletId: {}", walletId, e);
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
-        return ResponseEntity.status(HttpStatus.OK).body(credentialResponseDTO);
     }
 
     /**
@@ -154,28 +146,20 @@ public class WalletCredentialsController {
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
             @RequestParam(value = "locale", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             HttpSession httpSession) throws InvalidRequestException {
-        String storedWalletId = (String) httpSession.getAttribute(SessionKeys.WALLET_ID);
-        if (!walletId.equals(storedWalletId)) {
-            log.error("Wallet ID mismatch: provided {}, stored {}", walletId, storedWalletId);
-            throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet ID mismatch");
-        }
-        String base64EncodedWalletKey = (String) httpSession.getAttribute(SessionKeys.WALLET_KEY);
-        if (base64EncodedWalletKey == null) {
-            log.error("Wallet key not found in session");
-            throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet key not found in session");
-        }
+
+        WalletUtil.validateWalletId(httpSession, walletId);
+        String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
         log.info("Fetching all credentials for walletId: {}", walletId);
         try {
             List<VerifiableCredentialResponseDTO> credentials = walletCredentialService.fetchAllCredentialsForWallet(
-                walletId, base64EncodedWalletKey, locale);
+                    walletId, base64EncodedWalletKey, locale);
             return ResponseEntity.status(HttpStatus.OK).body(credentials);
         } catch (CredentialProcessingException e) {
-            log.error("Error processing credentials for walletId: {} ", walletId, e);
+            log.error("Error processing credentials for walletId: {}", walletId, e);
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
-
     }
 
     /**
@@ -206,22 +190,23 @@ public class WalletCredentialsController {
             @RequestParam(value = "locale", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             @RequestParam(value = "action", defaultValue = "inline") @Pattern(regexp = "^(inline|download)$", message = "Action must be 'inline' or 'download'") String action,
             HttpSession httpSession) throws InvalidRequestException {
-        String storedWalletId = (String) httpSession.getAttribute(SessionKeys.WALLET_ID);
-        if (!walletId.equals(storedWalletId)) {
-            log.error("Wallet ID mismatch: provided {}, stored {}", walletId, storedWalletId);
-            throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet ID mismatch");
-        }
-        String base64EncodedWalletKey = (String) httpSession.getAttribute(SessionKeys.WALLET_KEY);
-        if (base64EncodedWalletKey == null) {
-            log.error("Wallet key not found in session");
-            throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet key not found in session");
-        }
+
+        WalletUtil.validateWalletId(httpSession, walletId);
+        String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
         log.info("Fetching credentialId: {} from walletId: {}", credentialId, walletId);
-        WalletCredentialResponseDTO walletCredentialResponseDTO = null;
         try {
-            walletCredentialResponseDTO = walletCredentialService.fetchVerifiableCredential(
+            WalletCredentialResponseDTO walletCredentialResponseDTO = walletCredentialService.fetchVerifiableCredential(
                     walletId, credentialId, base64EncodedWalletKey, locale);
+
+            String dispositionType = "download".equalsIgnoreCase(action) ? "attachment" : "inline";
+            String contentDisposition = String.format("%s; filename=\"%s\"", dispositionType, walletCredentialResponseDTO.getFileName());
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(walletCredentialResponseDTO.getFileContentStream());
         } catch (CredentialNotFoundException e) {
             log.error("Credential not found for walletId: {} and credentialId: {}", walletId, credentialId, e);
             return Utilities.getErrorResponseEntityWithoutWrapper(
@@ -231,14 +216,5 @@ public class WalletCredentialsController {
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
-
-            String dispositionType = "download".equalsIgnoreCase(action) ? "attachment" : "inline";
-        String contentDisposition = String.format("%s; filename=\"%s\"", dispositionType, walletCredentialResponseDTO.getFileName());
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
-                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(walletCredentialResponseDTO.getFileContentStream());
     }
 }
