@@ -2,7 +2,7 @@ package io.mosip.mimoto.exception;
 
 import java.io.Serial;
 
-public class CredentialNotFoundException extends BaseUncheckedException {
+public class CredentialNotFoundException extends BaseCheckedException {
     @Serial
     private static final long serialVersionUID = 1L;
 

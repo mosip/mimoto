@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 @ControllerAdvice
 @ResponseBody
@@ -66,6 +68,21 @@ public class GlobalExceptionHandler {
         }
 
         return new ErrorDTO(errorCode, errorMessage);
+    }
+
+    @ExceptionHandler(NoHandlerFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorDTO handleNoHandlerFoundException(NoHandlerFoundException ex) {
+        log.error("No handler found for request: {} {}", ex.getHttpMethod(), ex.getRequestURL());
+        return new ErrorDTO(ErrorConstants.RESOURCE_NOT_FOUND.getErrorCode(), ErrorConstants.RESOURCE_NOT_FOUND.getErrorMessage());
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorDTO handleHandlerMethodValidationException(HandlerMethodValidationException ex) {
+        log.error("Validation error in handler method: {}", ex.getMessage());
+        // You might want to extract more detailed information if available in this exception
+        return new ErrorDTO(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Validation error in request parameters");
     }
 
 }
