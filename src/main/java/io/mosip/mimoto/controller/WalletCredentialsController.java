@@ -1,6 +1,5 @@
 package io.mosip.mimoto.controller;
 
-import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
@@ -39,6 +38,9 @@ import java.util.Map;
 
 import static io.mosip.mimoto.exception.ErrorConstants.CREDENTIAL_DOWNLOAD_EXCEPTION;
 
+/**
+ * REST controller for managing wallet credentials.
+ */
 @Slf4j
 @RestController
 @RequestMapping(value = "/wallets/{walletId}/credentials")
