@@ -1,359 +1,332 @@
 package io.mosip.mimoto.controller;
 
-import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.util.CredentialUtilService;
+import io.mosip.mimoto.util.GlobalExceptionHandler;
 import jakarta.servlet.http.HttpSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.io.ByteArrayInputStream;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static io.mosip.mimoto.exception.ErrorConstants.CREDENTIAL_FETCH_EXCEPTION;
+import static io.mosip.mimoto.exception.ErrorConstants.RESOURCE_NOT_FOUND;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {WalletCredentialsController.class, GlobalExceptionHandler.class})
+@AutoConfigureMockMvc(addFilters = false)
+@EnableWebMvc
 public class WalletCredentialsControllerTest {
 
     @InjectMocks
-    private WalletCredentialsController walletCredentialsController;
+    private WalletCredentialsController controller;
 
-    @Mock
+    @MockBean
     private WalletCredentialService walletCredentialService;
 
-    @Mock
+    @MockBean
     private CredentialUtilService credentialUtilService;
 
     @Mock
     private HttpSession httpSession;
 
-    private static final String WALLET_ID = "wallet123";
-    private static final String CREDENTIAL_ID = "cred456";
-    private static final String BASE64_ENCODED_WALLET_KEY = "encodedKey";
-    private static final String ISSUER_ID = "issuer1";
-    private static final String CREDENTIAL_TYPE = "type1";
-    private static final String LOCALE = "en";
-    private static final String VC_STORAGE_EXPIRY = "-1";
+    @Autowired
+    private MockMvc mockMvc;
+
+    private VerifiableCredentialResponseDTO verifiableCredentialResponseDTO;
+    private WalletCredentialResponseDTO walletCredentialResponseDTO;
+    private String walletId = "wallet123";
+    private String credentialId = "cred456";
+    private String walletKey = "encodedKey";
+    private String issuer = "issuer1";
+    private String credentialType = "type1";
+    private String locale = "en";
+    private String vcStorageExpiryLimit = "-1";
 
     @Before
-    public void setUp() {
-        when(httpSession.getAttribute(SessionKeys.WALLET_ID)).thenReturn(WALLET_ID);
-        when(httpSession.getAttribute(SessionKeys.WALLET_KEY)).thenReturn(BASE64_ENCODED_WALLET_KEY);
+    public void setup() {
+        MockitoAnnotations.openMocks(this);
+        verifiableCredentialResponseDTO = VerifiableCredentialResponseDTO.builder()
+                .issuerName("issuerName123")
+                .issuerLogo("issuerLogo")
+                .credentialType("credentialType123")
+                .credentialTypeLogo("credentialTypeLogo")
+                .credentialId("credentialId123")
+                .build();
+
+        walletCredentialResponseDTO = new WalletCredentialResponseDTO();
+        walletCredentialResponseDTO.setFileName("credential.pdf");
+        walletCredentialResponseDTO.setFileContentStream(new InputStreamResource(new ByteArrayInputStream("test-pdf".getBytes())));
+
+        when(httpSession.getAttribute("wallet_id")).thenReturn(walletId);
+        when(httpSession.getAttribute("wallet_key")).thenReturn(walletKey);
+    }
+
+    // Tests for downloadCredential
+    @Test
+    public void shouldDownloadCredentialSuccessfully() throws Exception {
+        when(credentialUtilService.getTokenResponse(anyMap(), eq(issuer))).thenReturn(new TokenResponseDTO());
+        when(walletCredentialService.fetchAndStoreCredential(eq(issuer), eq(credentialType), any(), eq(vcStorageExpiryLimit), eq(locale), eq(walletId), eq(walletKey)))
+                .thenReturn(verifiableCredentialResponseDTO);
+
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .param("issuer", issuer)
+                        .param("credential", credentialType)
+                        .param("vcStorageExpiryLimitInTimes", vcStorageExpiryLimit)
+                        .param("locale", locale)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.issuer_name").value("issuerName123"))
+                .andExpect(jsonPath("$.credential_id").value("credentialId123"));
     }
 
     @Test
-    public void downloadCredentialSuccess() throws Exception {
-        Map<String, String> params = new HashMap<>();
-        params.put("issuer", ISSUER_ID);
-        params.put("credential", CREDENTIAL_TYPE);
-        params.put("locale", LOCALE);
-        params.put("vcStorageExpiryLimitInTimes", VC_STORAGE_EXPIRY);
+    public void shouldThrowInvalidRequestForWalletIdMismatch() throws Exception {
+        when(httpSession.getAttribute("wallet_id")).thenReturn("differentWalletId");
 
-        TokenResponseDTO tokenResponse = new TokenResponseDTO();
-        VerifiableCredentialResponseDTO responseDTO = new VerifiableCredentialResponseDTO();
-
-        when(credentialUtilService.getTokenResponse(params, ISSUER_ID)).thenReturn(tokenResponse);
-        when(walletCredentialService.fetchAndStoreCredential(eq(ISSUER_ID), eq(CREDENTIAL_TYPE), eq(tokenResponse),
-                eq(VC_STORAGE_EXPIRY), eq(LOCALE), eq(WALLET_ID), eq(BASE64_ENCODED_WALLET_KEY)))
-                .thenReturn(responseDTO);
-
-        ResponseEntity<VerifiableCredentialResponseDTO> response = walletCredentialsController
-                .downloadCredential(WALLET_ID, params, httpSession);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(responseDTO, response.getBody());
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verify(httpSession).getAttribute(SessionKeys.WALLET_KEY);
-        verify(credentialUtilService).getTokenResponse(params, ISSUER_ID);
-        verify(walletCredentialService).fetchAndStoreCredential(eq(ISSUER_ID), eq(CREDENTIAL_TYPE), eq(tokenResponse),
-                eq(VC_STORAGE_EXPIRY), eq(LOCALE), eq(WALLET_ID), eq(BASE64_ENCODED_WALLET_KEY));
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("issuer", issuer)
+                        .param("credential", credentialType)
+                        .sessionAttr("wallet_id", "differentWalletId")
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Wallet ID mismatch"));
     }
 
     @Test
-    public void downloadCredentialInvalidWalletIdThrowsInvalidRequestException() {
-        when(httpSession.getAttribute(SessionKeys.WALLET_ID)).thenReturn("differentWalletId");
+    public void shouldThrowInvalidRequestForMissingWalletKey() throws Exception {
+        when(httpSession.getAttribute("wallet_key")).thenReturn(null);
 
-        Map<String, String> params = new HashMap<>();
-        params.put("issuer", ISSUER_ID);
-        params.put("credential", CREDENTIAL_TYPE);
-
-        try {
-            walletCredentialsController.downloadCredential(WALLET_ID, params, httpSession);
-            fail("Expected InvalidRequestException");
-        } catch (InvalidRequestException e) {
-            assertEquals(ErrorConstants.INVALID_REQUEST.getErrorCode(), e.getErrorCode());
-            assertEquals("invalid_request --> Wallet ID mismatch", e.getMessage());
-        }
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verifyNoMoreInteractions(credentialUtilService, walletCredentialService);
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("issuer", issuer)
+                        .param("credential", credentialType)
+                        .sessionAttr("wallet_id", walletId))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Wallet key not found in session"));
     }
 
     @Test
-    public void downloadCredentialMissingWalletKeyThrowsInvalidRequestException() {
-        when(httpSession.getAttribute(SessionKeys.WALLET_KEY)).thenReturn(null);
-
-        Map<String, String> params = new HashMap<>();
-        params.put("issuer", ISSUER_ID);
-        params.put("credential", CREDENTIAL_TYPE);
-
-        try {
-            walletCredentialsController.downloadCredential(WALLET_ID, params, httpSession);
-            fail("Expected InvalidRequestException");
-        } catch (InvalidRequestException e) {
-            assertEquals(ErrorConstants.INVALID_REQUEST.getErrorCode(), e.getErrorCode());
-            assertEquals("invalid_request --> Wallet key not found in session", e.getMessage());
-        }
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verify(httpSession).getAttribute(SessionKeys.WALLET_KEY);
-        verifyNoInteractions(credentialUtilService, walletCredentialService);
+    public void shouldThrowInvalidRequestForMissingIssuerOrCredential() throws Exception {
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("locale", locale)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Issuer and credential type are required"));
     }
 
     @Test
-    public void downloadCredentialMissingIssuerThrowsInvalidRequestException() {
-        Map<String, String> params = new HashMap<>();
-        params.put("credential", CREDENTIAL_TYPE);
+    public void shouldThrowServiceUnavailableForTokenResponseFailure() throws Exception {
+        when(credentialUtilService.getTokenResponse(anyMap(), eq(issuer)))
+                .thenThrow(new ApiNotAccessibleException("API not accessible"));
 
-        try {
-            walletCredentialsController.downloadCredential(WALLET_ID, params, httpSession);
-            fail("Expected InvalidRequestException");
-        } catch (InvalidRequestException e) {
-            assertEquals(ErrorConstants.INVALID_REQUEST.getErrorCode(), e.getErrorCode());
-            assertEquals("invalid_request --> Issuer and credential type are required", e.getMessage());
-        }
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verify(httpSession).getAttribute(SessionKeys.WALLET_KEY);
-        verifyNoInteractions(credentialUtilService, walletCredentialService);
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("issuer", issuer)
+                        .param("credential", credentialType)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.errorCode").value("credential_download_error"));
     }
 
     @Test
-    public void downloadCredentialTokenFetchFailureReturnsServiceUnavailable() throws Exception {
-        Map<String, String> params = new HashMap<>();
-        params.put("issuer", ISSUER_ID);
-        params.put("credential", CREDENTIAL_TYPE);
+    public void shouldThrowServiceUnavailableForExternalServiceFailure() throws Exception {
+        when(credentialUtilService.getTokenResponse(anyMap(), eq(issuer))).thenReturn(new TokenResponseDTO());
+        when(walletCredentialService.fetchAndStoreCredential(anyString(), anyString(), any(), anyString(), anyString(), anyString(), anyString()))
+                .thenThrow(new ExternalServiceUnavailableException("Service unavailable", "Service unavailable"));
 
-        when(credentialUtilService.getTokenResponse(params, ISSUER_ID))
-                .thenThrow(new ApiNotAccessibleException("API Error"));
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("issuer", issuer)
+                        .param("credential", credentialType)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.errorCode").value("Service unavailable"))
+                .andExpect(jsonPath("$.errorMessage").value("Service unavailable"));
+    }
 
-        ResponseEntity<VerifiableCredentialResponseDTO> response = walletCredentialsController
-                .downloadCredential(WALLET_ID, params, httpSession);
+    // Tests for fetchAllCredentialsForGivenWallet
+    @Test
+    public void shouldFetchAllCredentialsSuccessfully() throws Exception {
+        List<VerifiableCredentialResponseDTO> credentials = Collections.singletonList(verifiableCredentialResponseDTO);
+        when(walletCredentialService.fetchAllCredentialsForWallet(walletId, walletKey, locale)).thenReturn(credentials);
 
-        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, response.getStatusCode());
-        assertEquals(MediaType.APPLICATION_JSON, response.getHeaders().getContentType());
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verify(httpSession).getAttribute(SessionKeys.WALLET_KEY);
-        verify(credentialUtilService).getTokenResponse(params, ISSUER_ID);
-        verifyNoInteractions(walletCredentialService);
+        mockMvc.perform(get("/wallets/{walletId}/credentials", walletId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .param("locale", locale)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].issuer_name").value("issuerName123"));
     }
 
     @Test
-    public void fetchAllCredentialsForGivenWalletSuccess() {
-        List<VerifiableCredentialResponseDTO> credentials = Arrays.asList(new VerifiableCredentialResponseDTO());
-        when(walletCredentialService.fetchAllCredentialsForWallet(WALLET_ID, BASE64_ENCODED_WALLET_KEY, LOCALE))
-                .thenReturn(credentials);
-
-        ResponseEntity<List<VerifiableCredentialResponseDTO>> response = walletCredentialsController
-                .fetchAllCredentialsForGivenWallet(WALLET_ID, LOCALE, httpSession);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(credentials, response.getBody());
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verify(httpSession).getAttribute(SessionKeys.WALLET_KEY);
-        verify(walletCredentialService).fetchAllCredentialsForWallet(WALLET_ID, BASE64_ENCODED_WALLET_KEY, LOCALE);
+    public void shouldThrowInvalidRequestForInvalidLocale() throws Exception {
+        mockMvc.perform(get("/wallets/{walletId}/credentials", walletId)
+                        .param("locale", "invalid")
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    public void fetchAllCredentialsInvalidWalletIdThrowsInvalidRequestException() {
-        when(httpSession.getAttribute(SessionKeys.WALLET_ID)).thenReturn("differentWalletId");
+    public void shouldThrowInvalidRequestForMissingWalletKeyInFetchAll() throws Exception {
+        when(httpSession.getAttribute("wallet_key")).thenReturn(null);
 
-        try {
-            walletCredentialsController.fetchAllCredentialsForGivenWallet(WALLET_ID, LOCALE, httpSession);
-            fail("Expected InvalidRequestException");
-        } catch (InvalidRequestException e) {
-            assertEquals(ErrorConstants.INVALID_REQUEST.getErrorCode(), e.getErrorCode());
-            assertEquals("invalid_request --> Wallet ID mismatch", e.getMessage());
-        }
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verifyNoInteractions(walletCredentialService);
+        mockMvc.perform(get("/wallets/{walletId}/credentials", walletId)
+                        .param("locale", locale)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Wallet key not found in session"));
     }
 
     @Test
-    public void fetchAllCredentialsMissingWalletKeyThrowsInvalidRequestException() {
-        when(httpSession.getAttribute(SessionKeys.WALLET_KEY)).thenReturn(null);
+    public void shouldThrowInvalidRequestForWalletIdMismatchInFetchAll() throws Exception {
+        when(httpSession.getAttribute("wallet_id")).thenReturn("differentWalletId");
 
-        try {
-            walletCredentialsController.fetchAllCredentialsForGivenWallet(WALLET_ID, LOCALE, httpSession);
-            fail("Expected InvalidRequestException");
-        } catch (InvalidRequestException e) {
-            assertEquals(ErrorConstants.INVALID_REQUEST.getErrorCode(), e.getErrorCode());
-            assertEquals("invalid_request --> Wallet key not found in session", e.getMessage());
-        }
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verify(httpSession).getAttribute(SessionKeys.WALLET_KEY);
-        verifyNoInteractions(walletCredentialService);
+        mockMvc.perform(get("/wallets/{walletId}/credentials", walletId)
+                        .param("locale", locale)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", "differentWalletId")
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Wallet ID mismatch"));
+    }
+
+    // Tests for getVerifiableCredential
+    @Test
+    public void shouldFetchVerifiableCredentialAsPdfSuccessfullyInline() throws Exception {
+        when(walletCredentialService.fetchVerifiableCredential(walletId, credentialId, walletKey, locale))
+                .thenReturn(walletCredentialResponseDTO);
+
+        mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .param("locale", locale)
+                        .param("action", "inline")
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", "inline; filename=\"credential.pdf\""))
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF));
     }
 
     @Test
-    public void getVerifiableCredentialSuccessInline() throws Exception {
-        WalletCredentialResponseDTO responseDTO = new WalletCredentialResponseDTO();
-        responseDTO.setFileName("credential.pdf");
-        responseDTO.setFileContentStream(new InputStreamResource(new ByteArrayInputStream(new byte[0])));
+    public void shouldFetchVerifiableCredentialAsDownload() throws Exception {
+        when(walletCredentialService.fetchVerifiableCredential(walletId, credentialId, walletKey, locale))
+                .thenReturn(walletCredentialResponseDTO);
 
-        when(walletCredentialService.fetchVerifiableCredential(WALLET_ID, CREDENTIAL_ID, BASE64_ENCODED_WALLET_KEY, LOCALE))
-                .thenReturn(responseDTO);
-
-        ResponseEntity<InputStreamResource> response = walletCredentialsController
-                .getVerifiableCredential(WALLET_ID, CREDENTIAL_ID, LOCALE, "inline", httpSession);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(MediaType.APPLICATION_PDF, response.getHeaders().getContentType());
-        assertEquals("inline; filename=\"credential.pdf\"", response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION));
-        assertNotNull(response.getBody());
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verify(httpSession).getAttribute(SessionKeys.WALLET_KEY);
-        verify(walletCredentialService).fetchVerifiableCredential(WALLET_ID, CREDENTIAL_ID, BASE64_ENCODED_WALLET_KEY, LOCALE);
+        mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .param("locale", locale)
+                        .param("action", "download")
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"credential.pdf\""))
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF));
     }
 
     @Test
-    public void getVerifiableCredentialSuccessDownload() throws Exception {
-        WalletCredentialResponseDTO responseDTO = new WalletCredentialResponseDTO();
-        responseDTO.setFileName("credential.pdf");
-        responseDTO.setFileContentStream(new InputStreamResource(new ByteArrayInputStream(new byte[0])));
-
-        when(walletCredentialService.fetchVerifiableCredential(WALLET_ID, CREDENTIAL_ID, BASE64_ENCODED_WALLET_KEY, LOCALE))
-                .thenReturn(responseDTO);
-
-        ResponseEntity<InputStreamResource> response = walletCredentialsController
-                .getVerifiableCredential(WALLET_ID, CREDENTIAL_ID, LOCALE, "download", httpSession);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(MediaType.APPLICATION_PDF, response.getHeaders().getContentType());
-        assertEquals("attachment; filename=\"credential.pdf\"", response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION));
-        assertNotNull(response.getBody());
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verify(httpSession).getAttribute(SessionKeys.WALLET_KEY);
-        verify(walletCredentialService).fetchVerifiableCredential(WALLET_ID, CREDENTIAL_ID, BASE64_ENCODED_WALLET_KEY, LOCALE);
+    public void shouldThrowInvalidRequestForInvalidAction() throws Exception {
+        mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .param("locale", locale)
+                        .param("action", "invalid")
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    public void getVerifiableCredentialInvalidWalletIdThrowsInvalidRequestException() {
-        when(httpSession.getAttribute(SessionKeys.WALLET_ID)).thenReturn("differentWalletId");
+    public void shouldThrowCredentialNotFoundException() throws Exception {
+        when(walletCredentialService.fetchVerifiableCredential(walletId, credentialId, walletKey, locale))
+                .thenThrow(new CredentialNotFoundException(RESOURCE_NOT_FOUND.getErrorCode(), RESOURCE_NOT_FOUND.getErrorMessage()));
 
-        try {
-            walletCredentialsController.getVerifiableCredential(WALLET_ID, CREDENTIAL_ID, LOCALE, "inline", httpSession);
-            fail("Expected InvalidRequestException");
-        } catch (InvalidRequestException e) {
-            assertEquals(ErrorConstants.INVALID_REQUEST.getErrorCode(), e.getErrorCode());
-            assertEquals("invalid_request --> Wallet ID mismatch", e.getMessage());
-        }
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verifyNoInteractions(walletCredentialService);
+        mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .param("locale", locale)
+                        .param("action", "inline")
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("resource_not_found"))
+                .andExpect(jsonPath("$.errorMessage").value("The requested resource doesn’t exist."));
     }
 
     @Test
-    public void getVerifiableCredentialMissingWalletKeyThrowsInvalidRequestException() {
-        when(httpSession.getAttribute(SessionKeys.WALLET_KEY)).thenReturn(null);
-
-        try {
-            walletCredentialsController.getVerifiableCredential(WALLET_ID, CREDENTIAL_ID, LOCALE, "inline", httpSession);
-            fail("Expected InvalidRequestException");
-        } catch (InvalidRequestException e) {
-            assertEquals(ErrorConstants.INVALID_REQUEST.getErrorCode(), e.getErrorCode());
-            assertEquals("invalid_request --> Wallet key not found in session", e.getMessage());
-        }
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verify(httpSession).getAttribute(SessionKeys.WALLET_KEY);
-        verifyNoInteractions(walletCredentialService);
+    public void shouldThrowInvalidRequestForMissingCredentialId() throws Exception {
+        mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, ""))
+                .andExpect(status().isNotFound());
     }
 
     @Test
-    public void getVerifiableCredentialNotFoundThrowsCredentialNotFoundException() throws Exception {
-        when(walletCredentialService.fetchVerifiableCredential(WALLET_ID, CREDENTIAL_ID, BASE64_ENCODED_WALLET_KEY, LOCALE))
-                .thenThrow(new CredentialNotFoundException("CREDENTIAL_NOT_FOUND", "Credential not found"));
+    public void shouldThrowCredentialProcessingExceptionForDecryptionError() throws Exception {
+        when(walletCredentialService.fetchVerifiableCredential(walletId, credentialId, walletKey, locale))
+                .thenThrow(new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Decryption failed"));
 
-        try {
-            walletCredentialsController.getVerifiableCredential(WALLET_ID, CREDENTIAL_ID, LOCALE, "inline", httpSession);
-            fail("Expected CredentialNotFoundException");
-        } catch (CredentialNotFoundException e) {
-            assertEquals("CREDENTIAL_NOT_FOUND", e.getErrorCode());
-            assertEquals("CREDENTIAL_NOT_FOUND --> Credential not found", e.getMessage());
-        }
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verify(httpSession).getAttribute(SessionKeys.WALLET_KEY);
-        verify(walletCredentialService).fetchVerifiableCredential(WALLET_ID, CREDENTIAL_ID, BASE64_ENCODED_WALLET_KEY, LOCALE);
+        mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .param("locale", locale)
+                        .param("action", "inline")
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("credential_fetch_error"))
+                .andExpect(jsonPath("$.errorMessage").value("Decryption failed"));
     }
 
     @Test
-    public void getVerifiableCredentialDecryptionExceptionThrowsProcessingException() throws Exception {
-        when(walletCredentialService.fetchVerifiableCredential(WALLET_ID, CREDENTIAL_ID, BASE64_ENCODED_WALLET_KEY, LOCALE))
-                .thenThrow(new CredentialProcessingException("DECRYPTION_ERROR", "Decryption failed"));
+    public void shouldThrowCredentialProcessingExceptionForCorruptedData() throws Exception {
+        when(walletCredentialService.fetchVerifiableCredential(walletId, credentialId, walletKey, locale))
+                .thenThrow(new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "CORRUPTED_DATA"));
 
-        try {
-            walletCredentialsController.getVerifiableCredential(WALLET_ID, CREDENTIAL_ID, LOCALE, "inline", httpSession);
-            fail("Expected CredentialProcessingException");
-        } catch (CredentialProcessingException e) {
-            assertEquals("DECRYPTION_ERROR", e.getErrorCode());
-            assertEquals("DECRYPTION_ERROR --> Decryption failed", e.getMessage());
-        }
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verify(httpSession).getAttribute(SessionKeys.WALLET_KEY);
-        verify(walletCredentialService).fetchVerifiableCredential(WALLET_ID, CREDENTIAL_ID, BASE64_ENCODED_WALLET_KEY, LOCALE);
-    }
-    @Test
-    public void getVerifiableCredentialCorruptedEncryptedDataExceptionThrowsProcessingException() throws Exception {
-        when(walletCredentialService.fetchVerifiableCredential(WALLET_ID, CREDENTIAL_ID, BASE64_ENCODED_WALLET_KEY, LOCALE))
-                .thenThrow(new CredentialProcessingException("CORRUPTED_DATA", "Corrupted data"));
-
-        try {
-            walletCredentialsController.getVerifiableCredential(WALLET_ID, CREDENTIAL_ID, LOCALE, "inline", httpSession);
-            fail("Expected CredentialProcessingException");
-        } catch (CredentialProcessingException e) {
-            assertEquals("CORRUPTED_DATA", e.getErrorCode());
-            assertEquals("CORRUPTED_DATA --> Corrupted data", e.getMessage());
-        }
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verify(httpSession).getAttribute(SessionKeys.WALLET_KEY);
-        verify(walletCredentialService).fetchVerifiableCredential(WALLET_ID, CREDENTIAL_ID, BASE64_ENCODED_WALLET_KEY, LOCALE);
-    }
-
-    @Test
-    public void downloadCredentialExternalServiceUnavailableReturnsServiceUnavailable() throws Exception {
-        Map<String, String> params = new HashMap<>();
-        params.put("issuer", ISSUER_ID);
-        params.put("credential", CREDENTIAL_TYPE);
-
-        TokenResponseDTO tokenResponse = new TokenResponseDTO();
-        when(credentialUtilService.getTokenResponse(params, ISSUER_ID)).thenReturn(tokenResponse);
-        when(walletCredentialService.fetchAndStoreCredential(any(), any(), any(), any(), any(), any(), any()))
-                .thenThrow(new ExternalServiceUnavailableException("SERVICE_UNAVAILABLE", "Service unavailable"));
-
-        ResponseEntity<VerifiableCredentialResponseDTO> response = walletCredentialsController
-                .downloadCredential(WALLET_ID, params, httpSession);
-
-        assertEquals(HttpStatus.SERVICE_UNAVAILABLE, response.getStatusCode());
-        assertEquals(MediaType.APPLICATION_JSON, response.getHeaders().getContentType());
-        verify(httpSession).getAttribute(SessionKeys.WALLET_ID);
-        verify(httpSession).getAttribute(SessionKeys.WALLET_KEY);
-        verify(credentialUtilService).getTokenResponse(params, ISSUER_ID);
-        verify(walletCredentialService).fetchAndStoreCredential(eq(ISSUER_ID), eq(CREDENTIAL_TYPE), eq(tokenResponse),
-                eq(VC_STORAGE_EXPIRY), eq(LOCALE), eq(WALLET_ID), eq(BASE64_ENCODED_WALLET_KEY));
+        mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .param("locale", locale)
+                        .param("action", "inline")
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value(CREDENTIAL_FETCH_EXCEPTION.getErrorCode()))
+                .andExpect(jsonPath("$.errorMessage").value("CORRUPTED_DATA"));
     }
 }

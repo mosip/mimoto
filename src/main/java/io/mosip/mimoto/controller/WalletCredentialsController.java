@@ -65,7 +65,6 @@ public class WalletCredentialsController {
      * @param httpSession The HTTP session containing wallet key and ID.
      * @return The stored Verifiable Credential details.
      * @throws InvalidRequestException If input parameters or session are invalid.
-     * @throws CredentialProcessingException If credential processing fails.
      */
     @Operation(summary = "Download a Verifiable Credential", description = "This API allows downloading a Verifiable Credential by providing the wallet ID and query parameters such as issuer, credential type, storage expiry, and locale. The user's session is authenticated, and the credential is fetched and stored in the wallet. If successful, the Verifiable Credential details are returned; otherwise, an appropriate error response is provided.", operationId = "downloadCredential", security = @SecurityRequirement(name = "SessionAuth"), parameters = {
             @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the wallet", schema = @Schema(type = "string")),
@@ -82,7 +81,7 @@ public class WalletCredentialsController {
     public ResponseEntity<VerifiableCredentialResponseDTO> downloadCredential(
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
             @RequestParam Map<String, String> params,
-            HttpSession httpSession) throws InvalidRequestException, CredentialProcessingException {
+            HttpSession httpSession) throws InvalidRequestException {
         params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
         params.putIfAbsent("locale", "en");
 
@@ -126,6 +125,10 @@ public class WalletCredentialsController {
         } catch (ExternalServiceUnavailableException e) {
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     e, e.getErrorCode(), HttpStatus.SERVICE_UNAVAILABLE, MediaType.APPLICATION_JSON);
+        }  catch (CredentialProcessingException e) {
+            log.error("Error processing credential download for walletId: {} ", walletId, e);
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
         return ResponseEntity.status(HttpStatus.OK).body(credentialResponseDTO);
     }
@@ -138,7 +141,6 @@ public class WalletCredentialsController {
      * @param httpSession The HTTP session containing wallet key and ID.
      * @return List of Verifiable Credential details.
      * @throws InvalidRequestException If session or wallet ID is invalid.
-     * @throws CredentialProcessingException If fetching credentials fails.
      */
     @Operation(summary = "Fetch all credentials for a given wallet", description = "This API retrieves all credentials associated with the specified wallet, identified by its unique wallet ID. The credentials are returned based on the provided locale. The user's session is authenticated to ensure access to the wallet. If successful, a list of Verifiable Credentials is returned; otherwise, an appropriate error response is returned.", operationId = "fetchAllCredentialsForGivenWallet", security = @SecurityRequirement(name = "SessionAuth"), parameters = {
             @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the wallet", schema = @Schema(type = "string")),
@@ -151,7 +153,7 @@ public class WalletCredentialsController {
     public ResponseEntity<List<VerifiableCredentialResponseDTO>> fetchAllCredentialsForGivenWallet(
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
             @RequestParam(value = "locale", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
-            HttpSession httpSession) throws InvalidRequestException, CredentialProcessingException {
+            HttpSession httpSession) throws InvalidRequestException {
         String storedWalletId = (String) httpSession.getAttribute(SessionKeys.WALLET_ID);
         if (!walletId.equals(storedWalletId)) {
             log.error("Wallet ID mismatch: provided {}, stored {}", walletId, storedWalletId);
@@ -164,9 +166,16 @@ public class WalletCredentialsController {
         }
 
         log.info("Fetching all credentials for walletId: {}", walletId);
-        List<VerifiableCredentialResponseDTO> credentials = walletCredentialService.fetchAllCredentialsForWallet(
+        try {
+            List<VerifiableCredentialResponseDTO> credentials = walletCredentialService.fetchAllCredentialsForWallet(
                 walletId, base64EncodedWalletKey, locale);
-        return ResponseEntity.status(HttpStatus.OK).body(credentials);
+            return ResponseEntity.status(HttpStatus.OK).body(credentials);
+        } catch (CredentialProcessingException e) {
+            log.error("Error processing credentials for walletId: {} ", walletId, e);
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
+        }
+
     }
 
     /**
@@ -179,8 +188,6 @@ public class WalletCredentialsController {
      * @param httpSession The HTTP session containing wallet key and ID.
      * @return The Verifiable Credential as a PDF stream.
      * @throws InvalidRequestException If session or parameters are invalid.
-     * @throws CredentialNotFoundException If the credential is not found.
-     * @throws CredentialProcessingException If processing fails.
      */
     @Operation(summary = "Fetch a specific Verifiable Credential", description = "This API retrieves a specific Verifiable Credential from the given wallet, identified by wallet and credential IDs. The locale parameter is used for localization, and the action parameter determines whether the credential is displayed inline or downloaded as a PDF. The user's session is authenticated to ensure access. If successful, the credential is returned as a PDF file; otherwise, an appropriate error response is returned.", operationId = "getVerifiableCredential", security = @SecurityRequirement(name = "SessionAuth"), parameters = {
             @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the wallet", schema = @Schema(type = "string")),
@@ -198,7 +205,7 @@ public class WalletCredentialsController {
             @PathVariable("credentialId") @NotBlank(message = "Credential ID cannot be blank") String credentialId,
             @RequestParam(value = "locale", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             @RequestParam(value = "action", defaultValue = "inline") @Pattern(regexp = "^(inline|download)$", message = "Action must be 'inline' or 'download'") String action,
-            HttpSession httpSession) throws InvalidRequestException, CredentialNotFoundException, CredentialProcessingException {
+            HttpSession httpSession) throws InvalidRequestException {
         String storedWalletId = (String) httpSession.getAttribute(SessionKeys.WALLET_ID);
         if (!walletId.equals(storedWalletId)) {
             log.error("Wallet ID mismatch: provided {}, stored {}", walletId, storedWalletId);
@@ -211,10 +218,21 @@ public class WalletCredentialsController {
         }
 
         log.info("Fetching credentialId: {} from walletId: {}", credentialId, walletId);
-        WalletCredentialResponseDTO walletCredentialResponseDTO = walletCredentialService.fetchVerifiableCredential(
-                walletId, credentialId, base64EncodedWalletKey, locale);
+        WalletCredentialResponseDTO walletCredentialResponseDTO = null;
+        try {
+            walletCredentialResponseDTO = walletCredentialService.fetchVerifiableCredential(
+                    walletId, credentialId, base64EncodedWalletKey, locale);
+        } catch (CredentialNotFoundException e) {
+            log.error("Credential not found for walletId: {} and credentialId: {}", walletId, credentialId, e);
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    e, e.getErrorCode(), HttpStatus.NOT_FOUND, MediaType.APPLICATION_JSON);
+        } catch (CredentialProcessingException e) {
+            log.error("Error processing credential for walletId: {} and credentialId: {}", walletId, credentialId, e);
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
+        }
 
-        String dispositionType = "download".equalsIgnoreCase(action) ? "attachment" : "inline";
+            String dispositionType = "download".equalsIgnoreCase(action) ? "attachment" : "inline";
         String contentDisposition = String.format("%s; filename=\"%s\"", dispositionType, walletCredentialResponseDTO.getFileName());
 
         return ResponseEntity.ok()
