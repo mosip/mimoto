@@ -4,14 +4,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.dbentity.CredentialMetadata;
 import io.mosip.mimoto.dbentity.VerifiableCredential;
+
+import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.IssuerConfig;
 import io.mosip.mimoto.dto.mimoto.VCCredentialRequest;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
-import io.mosip.mimoto.exception.CredentialProcessingException;
-import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
-import io.mosip.mimoto.exception.VCVerificationException;
+import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
+import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
+import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.impl.DataShareServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,34 +23,95 @@ import java.util.UUID;
 
 import static io.mosip.mimoto.exception.ErrorConstants.*;
 
+/**
+ * Utility class for processing and storing credentials.
+ */
 @Slf4j
 @Component
 public class CredentialProcessor {
-    @Autowired
-    private CredentialUtilService credentialUtilService;
+
+    private final CredentialUtilService credentialUtilService;
+    private final DataShareServiceImpl dataShareService;
+    private final ObjectMapper objectMapper;
+    private final EncryptionDecryptionUtil encryptionDecryptionUtil;
+    private final WalletCredentialsRepository walletCredentialsRepository;
+    private final IssuersService issuersService;
 
     @Autowired
-    private DataShareServiceImpl dataShareService;
+    public CredentialProcessor(
+            CredentialUtilService credentialUtilService,
+            DataShareServiceImpl dataShareService,
+            ObjectMapper objectMapper,
+            EncryptionDecryptionUtil encryptionDecryptionUtil,
+            WalletCredentialsRepository walletCredentialsRepository,
+            IssuersService issuersService) {
+        this.credentialUtilService = credentialUtilService;
+        this.dataShareService = dataShareService;
+        this.objectMapper = objectMapper;
+        this.encryptionDecryptionUtil = encryptionDecryptionUtil;
+        this.walletCredentialsRepository = walletCredentialsRepository;
+        this.issuersService = issuersService;
+    }
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    /**
+     * Processes and stores a credential using the provided token and parameters.
+     *
+     * @param tokenResponse The token response containing the access token.
+     * @param credentialType The type of the credential.
+     * @param walletId The ID of the wallet.
+     * @param base64Key The Base64-encoded wallet key.
+     * @param credentialValidity The validity period of the credential.
+     * @param issuerId The ID of the issuer.
+     * @return The stored VerifiableCredential.
+     * @throws InvalidRequestException If input parameters are invalid.
+     * @throws CredentialProcessingException If processing fails.
+     * @throws ExternalServiceUnavailableException If an external service is unavailable.
+     * @throws VCVerificationException If credential verification fails.
+     */
+    public VerifiableCredentialResponseDTO processAndStoreCredential(
+            TokenResponseDTO tokenResponse, String credentialType, String walletId,
+            String base64Key, String credentialValidity, String issuerId, String locale)
+            throws InvalidRequestException, CredentialProcessingException, ExternalServiceUnavailableException, VCVerificationException {
+        // Validate inputs
+        if (tokenResponse == null || tokenResponse.getAccess_token() == null) {
+            log.error("Invalid token response: null or missing access token");
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Token response or access token cannot be null");
+        }
+        if (credentialType == null || credentialType.isBlank()) {
+            log.error("Invalid credential type: null or blank");
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Credential type cannot be null or blank");
+        }
+        if (walletId == null || walletId.isBlank()) {
+            log.error("Invalid wallet ID: null or blank");
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet ID cannot be null or blank");
+        }
+        if (base64Key == null || base64Key.isBlank()) {
+            log.error("Invalid wallet key: null or blank");
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet key cannot be null or blank");
+        }
+        if (issuerId == null || issuerId.isBlank()) {
+            log.error("Invalid issuer ID: null or blank");
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Issuer ID cannot be null or blank");
+        }
 
-    @Autowired
-    private EncryptionDecryptionUtil encryptionDecryptionUtil;
-
-    @Autowired
-    private WalletCredentialsRepository walletCredentialsRepository;
-
-    public VerifiableCredential processAndStoreCredential(
-            IssuerConfig issuerConfig, String accessToken, String credentialType,
-            String walletId, String base64EncodedWalletKey, String credentialValidity, String issuerId) throws ExternalServiceUnavailableException {
+        // Fetch issuer configuration
+        IssuerConfig issuerConfig;
+        try {
+            issuerConfig = issuersService.getIssuerConfig(issuerId, credentialType);
+        } catch (Exception e) {
+            log.error("Failed to fetch issuer config for issuerId: {}", issuerId, e);
+            throw new CredentialProcessingException(
+                    CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(),
+                    "Unable to fetch issuer configuration", e);
+        }
 
         // Generate credential request
         VCCredentialRequest vcCredentialRequest;
         try {
             vcCredentialRequest = credentialUtilService.generateVCCredentialRequest(
                     issuerConfig.getIssuerDTO(), issuerConfig.getWellKnownResponse(),
-                    issuerConfig.getCredentialsSupportedResponse(), accessToken, walletId, base64EncodedWalletKey, true);
+                    issuerConfig.getCredentialsSupportedResponse(), tokenResponse.getAccess_token(),
+                    walletId, base64Key, true);
         } catch (Exception e) {
             log.error("Failed to generate VC credential request for issuerId: {}, credentialType: {}", issuerId, credentialType, e);
             throw new CredentialProcessingException(
@@ -61,7 +124,7 @@ public class CredentialProcessor {
         try {
             vcCredentialResponse = credentialUtilService.downloadCredential(
                     issuerConfig.getWellKnownResponse().getCredentialEndPoint(),
-                    vcCredentialRequest, accessToken);
+                    vcCredentialRequest, tokenResponse.getAccess_token());
         } catch (Exception e) {
             log.error("Failed to download credential for issuerId: {}, credentialType: {}", issuerId, credentialType, e);
             throw new ExternalServiceUnavailableException(
@@ -113,7 +176,7 @@ public class CredentialProcessor {
 
         String encryptedCredentialData;
         try {
-            encryptedCredentialData = encryptionDecryptionUtil.encryptCredential(vcResponseAsJsonString, base64EncodedWalletKey);
+            encryptedCredentialData = encryptionDecryptionUtil.encryptCredential(vcResponseAsJsonString, base64Key);
         } catch (Exception e) {
             log.error("Failed to encrypt credential for issuerId: {}, credentialType: {}", issuerId, credentialType, e);
             throw new CredentialProcessingException(
@@ -121,9 +184,21 @@ public class CredentialProcessor {
                     "Unable to encrypt credential data", e);
         }
 
-        return saveCredential(walletId, encryptedCredentialData, issuerId, credentialType, dataShareUrl, credentialValidity);
+        VerifiableCredential savedCredential =  saveCredential(walletId, encryptedCredentialData, issuerId, credentialType, dataShareUrl, credentialValidity);
+        return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerConfig, locale, savedCredential.getId());
     }
 
+    /**
+     * Saves the credential to the repository.
+     *
+     * @param walletId The wallet ID.
+     * @param encryptedCredential The encrypted credential data.
+     * @param issuerId The issuer ID.
+     * @param credentialType The credential type.
+     * @param dataShareUrl The data share URL.
+     * @param credentialValidity The credential validity.
+     * @return The stored VerifiableCredential.
+     */
     private VerifiableCredential saveCredential(String walletId, String encryptedCredential, String issuerId,
                                                 String credentialType, String dataShareUrl, String credentialValidity) {
         CredentialMetadata credentialMetadata = new CredentialMetadata();
@@ -138,6 +213,13 @@ public class CredentialProcessor {
         verifiableCredential.setCredential(encryptedCredential);
         verifiableCredential.setCredentialMetadata(credentialMetadata);
 
-        return walletCredentialsRepository.save(verifiableCredential);
+        try {
+            return walletCredentialsRepository.save(verifiableCredential);
+        } catch (Exception e) {
+            log.error("Failed to save credential for walletId: {}, issuerId: {}, credentialType: {}", walletId, issuerId, credentialType, e);
+            throw new CredentialProcessingException(
+                    CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(),
+                    "Unable to save credential to database", e);
+        }
     }
 }

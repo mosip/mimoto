@@ -2,7 +2,7 @@ package io.mosip.mimoto.security.oauth2;
 
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
-import io.mosip.mimoto.exception.InvalidRequestException;
+import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.service.UserMetadataService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -68,7 +68,7 @@ public class OAuth2AuthenticationSuccessHandlerTest {
     }
 
     @Test
-    public void onAuthenticationSuccessSetsSessionAttributesAndRedirects() throws IOException, ServletException {
+    public void onAuthenticationSuccessSetsSessionAttributesAndRedirects() throws IOException, ServletException, DecryptionException {
         // Arrange
         when(oauth2Token.getAuthorizedClientRegistrationId()).thenReturn(CLIENT_REGISTRATION_ID);
         when(oauth2Token.getPrincipal()).thenReturn(oauth2User);
@@ -102,7 +102,7 @@ public class OAuth2AuthenticationSuccessHandlerTest {
     }
 
     @Test
-    public void onAuthenticationSuccessWithNullAttributesSetsSessionAttributesAndRedirects() throws IOException, ServletException {
+    public void onAuthenticationSuccessWithNullAttributesSetsSessionAttributesAndRedirects() throws IOException, ServletException, DecryptionException {
         // Arrange
         when(oauth2Token.getAuthorizedClientRegistrationId()).thenReturn(CLIENT_REGISTRATION_ID);
         when(oauth2Token.getPrincipal()).thenReturn(oauth2User);
@@ -152,7 +152,7 @@ public class OAuth2AuthenticationSuccessHandlerTest {
     }
 
     @Test
-    public void onAuthenticationSuccessWithServiceFailureThrowsIOException() throws IOException, ServletException {
+    public void onAuthenticationSuccessWithServiceFailureThrowsIOException() throws IOException, ServletException, DecryptionException {
         // Arrange
         when(oauth2Token.getAuthorizedClientRegistrationId()).thenReturn(CLIENT_REGISTRATION_ID);
         when(oauth2Token.getPrincipal()).thenReturn(oauth2User);

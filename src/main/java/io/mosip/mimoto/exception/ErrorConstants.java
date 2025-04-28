@@ -34,7 +34,8 @@ public enum ErrorConstants {
     DECRYPTION_FAILED( "decryption_failed", "Failed to decrypt the data"),
     SCHEMA_MISMATCH( "schema_mismatch", "Failed to restored the stored data"),
     INVALID_USER("invalid_user", "User does not exist in database"),
-    CREDENTIAL_DOWNLOAD_EXCEPTION( "credential_download_error", "Failed to download and store the credential");
+    CREDENTIAL_DOWNLOAD_EXCEPTION( "credential_download_error", "Failed to download and store the credential"),
+    CREDENTIAL_FETCH_EXCEPTION( "credential_fetch_error", "Failed to fetch the credential");
 
     private final String errorCode;
     private final String errorMessage;

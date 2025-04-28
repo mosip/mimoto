@@ -1,15 +1,16 @@
 package io.mosip.mimoto.controller;
 
+import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.constant.SwaggerExampleConstants;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
-import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
+import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.OAuth2AuthenticationException;
 import io.mosip.mimoto.repository.UserMetadataRepository;
-import io.mosip.mimoto.util.EncryptionDecryptionUtil;
+import io.mosip.mimoto.service.EncryptionService;
 import io.mosip.mimoto.util.Utilities;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -41,7 +42,7 @@ public class UsersController {
     private UserMetadataRepository userMetadataRepository;
 
     @Autowired
-    private EncryptionDecryptionUtil encryptionDecryptionUtill;
+    private EncryptionService encryptionService;
 
     @Operation(summary = "Retrieve user metadata from the database", description = "This API is secured using session-based authentication. When a request is made, the server retrieves the session ID from the Cookie header and uses it to fetch session details from Redis. From the session, it extracts the user's unique identifier (typically the sub field provided by the identity provider) along with the clientRegistrationId. These values are then used to retrieve the user's metadata from the database. If successful, the API returns the user's profile information. If any issue occurs such as missing user data or server error then an appropriate error response is returned.", operationId = "getUserProfileFromDB", security = @SecurityRequirement(name = "SessionAuth"))
     @ApiResponse(responseCode = "200", description = "User profile retrieved successfully from the Database", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserMetadataDTO.class), examples = @ExampleObject(name = "Success response", value = SwaggerExampleConstants.FETCH_USER_PROFILE_SUCCESS)))
@@ -59,12 +60,14 @@ public class UsersController {
             return Utilities.getErrorResponseEntityWithoutWrapper(exception, ErrorConstants.INVALID_USER.getErrorCode(), exception.getStatus(), null);
         }
 
-        UserMetadataDTO userMetadataDTO = new UserMetadataDTO(encryptionDecryptionUtill.decrypt(userMetadata.getDisplayName(),
-                EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""),
-                encryptionDecryptionUtill.decrypt(userMetadata.getProfilePictureUrl(),
-                        EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""),
-                encryptionDecryptionUtill.decrypt(userMetadata.getEmail(), EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID,
-                        "", ""));
+        UserMetadataDTO userMetadataDTO = null;
+        try {
+            userMetadataDTO = new UserMetadataDTO(encryptionService.decrypt(userMetadata.getDisplayName()),
+                    encryptionService.decrypt(userMetadata.getProfilePictureUrl()),
+                    encryptionService.decrypt(userMetadata.getEmail()));
+        } catch (DecryptionException e) {
+            throw new RuntimeException(e);
+        }
 
         return ResponseEntity.status(HttpStatus.OK).body(userMetadataDTO);
 

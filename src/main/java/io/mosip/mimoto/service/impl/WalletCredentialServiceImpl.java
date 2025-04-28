@@ -1,16 +1,13 @@
 package io.mosip.mimoto.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mosip.kernel.cryptomanager.service.CryptomanagerService;
 import io.mosip.mimoto.dbentity.VerifiableCredential;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
-import io.mosip.mimoto.dto.mimoto.*;
+import io.mosip.mimoto.dto.mimoto.IssuerConfig;
+import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
-import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.util.CredentialProcessor;
@@ -19,185 +16,107 @@ import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.WalletCredentialResponseDTOFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static io.mosip.mimoto.exception.ErrorConstants.*;
-import static io.mosip.mimoto.util.LocaleUtils.getCredentialDisplayDTOBasedOnLocale;
 
+/**
+ * Implementation of {@link WalletCredentialService} for managing wallet credentials.
+ */
 @Slf4j
 @Service
 public class WalletCredentialServiceImpl implements WalletCredentialService {
-    @Autowired
-    private IssuersService issuersService;
+    private final WalletCredentialsRepository repository;
+    private final IssuersService issuersService;
+    private final CredentialProcessor credentialProcessor;
+    private final CredentialUtilService credentialUtilService;
+    private final EncryptionDecryptionUtil encryptionDecryptionUtil;
 
     @Autowired
-    private DataShareServiceImpl dataShareService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private IdpService idpService;
-
-    @Autowired
-    private RestTemplate restTemplate;
-
-    @Autowired
-    private PresentationServiceImpl presentationService;
-
-    @Autowired
-    private CryptomanagerService cryptomanagerService;
-
-    @Autowired
-    private WalletCredentialsRepository walletCredentialsRepository;
-
-    @Autowired
-    private CredentialUtilService credentialUtilService;
-
-    @Autowired
-    private EncryptionDecryptionUtil encryptionDecryptionUtil;
-
-    @Autowired
-    private CredentialProcessor credentialProcessor;
-
-    @Override
-    public VerifiableCredentialResponseDTO fetchAndStoreCredential(
-            String issuerId, String credentialType, TokenResponseDTO response,
-            String credentialValidity, String locale, String walletId, String base64EncodedWalletKey) throws ExternalServiceUnavailableException {
-
-        shouldInitiateDownloadRequest(issuerId, credentialType, walletId);
-
-        IssuerConfig issuerConfig = fetchIssuerConfig(issuerId, credentialType);
-
-        VerifiableCredential savedCredential = credentialProcessor.processAndStoreCredential(
-                issuerConfig, response.getAccess_token(), credentialType, walletId,
-                base64EncodedWalletKey, credentialValidity, issuerId);
-
-        return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(
-                issuerConfig.getIssuerDTO(), issuerConfig.getCredentialsSupportedResponse(), locale, savedCredential.getId());
+    public WalletCredentialServiceImpl(WalletCredentialsRepository repository,
+                                       IssuersService issuersService,
+                                       CredentialProcessor credentialProcessor,
+                                       CredentialUtilService credentialUtilService,
+                                       EncryptionDecryptionUtil encryptionDecryptionUtil) {
+        this.repository = repository;
+        this.issuersService = issuersService;
+        this.credentialProcessor = credentialProcessor;
+        this.credentialUtilService = credentialUtilService;
+        this.encryptionDecryptionUtil = encryptionDecryptionUtil;
     }
 
-    private void shouldInitiateDownloadRequest(String issuerId, String credentialType, String walletId) {
+    @Override
+    public VerifiableCredentialResponseDTO fetchAndStoreCredential(String issuerId, String credentialType,
+                                                                   TokenResponseDTO tokenResponse, String credentialValidity,
+                                                                   String locale, String walletId, String base64Key)
+            throws CredentialProcessingException, ExternalServiceUnavailableException {
+        log.info("Fetching and storing credential for wallet: {}, issuer: {}, type: {}", walletId, issuerId, credentialType);
+
         Set<String> issuers = Set.of("Mosip");
-        if (issuers.contains(issuerId) && alreadyDownloaded(issuerId, credentialType, walletId)) {
-            throw new InvalidRequestException(
-                    INVALID_REQUEST.getErrorCode(),
-                    "A credential is already downloaded for the selected Issuer and Credential Type. Only one is allowed");
-        }
-    }
-
-    private boolean alreadyDownloaded(String issuerId, String credentialType, String walletId) {
-        return walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId(issuerId, credentialType, walletId);
-    }
-
-    private IssuerConfig fetchIssuerConfig(String issuerId, String credentialType) throws ExternalServiceUnavailableException {
-        IssuerDTO issuerDTO;
-        try {
-            issuerDTO = issuersService.getIssuerDetails(issuerId);
-        } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
-                 InvalidWellknownResponseException e) {
-            log.error("Failed to fetch issuer details for issuerId: {}", issuerId, e);
-            throw new ExternalServiceUnavailableException(SERVER_UNAVAILABLE.getErrorCode(), "Unable to fetch issuer details due to a service error", e);
-        } catch (InvalidIssuerIdException e) {
-            log.error("Invalid issuerId: {}", issuerId, e);
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), e.getMessage(), e);
-        }
-
-        CredentialIssuerWellKnownResponse wellKnownResponse;
-        try {
-            wellKnownResponse = getIssuerWellKnownResponse(issuerId);
-        } catch (AuthorizationServerWellknownResponseException | ApiNotAccessibleException | IOException |
-                 InvalidWellknownResponseException e) {
-            log.error("Failed to fetch issuer well-known response for issuerId: {}", issuerId, e);
-            throw new ExternalServiceUnavailableException(SERVER_UNAVAILABLE.getErrorCode(), "Unable to fetch issuer configuration", e);
-        }
-
-        CredentialsSupportedResponse credentialsSupportedResponse = wellKnownResponse.getCredentialConfigurationsSupported().get(credentialType);
-        if (credentialsSupportedResponse == null) {
-            log.error("Credential type {} not supported for issuerId: {}", credentialType, issuerId);
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), String.format("Credential type %s is not supported by issuer %s", credentialType, issuerId));
-        }
-
-        return new IssuerConfig(issuerDTO, wellKnownResponse, credentialsSupportedResponse);
-    }
-
-    @Override
-    public List<VerifiableCredentialResponseDTO> fetchAllCredentialsForWallet(String walletId, String walletKey, String locale) {
-        List<VerifiableCredential> credentials = walletCredentialsRepository.findByWalletId(walletId);
-
-        return credentials.stream().map(credentialRecord -> {
-            try {
-                String issuerId = credentialRecord.getCredentialMetadata().getIssuerId();
-                IssuerConfig issuerConfig = fetchIssuerConfig(issuerId, credentialRecord.getCredentialMetadata().getCredentialType());
-                return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(
-                        issuerConfig.getIssuerDTO(), issuerConfig.getCredentialsSupportedResponse(), locale, credentialRecord.getId());
-            } catch (Exception e) {
-                log.info("Error occurred while fetching configuration of issuerId: {} for credentialId: {}",
-                        credentialRecord.getCredentialMetadata().getIssuerId(), credentialRecord.getId(), e);
-                return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(null, null, locale, credentialRecord.getId());
+        if (issuers.contains(issuerId)){
+            if (repository.existsByIssuerIdAndCredentialTypeAndWalletId(issuerId, credentialType, walletId)) {
+                log.warn("Duplicate credential found for issuer: {}, type: {}, wallet: {}", issuerId, credentialType, walletId);
+                throw new CredentialProcessingException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), "Duplicate credential for issuer and type");
             }
-        }).toList();
+        }
+
+        VerifiableCredentialResponseDTO credential = null;
+
+            credential = credentialProcessor.processAndStoreCredential(
+                    tokenResponse, credentialType, walletId, base64Key, credentialValidity, issuerId, locale);
+
+        log.debug("Credential stored successfully: {}", credential.getCredentialId());
+            return credential;
+
     }
 
     @Override
-    public WalletCredentialResponseDTO fetchVerifiableCredential(String walletId, String credentialId, String base64EncodedWalletKey, String locale)
-            throws DecryptionException, CorruptedEncryptedDataException, ExternalServiceUnavailableException {
-        Optional<VerifiableCredential> verifiableCredentialObj = walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId);
-        VerifiableCredential verifiableCredential;
-        if (verifiableCredentialObj.isEmpty()) {
-            log.error("Credential not found for walletId: {} and credentialId: {}", walletId, credentialId);
-            throw new CredentialNotFoundException(RESOURCE_NOT_FOUND.getErrorCode(), RESOURCE_NOT_FOUND.getErrorMessage());
-        }
-        verifiableCredential = verifiableCredentialObj.get();
+    public List<VerifiableCredentialResponseDTO> fetchAllCredentialsForWallet(String walletId, String base64Key, String locale) throws CredentialProcessingException {
+        log.info("Fetching all credentials for wallet: {}", walletId);
 
-        String decryptCredentialResponse = encryptionDecryptionUtil.decryptCredential(verifiableCredential.getCredential(), base64EncodedWalletKey);
-        String issuerId = verifiableCredential.getCredentialMetadata().getIssuerId();
-        String credentialType = verifiableCredential.getCredentialMetadata().getCredentialType();
-        String dataShareUrl = verifiableCredential.getCredentialMetadata().getDataShareUrl();
-        String credentialValidity = verifiableCredential.getCredentialMetadata().getCredentialValidity();
+        List<VerifiableCredential> credentials = repository.findByWalletId(walletId);
 
-        IssuerConfig issuerConfig = fetchIssuerConfig(issuerId, credentialType);
+        return credentials.stream().map(credential -> {
+            String issuerId = credential.getCredentialMetadata().getIssuerId();
+            IssuerConfig issuerConfig = null;
+            try {
+                issuerConfig = issuersService.getIssuerConfig(issuerId, credential.getCredentialMetadata().getCredentialType());
+            } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
+                     InvalidWellknownResponseException e) {
+                log.error("Failed to fetch issuer details for issuerId: {}", issuerId, e);
+            }
+            return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerConfig, locale, credential.getId());
+        }).collect(Collectors.toList());
 
-        VCCredentialResponse vcCredentialResponse;
-        try {
-            vcCredentialResponse = objectMapper.readValue(decryptCredentialResponse, VCCredentialResponse.class);
-        } catch (JsonProcessingException e) {
-            log.error("Error occurred while parsing the decrypted credential response", e);
-            throw new CorruptedEncryptedDataException(SCHEMA_MISMATCH.getErrorCode(), SCHEMA_MISMATCH.getErrorMessage(), e);
-        }
-
-        ByteArrayInputStream byteArrayInputStream;
-        try {
-            byteArrayInputStream = credentialUtilService.generatePdfForVerifiableCredentials(
-                    credentialType, vcCredentialResponse, issuerConfig.getIssuerDTO(),
-                    issuerConfig.getCredentialsSupportedResponse(), dataShareUrl, credentialValidity, locale);
-        } catch (Exception e) {
-            log.error("Error occurred while creating pdf", e);
-            throw new CredentialPdfGenerationException(
-                    SERVER_UNAVAILABLE.getErrorCode(),
-                    SERVER_UNAVAILABLE.getErrorMessage());
-        }
-        String fileName = getCredentialDisplayDTOBasedOnLocale(issuerConfig.getCredentialsSupportedResponse().getDisplay(), locale).getName();
-
-        return new WalletCredentialResponseDTO(new InputStreamResource(byteArrayInputStream), fileName);
     }
 
-    private CredentialIssuerWellKnownResponse getIssuerWellKnownResponse(String issuerId) throws AuthorizationServerWellknownResponseException, ApiNotAccessibleException, IOException, InvalidWellknownResponseException {
-        CredentialIssuerConfiguration credentialIssuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
-        return new CredentialIssuerWellKnownResponse(
-                credentialIssuerConfiguration.getCredentialIssuer(),
-                credentialIssuerConfiguration.getAuthorizationServers(),
-                credentialIssuerConfiguration.getCredentialEndPoint(),
-                credentialIssuerConfiguration.getCredentialConfigurationsSupported()
-        );
+    @Override
+    public WalletCredentialResponseDTO fetchVerifiableCredential(String walletId, String credentialId,
+                                                                 String base64Key, String locale)
+            throws CredentialNotFoundException, CredentialProcessingException {
+        log.info("Fetching credential: {} for wallet: {}", credentialId, walletId);
+        VerifiableCredential credential = repository.findByIdAndWalletId(credentialId, walletId)
+                .orElseThrow(() -> {
+                    log.warn("Credential not found: {} for wallet: {}", credentialId, walletId);
+                    return new CredentialNotFoundException(RESOURCE_NOT_FOUND.getErrorCode(), RESOURCE_NOT_FOUND.getErrorMessage());
+                });
+
+        try {
+            String decryptedCredential = encryptionDecryptionUtil.decryptCredential(credential.getCredential(), base64Key);
+            WalletCredentialResponseDTO response = credentialUtilService.generateCredentialResponse(
+                    decryptedCredential, credential.getCredentialMetadata(), locale);
+            log.debug("Credential fetched successfully: {}", credentialId);
+            return response;
+        } catch (DecryptionException e) {
+            log.error("Decryption failed for credential: {}", credentialId, e);
+            throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Decryption failed", e);
+        }
     }
+
 
 }

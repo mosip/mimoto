@@ -2,6 +2,7 @@ package io.mosip.mimoto.security.oauth2;
 
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
+import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.service.UserMetadataService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,7 +51,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         // Call the service to update or insert the user metadata in the database
 
-        String userId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+        String userId = null;
+        try {
+            userId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+        } catch (DecryptionException e) {
+            log.error("Failed to store the user info in the database", e);
+            String redirectUrl = injiWebUrl + "/login?status=error&error_message=" + "database_error";
+            response.sendRedirect(redirectUrl);
+        }
         UserMetadataDTO userMetadataDTO = new UserMetadataDTO(displayName,
                     profilePictureUrl,
                     email);

@@ -1,8 +1,9 @@
 package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dbentity.UserMetadata;
+import io.mosip.mimoto.exception.DecryptionException;
+import io.mosip.mimoto.exception.EncryptionException;
 import io.mosip.mimoto.repository.UserMetadataRepository;
-import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,71 +15,61 @@ import java.util.function.Supplier;
 
 @Service
 public class UserMetadataService {
+    private final UserMetadataRepository repository;
+    private final EncryptionService encryptionService;
 
     @Autowired
-    private UserMetadataRepository userMetadataRepository;
-
-    @Autowired
-    private EncryptionDecryptionUtil encryptionDecryptionUtil;
+    public UserMetadataService(UserMetadataRepository repository, EncryptionService encryptionService) {
+        this.repository = repository;
+        this.encryptionService = encryptionService;
+    }
 
     public String updateOrInsertUserMetadata(String providerSubjectId, String identityProvider,
-                                             String displayName, String profilePictureUrl,
-                                             String email) {
-        // Compute current time once
+                                             String displayName, String profilePictureUrl, String email)
+            throws EncryptionException, DecryptionException {
         Timestamp now = new Timestamp(System.currentTimeMillis());
-
-        // Check if user exists
-        Optional<UserMetadata> existingUser = userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider);
+        Optional<UserMetadata> existingUser = repository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider);
         if (existingUser.isPresent()) {
-            // If user exists, update metadata and return the userID
-            updateUserMetadata(existingUser.get(), displayName, profilePictureUrl, email, now);
-            return existingUser.get().getId(); // Return the userID from the existing user
+            return updateUser(existingUser.get(), displayName, profilePictureUrl, email, now);
         } else {
-            // If user does not exist, create new record and return the userID
-            return createUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email, now);
+            return createUser(providerSubjectId, identityProvider, displayName, profilePictureUrl, email, now);
         }
     }
 
-    private void updateUserMetadata(UserMetadata userMetadata, String displayName, String profilePictureUrl,
-                                    String email, Timestamp now) {
-        boolean isUpdated = false;
-
-        // Check and update fields if needed
-        isUpdated |= checkAndUpdateEncryptedField(userMetadata::getDisplayName, userMetadata::setDisplayName, displayName);
-        isUpdated |= checkAndUpdateEncryptedField(userMetadata::getProfilePictureUrl, userMetadata::setProfilePictureUrl, profilePictureUrl);
-        isUpdated |= checkAndUpdateEncryptedField(userMetadata::getEmail, userMetadata::setEmail, email);
-
-        // If any field was updated, save the updated record and set the updated timestamp
-        if (isUpdated) {
-            userMetadata.setUpdatedAt(now);
-            userMetadataRepository.save(userMetadata);
+    private String updateUser(UserMetadata user, String displayName, String profilePictureUrl, String email, Timestamp now)
+            throws EncryptionException, DecryptionException {
+        boolean updated = updateIfChanged(user::getDisplayName, user::setDisplayName, displayName)
+                || updateIfChanged(user::getProfilePictureUrl, user::setProfilePictureUrl, profilePictureUrl)
+                || updateIfChanged(user::getEmail, user::setEmail, email);
+        if (updated) {
+            user.setUpdatedAt(now);
+            repository.save(user);
         }
+        return user.getId();
     }
 
-    private boolean checkAndUpdateEncryptedField(Supplier<String> getter, Consumer<String> setter, String newValue) {
-        String decryptedValue = encryptionDecryptionUtil.decrypt(getter.get(), EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", "");
-        if (!decryptedValue.equals(newValue)) {
-            setter.accept(encryptionDecryptionUtil.encrypt(newValue, EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""));
+    private boolean updateIfChanged(Supplier<String> getter, Consumer<String> setter, String newValue)
+            throws EncryptionException, DecryptionException {
+        String current = encryptionService.decrypt(getter.get());
+        if (!current.equals(newValue)) {
+            setter.accept(encryptionService.encrypt(newValue));
             return true;
         }
         return false;
     }
 
-    private String createUserMetadata(String providerSubjectId, String identityProvider, String displayName,
-                                      String profilePictureUrl, String email, Timestamp now) {
-        UserMetadata userMetadata = new UserMetadata();
-        String userId = UUID.randomUUID().toString();
-        userMetadata.setId(userId);
-        userMetadata.setProviderSubjectId(providerSubjectId);
-        userMetadata.setIdentityProvider(identityProvider);
-        userMetadata.setDisplayName(encryptionDecryptionUtil.encrypt(displayName, EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""));
-        userMetadata.setProfilePictureUrl(encryptionDecryptionUtil.encrypt(profilePictureUrl, EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""));
-        userMetadata.setEmail(encryptionDecryptionUtil.encrypt(email, EncryptionDecryptionUtil.USER_PII_KEY_REFERENCE_ID, "", ""));
-        userMetadata.setCreatedAt(now);
-        userMetadata.setUpdatedAt(now);
-
-        UserMetadata savedUserMetadata = userMetadataRepository.save(userMetadata); // Insert new record
-        return savedUserMetadata.getId(); // Return the userID of the newly created user
+    private String createUser(String providerSubjectId, String identityProvider, String displayName,
+                              String profilePictureUrl, String email, Timestamp now)
+            throws EncryptionException {
+        UserMetadata user = new UserMetadata();
+        user.setId(UUID.randomUUID().toString());
+        user.setProviderSubjectId(providerSubjectId);
+        user.setIdentityProvider(identityProvider);
+        user.setDisplayName(encryptionService.encrypt(displayName));
+        user.setProfilePictureUrl(encryptionService.encrypt(profilePictureUrl));
+        user.setEmail(encryptionService.encrypt(email));
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
+        return repository.save(user).getId();
     }
-
 }

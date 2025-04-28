@@ -11,4 +11,9 @@ public class EncryptionException extends BaseUncheckedException {
         super(errorCode, errorMessage, cause);
 
     }
+
+    public EncryptionException(String errorCode, String errorMessage) {
+        super(errorCode, errorMessage);
+
+    }
 }
