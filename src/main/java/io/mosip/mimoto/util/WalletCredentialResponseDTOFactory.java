@@ -8,7 +8,7 @@ import static io.mosip.mimoto.util.LocaleUtils.getCredentialDisplayDTOBasedOnLoc
 import static io.mosip.mimoto.util.LocaleUtils.getIssuerDisplayDTOBasedOnLocale;
 
 public class WalletCredentialResponseDTOFactory {
-    public static VerifiableCredentialResponseDTO buildCredentialResponseDTO(IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse,
+    public static VerifiableCredentialResponseDTO buildCredentialResponseDTO(IssuerConfig issuerConfig,
                                                                        String locale, String credentialId) {
         String issuerName = "";
         String issuerLogo = "";
@@ -16,17 +16,20 @@ public class WalletCredentialResponseDTOFactory {
         String credentialTypeLogo = "";
         DisplayDTO issuerDisplayDTO;
         CredentialSupportedDisplayResponse credentialTypeDisplayDTO;
-
-        if (issuerDTO != null) {
-            issuerDisplayDTO = getIssuerDisplayDTOBasedOnLocale(issuerDTO.getDisplay(), locale);
-            issuerName = issuerDisplayDTO.getName();
-            issuerLogo = issuerDisplayDTO.getLogo().getUrl();
-        }
-        if (credentialsSupportedResponse != null) {
-            credentialTypeDisplayDTO = getCredentialDisplayDTOBasedOnLocale(
-                    credentialsSupportedResponse.getDisplay(), locale);
-            credentialType = credentialTypeDisplayDTO.getName();
-            credentialTypeLogo = credentialTypeDisplayDTO.getLogo().getUrl();
+        if (null != issuerConfig) {
+            IssuerDTO issuerDTO = issuerConfig.getIssuerDTO();
+            CredentialsSupportedResponse credentialsSupportedResponse = issuerConfig.getCredentialsSupportedResponse();
+            if (issuerDTO != null) {
+                issuerDisplayDTO = getIssuerDisplayDTOBasedOnLocale(issuerDTO.getDisplay(), locale);
+                issuerName = issuerDisplayDTO.getName();
+                issuerLogo = issuerDisplayDTO.getLogo().getUrl();
+            }
+            if (credentialsSupportedResponse != null) {
+                credentialTypeDisplayDTO = getCredentialDisplayDTOBasedOnLocale(
+                        credentialsSupportedResponse.getDisplay(), locale);
+                credentialType = credentialTypeDisplayDTO.getName();
+                credentialTypeLogo = credentialTypeDisplayDTO.getLogo().getUrl();
+            }
         }
 
         return VerifiableCredentialResponseDTO.builder()

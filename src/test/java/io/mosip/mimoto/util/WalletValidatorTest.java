@@ -1,6 +1,7 @@
 package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.dto.WalletRequestDto;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,50 +23,34 @@ public class WalletValidatorTest {
     @Autowired
     private WalletValidator walletValidator;
 
-    @Mock
-    private WalletRequestDto walletRequestDto;
-
-    @BeforeEach
-    void setUp() {
-        when(walletRequestDto.getWalletPin()).thenReturn("1234");
-        when(walletRequestDto.getWalletName()).thenReturn("My Wallet");
-    }
-
     @Test
     void testValidateWalletRequest_validData() {
-        walletValidator.validateWalletRequest(walletRequestDto);
+        walletValidator.validateWalletRequest("user1", "wallet1", "123456");
     }
 
     @Test
     void testValidatePin_invalidPin() {
-        when(walletRequestDto.getWalletPin()).thenReturn("12");
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            walletValidator.validateWalletRequest(walletRequestDto);
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
+            walletValidator.validateWalletRequest("user1", "My Wallet", "12");
         });
 
-        assertEquals("Pin should be numeric with 4 or 6 digits.", exception.getMessage());
+        assertEquals("invalid_request --> PIN must be numeric with 4 or 6 digits", exception.getMessage());
     }
 
     @Test
     void testValidateWalletName_invalidName() {
-        // Ensure valid pin for wallet name test
-        when(walletRequestDto.getWalletPin()).thenReturn("1234");
-        when(walletRequestDto.getWalletName()).thenReturn("My Wallet!@");
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            walletValidator.validateWalletRequest(walletRequestDto);
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
+            walletValidator.validateWalletRequest("user1", "My Wallet!@", "123456");
         });
 
-        assertEquals("Wallet name should be alphanumeric with spaces and a few allowed special characters.", exception.getMessage());
+        assertEquals("invalid_request --> Wallet name must be alphanumeric with allowed special characters", exception.getMessage());
     }
 
     @Test
     void testValidateWalletName_validName() {
-        // Ensure valid pin for wallet name test
-        when(walletRequestDto.getWalletPin()).thenReturn("123456");
-        when(walletRequestDto.getWalletName()).thenReturn("Valid Wallet 123");
 
-        walletValidator.validateWalletRequest(walletRequestDto);
+        walletValidator.validateWalletRequest("user1", "wallet1", "123456");
     }
 }

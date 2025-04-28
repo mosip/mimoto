@@ -4,6 +4,8 @@ import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dbentity.WalletMetadata;
+import io.mosip.mimoto.exception.DecryptionException;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.repository.WalletRepository;
 import jakarta.servlet.http.HttpSession;
@@ -14,6 +16,8 @@ import javax.crypto.SecretKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
 
 @Component
 public class WalletUtil {
@@ -28,12 +32,12 @@ public class WalletUtil {
         return encryptionDecryptionUtil.decryptWithPin(encryptedWalletKey, pin);
     }
 
-    public String createWallet(String userId, String walletName, String pin) throws Exception {
+    public String createWallet(String userId, String walletName, String pin) {
         SecretKey encryptionKey = KeyGenerationUtil.generateEncryptionKey("AES", 256);
         return saveWallet(userId, walletName, pin, encryptionKey, "AES", "encryptWithPin");
     }
 
-    public String saveWallet(String userId, String walletName, String walletPin, SecretKey encryptionKey, String encryptionAlgorithm, String encryptionType) throws Exception {
+    public String saveWallet(String userId, String walletName, String walletPin, SecretKey encryptionKey, String encryptionAlgorithm, String encryptionType) {
 
         String walletId = UUID.randomUUID().toString();
         WalletMetadata walletMetadata = createWalletMetadata(walletName, encryptionAlgorithm, encryptionType);
@@ -60,7 +64,7 @@ public class WalletUtil {
         return walletMetadata;
     }
 
-    private List<ProofSigningKey> createProofSigningKeys(SecretKey encryptionKey, Wallet wallet) throws Exception {
+    private List<ProofSigningKey> createProofSigningKeys(SecretKey encryptionKey, Wallet wallet) {
         List<ProofSigningKey> proofSigningKeys = new ArrayList<>();
         List<SigningAlgorithm> algorithms = List.of(SigningAlgorithm.RS256, SigningAlgorithm.ES256, SigningAlgorithm.ES256K, SigningAlgorithm.ED25519);
         for (SigningAlgorithm algorithm : algorithms) {
@@ -75,17 +79,17 @@ public class WalletUtil {
 
     public static String getSessionWalletKey(HttpSession session) {
         Object key = session.getAttribute(SessionKeys.WALLET_KEY);
-        if (key == null) throw new RuntimeException("Wallet Key is missing in session");
+        if (key == null) throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet Key is missing in session");
         return key.toString();
     }
 
     public static void validateWalletId(HttpSession session, String walletIdFromRequest) {
         Object sessionWalletId = session.getAttribute(SessionKeys.WALLET_ID);
-        if (sessionWalletId == null) throw new RuntimeException("Wallet Id is missing in session");
+        if (sessionWalletId == null) throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet Id is missing in session");
 
         String walletIdInSession = sessionWalletId.toString();
         if (!walletIdInSession.equals(walletIdFromRequest)) {
-            throw new RuntimeException("Invalid Wallet Id. Session and request Wallet Id do not match");
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Invalid Wallet Id. Session and request Wallet Id do not match");
         }
     }
 }

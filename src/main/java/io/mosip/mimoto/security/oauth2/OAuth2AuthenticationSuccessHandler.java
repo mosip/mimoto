@@ -2,6 +2,7 @@ package io.mosip.mimoto.security.oauth2;
 
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
+import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.service.UserMetadataService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,7 +11,6 @@ import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -18,11 +18,6 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
-import static io.mosip.mimoto.exception.PlatformErrorMessages.DATABASE_CONNECTION_EXCEPTION;
-import static io.mosip.mimoto.exception.PlatformErrorMessages.USER_METADATA_STORAGE_EXCEPTION;
 
 @Component
 @Slf4j
@@ -38,6 +33,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2AuthenticationToken oauth2Token = (OAuth2AuthenticationToken) authentication;
         OAuth2User oAuth2User = oauth2Token.getPrincipal();
         HttpSession session = request.getSession(false);
+        if (session == null) {
+            log.error("Session not available");
+            throw new ServletException("Session not available");
+        }
 
         // Storing clientRegistrationId in the Redis session to verify it against the one in user metadata during profile retrieval
         String clientRegistrationId = oauth2Token.getAuthorizedClientRegistrationId();
@@ -51,31 +50,21 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String email = oAuth2User.getAttribute("email");
 
         // Call the service to update or insert the user metadata in the database
+
+        String userId = null;
         try {
-            String userId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
-            UserMetadataDTO userMetadataDTO = new UserMetadataDTO(displayName,
+            userId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+        } catch (DecryptionException e) {
+            log.error("Failed to store the user info in the database", e);
+            String redirectUrl = injiWebUrl + "/login?status=error&error_message=" + "database_error";
+            response.sendRedirect(redirectUrl);
+        }
+        UserMetadataDTO userMetadataDTO = new UserMetadataDTO(displayName,
                     profilePictureUrl,
                     email);
-            session.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
-            session.setAttribute(SessionKeys.USER_ID, userId);
-            response.sendRedirect(injiWebUrl + "/login?status=success");
-        } catch (DataAccessResourceFailureException exception) {
-            log.error("Exception occurred while connecting to the database to store user data:", exception);
-            String errorMessage = String.format(
-                    "status=error&error_code=%s&error_message=%s",
-                    URLEncoder.encode(DATABASE_CONNECTION_EXCEPTION.getCode(), StandardCharsets.UTF_8),
-                    URLEncoder.encode(DATABASE_CONNECTION_EXCEPTION.getMessage(), StandardCharsets.UTF_8)
+        session.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
+        session.setAttribute(SessionKeys.USER_ID, userId);
+        response.sendRedirect(injiWebUrl + "/login?status=success");
 
-            );
-            response.sendRedirect(injiWebUrl + "/login?" + errorMessage);
-        } catch (Exception exception) {
-            log.error("Exception occurred while saving or updating user data in the database:", exception);
-            String errorMessage = String.format(
-                    "status=error&error_code=%s&error_message=%s",
-                    URLEncoder.encode(USER_METADATA_STORAGE_EXCEPTION.getCode(),StandardCharsets.UTF_8),
-                    URLEncoder.encode(USER_METADATA_STORAGE_EXCEPTION.getMessage(), StandardCharsets.UTF_8)
-            );
-            response.sendRedirect(injiWebUrl + "/login?" + errorMessage);
-        }
     }
 }

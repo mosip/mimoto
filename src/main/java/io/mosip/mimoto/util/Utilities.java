@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.ErrorDTO;
+import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.ExceptionUtils;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.impl.CredentialShareServiceImpl;
@@ -259,9 +260,9 @@ public class Utilities {
     }
 
     public static <T> ResponseEntity<T> getErrorResponseEntityFromPlatformErrorMessage(
-            PlatformErrorMessages message, HttpStatus status, MediaType contentType) {
-        String errorMessage = message.getMessage();
-        String errorCode = message.getCode();
+            ErrorConstants message, HttpStatus status, MediaType contentType) {
+        String errorMessage = message.getErrorMessage();
+        String errorCode = message.getErrorCode();
 
         ResponseEntity.BodyBuilder responseEntity = ResponseEntity.status(status);
         if (contentType != null) {

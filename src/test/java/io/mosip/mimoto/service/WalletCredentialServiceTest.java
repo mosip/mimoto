@@ -1,333 +1,249 @@
 package io.mosip.mimoto.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mosip.kernel.cryptomanager.service.CryptomanagerService;
+import io.mosip.mimoto.dbentity.CredentialMetadata;
 import io.mosip.mimoto.dbentity.VerifiableCredential;
-import io.mosip.mimoto.dto.*;
+import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
-import io.mosip.mimoto.dto.mimoto.*;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
+import io.mosip.mimoto.dto.mimoto.IssuerConfig;
+import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
-import io.mosip.mimoto.service.impl.*;
-import io.mosip.mimoto.util.*;
+import io.mosip.mimoto.service.impl.WalletCredentialServiceImpl;
+import io.mosip.mimoto.util.CredentialProcessor;
+import io.mosip.mimoto.util.CredentialUtilService;
+import io.mosip.mimoto.util.EncryptionDecryptionUtil;
+import io.mosip.mimoto.util.WalletCredentialResponseDTOFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.*;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.web.client.RestTemplate;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.io.InputStreamResource;
 
 import java.io.ByteArrayInputStream;
-import java.util.*;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 
-import static io.mosip.mimoto.exception.ErrorConstants.SIGNATURE_VERIFICATION_EXCEPTION;
-import static io.mosip.mimoto.util.TestUtilities.*;
+import static io.mosip.mimoto.exception.ErrorConstants.*;
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@RunWith(SpringRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class WalletCredentialServiceTest {
 
     @InjectMocks
     private WalletCredentialServiceImpl walletCredentialService;
 
     @Mock
-    private IssuersService issuersService;
-    @Mock
-    private DataShareServiceImpl dataShareService;
-    @Mock
-    private ObjectMapper objectMapper;
-    @Mock
-    private IdpService idpService;
-    @Mock
-    private RestTemplate restTemplate;
-    @Mock
-    private PresentationServiceImpl presentationService;
-    @Mock
-    private CryptomanagerService cryptomanagerService;
-    @Mock
     private WalletCredentialsRepository walletCredentialsRepository;
+
+    @Mock
+    private IssuersService issuersService;
+
+    @Mock
+    private CredentialProcessor credentialProcessor;
+
     @Mock
     private CredentialUtilService credentialUtilService;
+
     @Mock
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
     private final String walletId = "wallet123";
     private final String issuerId = "issuer123";
     private final String credentialType = "CredentialType1";
-    private final String accessToken = "accessToken";
-    private final String base64Key = Base64.getEncoder().encodeToString("dummykey12345678".getBytes());
+    private final String credentialId = "cred123";
+    private final String base64Key = "ZHVtbXlrZXkxMjM0NTY3OA=="; // Base64 of "dummykey12345678"
+    private final String locale = "en";
+    private final String credentialValidity = "1";
 
-    private CredentialIssuerConfiguration issuerConfig;
-    private VCCredentialRequest vcRequest;
-    TokenResponseDTO tokenResponse;
+    private TokenResponseDTO tokenResponse;
+    private VerifiableCredential verifiableCredential;
+    private IssuerConfig issuerConfig;
 
     @Before
     public void setUp() {
-        walletCredentialService.init();
-        issuerConfig = getCredentialIssuerConfigurationResponseDto(issuerId, credentialType, List.of());
-        vcRequest = getVCCredentialRequestDTO();
         tokenResponse = new TokenResponseDTO();
-        tokenResponse.setAccess_token(accessToken);
-    }
+        tokenResponse.setAccess_token("accessToken");
 
-    private IssuerDTO getMockIssuerDTO() {
-        DisplayDTO display = new DisplayDTO();
-        display.setName("issuer name");
-        display.setDescription("issuer description");
-        display.setLanguage("en");
+        verifiableCredential = new VerifiableCredential();
+        verifiableCredential.setId(credentialId);
+        verifiableCredential.setWalletId(walletId);
+        verifiableCredential.setCredential("encryptedCredential");
+        CredentialMetadata metadata = new CredentialMetadata();
+        metadata.setIssuerId(issuerId);
+        metadata.setCredentialType(credentialType);
+        verifiableCredential.setCredentialMetadata(metadata);
+        verifiableCredential.setCreatedAt(Instant.now());
+        verifiableCredential.setUpdatedAt(Instant.now());
 
-        LogoDTO logoDTO = new LogoDTO();
-        logoDTO.setUrl("https://issuer_logo_url");
-        logoDTO.setAlt_text("issuerLogo");
-        display.setLogo(logoDTO);
-
-        IssuerDTO dto = new IssuerDTO();
-        dto.setDisplay(List.of(display));
-        dto.setIssuer_id(issuerId);
-        return dto;
+        IssuerDTO issuerDTO = new IssuerDTO();
+        issuerDTO.setIssuer_id(issuerId);
+        CredentialIssuerWellKnownResponse wellKnownResponse = new CredentialIssuerWellKnownResponse();
+        CredentialsSupportedResponse credentialsSupportedResponse = new CredentialsSupportedResponse();
+        issuerConfig = new IssuerConfig(issuerDTO, wellKnownResponse, credentialsSupportedResponse);
     }
 
     @Test
     public void shouldFetchAndStoreCredentialSuccessfully() throws Exception {
-        VCCredentialResponse vcResponse = new VCCredentialResponse();
-        String encryptedCredential = "encryptedCredential";
+        String mosipIssuerId = "Mosip";
+        VerifiableCredentialResponseDTO expectedResponse = new VerifiableCredentialResponseDTO();
+        expectedResponse.setCredentialId(credentialId);
 
-        VerifiableCredential vc = getVerifiableCredential("vc-id-123", walletId, "encryptedCredential", issuerId, credentialType);
-        VerifiableCredentialResponseDTO expectedVerifiableCredentialResponseDTO = getVerifiableCredentialResponseDTO("issuer name", "https://issuer_logo_url", credentialType, "https://logo", "vc-id-123");
+        when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId)).thenReturn(false);
+        when(credentialProcessor.processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(mosipIssuerId), eq(locale)))
+                .thenReturn(expectedResponse);
 
-        when(issuersService.getIssuerDetails(issuerId)).thenReturn(getMockIssuerDTO());
-        when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
-        when(credentialUtilService.generateVCCredentialRequest(any(), any(), any(), eq(accessToken), eq(walletId), eq(base64Key), eq(true))).thenReturn(vcRequest);
-        when(credentialUtilService.downloadCredential(anyString(), eq(vcRequest), eq(accessToken))).thenReturn(vcResponse);
-        when(credentialUtilService.verifyCredential(any())).thenReturn(true);
-        when(encryptionDecryptionUtil.encryptWithAES(any(), any())).thenReturn(encryptedCredential);
-        when(walletCredentialsRepository.save(any())).thenReturn(vc);
+        VerifiableCredentialResponseDTO actualResponse = walletCredentialService.fetchAndStoreCredential(
+                mosipIssuerId, credentialType, tokenResponse, credentialValidity, locale, walletId, base64Key);
 
-        VerifiableCredentialResponseDTO actualVerifiableCredentialResponseDTO = walletCredentialService.fetchAndStoreCredential(
-                issuerId, credentialType, tokenResponse, "1", "en", walletId, base64Key
-        );
-
-        assertEquals(expectedVerifiableCredentialResponseDTO, actualVerifiableCredentialResponseDTO);
+        assertEquals(expectedResponse, actualResponse);
+        verify(walletCredentialsRepository).existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId);
+        verify(credentialProcessor).processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(mosipIssuerId), eq(locale));
     }
 
     @Test
-    public void shouldThrowExceptionWhenDuplicateCredentialExists() {
+    public void shouldThrowDuplicateCredentialExceptionForMosipIssuer() {
         when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId("Mosip", credentialType, walletId)).thenReturn(true);
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                walletCredentialService.fetchAndStoreCredential("Mosip", credentialType, tokenResponse, "1", "en", walletId, base64Key)
-        );
+        CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
+                walletCredentialService.fetchAndStoreCredential("Mosip", credentialType, tokenResponse, credentialValidity, locale, walletId, base64Key));
 
-        assertEquals("A credential is already downloaded for the selected Issuer and Credential Type. Only one is allowed, so download will not be initiated", exception.getMessage());
+        assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
+        assertEquals("credential_download_error --> Duplicate credential for issuer and type", exception.getMessage());
+        verify(walletCredentialsRepository).existsByIssuerIdAndCredentialTypeAndWalletId("Mosip", credentialType, walletId);
+        verifyNoInteractions(credentialProcessor);
+    }
+
+    @Test
+    public void shouldFetchAndStoreNonMosipIssuerCredential() throws Exception {
+        VerifiableCredentialResponseDTO expectedResponse = new VerifiableCredentialResponseDTO();
+        expectedResponse.setCredentialId(credentialId);
+
+        when(credentialProcessor.processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(issuerId), eq(locale)))
+                .thenReturn(expectedResponse);
+
+        VerifiableCredentialResponseDTO actualResponse = walletCredentialService.fetchAndStoreCredential(
+                issuerId, credentialType, tokenResponse, credentialValidity, locale, walletId, base64Key);
+
+        assertEquals(expectedResponse, actualResponse);
+        verify(credentialProcessor).processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(issuerId), eq(locale));
+    }
+
+    @Test
+    public void shouldThrowExternalServiceUnavailableException() throws Exception {
+        String mosipIssuerId = "Mosip"; // Use Mosip to trigger repository check
+
+        when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId)).thenReturn(false);
+        when(credentialProcessor.processAndStoreCredential(any(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString()))
+                .thenThrow(new ExternalServiceUnavailableException("SERVICE_UNAVAILABLE", "Service unavailable"));
+
+        ExternalServiceUnavailableException exception = assertThrows(ExternalServiceUnavailableException.class, () ->
+                walletCredentialService.fetchAndStoreCredential(mosipIssuerId, credentialType, tokenResponse, credentialValidity, locale, walletId, base64Key));
+
+        assertEquals("SERVICE_UNAVAILABLE", exception.getErrorCode());
+        assertEquals("SERVICE_UNAVAILABLE --> Service unavailable", exception.getMessage());
+        verify(walletCredentialsRepository).existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId);
+        verify(credentialProcessor).processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(mosipIssuerId), eq(locale));
     }
 
     @Test
     public void shouldFetchAllCredentialsForWalletSuccessfully() throws Exception {
-        VerifiableCredential vc = getVerifiableCredential("vc-id-123", walletId, "encryptedCredential", issuerId, credentialType);
-        when(walletCredentialsRepository.findByWalletId(walletId)).thenReturn(List.of(vc));
-        when(issuersService.getIssuerDetails(issuerId)).thenReturn(getMockIssuerDTO());
-        when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
-        List<VerifiableCredentialResponseDTO> expectedCredentialsList = List.of(getVerifiableCredentialResponseDTO("issuer name", "https://issuer_logo_url", credentialType, "https://logo", "vc-id-123"));
+        VerifiableCredentialResponseDTO responseDTO = new VerifiableCredentialResponseDTO();
+        responseDTO.setCredentialId(credentialId);
 
-        List<VerifiableCredentialResponseDTO> actualCredentialsList = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64Key, "en");
+        when(walletCredentialsRepository.findByWalletId(walletId)).thenReturn(List.of(verifiableCredential));
+        when(issuersService.getIssuerConfig(issuerId, credentialType)).thenReturn(issuerConfig);
 
-        assertEquals(1, actualCredentialsList.size());
-        assertEquals(expectedCredentialsList, actualCredentialsList);
+        try (MockedStatic<WalletCredentialResponseDTOFactory> factoryMock = mockStatic(WalletCredentialResponseDTOFactory.class)) {
+            factoryMock.when(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerConfig, locale, credentialId))
+                    .thenReturn(responseDTO);
+
+            List<VerifiableCredentialResponseDTO> actualCredentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64Key, locale);
+
+            assertEquals(1, actualCredentials.size());
+            assertEquals(responseDTO, actualCredentials.get(0));
+            verify(walletCredentialsRepository).findByWalletId(walletId);
+            verify(issuersService).getIssuerConfig(issuerId, credentialType);
+            factoryMock.verify(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerConfig, locale, credentialId));
+        }
     }
 
     @Test
-    public void shouldIncludeEmptyCredentialDetailsInResponseIfAnyErrorOccurredWhileFetchingDetails() throws Exception {
-        VerifiableCredential vc1 = getVerifiableCredential("vc-id-123", walletId, "encryptedCredential", issuerId, credentialType);
-        VerifiableCredential vc2 = getVerifiableCredential("vc-id-124", walletId, "encryptedCredential", "issuer234", credentialType);
-        when(walletCredentialsRepository.findByWalletId(walletId)).thenReturn(List.of(vc1, vc2));
-        when(issuersService.getIssuerDetails(issuerId)).thenReturn(getMockIssuerDTO());
-        when(issuersService.getIssuerDetails("issuer234")).thenThrow(new ApiNotAccessibleException());
-        when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
-        List<VerifiableCredentialResponseDTO> expectedCredentialsList = List.of(getVerifiableCredentialResponseDTO("issuer name", "https://issuer_logo_url", credentialType, "https://logo", "vc-id-123"), getVerifiableCredentialResponseDTO("", "", "", "", "vc-id-124"));
+    public void shouldHandleIssuerConfigFetchFailure() throws Exception {
+        VerifiableCredentialResponseDTO responseDTO = new VerifiableCredentialResponseDTO();
+        responseDTO.setCredentialId(credentialId);
 
-        List<VerifiableCredentialResponseDTO> actualCredentialList = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64Key, "en");
+        when(walletCredentialsRepository.findByWalletId(walletId)).thenReturn(List.of(verifiableCredential));
+        when(issuersService.getIssuerConfig(issuerId, credentialType)).thenThrow(new ApiNotAccessibleException("API error"));
 
-        assertEquals(2, actualCredentialList.size());
-        assertEquals(expectedCredentialsList, actualCredentialList);
-    }
+        try (MockedStatic<WalletCredentialResponseDTOFactory> factoryMock = mockStatic(WalletCredentialResponseDTOFactory.class)) {
+            factoryMock.when(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(null, locale, credentialId))
+                    .thenReturn(responseDTO);
 
-    @Test
-    public void shouldThrowExceptionOnVerificationFailureDuringVCDownloaded() throws Exception {
-        VCCredentialResponse vcResponse = new VCCredentialResponse();
-        String encryptedCredential = "encryptedCredential";
-        VCVerificationException expectedException = new VCVerificationException(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(),
-                SIGNATURE_VERIFICATION_EXCEPTION.getErrorMessage());
-        VerifiableCredential vc = getVerifiableCredential("vc-id-123", walletId, "encryptedCredential", issuerId, credentialType);
+            List<VerifiableCredentialResponseDTO> actualCredentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64Key, locale);
 
-        when(issuersService.getIssuerDetails(issuerId)).thenReturn(getMockIssuerDTO());
-        when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
-        when(credentialUtilService.generateVCCredentialRequest(any(), any(), any(), eq(accessToken), eq(walletId), eq(base64Key), eq(true))).thenReturn(vcRequest);
-        when(credentialUtilService.downloadCredential(anyString(), eq(vcRequest), eq(accessToken))).thenReturn(vcResponse);
-        when(credentialUtilService.verifyCredential(any())).thenReturn(false);
-        when(encryptionDecryptionUtil.encryptWithAES(any(), any())).thenReturn(encryptedCredential);
-        when(walletCredentialsRepository.save(any())).thenReturn(vc);
-
-        VCVerificationException actualException = assertThrows(VCVerificationException.class, () -> walletCredentialService.fetchAndStoreCredential(
-                issuerId, credentialType, tokenResponse, "1", "en", walletId, base64Key
-        ));
-
-        assertEquals(expectedException.getErrorCode(), actualException.getErrorCode());
-        assertEquals(expectedException.getErrorText(), actualException.getErrorText());
+            assertEquals(1, actualCredentials.size());
+            assertEquals(responseDTO, actualCredentials.get(0));
+            verify(walletCredentialsRepository).findByWalletId(walletId);
+            verify(issuersService).getIssuerConfig(issuerId, credentialType);
+            factoryMock.verify(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(null, locale, credentialId));
+        }
     }
 
     @Test
     public void shouldFetchVerifiableCredentialSuccessfully() throws Exception {
-        String credentialId = "cred123";
-        String base64Key = Base64.getEncoder().encodeToString("dummykey12345678".getBytes());
-        String locale = "en";
-        String issuerId = "issuer123";
-        String credentialType = "CredentialType1";
-        String dataShareUrl = "https://datashare.url";
-        String credentialValidity = "1";
-        String encryptedCredential = "encryptedCredential";
         String decryptedCredential = "{\"credential\":\"test\"}";
-        byte[] pdfBytes = "PDF Content".getBytes(); // Dummy PDF content
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(pdfBytes);
-
-        VerifiableCredential verifiableCredential = getVerifiableCredential(credentialId, walletId, encryptedCredential, issuerId, credentialType);
-        verifiableCredential.getCredentialMetadata().setDataShareUrl(dataShareUrl);
-        verifiableCredential.getCredentialMetadata().setCredentialValidity(credentialValidity);
-
-        VCCredentialResponse vcResponse = new VCCredentialResponse();
-        CredentialIssuerConfiguration issuerConfig = getCredentialIssuerConfigurationResponseDto(issuerId, credentialType, List.of());
-
-        // Create proper display objects
-        CredentialSupportedDisplayResponse display = new CredentialSupportedDisplayResponse();
-        display.setName(credentialType);
-        display.setLocale(locale);
-
-        CredentialsSupportedResponse credentialsSupportedResponse = new CredentialsSupportedResponse();
-        credentialsSupportedResponse.setDisplay(List.of(display));
-
-        // Create proper issuer well-known response
-        CredentialIssuerWellKnownResponse wellKnownResponse = new CredentialIssuerWellKnownResponse();
-        Map<String, CredentialsSupportedResponse> configs = new HashMap<>();
-        configs.put(credentialType, credentialsSupportedResponse);
-        wellKnownResponse.setCredentialConfigurationsSupported(configs);
+        WalletCredentialResponseDTO expectedResponse = new WalletCredentialResponseDTO();
+        expectedResponse.setFileName(credentialType);
+        expectedResponse.setFileContentStream(new InputStreamResource(new ByteArrayInputStream("PDF Content".getBytes())));
 
         when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
-        when(encryptionDecryptionUtil.decryptCredential(encryptedCredential, base64Key)).thenReturn(decryptedCredential);
-        when(issuersService.getIssuerDetails(issuerId)).thenReturn(getMockIssuerDTO());
-        when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
-        when(objectMapper.readValue(decryptedCredential, VCCredentialResponse.class)).thenReturn(vcResponse);
-        when(credentialUtilService.generatePdfForVerifiableCredentials(
-                anyString(), // credentialType
-                any(VCCredentialResponse.class), // vcResponse
-                any(IssuerDTO.class), // issuerDTO
-                any(CredentialsSupportedResponse.class), // credentialsSupportedResponse
-                anyString(), // dataShareUrl
-                anyString(), // credentialValidity
-                anyString()  // locale
-        )).thenReturn(inputStream);
+        when(encryptionDecryptionUtil.decryptCredential("encryptedCredential", base64Key)).thenReturn(decryptedCredential);
+        when(credentialUtilService.generateCredentialResponse(eq(decryptedCredential), any(), eq(locale))).thenReturn(expectedResponse);
 
-        WalletCredentialResponseDTO response = walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale);
+        WalletCredentialResponseDTO actualResponse = walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale);
 
-        assertNotNull(response);
-        assertNotNull(response.getFileContentStream());
-        assertEquals(credentialType, response.getFileName());
+        assertNotNull(actualResponse);
+        assertEquals(expectedResponse, actualResponse);
+        assertEquals(credentialType, actualResponse.getFileName());
+        verify(walletCredentialsRepository).findByIdAndWalletId(credentialId, walletId);
+        verify(encryptionDecryptionUtil).decryptCredential("encryptedCredential", base64Key);
+        verify(credentialUtilService).generateCredentialResponse(eq(decryptedCredential), any(), eq(locale));
     }
 
     @Test
-    public void shouldThrowExceptionWhenCredentialNotFound() {
-        String credentialId = "nonExistentCredential";
-        String base64Key = Base64.getEncoder().encodeToString("dummykey12345678".getBytes());
-        String locale = "en";
+    public void shouldThrowCredentialNotFoundException() {
+        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.empty());
 
-        when(walletCredentialsRepository.findById(credentialId)).thenReturn(Optional.empty());
+        CredentialNotFoundException exception = assertThrows(CredentialNotFoundException.class, () ->
+                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale));
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale)
-        );
-
-        assertEquals("Credential not found", exception.getMessage());
+        assertEquals(RESOURCE_NOT_FOUND.getErrorCode(), exception.getErrorCode());
+        assertEquals(RESOURCE_NOT_FOUND.getErrorCode() +" --> "+RESOURCE_NOT_FOUND.getErrorMessage(), exception.getMessage());
+        verify(walletCredentialsRepository).findByIdAndWalletId(credentialId, walletId);
+        verifyNoInteractions(encryptionDecryptionUtil, credentialUtilService);
     }
 
     @Test
-    public void shouldThrowExceptionWhenDecryptionFails() throws Exception {
-        String credentialId = "cred123";
-        String base64Key = Base64.getEncoder().encodeToString("dummykey12345678".getBytes());
-        String locale = "en";
-        String encryptedCredential = "encryptedCredential";
-
-        VerifiableCredential verifiableCredential = getVerifiableCredential(credentialId, walletId, encryptedCredential, issuerId, credentialType);
-
+    public void shouldThrowCredentialProcessingExceptionOnDecryptionFailure() throws Exception {
         when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
-        when(encryptionDecryptionUtil.decryptCredential(encryptedCredential, base64Key))
-                .thenThrow(new RuntimeException("Decryption failed"));
+        when(encryptionDecryptionUtil.decryptCredential("encryptedCredential", base64Key))
+                .thenThrow(new DecryptionException("DECRYPTION_ERROR", "Decryption failed"));
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale)
-        );
+        CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
+                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale));
 
-        assertEquals("Decryption failed", exception.getMessage());
-    }
-
-    @Test
-    public void shouldThrowExceptionWhenIssuerConfigurationRetrievalFails() throws Exception {
-        String credentialId = "cred123";
-        String base64Key = Base64.getEncoder().encodeToString("dummykey12345678".getBytes());
-        String locale = "en";
-        String encryptedCredential = "encryptedCredential";
-        String decryptedCredential = "{\"credential\":\"test\"}";
-
-        VerifiableCredential verifiableCredential = getVerifiableCredential(credentialId, walletId, encryptedCredential, issuerId, credentialType);
-
-        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
-        when(encryptionDecryptionUtil.decryptCredential(encryptedCredential, base64Key)).thenReturn(decryptedCredential);
-        when(issuersService.getIssuerDetails(issuerId)).thenThrow(new ApiNotAccessibleException());
-
-        ApiNotAccessibleException exception = assertThrows(ApiNotAccessibleException.class, () ->
-                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale)
-        );
-
-        assertNotNull(exception);
-    }
-
-    @Test
-    public void shouldThrowExceptionWhenPdfGenerationFails() throws Exception {
-        String credentialId = "cred123";
-        String base64Key = Base64.getEncoder().encodeToString("dummykey12345678".getBytes());
-        String locale = "en";
-        String encryptedCredential = "encryptedCredential";
-        String decryptedCredential = "{\"credential\":\"test\"}";
-        String issuerId = "issuer123";
-        String credentialType = "CredentialType1";
-        String dataShareUrl = "https://datashare.url";
-        String credentialValidity = "1";
-
-        VerifiableCredential verifiableCredential = getVerifiableCredential(credentialId, walletId, encryptedCredential, issuerId, credentialType);
-        verifiableCredential.getCredentialMetadata().setDataShareUrl(dataShareUrl);
-        verifiableCredential.getCredentialMetadata().setCredentialValidity(credentialValidity);
-
-        VCCredentialResponse vcResponse = new VCCredentialResponse();
-        CredentialIssuerConfiguration issuerConfig = getCredentialIssuerConfigurationResponseDto(issuerId, credentialType, List.of());
-
-        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
-        when(encryptionDecryptionUtil.decryptCredential(encryptedCredential, base64Key)).thenReturn(decryptedCredential);
-        when(issuersService.getIssuerDetails(issuerId)).thenReturn(getMockIssuerDTO());
-        when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
-        when(objectMapper.readValue(decryptedCredential, VCCredentialResponse.class)).thenReturn(vcResponse);
-        when(credentialUtilService.generatePdfForVerifiableCredentials(
-                anyString(), // credentialType
-                any(VCCredentialResponse.class), // vcCredentialResponse
-                any(IssuerDTO.class), // issuerDTO
-                any(CredentialsSupportedResponse.class), // credentialsSupportedResponse
-                anyString(), // dataShareUrl
-                anyString(), // credentialValidity
-                anyString()  // locale
-        )).thenThrow(new RuntimeException("PDF generation failed"));
-
-        RuntimeException exception = assertThrows(RuntimeException.class, () ->
-                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale)
-        );
-
-        assertEquals("PDF generation failed", exception.getMessage());
+        assertEquals(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), exception.getErrorCode());
+        verify(walletCredentialsRepository).findByIdAndWalletId(credentialId, walletId);
+        verify(encryptionDecryptionUtil).decryptCredential("encryptedCredential", base64Key);
+        verifyNoInteractions(credentialUtilService);
     }
 }

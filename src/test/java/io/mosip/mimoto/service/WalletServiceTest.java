@@ -2,9 +2,11 @@ package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dto.WalletResponseDto;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.service.impl.WalletServiceImpl;
 import io.mosip.mimoto.util.WalletUtil;
+import io.mosip.mimoto.util.WalletValidator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,7 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WalletServiceTest {
@@ -28,6 +30,9 @@ public class WalletServiceTest {
 
     @Mock
     private WalletUtil walletHelper;
+
+    @Mock
+    private WalletValidator walletValidator;
 
     @InjectMocks
     private WalletServiceImpl walletService;
@@ -63,25 +68,33 @@ public class WalletServiceTest {
         String result = walletService.createWallet(userId, name, pin);
 
         assertEquals(newWalletId, result);
+        verify(walletValidator).validateWalletRequest(userId, name, pin);
+        verify(walletHelper).createWallet(userId, name, pin);
     }
 
     @Test
-    public void shouldDecryptWalletKeySuccessfully() {
+    public void shouldDecryptWalletKeySuccessfully() throws Exception {
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
         when(walletHelper.decryptWalletKey(encryptedWalletKey, pin)).thenReturn(decryptedWalletKey);
 
         String result = walletService.getWalletKey(userId, walletId, pin);
 
         assertEquals(decryptedWalletKey, result);
+        verify(walletRepository).findByUserIdAndId(userId, walletId);
+        verify(walletHelper).decryptWalletKey(encryptedWalletKey, pin);
     }
 
     @Test
-    public void shouldReturnNullIfWalletNotFoundForGivenUserIdAndWalletId() {
+    public void shouldThrowInvalidRequestExceptionIfWalletNotFoundForGivenUserIdAndWalletId() {
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.empty());
 
-        String result = walletService.getWalletKey(userId, walletId, pin);
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+                walletService.getWalletKey(userId, walletId, pin));
 
-        assertNull(result);
+        assertEquals("invalid_request", exception.getErrorCode());
+        assertEquals("invalid_request --> Wallet not found", exception.getMessage());
+        verify(walletRepository).findByUserIdAndId(userId, walletId);
+        verifyNoInteractions(walletHelper);
     }
 
     @Test
@@ -95,6 +108,7 @@ public class WalletServiceTest {
         for (int i = 0; i < walletIds.size(); i++) {
             assertEquals(walletIds.get(i), result.get(i).getWalletId());
         }
+        verify(walletRepository).findWalletIdByUserId(userId);
     }
 
     @Test
@@ -104,12 +118,18 @@ public class WalletServiceTest {
         List<WalletResponseDto> result = walletService.getWallets(userId);
 
         assertTrue(result.isEmpty());
+        verify(walletRepository).findWalletIdByUserId(userId);
     }
 
-    @Test(expected = Exception.class)
-    public void shouldThrowExceptionIfAnyErrorOccurredWhileCreatingWallet() throws Exception {
-        when(walletHelper.createWallet(userId, name, pin)).thenThrow(new Exception("Test Exception"));
+    @Test
+    public void shouldThrowInvalidRequestExceptionIfAnyErrorOccurredWhileCreatingWallet() throws Exception {
+        when(walletHelper.createWallet(userId, name, pin)).thenThrow(new InvalidRequestException("INVALID_REQUEST", "Test Exception"));
 
-        walletService.createWallet(userId, name, pin);
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+                walletService.createWallet(userId, name, pin));
+
+        assertEquals("INVALID_REQUEST", exception.getErrorCode());
+        assertEquals("INVALID_REQUEST --> Test Exception", exception.getMessage());
+        verify(walletHelper).createWallet(userId, name, pin);
     }
 }

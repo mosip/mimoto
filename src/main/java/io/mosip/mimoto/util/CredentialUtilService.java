@@ -11,11 +11,13 @@ import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import io.mosip.mimoto.dbentity.CredentialMetadata;
 import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
+import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.model.SigningAlgorithm;
@@ -34,6 +36,7 @@ import org.apache.velocity.app.Velocity;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -50,6 +53,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static io.mosip.mimoto.exception.ErrorConstants.CREDENTIAL_FETCH_EXCEPTION;
 
 @Slf4j
 @Service
@@ -121,7 +126,7 @@ public class CredentialUtilService {
         VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialEndpoint, MediaType.APPLICATION_JSON,
                 vcCredentialRequest, VCCredentialResponse.class, accessToken);
         log.debug("VC Credential Response is -> " + vcCredentialResponse);
-        if (vcCredentialResponse == null) throw new RuntimeException("VC Credential Issue API not accessible");
+        if (vcCredentialResponse == null) throw new InvalidCredentialResourceException("VC Credential Issue API not accessible");
         return vcCredentialResponse;
     }
 
@@ -334,5 +339,54 @@ public class CredentialUtilService {
         BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
         return Utilities.encodeToString(qrImage, "png");
     }
+
+    public WalletCredentialResponseDTO generateCredentialResponse(String decryptedCredential, CredentialMetadata credentialMetadata, String locale) throws CredentialProcessingException {
+        log.info("Generating credential response for issuerId: {}, credentialType: {}", credentialMetadata.getIssuerId(), credentialMetadata.getCredentialType());
+        try {
+            // Parse decrypted credential
+            VCCredentialResponse vcCredentialResponse = objectMapper.readValue(decryptedCredential, VCCredentialResponse.class);
+
+            // Fetch issuer details
+            IssuerDTO issuerDTO = issuersService.getIssuerDetails(credentialMetadata.getIssuerId());
+
+            // Fetch issuer configuration
+            IssuerConfig issuerConfig = issuersService.getIssuerConfig(credentialMetadata.getIssuerId(), credentialMetadata.getCredentialType());
+
+            // Find credentials supported response for the credential type
+            CredentialsSupportedResponse credentialsSupportedResponse = issuerConfig.getCredentialsSupportedResponse();
+            if (credentialsSupportedResponse == null || !credentialsSupportedResponse.getCredentialDefinition().getType().contains(credentialMetadata.getCredentialType())) {
+                log.error("Credentials supported response not found for credentialType: {}", credentialMetadata.getCredentialType());
+                throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Invalid credential type configuration");
+            }
+
+            // Generate PDF
+            ByteArrayInputStream pdfStream = generatePdfForVerifiableCredentials(
+                    credentialMetadata.getCredentialType(),
+                    vcCredentialResponse,
+                    issuerDTO,
+                    credentialsSupportedResponse,
+                    credentialMetadata.getDataShareUrl(),
+                    credentialMetadata.getCredentialValidity(),
+                    locale
+            );
+
+            // Construct response
+            String fileName = String.format("%s_credential.pdf", credentialMetadata.getCredentialType());
+            return WalletCredentialResponseDTO.builder()
+                    .fileName(fileName)
+                    .fileContentStream(new InputStreamResource(pdfStream))
+                    .build();
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse decrypted credential for issuerId: {}, credentialType: {}", credentialMetadata.getIssuerId(), credentialMetadata.getCredentialType(), e);
+            throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to parse decrypted credential");
+        } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException | InvalidWellknownResponseException | InvalidIssuerIdException e) {
+            log.error("Failed to fetch issuer details or configuration for issuerId: {}", credentialMetadata.getIssuerId(), e);
+            throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to fetch issuer configuration");
+        } catch (Exception e) {
+            log.error("Failed to generate PDF for credentialType: {}", credentialMetadata.getCredentialType(), e);
+            throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to generate credential PDF");
+        }
+    }
 }
+
 

@@ -2,9 +2,12 @@ package io.mosip.mimoto.service.impl;
 
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dto.WalletResponseDto;
+import io.mosip.mimoto.exception.ErrorConstants;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.WalletUtil;
+import io.mosip.mimoto.util.WalletValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,34 +16,56 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-
+/**
+ * Implementation of {@link WalletService} for managing wallets.
+ */
 @Slf4j
 @Service
 public class WalletServiceImpl implements WalletService {
 
-    @Autowired
-    private WalletRepository walletRepository;
+    private final WalletRepository repository;
+    private final WalletUtil walletUtil;
+    private final WalletValidator validator;
 
     @Autowired
-    private WalletUtil walletHelper;
-    @Override
-    public String createWallet(String userId, String walletName, String pin) throws Exception {
-        // Create a new wallet for the user
-        return walletHelper.createWallet(userId, walletName, pin);
+    public WalletServiceImpl(WalletRepository repository, WalletUtil walletUtil, WalletValidator validator) {
+        this.repository = repository;
+        this.walletUtil = walletUtil;
+        this.validator = validator;
     }
 
     @Override
-    public String getWalletKey(String userId, String walletId, String pin) {
-        Optional<Wallet> existingWallet = walletRepository.findByUserIdAndId(userId, walletId);
-        // Decrypt wallet key using the user's PIN
-        return existingWallet.map(wallet -> walletHelper.decryptWalletKey(wallet.getWalletKey(), pin)).orElse(null);
+    public String createWallet(String userId, String name, String pin) throws InvalidRequestException {
+        log.info("Creating wallet for user: {}, name: {}", userId, name);
+        validator.validateWalletRequest(userId, name, pin);
+
+        String walletId = walletUtil.createWallet(userId, name, pin);
+        log.debug("Wallet created successfully: {}", walletId);
+        return walletId;
+
+    }
+
+    @Override
+    public String getWalletKey(String userId, String walletId, String pin) throws InvalidRequestException {
+        log.info("Retrieving wallet key for user: {}, wallet: {}", userId, walletId);
+
+        return repository.findByUserIdAndId(userId, walletId)
+                .map(wallet -> walletUtil.decryptWalletKey(wallet.getWalletKey(), pin))
+                .orElseThrow(() -> {
+                    log.warn("Wallet not found: {} for user: {}", walletId, userId);
+                    return new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet not found");
+                });
+
     }
 
     @Override
     public List<WalletResponseDto> getWallets(String userId) {
-        List<String> walletIds = walletRepository.findWalletIdByUserId(userId);
+        log.info("Retrieving wallets for user: {}", userId);
+
+        List<String> walletIds = repository.findWalletIdByUserId(userId);
         return walletIds.stream()
-                .map(walletId -> new WalletResponseDto(walletId))
+                .map(id -> WalletResponseDto.builder().walletId(id).build())
                 .collect(Collectors.toList());
+
     }
 }
