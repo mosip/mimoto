@@ -45,15 +45,28 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public void deleteWallet(String userId, String walletId) throws Exception{
+    public void deleteWallet(String userId, String walletId, String sessionWalletId) throws Exception {
+        // Validate that the wallet ID matches the session wallet ID
+        if (sessionWalletId != null && !sessionWalletId.equals(walletId)) {
+            log.error("Wallet ID in request ({}) does not match wallet ID in session ({})", walletId, sessionWalletId);
+            throw new UnauthorizedWalletAccessException("Unauthorized access to wallet");
+        }
+
+        // Check if the wallet exists and belongs to the user
         Optional<Wallet> existingWallet = walletRepository.findByUserIdAndId(userId, walletId);
-        if(existingWallet.isEmpty()){
+        if (existingWallet.isEmpty()) {
+            log.error("Wallet not found or unauthorized access for walletId: {} and userId: {}", walletId, userId);
             throw new IllegalArgumentException("Wallet not found or unauthorized access");
         }
-        Wallet wallet = existingWallet.get();
-        //Clean related data
-        walletHelper.deleteWalletAndCredentials(wallet);
-        //Delete wallet
-        walletRepository.delete(wallet);
+
+        try {
+            // The wallet entity has CascadeType.ALL for proofSigningKeys, so they will be deleted automatically
+            // Delete the wallet - this will cascade delete the proof signing keys
+            walletRepository.delete(existingWallet.get());
+            log.info("Successfully deleted wallet with ID: {} for user: {}", walletId, userId);
+        } catch (Exception e) {
+            log.error("Error occurred while deleting wallet with ID: {} for user: {}", walletId, userId, e);
+            throw e;
+        }
     }
 }

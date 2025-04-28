@@ -29,6 +29,9 @@ public class WalletServiceTest {
     private WalletRepository walletRepository;
 
     @Mock
+    private WalletCredentialsRepository walletCredentialsRepository;
+
+    @Mock
     private WalletUtil walletHelper;
 
     @InjectMocks
@@ -117,33 +120,67 @@ public class WalletServiceTest {
 
     @Test
     public void shouldDeleteWalletSuccessfully() throws Exception {
+        // Arrange
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
+        String sessionWalletId = walletId; // Session wallet ID matches the wallet ID
 
-        walletService.deleteWallet(userId, walletId);
+        // Act
+        walletService.deleteWallet(userId, walletId, sessionWalletId);
 
-        verify(walletHelper).deleteWalletAndCredentials(wallet);
+        // Assert
+        verify(walletRepository).delete(wallet);
+    }
+
+    @Test
+    public void shouldDeleteWalletSuccessfullyWithNullSessionWalletId() throws Exception {
+        // Arrange
+        when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
+        String sessionWalletId = null; // No session wallet ID (backward compatibility)
+
+        // Act
+        walletService.deleteWallet(userId, walletId, sessionWalletId);
+
+        // Assert
         verify(walletRepository).delete(wallet);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowIllegalArgumentExceptionWhenWalletNotFound() throws Exception {
+        // Arrange
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.empty());
+        String sessionWalletId = walletId;
 
-        walletService.deleteWallet(userId, walletId);
+        // Act
+        walletService.deleteWallet(userId, walletId, sessionWalletId);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowIllegalArgumentExceptionWhenUserIdDoesNotMatch() throws Exception {
+        // Arrange
         String differentUserId = UUID.randomUUID().toString();
+        String sessionWalletId = walletId;
 
-        walletService.deleteWallet(differentUserId, walletId);
+        // Act
+        walletService.deleteWallet(differentUserId, walletId, sessionWalletId);
+    }
+
+    @Test(expected = UnauthorizedWalletAccessException.class)
+    public void shouldThrowUnauthorizedWalletAccessExceptionWhenSessionWalletIdDoesNotMatch() throws Exception {
+        // Arrange
+        String sessionWalletId = UUID.randomUUID().toString(); // Different from walletId
+
+        // Act
+        walletService.deleteWallet(userId, walletId, sessionWalletId);
     }
 
     @Test(expected = Exception.class)
     public void shouldPropagateExceptionWhenErrorOccursDuringDeletion() throws Exception {
+        // Arrange
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
         doThrow(new RuntimeException("Database error")).when(walletRepository).delete(any(Wallet.class));
+        String sessionWalletId = walletId;
 
-        walletService.deleteWallet(userId, walletId);
+        // Act
+        walletService.deleteWallet(userId, walletId, sessionWalletId);
     }
 }

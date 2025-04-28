@@ -112,84 +112,68 @@ class WalletUtilTest {
     }
 
     @Test
-    void shouldClearProofSigningKeysWhenDeletingWallet() {
-        // Create a wallet with proof signing keys
-        Wallet wallet = new Wallet();
-        List<ProofSigningKey> proofSigningKeys = new ArrayList<>();
-        ProofSigningKey key1 = new ProofSigningKey();
-        key1.setId(UUID.randomUUID().toString());
-        ProofSigningKey key2 = new ProofSigningKey();
-        key2.setId(UUID.randomUUID().toString());
-        proofSigningKeys.add(key1);
-        proofSigningKeys.add(key2);
-        wallet.setProofSigningKeys(proofSigningKeys);
+    public void shouldDeleteWalletSuccessfully() throws Exception {
+        // Arrange
+        when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
+        String sessionWalletId = walletId; // Session wallet ID matches the wallet ID
 
-        // Set wallet metadata
-        WalletMetadata metadata = new WalletMetadata();
-        metadata.setName("Test Wallet");
-        metadata.setEncryptionAlgo("AES");
-        metadata.setEncryptionType("encryptWithPin");
-        wallet.setWalletMetadata(metadata);
+        // Act
+        walletService.deleteWallet(userId, walletId, sessionWalletId);
 
-        // Set wallet key
-        wallet.setWalletKey("encrypted-wallet-key");
-
-        // Call the method under test
-        walletUtil.deleteWalletAndCredentials(wallet);
-
-        // Verify that proof signing keys are cleared
-        assertTrue(wallet.getProofSigningKeys().isEmpty());
-        // Verify that wallet metadata is set to null
-        assertNull(wallet.getWalletMetadata());
-        // Verify that wallet key is set to null
-        assertNull(wallet.getWalletKey());
+        // Assert
+        verify(walletRepository).delete(wallet);
     }
 
     @Test
-    void shouldHandleNullProofSigningKeysWhenDeletingWallet() {
-        // Create a wallet without proof signing keys
-        Wallet wallet = new Wallet();
-        wallet.setProofSigningKeys(null);
+    public void shouldDeleteWalletSuccessfullyWithNullSessionWalletId() throws Exception {
+        // Arrange
+        when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
+        String sessionWalletId = null; // No session wallet ID (backward compatibility)
 
-        // Set wallet metadata
-        WalletMetadata metadata = new WalletMetadata();
-        metadata.setName("Test Wallet");
-        wallet.setWalletMetadata(metadata);
+        // Act
+        walletService.deleteWallet(userId, walletId, sessionWalletId);
 
-        // Set wallet key
-        wallet.setWalletKey("encrypted-wallet-key");
-
-        // Call the method under test
-        walletUtil.deleteWalletAndCredentials(wallet);
-
-        // Verify that wallet metadata is set to null
-        assertNull(wallet.getWalletMetadata());
-        // Verify that wallet key is set to null
-        assertNull(wallet.getWalletKey());
+        // Assert
+        verify(walletRepository).delete(wallet);
     }
 
-    @Test
-    void shouldHandleNullWalletMetadataWhenDeletingWallet() {
-        // Create a wallet without metadata
-        Wallet wallet = new Wallet();
-        wallet.setWalletMetadata(null);
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowIllegalArgumentExceptionWhenWalletNotFound() throws Exception {
+        // Arrange
+        when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.empty());
+        String sessionWalletId = walletId;
 
-        // Set proof signing keys
-        List<ProofSigningKey> proofSigningKeys = new ArrayList<>();
-        ProofSigningKey key = new ProofSigningKey();
-        key.setId(UUID.randomUUID().toString());
-        proofSigningKeys.add(key);
-        wallet.setProofSigningKeys(proofSigningKeys);
+        // Act
+        walletService.deleteWallet(userId, walletId, sessionWalletId);
+    }
 
-        // Set wallet key
-        wallet.setWalletKey("encrypted-wallet-key");
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowIllegalArgumentExceptionWhenUserIdDoesNotMatch() throws Exception {
+        // Arrange
+        String differentUserId = UUID.randomUUID().toString();
+        String sessionWalletId = walletId;
 
-        // Call the method under test
-        walletUtil.deleteWalletAndCredentials(wallet);
+        // Act
+        walletService.deleteWallet(differentUserId, walletId, sessionWalletId);
+    }
 
-        // Verify that proof signing keys are cleared
-        assertTrue(wallet.getProofSigningKeys().isEmpty());
-        // Verify that wallet key is set to null
-        assertNull(wallet.getWalletKey());
+    @Test(expected = UnauthorizedWalletAccessException.class)
+    public void shouldThrowUnauthorizedWalletAccessExceptionWhenSessionWalletIdDoesNotMatch() throws Exception {
+        // Arrange
+        String sessionWalletId = UUID.randomUUID().toString(); // Different from walletId
+
+        // Act
+        walletService.deleteWallet(userId, walletId, sessionWalletId);
+    }
+
+    @Test(expected = Exception.class)
+    public void shouldPropagateExceptionWhenErrorOccursDuringDeletion() throws Exception {
+        // Arrange
+        when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
+        doThrow(new RuntimeException("Database error")).when(walletRepository).delete(any(Wallet.class));
+        String sessionWalletId = walletId;
+
+        // Act
+        walletService.deleteWallet(userId, walletId, sessionWalletId);
     }
 }

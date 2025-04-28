@@ -168,10 +168,11 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldDeleteWalletSuccessfully() throws Exception {
-        // Set up session with wallet_key attribute
+        // Set up session with wallet_key and wallet_id attributes
         mockSession.setAttribute("wallet_key", "test-wallet-key");
+        mockSession.setAttribute("wallet_id", "walletId123");
 
-        doNothing().when(walletService).deleteWallet(userId, "walletId123");
+        doNothing().when(walletService).deleteWallet(eq(userId), eq("walletId123"), eq("walletId123"));
 
         MvcResult result = mockMvc.perform(delete("/wallets/walletId123")
                         .session(mockSession)
@@ -180,15 +181,46 @@ public class WalletsControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        // Verify that wallet_key attribute is removed from session
+        // Verify that wallet_key and wallet_id attributes are removed from session
         assertNull(result.getRequest().getSession().getAttribute("wallet_key"));
-        verify(walletService).deleteWallet(userId, "walletId123");
+        assertNull(result.getRequest().getSession().getAttribute("wallet_id"));
+        verify(walletService).deleteWallet(eq(userId), eq("walletId123"), eq("walletId123"));
+    }
+
+    @Test
+    public void shouldReturnUnauthorizedWhenUserIdIsMissingInSession() throws Exception {
+        // Create a session without userId
+        MockHttpSession emptySession = new MockHttpSession();
+
+        mockMvc.perform(delete("/wallets/walletId123")
+                        .session(emptySession)
+                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void shouldReturnForbiddenWhenWalletIdDoesNotMatchSessionWalletId() throws Exception {
+        // Set up session with different wallet_id
+        mockSession.setAttribute("wallet_id", "differentWalletId");
+
+        doThrow(new UnauthorizedWalletAccessException("Unauthorized access to wallet"))
+                .when(walletService).deleteWallet(eq(userId), eq("walletId123"), eq("differentWalletId"));
+
+        mockMvc.perform(delete("/wallets/walletId123")
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     public void shouldReturnNotFoundWhenWalletDoesNotExist() throws Exception {
+        // Set up session with matching wallet_id
+        mockSession.setAttribute("wallet_id", "nonExistentWalletId");
+
         doThrow(new IllegalArgumentException("Wallet not found or unauthorized access"))
-                .when(walletService).deleteWallet(userId, "nonExistentWalletId");
+                .when(walletService).deleteWallet(eq(userId), eq("nonExistentWalletId"), eq("nonExistentWalletId"));
 
         mockMvc.perform(delete("/wallets/nonExistentWalletId")
                         .session(mockSession)
@@ -199,8 +231,11 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldReturnInternalServerErrorWhenExceptionOccursDuringDeletion() throws Exception {
+        // Set up session with matching wallet_id
+        mockSession.setAttribute("wallet_id", "walletId123");
+
         doThrow(new RuntimeException("Database error"))
-                .when(walletService).deleteWallet(userId, "walletId123");
+                .when(walletService).deleteWallet(eq(userId), eq("walletId123"), eq("walletId123"));
 
         mockMvc.perform(delete("/wallets/walletId123")
                         .session(mockSession)

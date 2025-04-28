@@ -2609,6 +2609,35 @@
                 }
             }
         },
+        "/credentials/{credentialId}": {
+            "delete": {
+                "operationId": "deleteCredential",
+                "summary": "Delete a specific credential",
+                "description": "Deletes a specific credential from the user's wallet",
+                "parameters": [
+                    {
+                        "name": "credentialId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "ID of the credential to delete"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Credential deleted successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Credential not found"
+                    }
+                }
+            }
+        },
         "/authorize": {
             "get": {
                 "summary": "Authorize Verifiable Presentation",
@@ -3327,6 +3356,22 @@
                                 }
                             }
                         }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "deleteWallet",
+                "summary": "Delete user's wallet",
+                "description": "Deletes the wallet associated with the authenticated user",
+                "responses": {
+                    "200": {
+                        "description": "Wallet deleted successfully"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Wallet not found"
                     }
                 }
             }

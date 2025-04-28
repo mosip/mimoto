@@ -1,15 +1,23 @@
 package io.mosip.mimoto.controller;
 
+import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.exception.CredentialNotFoundException;
+import io.mosip.mimoto.exception.UnauthorizedWalletAccessException;
 import io.mosip.mimoto.model.DatabaseEntity;
 import io.mosip.mimoto.model.DatabaseOperation;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.util.CredentialUtilService;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.mimoto.util.WalletUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,12 +38,19 @@ import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 @Slf4j
 @RestController
 @RequestMapping(value = "/wallets/{walletId}/credentials")
+@Tag(name = SwaggerLiteralConstants.WALLET_CREDENTIALS_NAME, description = SwaggerLiteralConstants.WALLET_CREDENTIALS_DESCRIPTION)
 public class WalletCredentialsController {
     @Autowired
     private WalletCredentialService walletCredentialService;
 
     @Autowired
     private CredentialUtilService credentialUtilService;
+
+    @Operation(summary = SwaggerLiteralConstants.WALLET_CREDENTIALS_DOWNLOAD_SUMMARY, description = SwaggerLiteralConstants.WALLET_CREDENTIALS_DOWNLOAD_DESCRIPTION)
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Credential successfully downloaded"),
+            @ApiResponse(responseCode = "400", description = "Bad request"),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = {@Content(mediaType = "application/json")})})
 
     @PostMapping
     public ResponseEntity<VerifiableCredentialResponseDTO> downloadCredential(@PathVariable("walletId") String walletId, @RequestParam Map<String, String> params, HttpSession httpSession) {
@@ -91,6 +106,11 @@ public class WalletCredentialsController {
         }
     }
 
+    @Operation(summary = SwaggerLiteralConstants.WALLET_CREDENTIALS_FETCH_ALL_SUMMARY, description = SwaggerLiteralConstants.WALLET_CREDENTIALS_FETCH_ALL_DESCRIPTION)
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Credentials successfully retrieved"),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = {@Content(mediaType = "application/json")})})
+
     @GetMapping("/{credentialId}")
     public ResponseEntity<InputStreamResource> getVerifiableCredential(@PathVariable("walletId") String walletId, @PathVariable("credentialId") String credentialId, @RequestParam("locale") String locale, @RequestParam(value = "action", defaultValue = "inline") String action, HttpSession httpSession) {
         try {
@@ -121,19 +141,57 @@ public class WalletCredentialsController {
             return Utilities.getErrorResponseEntityWithoutWrapper(exception, CREDENTIAL_FETCH_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
     }
+    /**
+     * Deletes a credential by its ID
+     *
+     * @param walletId The ID of the wallet that owns the credential
+     * @param credentialId The ID of the credential to delete
+     * @return ResponseEntity with HTTP status 200 if successful, 404 if credential not found, or 500 for other errors
+     */
+    @Operation(summary = SwaggerLiteralConstants.WALLET_CREDENTIALS_DELETE_SUMMARY, description = SwaggerLiteralConstants.WALLET_CREDENTIALS_DELETE_DESCRIPTION)
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Credential successfully deleted"),
+            @ApiResponse(responseCode = "403", description = "Unauthorized access to wallet"),
+            @ApiResponse(responseCode = "404", description = "Credential not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = {@Content(mediaType = "application/json")})})
     @DeleteMapping("/{credentialId}")
     public ResponseEntity<?> deleteCredential(@PathVariable("walletId") String walletId,
-                                              @PathVariable("credentialId") String credentialId) {
+                                              @PathVariable("credentialId") String credentialId,
+                                              HttpSession httpSession) {
         try {
             log.info("Deleting credential with ID: {} for walletId: {}", credentialId, walletId);
 
-            boolean deleted = walletCredentialService.deleteCredential(credentialId, walletId);
-
-            if (deleted) {
-                return ResponseEntity.status(HttpStatus.OK).build();
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            // Validate that the wallet ID in the request matches the one in the session
+            Object sessionWalletId = httpSession.getAttribute("wallet_id");
+            if (sessionWalletId == null) {
+                log.error("Wallet ID is missing in session");
+                throw new UnauthorizedWalletAccessException("Wallet ID is missing in session");
             }
+
+            if (!sessionWalletId.toString().equals(walletId)) {
+                log.error("Wallet ID in request ({}) does not match wallet ID in session ({})",
+                        walletId, sessionWalletId.toString());
+                throw new UnauthorizedWalletAccessException("Unauthorized access to wallet");
+            }
+
+            // Delete the credential
+            walletCredentialService.deleteCredential(credentialId, walletId);
+            return ResponseEntity.status(HttpStatus.OK).build();
+
+        } catch (UnauthorizedWalletAccessException exception) {
+            log.error("Unauthorized access to wallet: {}", exception.getMessage());
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    exception,
+                    exception.getErrorCode(),
+                    HttpStatus.FORBIDDEN,
+                    MediaType.APPLICATION_JSON);
+        } catch (CredentialNotFoundException exception) {
+            log.error("Credential not found: {}", exception.getMessage());
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    exception,
+                    exception.getErrorCode(),
+                    HttpStatus.NOT_FOUND,
+                    MediaType.APPLICATION_JSON);
         } catch (DataAccessResourceFailureException exception) {
             log.error("Exception occurred while connecting to the database to delete credential with ID: {} for walletId: {}",
                     credentialId, walletId, exception);

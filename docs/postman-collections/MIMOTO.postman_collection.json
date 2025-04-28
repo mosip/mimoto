@@ -523,6 +523,25 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Delete Credential",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{HOST}}/credentials/{{credentialId}}",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"credentials",
+								"{{credentialId}}"
+							]
+						},
+						"description": "Deletes a specific credential from the user's wallet"
+					},
+					"response": []
 				}
 			]
 		},
@@ -560,6 +579,29 @@
 						"url": "{{HOST}}/logout"
 					},
 					"response": []
+				},
+				{
+					"name": "Wallet Management",
+					"item": [
+						{
+							"name": "Delete Wallet",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{HOST}}/wallet",
+									"host": [
+										"{{HOST}}"
+									],
+									"path": [
+										"wallet"
+									]
+								},
+								"description": "Deletes the wallet associated with the authenticated user"
+							},
+							"response": []
+						}
+					]
 				}
 			]
 		},

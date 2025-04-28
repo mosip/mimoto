@@ -76,4 +76,14 @@ public class SwaggerLiteralConstants {
     public static final String VERIFIERS_GET_VERIFIERS_SUMMARY = "Retrieve all trusted verifiers" ;
     public static final String VERIFIERS_GET_VERIFIERS_DESCRIPTION = "This endpoint allow you to retrieve all the trusted verifiers" ;
 
+    /*  Wallet Credentials Controller */
+    public static final String WALLET_CREDENTIALS_NAME = "Wallet Credentials" ;
+    public static final String WALLET_CREDENTIALS_DESCRIPTION = "All the wallet credentials related endpoints" ;
+    public static final String WALLET_CREDENTIALS_DOWNLOAD_SUMMARY = "Download credential to wallet" ;
+    public static final String WALLET_CREDENTIALS_DOWNLOAD_DESCRIPTION = "This endpoint allows you to download a credential to a specific wallet" ;
+    public static final String WALLET_CREDENTIALS_FETCH_ALL_SUMMARY = "Fetch all credentials for a wallet" ;
+    public static final String WALLET_CREDENTIALS_FETCH_ALL_DESCRIPTION = "This endpoint allows you to retrieve all credentials for a specific wallet" ;
+    public static final String WALLET_CREDENTIALS_DELETE_SUMMARY = "Delete a credential from a wallet" ;
+    public static final String WALLET_CREDENTIALS_DELETE_DESCRIPTION = "This endpoint allows you to delete a specific credential from a wallet" ;
+
 }

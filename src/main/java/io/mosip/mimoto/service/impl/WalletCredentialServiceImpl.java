@@ -209,20 +209,25 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     }
 
     @Override
-    public boolean deleteCredential(String credentialId, String walletId) {
+    public void deleteCredential(String credentialId, String walletId) throws CredentialNotFoundException, UnauthorizedWalletAccessException {
         log.info("Deleting credential with ID: {} for wallet: {}", credentialId, walletId);
 
-        // Find the credential by ID and wallet ID to ensure it belongs to the specified wallet
+        // Find the credential by ID
         Optional<VerifiableCredential> credential = walletCredentialsRepository.findById(credentialId);
 
-        if (credential.isPresent() && credential.get().getWalletId().equals(walletId)) {
-            // Delete the credential
-            walletCredentialsRepository.deleteById(credentialId);
-            log.info("Successfully deleted credential with ID: {}", credentialId);
-            return true;
-        } else {
-            log.warn("Credential with ID: {} not found or does not belong to wallet: {}", credentialId, walletId);
-            return false;
+        if (credential.isEmpty()) {
+            log.warn("Credential with ID: {} not found", credentialId);
+            throw new CredentialNotFoundException("Credential with ID: " + credentialId + " not found");
         }
+
+        // Check if the credential belongs to the specified wallet
+        if (!credential.get().getWalletId().equals(walletId)) {
+            log.warn("Credential with ID: {} does not belong to wallet: {}", credentialId, walletId);
+            throw new UnauthorizedWalletAccessException("Credential does not belong to the specified wallet");
+        }
+
+        // Delete the credential
+        walletCredentialsRepository.deleteById(credentialId);
+        log.info("Successfully deleted credential with ID: {}", credentialId);
     }
 }

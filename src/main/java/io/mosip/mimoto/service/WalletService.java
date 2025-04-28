@@ -13,5 +13,12 @@ public interface WalletService {
 
     List<WalletResponseDto> getWallets(String userId);
 
-    void deleteWallet(String userId, String walletId) throws Exception;
-}
+    void deleteWallet(String userId, String walletId, String sessionWalletId) throws Exception;
+
+    /**
+     * @deprecated Use {@link #deleteWallet(String, String, String)} instead
+     */
+    @Deprecated
+    default void deleteWallet(String userId, String walletId) throws Exception {
+        deleteWallet(userId, walletId, null);
+    }}

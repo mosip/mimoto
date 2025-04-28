@@ -3,6 +3,7 @@ package io.mosip.mimoto.controller;
 import io.mosip.kernel.core.crypto.exception.InvalidDataException;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.ErrorDTO;
+import io.mosip.mimoto.exception.UnauthorizedWalletAccessException;
 import io.mosip.mimoto.dto.WalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.service.WalletService;
@@ -83,20 +84,41 @@ public class WalletsController {
     }
 
     @DeleteMapping("/{walletId}")
-    public ResponseEntity<Void> deleteWallet(@PathVariable("walletId") String walletId, HttpSession httpSession){
-        try{
-            walletService.deleteWallet((String) httpSession.getAttribute("userId"), walletId);
+    public ResponseEntity<Void> deleteWallet(@PathVariable("walletId") String walletId, HttpSession httpSession) {
+        try {
+            String userId = (String) httpSession.getAttribute("userId");
+            if (userId == null) {
+                log.error("User ID is missing in session");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
 
-            // Clear wallet-specific session attributes
-            httpSession.removeAttribute("wallet_key");
+            // Get the wallet ID from the session for validation
+            String sessionWalletId = (String) httpSession.getAttribute("wallet_id");
+
+            // Delete the wallet with session validation
+            walletService.deleteWallet(userId, walletId, sessionWalletId);
+
+            // Clear wallet-specific session attributes if they match the deleted wallet
+            if (sessionWalletId != null && sessionWalletId.equals(walletId)) {
+                httpSession.removeAttribute("wallet_key");
+                httpSession.removeAttribute("wallet_id");
+                log.info("Cleared wallet session attributes for walletId: {}", walletId);
+            }
 
             return ResponseEntity.ok().build();
+        } catch (UnauthorizedWalletAccessException exception) {
+            log.error("Unauthorized access to wallet: {}", exception.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (IllegalArgumentException exception) {
-            log.error("Error occurred while deleting wallet: ", exception);
+            log.error("Wallet not found or unauthorized access: {}", exception.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception exception) {
             log.error("Error occurred while deleting wallet: ", exception);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    exception,
+                    USER_WALLET_RETRIEVAL_EXCEPTION.getCode(),
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    MediaType.APPLICATION_JSON);
         }
     }
 
