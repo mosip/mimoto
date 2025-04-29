@@ -3,7 +3,7 @@
 # DST_NS: Destination namespace 
 
 COPY_UTIL=./copy_cm_func.sh
-DST_NS=injiweb
+DST_NS=$( printenv NS )
 
 $COPY_UTIL configmap global default $DST_NS
 $COPY_UTIL configmap keycloak-env-vars keycloak $DST_NS
