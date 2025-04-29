@@ -9,6 +9,8 @@ fi
 NS=injiweb
 CHART_VERSION=0.0.1-develop
 KEYGEN_CHART_VERSION=1.3.0-beta.2
+SOFTHSM_NS=softhsm
+SOFTHSM_CHART_VERSION=1.3.0-beta.2
 
 echo Create $NS namespace
 kubectl create ns $NS
@@ -44,6 +46,57 @@ function installing_mimoto() {
     ENABLE_INSECURE='--set enable_insecure=true';
   fi
 
+  echo "Do you want to use SoftHSM or .p12 keystore for key management?"
+  echo "1) SoftHSM"
+  echo "2) .p12 keystore"
+  read -p "Enter 1 or 2 [default: 2]: " keystore_choice
+  keystore_choice=${keystore_choice:-2}
+
+  if [[ $keystore_choice == 1 ]]; then
+    echo Installing SoftHSM
+    helm -n $SOFTHSM_NS install softhsm-mimoto mosip/softhsm -f softhsm-values.yaml --version $SOFTHSM_CHART_VERSION --wait
+
+    echo Copy SoftHSM configMap and Secret to $NS and config-server
+    $COPY_UTIL configmap softhsm-mimoto-share softhsm $NS
+    $COPY_UTIL secret softhsm-mimoto softhsm config-server
+    $COPY_UTIL secret softhsm-mimoto softhsm $NS
+    kubectl -n config-server set env --keys=security-pin --from secret/softhsm-mimoto deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_SOFTHSM_MIMOTO_
+  else
+    default_enable_volume=true  # Default to true for mimoto
+    read -p "Would you like to enable volume (true/false) : [ default : true ] : " enable_volume
+    enable_volume=${enable_volume:-$default_enable_volume}
+    MIMOTO_KEYGEN_HELM_ARGS='--set springConfigNameEnv="mimoto"'
+    MIMOTO_HELM_ARGS=''
+
+    if [[ $enable_volume == 'true' ]]; then
+      default_volume_size=200M
+      read -p "Provide the size for volume [ default : 200M ]" volume_size
+      volume_size=${volume_size:-$default_volume_size}
+      volume_mount_path='/home/mosip/encryption'
+      PVC_CLAIM_NAME='mimoto-keygen-keymanager'
+
+      # Check if PVC already exists
+      if kubectl -n $NS get pvc "$PVC_CLAIM_NAME" >/dev/null 2>&1; then
+        echo "PVC $PVC_CLAIM_NAME already exists. Skipping keygen job."
+      else
+        echo "Creating new PVC and running keygen job"
+        MIMOTO_KEYGEN_HELM_ARGS="--set persistence.enabled=true  \
+                 --set volumePermissions.enabled=true \
+                 --set persistence.size=$volume_size \
+                 --set persistence.mountDir=\"$volume_mount_path\" \
+                 --set springConfigNameEnv='mimoto' \
+                 --set persistence.pvc_claim_name=\"$PVC_CLAIM_NAME\" \
+                 --set keysDir=\"$volume_mount_path\" \
+                 --set keyStore.fileName=\"encryptionkeystore.p12\" \
+                 --set skipIfFileExists=true"
+
+        echo "MIMOTO KEYGEN HELM ARGS $MIMOTO_KEYGEN_HELM_ARGS"
+        echo "Running mimoto keygen"
+        helm -n $NS install mimoto-keygen mosip/keygen $MIMOTO_KEYGEN_HELM_ARGS --wait --wait-for-jobs --version $KEYGEN_CHART_VERSION
+      fi
+    fi
+  fi
+
   echo  "Copy secrets to config-server namespace"
   ../copy_cm_func.sh secret mimoto-wallet-binding-partner-api-key injiweb config-server
   ../copy_cm_func.sh secret mimoto-oidc-partner-clientid injiweb config-server
@@ -57,41 +110,6 @@ function installing_mimoto() {
 
   kubectl -n config-server get deploy -o name | xargs -n1 -t kubectl -n config-server rollout status
 
-  default_enable_volume=true  # Default to true for mimoto
-  read -p "Would you like to enable volume (true/false) : [ default : true ] : " enable_volume
-  enable_volume=${enable_volume:-$default_enable_volume}
-  MIMOTO_KEYGEN_HELM_ARGS='--set springConfigNameEnv="mimoto"'
-  MIMOTO_HELM_ARGS=''
-
-  if [[ $enable_volume == 'true' ]]; then
-    default_volume_size=200M
-    read -p "Provide the size for volume [ default : 200M ]" volume_size
-    volume_size=${volume_size:-$default_volume_size}
-    volume_mount_path='/home/mosip/encryption'
-    PVC_CLAIM_NAME='mimoto-keygen-keymanager'
-
-    # Check if PVC already exists
-    if kubectl -n $NS get pvc "$PVC_CLAIM_NAME" >/dev/null 2>&1; then
-      echo "PVC $PVC_CLAIM_NAME already exists. Skipping keygen job."
-      # Verify if the keystore file exists in the PVC (this would require a temporary pod to check)
-      # For simplicity, we'll assume if PVC exists, the keystore is there
-    else
-      echo "Creating new PVC and running keygen job"
-      MIMOTO_KEYGEN_HELM_ARGS="--set persistence.enabled=true  \
-               --set volumePermissions.enabled=true \
-               --set persistence.size=$volume_size \
-               --set persistence.mountDir=\"$volume_mount_path\" \
-               --set springConfigNameEnv='mimoto' \
-               --set persistence.pvc_claim_name=\"$PVC_CLAIM_NAME\" \
-               --set keysDir=\"$volume_mount_path\" \
-               --set keyStore.fileName=\"encryptionkeystore.p12\" \
-               --set skipIfFileExists=true"  # Add this flag to skip if file exists
-
-      echo "MIMOTO KEYGEN HELM ARGS $MIMOTO_KEYGEN_HELM_ARGS"
-      echo "Running mimoto keygen"
-      helm -n $NS install mimoto-keygen mosip/keygen $MIMOTO_KEYGEN_HELM_ARGS --wait --wait-for-jobs --version $KEYGEN_CHART_VERSION
-    fi
-  fi
   echo "Please proceed with generating the Google Client ID and Secret Key required for integration."
   read -p "Please enter the Google Client ID: " clientId
 
