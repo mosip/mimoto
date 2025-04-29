@@ -1,10 +1,8 @@
 package io.mosip.mimoto.util;
 
-import io.mosip.mimoto.dto.WalletRequestDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -18,30 +16,45 @@ public class WalletValidator {
     @Value("${mosip.inji.user.wallet.pin.validation.regex:^\\d{4,6}$}")
     private String pinRegex;
 
-    @Value("${mosip.inji.user.wallet.name.validation.regex:^[A-Za-z0-9 _.-]{1,50}$}")
+    @Value("${mosip.inji.user.wallet.name.validation.regex:^[A-Za-z0-9 _.-]{0,50}$}")
     private String nameRegex;
 
     /**
-     * Validates a wallet creation request.
+     * Validates the user ID.
      *
      * @param userId The user ID.
-     * @param name   The wallet name.
-     * @param pin    The wallet PIN.
-     * @throws InvalidRequestException If the request is invalid.
+     * @throws InvalidRequestException If the User ID is invalid.
      */
-    public void validateWalletRequest(String userId, String name, String pin) throws InvalidRequestException {
-        log.debug("Validating wallet request for user: {}, name: {}", userId, name);
-
+    public void validateUserId(String userId) throws InvalidRequestException {
+        log.debug("Validating User: {}", userId);
         if (userId == null || userId.trim().isEmpty()) {
             log.warn("Invalid user ID: null or empty");
             throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "User ID cannot be null or empty");
         }
+    }
 
-        if (name == null || !name.matches(nameRegex)) {
-            log.warn("Invalid wallet name: {}", name);
+    /**
+     * Validates the Wallet name.
+     *
+     * @param name The Wallet name.
+     * @throws InvalidRequestException If the Wallet name is invalid.
+     */
+    public void validateWalletName(String name) throws InvalidRequestException {
+        log.debug("Validating Wallet name: {}", name);
+        if (name != null && !name.matches(nameRegex)) {
+            log.warn("Invalid Wallet name: {}", name);
             throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet name must be alphanumeric with allowed special characters");
         }
+    }
 
+    /**
+     * Validates the Wallet PIN.
+     *
+     * @param pin The Wallet PIN.
+     * @throws InvalidRequestException If the Wallet PIN is invalid.
+     */
+    public void validateWalletPin(String pin) throws InvalidRequestException {
+        log.debug("Validating Wallet PIN: {}", pin);
         if (pin == null || !pin.matches(pinRegex)) {
             log.warn("Invalid PIN: {}", pin);
             throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "PIN must be numeric with 4 or 6 digits");

@@ -3654,23 +3654,17 @@
                                             "errorCode": "invalid_request",
                                             "errorMessage": "Wallet not found"
                                         }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                },
-                                "examples": {
-                                    "Invalid PIN": {
+                                    },
+                                    "Invalid User ID": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-051",
-                                            "errorMessage": "Exception occurred due to an incorrect pin to unlock the wallet"
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "User ID cannot be null or empty"
+                                        }
+                                    },
+                                    "Invalid Wallet Pin": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "PIN must be numeric with 4 or 6 digits"
                                         }
                                     }
                                 }
@@ -3678,7 +3672,7 @@
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error - any error occurred while decrypting the Wallet key with Wallet PIN or when fetching Wallet details from the database",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3878,8 +3872,7 @@
                     }
                 },
                 "required": [
-                    "walletPin",
-                    "walletName"
+                    "walletPin"
                 ]
             },
             "WalletResponseDto": {

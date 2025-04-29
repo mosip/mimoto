@@ -1,6 +1,5 @@
 package io.mosip.mimoto.service.impl;
 
-import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -37,7 +35,10 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public String createWallet(String userId, String name, String pin) throws InvalidRequestException {
         log.info("Creating wallet for user: {}, name: {}", userId, name);
-        validator.validateWalletRequest(userId, name, pin);
+
+        validator.validateUserId(userId);
+        validator.validateWalletName(name);
+        validator.validateWalletPin(pin);
 
         String walletId = walletUtil.createWallet(userId, name, pin);
         log.debug("Wallet created successfully: {}", walletId);
@@ -48,6 +49,9 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public String getWalletKey(String userId, String walletId, String pin) throws InvalidRequestException {
         log.info("Retrieving wallet key for user: {}, wallet: {}", userId, walletId);
+
+        validator.validateUserId(userId);
+        validator.validateWalletPin(pin);
 
         return repository.findByUserIdAndId(userId, walletId)
                 .map(wallet -> walletUtil.decryptWalletKey(wallet.getWalletKey(), pin))

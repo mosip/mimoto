@@ -68,7 +68,10 @@ public class WalletServiceTest {
         String result = walletService.createWallet(userId, name, pin);
 
         assertEquals(newWalletId, result);
-        verify(walletValidator).validateWalletRequest(userId, name, pin);
+        verify(walletValidator).validateUserId(userId);
+        verify(walletValidator).validateWalletName(name);
+        verify(walletValidator).validateWalletPin(pin);
+
         verify(walletHelper).createWallet(userId, name, pin);
     }
 
