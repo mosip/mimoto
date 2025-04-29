@@ -120,7 +120,7 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Invalid Wallet Id. Session and request Wallet Id do not match"));
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Invalid Wallet ID. Session and request Wallet ID do not match"));
     }
 
     @Test
@@ -231,7 +231,7 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Invalid Wallet Id. Session and request Wallet Id do not match"));
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Invalid Wallet ID. Session and request Wallet ID do not match"));
     }
 
     // Tests for getVerifiableCredential

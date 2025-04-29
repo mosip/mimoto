@@ -85,11 +85,11 @@ public class WalletUtil {
 
     public static void validateWalletId(HttpSession session, String walletIdFromRequest) {
         Object sessionWalletId = session.getAttribute(SessionKeys.WALLET_ID);
-        if (sessionWalletId == null) throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet Id is missing in session");
+        if (sessionWalletId == null) throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet ID is missing in session");
 
         String walletIdInSession = sessionWalletId.toString();
         if (!walletIdInSession.equals(walletIdFromRequest)) {
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Invalid Wallet Id. Session and request Wallet Id do not match");
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Invalid Wallet ID. Session and request Wallet ID do not match");
         }
     }
 }

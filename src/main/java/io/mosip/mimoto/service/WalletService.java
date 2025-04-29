@@ -41,5 +41,5 @@ public interface WalletService {
      * @return List of wallet responses.
      * @throws InvalidRequestException If the request fails.
      */
-    List<WalletResponseDto> getWallets(String userId) throws InvalidRequestException;
+    List<WalletResponseDto> getWallets(String userId);
 }

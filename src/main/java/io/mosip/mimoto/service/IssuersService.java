@@ -7,6 +7,7 @@ import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
+import jakarta.validation.constraints.NotBlank;
 
 import java.io.IOException;
 
@@ -19,5 +20,5 @@ public interface IssuersService {
 
     CredentialIssuerConfiguration getIssuerConfiguration(String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException;
 
-    IssuerConfig getIssuerConfig(String issuerId, String credentialType) throws ApiNotAccessibleException, IOException, InvalidIssuerIdException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException;
+    IssuerConfig getIssuerConfig(String issuerId, @NotBlank String credentialType) throws ApiNotAccessibleException, IOException, InvalidIssuerIdException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException;
 }

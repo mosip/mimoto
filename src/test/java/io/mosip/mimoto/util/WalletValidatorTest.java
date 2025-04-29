@@ -25,14 +25,17 @@ public class WalletValidatorTest {
 
     @Test
     void testValidateWalletRequest_validData() {
-        walletValidator.validateWalletRequest("user1", "wallet1", "123456");
+        walletValidator.validateUserId("user1");
+        walletValidator.validateWalletName("wallet1");
+        walletValidator.validateWalletPin("123456");
     }
 
     @Test
     void testValidatePin_invalidPin() {
-
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
-            walletValidator.validateWalletRequest("user1", "My Wallet", "12");
+            walletValidator.validateUserId("user1");
+            walletValidator.validateWalletName("My Wallet");
+            walletValidator.validateWalletPin("12");
         });
 
         assertEquals("invalid_request --> PIN must be numeric with 4 or 6 digits", exception.getMessage());
@@ -40,9 +43,10 @@ public class WalletValidatorTest {
 
     @Test
     void testValidateWalletName_invalidName() {
-
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
-            walletValidator.validateWalletRequest("user1", "My Wallet!@", "123456");
+            walletValidator.validateUserId("user1");
+            walletValidator.validateWalletName("My Wallet!@");
+            walletValidator.validateWalletPin("123456");
         });
 
         assertEquals("invalid_request --> Wallet name must be alphanumeric with allowed special characters", exception.getMessage());
@@ -50,7 +54,8 @@ public class WalletValidatorTest {
 
     @Test
     void testValidateWalletName_validName() {
-
-        walletValidator.validateWalletRequest("user1", "wallet1", "123456");
+        walletValidator.validateUserId("user1");
+        walletValidator.validateWalletName("wallet1");
+        walletValidator.validateWalletPin("123456");
     }
 }
