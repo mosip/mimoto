@@ -4,21 +4,18 @@ package io.mosip.mimoto.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
-import io.mosip.mimoto.dto.mimoto.AuthorizationServerWellKnownResponse;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
-import io.mosip.mimoto.exception.ApiNotAccessibleException;
-import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
-import io.mosip.mimoto.exception.InvalidIssuerIdException;
-import io.mosip.mimoto.exception.InvalidWellknownResponseException;
+import io.mosip.mimoto.dto.mimoto.*;
+import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.IssuerConfigUtil;
 import io.mosip.mimoto.util.Utilities;
+import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -26,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@Validated
 public class IssuersServiceImpl implements IssuersService {
 
     @Autowired
@@ -100,5 +98,24 @@ public class IssuersServiceImpl implements IssuersService {
                 credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported(),
                 authorizationServerWellKnownResponse
         );
+    }
+
+    public IssuerConfig getIssuerConfig(String issuerId, @NotBlank String credentialType) throws ApiNotAccessibleException, IOException, InvalidIssuerIdException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+        log.info("Fetching issuer config for issuerId: {}", issuerId);
+        try {
+            IssuerDTO issuerDTO = getIssuerDetails(issuerId);
+            CredentialIssuerWellKnownResponse wellKnownResponse = issuersConfigUtil.getIssuerWellknown(issuerDTO.getCredential_issuer_host());
+            return new IssuerConfig(
+                    issuerDTO,
+                    wellKnownResponse,
+                    wellKnownResponse.getCredentialConfigurationsSupported().get(credentialType)
+            );
+        } catch (Exception e) {
+            log.error("Failed to fetch issuer config for issuerId: {}", issuerId, e);
+            if (e instanceof InvalidIssuerIdException) {
+                throw (InvalidIssuerIdException) e;
+            }
+            throw new ApiNotAccessibleException("Unable to fetch issuer configuration for issuerId: " + issuerId, e);
+        }
     }
 }

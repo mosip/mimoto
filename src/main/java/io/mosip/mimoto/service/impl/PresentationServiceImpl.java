@@ -5,14 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.openid.presentation.*;
-import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.util.RestApiClient;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -111,7 +108,7 @@ public class PresentationServiceImpl implements PresentationService {
         return objectMapper.writeValueAsString(presentationSubmissionDTO);
     }
 
-    PresentationDefinitionDTO constructPresentationDefinition(VCCredentialResponse vcCredentialResponse){
+    public PresentationDefinitionDTO constructPresentationDefinition(VCCredentialResponse vcCredentialResponse){
         FilterDTO filterDTO = FilterDTO.builder().type("String").pattern(vcCredentialResponse.getCredential().getType().getLast()).build();
         FieldDTO fieldDTO = FieldDTO.builder().path(new String[]{"$.type"}).filter(filterDTO).build();
         ConstraintsDTO constraintsDTO = ConstraintsDTO.builder().fields(new FieldDTO[]{fieldDTO}).build();

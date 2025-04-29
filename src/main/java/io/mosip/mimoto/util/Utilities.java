@@ -6,6 +6,7 @@ import com.google.common.collect.Lists;
 import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.ErrorDTO;
+import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.ExceptionUtils;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.impl.CredentialShareServiceImpl;
@@ -89,7 +90,7 @@ public class Utilities {
 
     @PostConstruct
     public void setUp() throws IOException {
-        if(activeProfile.equals("local")) {
+        if(activeProfile.contains("local")) {
             Resource resource = new ClassPathResource(issuersConfigPath);
             Resource trustedVerifiersResource = new ClassPathResource(trustedVerifiersPath);
             Resource credentialTemplateResource = new ClassPathResource("templates/"+ credentialTemplatePath);
@@ -188,7 +189,7 @@ public class Utilities {
     }
     public String getCredentialSupportedTemplateString(String issuerId, String credentialType) {
         String templateFileName = String.format("%s-%s-template.html", issuerId, credentialType);
-        if(activeProfile.equals("local")) {
+        if(activeProfile.contains("local")) {
             Path basePath = Paths.get("templates").toAbsolutePath().normalize();
             Path resolvedPath = basePath.resolve(templateFileName).normalize();
 
@@ -250,6 +251,18 @@ public class Utilities {
             errorCode = errorSections[0];
             errorMessage = errorSections[1];
         }
+
+        ResponseEntity.BodyBuilder responseEntity = ResponseEntity.status(status);
+        if (contentType != null) {
+            responseEntity.contentType(contentType);
+        }
+        return (ResponseEntity<T>) responseEntity.body(new ErrorDTO(errorCode, errorMessage));
+    }
+
+    public static <T> ResponseEntity<T> getErrorResponseEntityFromPlatformErrorMessage(
+            ErrorConstants message, HttpStatus status, MediaType contentType) {
+        String errorMessage = message.getErrorMessage();
+        String errorCode = message.getErrorCode();
 
         ResponseEntity.BodyBuilder responseEntity = ResponseEntity.status(status);
         if (contentType != null) {

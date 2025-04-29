@@ -23,8 +23,14 @@ This is the docker-compose setup to run mimoto which act as BFF for Inji mobile 
 Refer [here](https://docs.mosip.io/inji/inji-mobile-wallet/customization-overview/credential_providers) to create client
 * Update client_id and client_alias as per onboarding in mimoto-issuers-config.json file.
 
-6. Create google client credentials from https://console.cloud.google.com/ and replace
-   GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET properties in docker-compose.yml
+6. Refer to the [How to create Google Client Credentials](#how-to-create-google-client-credentials) section to create 
+    Google client credentials.
+   - Replace the placeholders in the `docker-compose.yml` file with the generated credentials:
+
+   ```yaml
+       environment:
+         - GOOGLE_OAUTH_CLIENT_ID=<your-client-id>
+         - GOOGLE_OAUTH_CLIENT_SECRET=<your-client-secret>
 
 7. Start the docker-compose file
 
@@ -36,6 +42,48 @@ Refer [here](https://docs.mosip.io/inji/inji-mobile-wallet/customization-overvie
    * http://localhost:8099/v1/mimoto/issuers/StayProtected
    * http://localhost:8099/v1/mimoto/issuers/StayProtected/well-known-proxy
 
+## How to create Google Client Credentials
+
+To enable Google OAuth2.0 authentication, follow these steps:
+
+1. **Go to the Google Cloud Console**:
+   - Visit [Google Cloud Console](https://console.cloud.google.com/).
+
+2. **Create a New Project**:
+   - If you don’t already have a project, create a new one by clicking on the project dropdown and selecting "New Project".
+
+3. **Enable the OAuth Consent Screen**:
+   - Navigate to "APIs & Services" > "OAuth consent screen".
+   - Select "External" for the user type and configure the required fields (e.g., app name, support email, etc.).
+   - Save the changes.
+4. **Create OAuth 2.0 Credentials**:
+   - Navigate to "APIs & Services" > "Credentials".
+   - Click "Create Credentials" > "OAuth 2.0 Client IDs".
+   - Select "Web application" as the application type.
+
+5. **Configure Authorized JavaScript Origins**:
+   Depending on your environment, use the following values:
+
+   - **Local or Docker**:
+     ```
+     http://localhost:8099
+     ```
+   - **Deployed domain (e.g., collab.mosip.net)**:
+     ```
+     https://collab.mosip.net
+
+6. **Configure Authorized Redirect URIs**:
+   - **Local or Docker**:
+     ```
+     http://localhost:8099/v1/mimoto/oauth2/callback/google
+     ```
+   - **Deployed domain (e.g., collab.mosip.net)**:
+     ```
+     https://collab.mosip.net/v1/mimoto/oauth2/callback/google
+     ```
+
+7. **Save and Retrieve Client Credentials**:
+   - After saving, you will receive a `Client ID` and `Client Secret`.
 
 Note:
 - Replace mosipbox.public.url, mosip.api.public.url with your public accessible domain. For dev or local env [ngrok](https://ngrok.com/docs/getting-started/) is recommended.

@@ -1,5 +1,6 @@
 package io.mosip.mimoto.util;
 
+import io.mosip.mimoto.exception.KeyGenerationException;
 import io.mosip.mimoto.model.SigningAlgorithm;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
@@ -9,6 +10,8 @@ import java.security.*;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+
+import static io.mosip.mimoto.exception.ErrorConstants.ENCRYPTION_FAILED;
 
 public class KeyGenerationUtil {
 
@@ -50,6 +53,10 @@ public class KeyGenerationUtil {
                 break;
         }
 
+        if (keyPairGenerator == null) {
+            throw new IllegalArgumentException("Unsupported algorithm: " + algorithm);
+        }
+
         return keyPairGenerator.generateKeyPair();
     }
 
@@ -73,10 +80,14 @@ public class KeyGenerationUtil {
      * @param algorithm The algorithm to use (e.g., "AES").
      * @param keysize   The key size in bits.
      * @return SecretKey object.
-     * @throws NoSuchAlgorithmException
      */
-    public static SecretKey generateEncryptionKey(String algorithm, int keysize) throws NoSuchAlgorithmException {
-        KeyGenerator keyGenerator = KeyGenerator.getInstance(algorithm);
+    public static SecretKey generateEncryptionKey(String algorithm, int keysize)  {
+        KeyGenerator keyGenerator = null;
+        try {
+            keyGenerator = KeyGenerator.getInstance(algorithm);
+        } catch (NoSuchAlgorithmException e) {
+            throw new KeyGenerationException(ENCRYPTION_FAILED.getErrorCode(), ENCRYPTION_FAILED.getErrorMessage(), e);
+        }
         keyGenerator.init(keysize);
         return keyGenerator.generateKey();
     }

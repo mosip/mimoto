@@ -156,6 +156,7 @@ public class JoseUtil {
                 .withAudience(audience)
                 .withExpiresAt(expiresAt)
                 .withIssuedAt(issuedAt)
+                .withClaim("jti", UUID.randomUUID().toString())
                 .sign(Algorithm.RSA256(null, privateKey));
     }
 
@@ -188,6 +189,7 @@ public class JoseUtil {
         payload.put("iss", clientId);
         payload.put("exp", expiresAt.toInstant().getEpochSecond());
         payload.put("iat", issuedAt.toInstant().getEpochSecond());
+        payload.put("jti", UUID.randomUUID().toString());
 
         return Jwts.builder()
                 .setHeader(header)

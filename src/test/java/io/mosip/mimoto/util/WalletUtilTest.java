@@ -1,6 +1,7 @@
 package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.dbentity.Wallet;
+import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.repository.WalletRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,7 +60,7 @@ class WalletUtilTest {
     }
 
     @Test
-    void shouldDecryptWalletKeySuccessfully() {
+    void shouldDecryptWalletKeySuccessfully() throws DecryptionException {
         when(encryptionDecryptionUtil.decryptWithPin(encryptedWalletKey, pin)).thenReturn(decryptedWalletKey);
 
         String decrypted = walletUtil.decryptWalletKey(encryptedWalletKey, pin);

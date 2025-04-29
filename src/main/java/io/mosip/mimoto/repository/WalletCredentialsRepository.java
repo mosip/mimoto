@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface WalletCredentialsRepository extends JpaRepository<VerifiableCredential, String> {
     List<VerifiableCredential> findByWalletId(String walletId);
-    Optional<VerifiableCredential> findById(String id);
+    Optional<VerifiableCredential> findByIdAndWalletId(String id,  String walletId);
 
     @Query(value = "SELECT EXISTS (SELECT 1 FROM verifiable_credentials WHERE credential_metadata->>'issuerId' = :issuerId AND credential_metadata->>'credentialType' = :credentialType AND wallet_id = :walletId)", nativeQuery = true)
     boolean existsByIssuerIdAndCredentialTypeAndWalletId(@Param("issuerId") String issuerId, @Param("credentialType") String credentialType, @Param("walletId") String walletId);

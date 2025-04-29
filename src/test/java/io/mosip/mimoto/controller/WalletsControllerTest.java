@@ -1,8 +1,10 @@
 package io.mosip.mimoto.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.WalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
+import io.mosip.mimoto.util.GlobalExceptionHandler;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.WalletValidator;
 import org.junit.Before;
@@ -31,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = WalletsController.class)
+@SpringBootTest(classes = {WalletsController.class, GlobalExceptionHandler.class})
 @AutoConfigureMockMvc
 @EnableWebMvc
 @EnableWebSecurity
@@ -58,8 +60,8 @@ public class WalletsControllerTest {
         walletRequestDto.setWalletPin("1234");
         mockSession = new MockHttpSession();
         mockSession.setAttribute("clientRegistrationId", "google");
-        mockSession.setAttribute("userId", "user123");
-        userId = (String) mockSession.getAttribute("userId");
+        mockSession.setAttribute(SessionKeys.USER_ID, "user123");
+        userId = (String) mockSession.getAttribute(SessionKeys.USER_ID);
     }
 
     @Test
@@ -90,8 +92,8 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-050"))
-                .andExpect(jsonPath("$.errorMessage").value("Exception occurred when creating Wallet for given userId"));
+                .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
+                .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
     }
 
 
@@ -121,8 +123,8 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-051"))
-                .andExpect(jsonPath("$.errorMessage").value("Exception occurred when fetching the wallets for given userId"));
+                .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
+                .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
     }
 
     @Test
@@ -157,7 +159,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-051"))
-                .andExpect(jsonPath("$.errorMessage").value("Exception occurred when fetching the wallet data for given walletId and userId"));
+                .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
+                .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
     }
 }
