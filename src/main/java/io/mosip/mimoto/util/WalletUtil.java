@@ -103,12 +103,5 @@ public class WalletUtil {
 
         //clear wallet key
         wallet.setWalletKey(null);
-
-        //remove cached data
-//        try{
-//            removeCacheData(wallet.getId());
-//        } catch (IOException e){
-//            log.error("Error removing cached wallet data", e);
-//        }
     }
 }
