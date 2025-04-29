@@ -2721,7 +2721,25 @@
                         }
                     },
                     "500": {
-                        "description": "Internal server error",
+                        "description": "Internal server error - any error occurred while decrypting the data or fetching the data from the database",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2730,14 +2748,8 @@
                                 "examples": {
                                     "Database connection failure": {
                                         "value": {
-                                            "errorCode": "RESIDENT-APP-047",
-                                            "errorMessage": "Failed to connect to the shared database while fetching User Metadata data from the database"
-                                        }
-                                    },
-                                    "Unexpected server error": {
-                                        "value": {
-                                            "errorCode": "RESIDENT-APP-049",
-                                            "errorMessage": "An unexpected error occurred while downloading and storing user metadata into database"
+                                            "errorCode": "database_unavailable",
+                                            "errorMessage": "Failed to connect to the database"
                                         }
                                     }
                                 }
