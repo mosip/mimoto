@@ -49,7 +49,8 @@ function installing_mimoto() {
   echo "Do you want to use SoftHSM or .p12 keystore for key management?"
   echo "1) SoftHSM"
   echo "2) .p12 keystore"
-  read -p "Enter 1 or 2 [default: 2]: " keystore_choice
+  echo "3) External HSM"
+  read -p "Enter 1, 2 or 3 [default: 2]: " keystore_choice
   keystore_choice=${keystore_choice:-2}
 
   if [[ $keystore_choice == 1 ]]; then
@@ -57,6 +58,19 @@ function installing_mimoto() {
     helm -n $SOFTHSM_NS install softhsm-mimoto mosip/softhsm -f softhsm-values.yaml --version $SOFTHSM_CHART_VERSION --wait
 
     echo Copy SoftHSM configMap and Secret to $NS and config-server
+    $COPY_UTIL configmap softhsm-mimoto-share softhsm $NS
+    $COPY_UTIL secret softhsm-mimoto softhsm config-server
+    $COPY_UTIL secret softhsm-mimoto softhsm $NS
+    kubectl -n config-server set env --keys=security-pin --from secret/softhsm-mimoto deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_SOFTHSM_MIMOTO_
+  elif [[ $keystore_choice == 3 ]]; then
+    echo "Setting up External HSM configuration"
+    read -p "Please provide the URL where externalhsm client zip is located: " externalhsmclient
+    read -p "Please provide the host URL for externalhsm: " externalhsmhosturl
+    read -p "Please provide the password for the externalhsm: " externalhsmpassword
+
+    # Create configmap and secret for external HSM
+    kubectl create configmap softhsm-mimoto-share --from-literal=hsm_client_zip_url_env="$externalhsmclient" --from-literal=PKCS11_PROXY_SOCKET="$externalhsmhosturl" -n softhsm --dry-run=client -o yaml | kubectl apply -f -
+    kubectl create secret generic softhsm-mimoto --from-literal=security-pin="$externalhsmpassword" -n softhsm --dry-run=client -o yaml | kubectl apply -f -
     $COPY_UTIL configmap softhsm-mimoto-share softhsm $NS
     $COPY_UTIL secret softhsm-mimoto softhsm config-server
     $COPY_UTIL secret softhsm-mimoto softhsm $NS
