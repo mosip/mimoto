@@ -1,8 +1,10 @@
 package io.mosip.mimoto.controller;
 
+import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.OAuth2AuthenticationException;
 import io.mosip.mimoto.service.TokenService;
 import io.mosip.mimoto.service.TokenServiceFactory;
+import io.mosip.mimoto.util.GlobalExceptionHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.*;
@@ -22,8 +25,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {TokenAuthController.class})
-@AutoConfigureMockMvc
+@SpringBootTest(classes = {TokenAuthController.class, GlobalExceptionHandler.class})
+@AutoConfigureMockMvc(addFilters = false)
+@EnableWebMvc
 public class TokenAuthControllerTest {
 
     @Autowired
@@ -79,7 +83,7 @@ public class TokenAuthControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", is(String.format("Unsupported provider: %s", provider))));
+                .andExpect(jsonPath("$.errorMessage", is(String.format("Unsupported provider: %s", provider))));
 
         verify(tokenServiceFactory).isSupportedProvider(eq(provider));
         verifyNoMoreInteractions(tokenServiceFactory);
@@ -87,7 +91,7 @@ public class TokenAuthControllerTest {
     }
 
     @Test
-    public void shouldReturnUnauthorizedForMissingAuthorizationHeader() throws Exception {
+    public void shouldReturnBadRequestForMissingAuthorizationHeader() throws Exception {
         when(tokenServiceFactory.isSupportedProvider(eq(provider))).thenReturn(true);
         mockMvc.perform(post("/auth/google/token-login", provider)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -96,11 +100,11 @@ public class TokenAuthControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest());
 
-        verifyNoInteractions(tokenServiceFactory, tokenService);
+        verifyNoInteractions(tokenService);
     }
 
     @Test
-    public void shouldReturnUnauthorizedForInvalidAuthorizationHeader() throws Exception {
+    public void shouldReturnBadRequestForInvalidAuthorizationHeader() throws Exception {
         when(tokenServiceFactory.isSupportedProvider(eq(provider))).thenReturn(true);
         String invalidAuthorizationHeader = "InvalidToken";
 
@@ -110,9 +114,9 @@ public class TokenAuthControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", is("Bearer ID token required.")));
+                .andExpect(jsonPath("$.errorMessage", is("Bearer ID token required.")));
     }
 
     @Test
@@ -130,7 +134,8 @@ public class TokenAuthControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", is("Invalid or expired ID token: invalid_token --> Invalid token format")));
+                .andExpect(jsonPath("$.errorCode", is("invalid_token")))
+                .andExpect(jsonPath("$.errorMessage", is("Invalid token format")));
 
         verify(tokenServiceFactory).isSupportedProvider(eq(provider));
         verify(tokenServiceFactory).getTokenService(eq(provider));

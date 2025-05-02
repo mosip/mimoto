@@ -3761,35 +3761,42 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized - invalid or expired token",
+                        "description": "Unauthorized - Invalid or expired token.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "string",
-                                    "description": "Error message explaining why the session is not created"
+                                    "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "Invalid token response": {
-                                        "value": "Invalid or expired ID token: please provide a valid token"
-                                    },
-                                    "Token not provided": {
-                                        "value": "Bearer ID token required"
+                                    "InvalidToken": {
+                                        "value": {
+                                            "errorCode": "invalid_token",
+                                            "errorMessage": "Invalid token format"
+                                        }
                                     }
                                 }
                             }
                         }
                     },
                     "400": {
-                        "description": "Bad Request - Unsupported provider",
+                        "description": "Bad Request - Missing/invalid header or unsupported provider.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "string",
-                                    "description": "Error message explaining why the session is not created"
+                                    "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "Unsupported provider response": {
-                                        "value": "Unsupported provider: provider123"
+                                    "UnsupportedProvider": {
+                                        "value": {
+                                            "errorCode": "INVALID_REQUEST",
+                                            "errorMessage": "Unsupported provider: provider123"
+                                        }
+                                    },
+                                    "MissingToken": {
+                                        "value": {
+                                            "errorCode": "INVALID_REQUEST",
+                                            "errorMessage": "Bearer ID token required."
+                                        }
                                     }
                                 }
                             }
