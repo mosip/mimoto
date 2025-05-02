@@ -1,15 +1,18 @@
 package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
+import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.OAuth2AuthenticationException;
 import io.mosip.mimoto.service.TokenService;
 import io.mosip.mimoto.service.TokenServiceFactory;
+import io.mosip.mimoto.util.Utilities;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,8 +26,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-import java.util.Map;
-
 @RestController
 @Tag(name = SwaggerLiteralConstants.ID_TOKEN_AUTHENTICATION_NAME, description = SwaggerLiteralConstants.ID_TOKEN_AUTHENTICATION_DESCRIPTION)
 public class TokenAuthController {
@@ -33,7 +34,6 @@ public class TokenAuthController {
     private static final String SESSION_CREATED = "Session created.";
     private static final String INVALID_TOKEN_MESSAGE = "Bearer ID token required.";
     private static final String UNSUPPORTED_PROVIDER_MESSAGE = "Unsupported provider: %s";
-    private static final String INVALID_TOKEN_ERROR = "Invalid or expired ID token: %s";
 
     private final TokenServiceFactory tokenServiceFactory;
 
@@ -42,17 +42,88 @@ public class TokenAuthController {
         this.tokenServiceFactory = tokenServiceFactory;
     }
 
-    @Operation(summary = "Login and create session using OAuth2 ID token", description = "This API accepts an OAuth2 ID token in the Authorization header and establishes a session by populating Spring Security context.\n\nFetch the ID token from a supported OAuth2 provider (such as Google or Microsoft) and provide it in the request as a Bearer token.", operationId = "loginWithOAuth2IdToken", security = @SecurityRequirement(name = "bearerAuth"), parameters = {@Parameter(name = "provider", in = ParameterIn.PATH, required = true, description = "The OAuth2 provider to use for login. Example values: 'google', 'microsoft', 'facebook'.", schema = @Schema(type = "string", example = "google")), @Parameter(name = "Authorization", in = ParameterIn.HEADER, required = true, description = "The OAuth2 ID token that must be provided in the 'Authorization' header, prefixed with 'Bearer '.", schema = @Schema(type = "string", example = "Bearer <id-token>"))})
-    @ApiResponse(responseCode = "200", description = "Successfully logged in and session created", content = @Content(mediaType = "application/json", schema = @Schema(type = "string", description = "Success message indicating that the session has been created"), examples = @ExampleObject(value = "\"Session created.\"")))
-    @ApiResponse(responseCode = "401", description = "Unauthorized - invalid or expired token", content = @Content(mediaType = "application/json", schema = @Schema(type = "string", description = "Error message explaining why the session is not created"), examples = {@ExampleObject(value = "\"Invalid or expired ID token: please provide a valid token\""), @ExampleObject(value = "\"Bearer ID token required\"")}))
-    @ApiResponse(responseCode = "400", description = "Bad Request - Unsupported provider", content = @Content(mediaType = "application/json", schema = @Schema(type = "string", description = "Error message explaining why the session is not created"), examples = @ExampleObject(value = "\"Unsupported provider: provider123\"")))
+    @Operation(
+            summary = "Login and create session using OAuth2 ID token",
+            description = """
+        This API accepts an OAuth2 ID token in the Authorization header and establishes a session 
+        by populating the Spring Security context.
+
+        Fetch the ID token from a supported OAuth2 provider (such as Google or Microsoft) and provide 
+        it in the request as a Bearer token.
+        """,
+            operationId = "loginWithOAuth2IdToken",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            parameters = {
+                    @Parameter(
+                            name = "provider",
+                            in = ParameterIn.PATH,
+                            required = true,
+                            description = "OAuth2 provider name. Example values: 'google', 'microsoft', 'facebook'.",
+                            schema = @Schema(type = "string", example = "google")
+                    ),
+                    @Parameter(
+                            name = "Authorization",
+                            in = ParameterIn.HEADER,
+                            required = true,
+                            description = "OAuth2 ID token prefixed with 'Bearer '.",
+                            schema = @Schema(type = "string", example = "Bearer eyJhbGciOi...")
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Successfully logged in and session created.",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(type = "string"),
+                                    examples = @ExampleObject(value = "Session created.")
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Bad Request - Missing/invalid header or unsupported provider.",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = io.mosip.mimoto.dto.ErrorDTO.class),
+                                    examples = {
+                                            @ExampleObject(name = "UnsupportedProvider", value = """
+                    {
+                      "errorCode": "INVALID_REQUEST",
+                      "errorMessage": "Unsupported provider: provider123"
+                    }
+                    """),
+                                            @ExampleObject(name = "MissingToken", value = """
+                    {
+                      "errorCode": "INVALID_REQUEST",
+                      "errorMessage": "Bearer ID token required."
+                    }
+                    """)
+                                    }
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Unauthorized - Invalid or expired token.",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = io.mosip.mimoto.dto.ErrorDTO.class),
+                                    examples = @ExampleObject(name = "InvalidToken", value = """
+                {
+                  "errorCode": "invalid_token",
+                  "errorMessage": "Invalid token format"
+                }
+                """)
+                            )
+                    )
+            }
+    )
     @PostMapping("/auth/{provider}/token-login")
-    public ResponseEntity<String> createSessionFromIdToken(@RequestHeader("Authorization") String authorization, @PathVariable("provider") String provider, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> createSessionFromIdToken(@RequestHeader(value = "Authorization", required = false) String authorization, @PathVariable("provider") String provider, HttpServletRequest request, HttpServletResponse response) {
         if (!tokenServiceFactory.isSupportedProvider(provider)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(String.format(UNSUPPORTED_PROVIDER_MESSAGE, provider));
+            return Utilities.buildErrorResponse(HttpStatus.BAD_REQUEST, ErrorConstants.INVALID_REQUEST.getErrorCode(), String.format(UNSUPPORTED_PROVIDER_MESSAGE, provider));
         }
         if (authorization == null || !authorization.startsWith(BEARER_PREFIX)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(INVALID_TOKEN_MESSAGE);
+            return Utilities.buildErrorResponse(HttpStatus.BAD_REQUEST, ErrorConstants.INVALID_REQUEST.getErrorCode(), INVALID_TOKEN_MESSAGE);
         }
 
         String idToken = authorization.substring(BEARER_PREFIX.length());
@@ -61,7 +132,7 @@ public class TokenAuthController {
             tokenService.processToken(idToken, provider, request, response);
             return ResponseEntity.ok(SESSION_CREATED);
         } catch (OAuth2AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(String.format(INVALID_TOKEN_ERROR, e.getMessage()));
+            return Utilities.getErrorResponseEntityWithoutWrapper(e, e.getErrorCode(), HttpStatus.UNAUTHORIZED, MediaType.APPLICATION_JSON);
         }
     }
 }

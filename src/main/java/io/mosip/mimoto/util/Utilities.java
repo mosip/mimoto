@@ -3,12 +3,10 @@ package io.mosip.mimoto.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
-import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.ExceptionUtils;
-import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.impl.CredentialShareServiceImpl;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
@@ -269,6 +267,13 @@ public class Utilities {
             responseEntity.contentType(contentType);
         }
         return (ResponseEntity<T>) responseEntity.body(new ErrorDTO(errorCode, errorMessage));
+    }
+
+    public static ResponseEntity<ErrorDTO> buildErrorResponse(HttpStatus status, String errorCode, String message) {
+        return ResponseEntity
+                .status(status)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new ErrorDTO(errorCode, message));
     }
 
     public static List<ErrorDTO> getErrors(String errorCode, String errorMessage) {
