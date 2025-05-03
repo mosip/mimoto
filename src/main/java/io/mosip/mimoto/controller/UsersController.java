@@ -5,6 +5,7 @@ import io.mosip.mimoto.constant.SwaggerExampleConstants;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.dto.ErrorDTO;
+import io.mosip.mimoto.dto.mimoto.CachedUserMetadataDTO;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.ErrorConstants;
@@ -79,17 +80,29 @@ public class UsersController {
     }
 
     @Operation(summary = "Retrieve user metadata from the stored redis session", description = "This API is secured using session-based authentication. When a request is made, the server retrieves the session ID from the Cookie header and uses it to fetch session details from Redis. It then attempts to retrieve the user's metadata directly from the session. If the metadata is available, the API returns the user's profile information otherwise an appropriate error response is returned.", operationId = "getUserProfileFromCache", security = @SecurityRequirement(name = "SessionAuth"))
-    @ApiResponse(responseCode = "200", description = "User profile retrieved successfully from the session", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserMetadataDTO.class), examples = @ExampleObject(name = "Success response", value = SwaggerExampleConstants.FETCH_USER_PROFILE_SUCCESS)))
+    @ApiResponse(responseCode = "200", description = "User profile retrieved successfully from the session", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CachedUserMetadataDTO.class), examples = @ExampleObject(name = "Success response", value = SwaggerExampleConstants.FETCH_USER_CACHE_PROFILE_SUCCESS)))
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User metadata not found in session", value = "{\"errorCode\": \"session_invalid_or_expired\", \"errorMessage\": \"User session is missing or expired. Please log in again.\"}")))
     @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
     @GetMapping("/cache")
-    public ResponseEntity<UserMetadataDTO> getUserProfileFromCache(HttpSession session) {
+    public ResponseEntity<CachedUserMetadataDTO> getUserProfileFromCache(HttpSession session) {
 
         UserMetadataDTO userMetadataDTO = (UserMetadataDTO) session.getAttribute(SessionKeys.USER_METADATA);
         if (userMetadataDTO == null) {
             log.error("User info is not present in the session");
             return getErrorResponseEntityFromPlatformErrorMessage(SESSION_EXPIRED_OR_INVALID, HttpStatus.UNAUTHORIZED, MediaType.APPLICATION_JSON);
         }
-        return ResponseEntity.status(HttpStatus.OK).body(userMetadataDTO);
+
+        CachedUserMetadataDTO cachedUserMetadataDTO = new CachedUserMetadataDTO();
+        cachedUserMetadataDTO.setDisplayName(userMetadataDTO.getDisplayName());
+        cachedUserMetadataDTO.setEmail(userMetadataDTO.getEmail());
+        cachedUserMetadataDTO.setProfilePictureUrl(userMetadataDTO.getProfilePictureUrl());
+        Object walletIdObj = session.getAttribute(SessionKeys.WALLET_ID);
+        if (walletIdObj instanceof String walletId) {
+            cachedUserMetadataDTO.setWalletId(walletId);
+        } else {
+            cachedUserMetadataDTO.setWalletId(null);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(cachedUserMetadataDTO);
     }
 }

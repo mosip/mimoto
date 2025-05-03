@@ -38,10 +38,17 @@ public class Wallet {
     private List<ProofSigningKey> proofSigningKeys; // One wallet can have many keys
 
     @Column(nullable = false, updatable = false)
-    private Instant createdAt = Instant.now();
+    private Instant createdAt;
 
     @Column(nullable = false)
-    private Instant updatedAt = Instant.now();
+    private Instant updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        Instant now = Instant.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
 
     @PreUpdate
     public void preUpdate() {

@@ -40,6 +40,14 @@ public class SwaggerExampleConstants {
                 "email": "john.doe@example.com"
             }
             """;
+    public static final String FETCH_USER_CACHE_PROFILE_SUCCESS = """
+            {
+                "display_name": "John Doe",
+                "profile_picture_url": "https://example.com/profile.jpg",
+                "email": "john.doe@example.com",
+                "walletId": "123e4567-e89b-12d3-a456-426614174000"
+            }
+            """;
 
     public static final String FETCH_ALL_WALLETS_OF_USER_SUCCESS = """
             [

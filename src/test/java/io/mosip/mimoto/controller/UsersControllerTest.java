@@ -3,6 +3,7 @@ package io.mosip.mimoto.controller;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.dto.ErrorDTO;
+import io.mosip.mimoto.dto.mimoto.CachedUserMetadataDTO;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.ErrorConstants;
@@ -131,11 +132,11 @@ class UsersControllerTest {
         when(session.getAttribute(SessionKeys.USER_METADATA)).thenReturn(userMetadataDTO);
 
         // Act
-        ResponseEntity<UserMetadataDTO> response = usersController.getUserProfileFromCache(session);
+        ResponseEntity<CachedUserMetadataDTO> response = usersController.getUserProfileFromCache(session);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        UserMetadataDTO result = response.getBody();
+        CachedUserMetadataDTO result = response.getBody();
         assertNotNull(result);
         assertEquals(DECRYPTED_DISPLAY_NAME, result.getDisplayName());
         assertEquals(DECRYPTED_PROFILE_PIC, result.getProfilePictureUrl());
@@ -171,5 +172,28 @@ class UsersControllerTest {
         ErrorDTO error = (ErrorDTO) response.getBody();
         assertNotNull(error);
         assertEquals(SESSION_EXPIRED_OR_INVALID.getErrorCode(), error.getErrorCode());
+        assertEquals(SESSION_EXPIRED_OR_INVALID.getErrorMessage(), error.getErrorMessage());
     }
+
+    @Test
+    void getUserProfileFromCacheMissingWalletId() {
+        // Arrange
+        UserMetadataDTO userMetadataDTO = new UserMetadataDTO(DECRYPTED_DISPLAY_NAME, DECRYPTED_PROFILE_PIC, DECRYPTED_EMAIL);
+        when(session.getAttribute(SessionKeys.USER_METADATA)).thenReturn(userMetadataDTO);
+        when(session.getAttribute(SessionKeys.WALLET_ID)).thenReturn(null);
+
+        // Act
+        ResponseEntity<CachedUserMetadataDTO> response = usersController.getUserProfileFromCache(session);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        CachedUserMetadataDTO result = response.getBody();
+        assertNotNull(result);
+        assertEquals(DECRYPTED_DISPLAY_NAME, result.getDisplayName());
+        assertEquals(DECRYPTED_PROFILE_PIC, result.getProfilePictureUrl());
+        assertEquals(DECRYPTED_EMAIL, result.getEmail());
+        assertNull(result.getWalletId());
+    }
+
+
 }

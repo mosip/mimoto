@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface WalletRepository extends JpaRepository<Wallet, String> {
-    @Query("SELECT w.id FROM Wallet w WHERE w.userId = :userId")
+    @Query("SELECT w.id FROM Wallet w WHERE w.userId = :userId ORDER BY w.createdAt ASC" )
     List<String> findWalletIdByUserId(@Param("userId") String userId);
 
     Optional<Wallet> findByUserIdAndId(String userId, String walletId);
