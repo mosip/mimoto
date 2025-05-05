@@ -240,6 +240,13 @@ public class WalletCredentialsController {
             // Delete the credential
             walletCredentialService.deleteCredential(credentialId, walletId);
             return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (InvalidRequestException exception) {
+            log.error("Invalid request: {}", exception.getMessage());
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    exception,
+                    exception.getErrorCode(),
+                    HttpStatus.BAD_REQUEST,
+                    MediaType.APPLICATION_JSON);
         } catch (CredentialNotFoundException exception) {
             log.error("Credential not found: {}", exception.getMessage());
             return Utilities.getErrorResponseEntityWithoutWrapper(
