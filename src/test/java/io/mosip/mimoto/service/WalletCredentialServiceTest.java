@@ -246,4 +246,27 @@ public class WalletCredentialServiceTest {
         verify(encryptionDecryptionUtil).decryptCredential("encryptedCredential", base64Key);
         verifyNoInteractions(credentialUtilService);
     }
+
+    @Test
+    public void shouldDeleteCredentialSuccessfully() throws Exception {
+        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
+
+        walletCredentialService.deleteCredential(credentialId, walletId);
+
+        verify(walletCredentialsRepository).findByIdAndWalletId(credentialId, walletId);
+        verify(walletCredentialsRepository).deleteById(credentialId);
+    }
+
+    @Test
+    public void shouldThrowCredentialNotFoundExceptionWhenDeletingNonExistentCredential() {
+        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.empty());
+
+        CredentialNotFoundException exception = assertThrows(CredentialNotFoundException.class, () ->
+                walletCredentialService.deleteCredential(credentialId, walletId));
+
+        assertEquals(RESOURCE_NOT_FOUND.getErrorCode(), exception.getErrorCode());
+        assertEquals(RESOURCE_NOT_FOUND.getErrorCode() + " --> " + RESOURCE_NOT_FOUND.getErrorMessage(), exception.getMessage());
+        verify(walletCredentialsRepository).findByIdAndWalletId(credentialId, walletId);
+        verify(walletCredentialsRepository, never()).deleteById(anyString());
+    }
 }

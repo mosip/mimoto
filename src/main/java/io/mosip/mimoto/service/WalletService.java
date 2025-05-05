@@ -42,4 +42,6 @@ public interface WalletService {
      * @throws InvalidRequestException If the request fails.
      */
     List<WalletResponseDto> getWallets(String userId);
+
+    void deleteWallet(String userId, String walletId) throws InvalidRequestException;
 }

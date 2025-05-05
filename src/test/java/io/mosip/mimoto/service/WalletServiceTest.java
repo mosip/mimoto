@@ -135,4 +135,29 @@ public class WalletServiceTest {
         assertEquals("INVALID_REQUEST --> Test Exception", exception.getMessage());
         verify(walletHelper).createWallet(userId, name, pin);
     }
+
+    @Test
+    public void shouldDeleteWalletSuccessfully() {
+        when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
+
+        walletService.deleteWallet(userId, walletId);
+
+        verify(walletValidator).validateUserId(userId);
+        verify(walletRepository).findByUserIdAndId(userId, walletId);
+        verify(walletRepository).delete(wallet);
+    }
+
+    @Test
+    public void shouldThrowInvalidRequestExceptionWhenDeletingNonExistentWallet() {
+        when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.empty());
+
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+                walletService.deleteWallet(userId, walletId));
+
+        assertEquals("invalid_request", exception.getErrorCode());
+        assertEquals("invalid_request --> Wallet not found", exception.getMessage());
+        verify(walletValidator).validateUserId(userId);
+        verify(walletRepository).findByUserIdAndId(userId, walletId);
+        verify(walletRepository, never()).delete(any(Wallet.class));
+    }
 }
