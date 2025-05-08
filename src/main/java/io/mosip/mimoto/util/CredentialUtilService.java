@@ -160,7 +160,7 @@ public class CredentialUtilService {
                         .build())
                 .credentialDefinition(VCCredentialDefinition.builder()
                         .type(credentialsSupportedResponse.getCredentialDefinition().getType())
-                        .context(List.of("https://www.w3.org/ns/credentials/v2"))
+                        .context(credentialsSupportedResponse.getCredentialDefinition().getContext())
                         .build())
                 .build();
     }

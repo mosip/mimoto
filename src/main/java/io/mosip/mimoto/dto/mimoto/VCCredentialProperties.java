@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-@JsonPropertyOrder({"@context", "credentialSubject", "validUntil", "id", "validFrom", "issuer", "proof", "type"})
+@JsonPropertyOrder({"@context", "credentialSubject", "validUntil", "id", "validFrom", "issuer", "proof", "type", "issuanceDate", "expirationDate"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -24,10 +24,17 @@ public class VCCredentialProperties {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String id;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String validFrom;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String issuanceDate;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String validUntil;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String expirationDate;
 
     private VCCredentialResponseProof proof;
 

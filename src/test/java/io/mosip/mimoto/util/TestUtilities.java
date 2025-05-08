@@ -73,6 +73,7 @@ public class TestUtilities {
 
         CredentialDefinitionResponseDto credentialDefinitionResponseDto = new CredentialDefinitionResponseDto();
         credentialDefinitionResponseDto.setType(List.of("VerifiableCredential", credentialSupportedName));
+        credentialDefinitionResponseDto.setContext(List.of("https://www.w3.org/2018/credentials/v1"));
         credentialDefinitionResponseDto.setCredentialSubject(Map.of(
                 "name", createCredentialDisplayResponse("Given Name", "en"),
                 "email", createCredentialDisplayResponse("Given Email", "pt"),
