@@ -77,7 +77,6 @@ function installing_mimoto() {
     kubectl -n config-server set env --keys=security-pin --from secret/softhsm-mimoto deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_SOFTHSM_MIMOTO_
   else
     default_enable_volume=true  # Default to true for mimoto
-    read -p "Would you like to enable volume (true/false) : [ default : true ] : " enable_volume
     enable_volume=${enable_volume:-$default_enable_volume}
     MIMOTO_KEYGEN_HELM_ARGS='--set springConfigNameEnv="mimoto"'
     MIMOTO_HELM_ARGS=''
