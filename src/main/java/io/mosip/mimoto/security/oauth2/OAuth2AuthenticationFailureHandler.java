@@ -43,7 +43,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         }
 
         String encodedErrorMessage = URLEncoder.encode(errorMessage, StandardCharsets.UTF_8);
-        String redirectUrl = injiWebUrl + "/login?status=error&error_message=" + encodedErrorMessage;
+        String redirectUrl = injiWebUrl + "/?status=error&error_message=" + encodedErrorMessage;
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 }
