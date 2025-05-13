@@ -3582,6 +3582,175 @@
                         }
                     }
                 }
+            },
+            "delete": {
+                "tags": [
+                    "Wallet Credentials"
+                ],
+                "summary": "Delete a credential from a wallet",
+                "description": "This endpoint allows you to delete a specific credential from a wallet. The API is secured using session-based authentication. The session ID is extracted from the Cookie header to authenticate the user. The wallet ID is validated against the session to ensure the user has access to the wallet. If the credential is successfully deleted, a 200 OK response is returned.",
+                "operationId": "deleteCredential",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Unique identifier of the wallet containing the credential"
+                    },
+                    {
+                        "name": "credentialId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Unique identifier of the credential to be deleted"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Credential successfully deleted"
+                    },
+                    "403": {
+                        "description": "Unauthorized access to wallet",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Invalid Wallet Id": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Credential not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Credential not found": {
+                                        "value": {
+                                            "errorCode": "resource_not_found",
+                                            "errorMessage": "The requested resource doesn’t exist."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/wallets/{walletId}": {
+            "delete": {
+                "tags": [
+                    "Wallets"
+                ],
+                "summary": "Delete a wallet",
+                "description": "This endpoint allows you to delete a specific wallet. The API is secured using session-based authentication. The session ID is extracted from the Cookie header to authenticate the user. The user's ID is obtained from the session and used to validate ownership of the wallet before deletion. If the wallet is successfully deleted, a 200 OK response is returned.",
+                "operationId": "deleteWallet",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Unique identifier of the wallet to be deleted"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Wallet successfully deleted"
+                    },
+                    "401": {
+                        "description": "Unauthorized access",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Wallet not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Wallet not found": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Wallet not found"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/wallets/{walletId}/unlock": {
