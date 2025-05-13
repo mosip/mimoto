@@ -57,8 +57,6 @@ public class CredentialServiceVCCredentialRequestTest {
                 false
         );
 
-        System.out.println("Result: " + result);
-
         assertNotNull(result.getCredentialDefinition().getContext());
         assertEquals("https://www.w3.org/2018/credentials/v1", result.getCredentialDefinition().getContext().get(0));
     }
@@ -84,8 +82,6 @@ public class CredentialServiceVCCredentialRequestTest {
                 "walletKey",
                 false
         );
-
-        System.out.println("Result: " + result);
 
         assertNotNull(result.getCredentialDefinition().getContext());
         assertEquals("https://www.w3.org/2018/credentials/v1", result.getCredentialDefinition().getContext().get(0));
