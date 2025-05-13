@@ -349,7 +349,7 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value("resource_not_found"))
-                .andExpect(jsonPath("$.errorMessage").value("The requested resource doesn’t exist."));
+                .andExpect(jsonPath("$.errorMessage").value("The requested resource doesn't exist."));
     }
 
     @Test
@@ -361,6 +361,6 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("Invalid Wallet ID. Session and request Wallet ID do not match"));
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Invalid Wallet ID. Session and request Wallet ID do not match"));
     }
 }
