@@ -54,4 +54,7 @@ public interface WalletCredentialService {
     WalletCredentialResponseDTO fetchVerifiableCredential(String walletId, String credentialId, String base64Key,
                                                           String locale)
             throws CredentialNotFoundException, CredentialProcessingException;
+
+    void deleteCredential(String credentialId, String walletId) throws CredentialNotFoundException;
+
 }

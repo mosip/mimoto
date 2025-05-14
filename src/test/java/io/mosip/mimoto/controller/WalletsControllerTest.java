@@ -162,4 +162,43 @@ public class WalletsControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
                 .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
     }
+
+    @Test
+    public void shouldDeleteWalletSuccessfully() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/wallets/walletId123")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void shouldClearSessionAttributesWhenDeletingCurrentWallet() throws Exception {
+        mockSession.setAttribute(SessionKeys.WALLET_ID, "walletId123");
+        mockSession.setAttribute(SessionKeys.WALLET_KEY, "walletKey123");
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/wallets/walletId123")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isOk());
+
+        // Session attributes should be cleared
+        assertEquals(null, mockSession.getAttribute(SessionKeys.WALLET_ID));
+        assertEquals(null, mockSession.getAttribute(SessionKeys.WALLET_KEY));
+    }
+
+    @Test
+    public void shouldReturnUnauthorizedWhenUserIdIsMissingForDeleteWallet() throws Exception {
+        MockHttpSession sessionWithoutUserId = new MockHttpSession();
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/wallets/walletId123")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .session(sessionWithoutUserId)
+                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isUnauthorized());
+    }
 }

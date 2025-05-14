@@ -31,7 +31,7 @@ import java.util.List;
 import static io.mosip.mimoto.exception.ErrorConstants.CREDENTIAL_FETCH_EXCEPTION;
 import static io.mosip.mimoto.exception.ErrorConstants.RESOURCE_NOT_FOUND;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -328,5 +328,39 @@ public class WalletCredentialsControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.errorCode").value(CREDENTIAL_FETCH_EXCEPTION.getErrorCode()))
                 .andExpect(jsonPath("$.errorMessage").value("CORRUPTED_DATA"));
+    }
+
+    // Tests for deleteCredential
+    @Test
+    public void shouldDeleteCredentialSuccessfully() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void shouldThrowCredentialNotFoundExceptionWhenDeletingNonExistentCredential() throws Exception {
+        doThrow(new CredentialNotFoundException(RESOURCE_NOT_FOUND.getErrorCode(), RESOURCE_NOT_FOUND.getErrorMessage()))
+                .when(walletCredentialService).deleteCredential(credentialId, walletId);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("resource_not_found"))
+                .andExpect(jsonPath("$.errorMessage").value("The requested resource doesn’t exist."));
+    }
+
+    @Test
+    public void shouldThrowInvalidRequestForWalletIdMismatchInDeleteCredential() throws Exception {
+        when(httpSession.getAttribute("wallet_id")).thenReturn("differentWalletId");
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .sessionAttr("wallet_id", "differentWalletId")
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("Invalid Wallet ID. Session and request Wallet ID do not match"));
     }
 }
