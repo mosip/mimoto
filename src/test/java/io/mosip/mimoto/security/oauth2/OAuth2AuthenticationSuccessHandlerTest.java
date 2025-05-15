@@ -87,7 +87,7 @@ public class OAuth2AuthenticationSuccessHandlerTest {
         // Assert
         verify(session).setAttribute(eq("clientRegistrationId"), eq(CLIENT_REGISTRATION_ID));
         verify(session).setAttribute(eq(SessionKeys.USER_ID), eq(USER_ID));
-        verify(response).sendRedirect(eq(INJI_WEB_URL + "/login?status=success"));
+        verify(response).sendRedirect(eq(INJI_WEB_URL + "/pin"));
         verify(userMetadataService).updateOrInsertUserMetadata(
                 eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), eq(DISPLAY_NAME),
                 eq(PROFILE_PICTURE_URL), eq(EMAIL));
@@ -121,7 +121,7 @@ public class OAuth2AuthenticationSuccessHandlerTest {
         // Assert
         verify(session).setAttribute(eq("clientRegistrationId"), eq(CLIENT_REGISTRATION_ID));
         verify(session).setAttribute(eq(SessionKeys.USER_ID), eq(USER_ID));
-        verify(response).sendRedirect(eq(INJI_WEB_URL + "/login?status=success"));
+        verify(response).sendRedirect(eq(INJI_WEB_URL + "/pin"));
         verify(userMetadataService).updateOrInsertUserMetadata(
                 eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), isNull(),
                 isNull(), isNull());
