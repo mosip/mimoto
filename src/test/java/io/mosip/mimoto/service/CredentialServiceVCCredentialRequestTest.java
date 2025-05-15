@@ -3,7 +3,6 @@ package io.mosip.mimoto.service;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.util.*;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -11,7 +10,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 import static io.mosip.mimoto.util.TestUtilities.*;
@@ -19,8 +17,6 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
-@SpringBootTest
-@Slf4j
 public class CredentialServiceVCCredentialRequestTest {
     @InjectMocks
     CredentialUtilService credentialUtilService;
