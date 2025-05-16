@@ -86,7 +86,7 @@ function installing_mimoto() {
 
       echo "MIMOTO KEYGEN HELM ARGS $MIMOTO_KEYGEN_HELM_ARGS"
       echo "Running mimoto keygen"
-      helm -n $NS install mimoto-keygen mosip/keygen $MIMOTO_KEYGEN_HELM_ARGS --wait --wait-for-jobs --version $KEYGEN_CHART_VERSION
+      helm -n $NS install mimoto-keygen mosip/keygen -f keygen-mimoto.yaml $MIMOTO_KEYGEN_HELM_ARGS --wait --wait-for-jobs --version $KEYGEN_CHART_VERSION
     fi
 
   elif [[ "$keystore_choice" == "3" ]]; then
