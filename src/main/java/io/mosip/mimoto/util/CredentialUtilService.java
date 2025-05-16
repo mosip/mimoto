@@ -151,6 +151,11 @@ public class CredentialUtilService {
             byte[] privateKeyInBytes = encryptionDecryptionUtil.decryptWithAES(walletKey, proofSigningKey.get().getEncryptedSecretKey());
             jwt = JwtGeneratorUtil.generateJwtUsingDBKeys(algorithm, credentialIssuerWellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), accessToken, publicKeyBytes, privateKeyInBytes);
         }
+        List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
+
+        if (credentialContext == null || credentialContext.isEmpty()) {
+            credentialContext = List.of("https://www.w3.org/2018/credentials/v1");
+        }
 
         return VCCredentialRequest.builder()
                 .format(credentialsSupportedResponse.getFormat())
@@ -160,7 +165,7 @@ public class CredentialUtilService {
                         .build())
                 .credentialDefinition(VCCredentialDefinition.builder()
                         .type(credentialsSupportedResponse.getCredentialDefinition().getType())
-                        .context(List.of("https://www.w3.org/2018/credentials/v1"))
+                        .context(credentialContext)
                         .build())
                 .build();
     }
