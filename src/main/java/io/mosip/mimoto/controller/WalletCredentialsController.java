@@ -74,26 +74,24 @@ public class WalletCredentialsController {
         @Parameter(name = "issuer", in = ParameterIn.QUERY, required = true, description = "The identifier of the issuer", schema = @Schema(type = "string")),
         @Parameter(name = "credentialConfigurationId", in = ParameterIn.QUERY, required = true, description = "The type of the credential", schema = @Schema(type = "string")),
         @Parameter(name = "vcStorageExpiryLimitInTimes", in = ParameterIn.QUERY, required = false, description = "The expiration limit for the Verifiable Credential storage", schema = @Schema(type = "string", defaultValue = "-1")),
-        @Parameter(name = "locale", in = ParameterIn.QUERY, required = false, description = "The locale for the Verifiable Credential", schema = @Schema(type = "string", defaultValue = "en"))})
+        @Parameter(name = "locale", in = ParameterIn.HEADER, required = false, description = "The locale for the Verifiable Credential. It follows 2 letter language code", schema = @Schema(type = "string", defaultValue = "en"))})
     @ApiResponse(responseCode = "200", description = "Verifiable Credential downloaded and stored successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = VerifiableCredentialResponseDTO.class)))
     @ApiResponse(responseCode = "400", description = "Bad request - Wallet key is null / blank or Wallet ID is null / blank / mismatch with session Wallet ID or required params are missing / invalid", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "Invalid Wallet Id", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Invalid Wallet ID. Session and request Wallet ID do not match\"}"), @ExampleObject(name = "Wallet key not found in session", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet key not found in session\"}"), @ExampleObject(name = "Missing required params", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Issuer and credentialConfigurationId are required\"}"), @ExampleObject(name = "Wallet ID is null or blank", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet ID cannot be null or blank\"}"), @ExampleObject(name = "Issuer ID is null or blank", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Issuer ID cannot be null or blank\"}")}))
     @ApiResponse(responseCode = "500", description = "Internal server error - error occurred while serializing the VC response, encrypting the credential, or storing it", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "Credential already exists", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Duplicate credential for issuer and type\"}"), @ExampleObject(name = "Issuer config error", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Unable to fetch issuer configuration\"}"), @ExampleObject(name = "Failed to generate VC request", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Unable to generate credential request\"}"), @ExampleObject(name = "Signature verification failed", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}"), @ExampleObject(name = "Unexpected server error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")}))
     @ApiResponse(responseCode = "503", description = "Service unavailable - error while fetching issuer or auth server wellknown, downloading credential, or DB connection failure", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "API is not accessible", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Failed to download and store the credential\"}"), @ExampleObject(name = "Failed to download credential", value = "{\"errorCode\": \"server_unavailable\", \"errorMessage\": \"Unable to download credential from issuer\"}"), @ExampleObject(name = "Database connection failure", value = "{\"errorCode\": \"database_unavailable\", \"errorMessage\": \"Failed to connect to the database\"}")}))
     @PostMapping
     public ResponseEntity<VerifiableCredentialResponseDTO> downloadCredential(
+            @RequestHeader(value = "Accept-Language", required = false, defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
             @RequestParam Map<String, String> params,
             HttpSession httpSession) throws InvalidRequestException {
-        params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
-        params.putIfAbsent("locale", "en");
 
         WalletUtil.validateWalletId(httpSession, walletId);
         String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
         String issuerId = params.get("issuer");
         String credentialConfigurationId = params.get("credentialConfigurationId");
-        String credentialValidity = params.get("vcStorageExpiryLimitInTimes");
-        String locale = params.get("locale");
+        String credentialValidity = params.getOrDefault("vcStorageExpiryLimitInTimes", "-1");
 
         if (issuerId == null || issuerId.isBlank() || credentialConfigurationId == null || credentialConfigurationId.isBlank()) {
             log.error("Missing required parameters: issuer or credential");
@@ -138,7 +136,7 @@ public class WalletCredentialsController {
      */
     @Operation(summary = "Fetch all credentials for the given wallet", description = "This API is secured using session-based authentication. When a request is made, the session ID is extracted from the Cookie header and used to fetch session details from Redis for authentication. It then retrieves the wallet key from the session and uses it to decrypt all stored Verifiable Credentials for the given wallet. If successful, it returns a list of credentials otherwise an appropriate error is returned.", operationId = "fetchAllCredentialsForWallet", security = @SecurityRequirement(name = "SessionAuth"), parameters = {
         @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the user's wallet from where the credential will be fetched", schema = @Schema(type = "string")),
-        @Parameter(name = "locale", in = ParameterIn.QUERY, required = true, description = "Locale is used to determine the language in which credentials should be rendered", schema = @Schema(type = "string"))})
+        @Parameter(name = "locale", in = ParameterIn.HEADER, required = false, description = "Locale is used to determine the language in which credentials should be rendered. It follows 2 letter language code", schema = @Schema(type = "string"))})
     @ApiResponse(responseCode = "200", description = "Credentials retrieved successfully", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = VerifiableCredentialResponseDTO.class)), examples = @ExampleObject(value = SwaggerExampleConstants.FETCH_ALL_CREDENTIALS_OF_WALLET_SUCCESS)))
     @ApiResponse(responseCode = "400", description = "Bad request", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "Invalid Wallet Id", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Invalid Wallet ID. Session and request Wallet ID do not match\"}"), @ExampleObject(name = "Wallet key not found in session", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet key not found in session\"}")}))
     @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
@@ -146,7 +144,7 @@ public class WalletCredentialsController {
     @GetMapping
     public ResponseEntity<List<VerifiableCredentialResponseDTO>> fetchAllCredentialsForGivenWallet(
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
-            @RequestParam(value = "locale", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
+            @RequestHeader(value = "Accept-Language", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             HttpSession httpSession) throws InvalidRequestException {
 
         WalletUtil.validateWalletId(httpSession, walletId);

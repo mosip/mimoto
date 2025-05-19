@@ -3,7 +3,10 @@ package io.mosip.mimoto.controller;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
-import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.exception.CredentialNotFoundException;
+import io.mosip.mimoto.exception.CredentialProcessingException;
+import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.util.CredentialUtilService;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
@@ -59,13 +62,13 @@ public class WalletCredentialsControllerTest {
 
     private VerifiableCredentialResponseDTO verifiableCredentialResponseDTO;
     private WalletCredentialResponseDTO walletCredentialResponseDTO;
-    private String walletId = "wallet123";
-    private String credentialId = "cred456";
-    private String walletKey = "encodedKey";
-    private String issuer = "issuer1";
-    private String credentialConfigurationId = "type1";
-    private String locale = "en";
-    private String vcStorageExpiryLimit = "-1";
+    private final String walletId = "wallet123";
+    private final String credentialId = "cred456";
+    private final String walletKey = "encodedKey";
+    private final String issuer = "issuer1";
+    private final String credentialConfigurationId = "type1";
+    private final String locale = "en";
+    private final String vcStorageExpiryLimit = "-1";
 
     @Before
     public void setup() {
@@ -96,15 +99,65 @@ public class WalletCredentialsControllerTest {
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .accept(MediaType.APPLICATION_JSON)
+                        .header("Accept-Language", locale)
                         .param("issuer", issuer)
                         .param("credentialConfigurationId", credentialConfigurationId)
                         .param("vcStorageExpiryLimitInTimes", vcStorageExpiryLimit)
-                        .param("locale", locale)
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.issuer_name").value("issuerName123"))
                 .andExpect(jsonPath("$.credential_id").value("credentialId123"));
+    }
+
+    @Test
+    public void shouldCallServiceWithCorrectParameters() throws Exception {
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header("Accept-Language", "fr")
+                        .param("issuer", issuer)
+                        .param("credentialConfigurationId", credentialConfigurationId)
+                        .param("vcStorageExpiryLimitInTimes", vcStorageExpiryLimit)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey));
+
+        verify(credentialUtilService).getTokenResponse(argThat(params -> params.get("issuer").equals(issuer) &&
+                params.get("credentialConfigurationId").equals(credentialConfigurationId) &&
+                params.get("vcStorageExpiryLimitInTimes").equals(vcStorageExpiryLimit)
+        ), eq(issuer));
+        verify(walletCredentialService
+                ).fetchAndStoreCredential(eq(issuer), eq(credentialConfigurationId), any(), eq(vcStorageExpiryLimit), eq("fr"), eq(walletId), eq(walletKey));
+    }
+
+    @Test
+    public void shouldSetDefaultAndProceedWhenOptionalRequestParametersAreNotPassed() throws Exception {
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .accept(MediaType.APPLICATION_JSON)
+                .param("issuer", issuer)
+                .param("credentialConfigurationId", credentialConfigurationId)
+                .sessionAttr("wallet_id", walletId)
+                .sessionAttr("wallet_key", walletKey));
+
+        // Default value for vcStorageExpiryLimit is -1 and locale is "en"
+        verify(walletCredentialService).fetchAndStoreCredential(any(), any(), any(), eq("-1"), eq("en"), eq(walletId), eq(walletKey));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenInvalidLocaleIsPassed() throws Exception {
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header("Accept-Language", "eng") // Three letter language code passed which is not valid
+                        .param("issuer", issuer)
+                        .param("credentialConfigurationId", credentialConfigurationId)
+                        .header("Accept-Language", "invalid")
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("Validation error in request parameters"));
     }
 
     @Test
@@ -143,7 +196,7 @@ public class WalletCredentialsControllerTest {
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .param("locale", locale)
+                        .header("Accept-Language", "fr")
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
@@ -157,7 +210,7 @@ public class WalletCredentialsControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("issuer", issuer)
-                        .param("locale", locale)
+                        .header("Accept-Language", "fr")
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
@@ -198,6 +251,7 @@ public class WalletCredentialsControllerTest {
     }
 
     // Tests for fetchAllCredentialsForGivenWallet
+
     @Test
     public void shouldFetchAllCredentialsSuccessfully() throws Exception {
         List<VerifiableCredentialResponseDTO> credentials = Collections.singletonList(verifiableCredentialResponseDTO);
@@ -205,7 +259,7 @@ public class WalletCredentialsControllerTest {
 
         mockMvc.perform(get("/wallets/{walletId}/credentials", walletId)
                         .accept(MediaType.APPLICATION_JSON)
-                        .param("locale", locale)
+                        .header("Accept-Language", locale)
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isOk())
@@ -215,7 +269,9 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldThrowInvalidRequestForInvalidLocale() throws Exception {
         mockMvc.perform(get("/wallets/{walletId}/credentials", walletId)
-                        .param("locale", "invalid")
+                        .header("Accept-Language", "invalid")
+                        .param("issuer", issuer)
+                        .param("credentialConfigurationId", credentialConfigurationId)
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest());
@@ -226,7 +282,7 @@ public class WalletCredentialsControllerTest {
         when(httpSession.getAttribute("wallet_key")).thenReturn(null);
 
         mockMvc.perform(get("/wallets/{walletId}/credentials", walletId)
-                        .param("locale", locale)
+                        .header("Accept-Language", locale)
                         .accept(MediaType.APPLICATION_JSON)
                         .sessionAttr("wallet_id", walletId))
                 .andExpect(status().isBadRequest())
@@ -239,7 +295,7 @@ public class WalletCredentialsControllerTest {
         when(httpSession.getAttribute("wallet_id")).thenReturn("differentWalletId");
 
         mockMvc.perform(get("/wallets/{walletId}/credentials", walletId)
-                        .param("locale", locale)
+                        .header("Accept-Language", locale)
                         .accept(MediaType.APPLICATION_JSON)
                         .sessionAttr("wallet_id", "differentWalletId")
                         .sessionAttr("wallet_key", walletKey))
@@ -255,7 +311,7 @@ public class WalletCredentialsControllerTest {
                 .thenReturn(walletCredentialResponseDTO);
 
         mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
-                        .param("locale", locale)
+                        .header("Accept-Language", locale)
                         .param("action", "inline")
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
@@ -270,7 +326,7 @@ public class WalletCredentialsControllerTest {
                 .thenReturn(walletCredentialResponseDTO);
 
         mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
-                        .param("locale", locale)
+                        .header("Accept-Language", locale)
                         .param("action", "download")
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
@@ -283,7 +339,7 @@ public class WalletCredentialsControllerTest {
     public void shouldThrowInvalidRequestForInvalidAction() throws Exception {
         mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
                         .accept(MediaType.APPLICATION_JSON)
-                        .param("locale", locale)
+                        .header("Accept-Language", locale)
                         .param("action", "invalid")
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
@@ -297,7 +353,7 @@ public class WalletCredentialsControllerTest {
 
         mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
                         .accept(MediaType.APPLICATION_JSON)
-                        .param("locale", locale)
+                        .header("Accept-Language", locale)
                         .param("action", "inline")
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
@@ -319,7 +375,7 @@ public class WalletCredentialsControllerTest {
 
         mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
                         .accept(MediaType.APPLICATION_JSON)
-                        .param("locale", locale)
+                        .header("Accept-Language", locale)
                         .param("action", "inline")
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
@@ -335,7 +391,7 @@ public class WalletCredentialsControllerTest {
 
         mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
                         .accept(MediaType.APPLICATION_JSON)
-                        .param("locale", locale)
+                        .header("Accept-Language", locale)
                         .param("action", "inline")
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))

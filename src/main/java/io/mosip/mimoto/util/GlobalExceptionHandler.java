@@ -81,7 +81,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorDTO handleHandlerMethodValidationException(HandlerMethodValidationException ex) {
         log.error("Validation error in handler method: {}", ex.getMessage());
-        // You might want to extract more detailed information if available in this exception
+        //TODO: You might want to extract more detailed information if available in this exception
         return new ErrorDTO(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Validation error in request parameters");
     }
 
