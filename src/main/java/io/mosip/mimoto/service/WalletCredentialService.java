@@ -16,7 +16,7 @@ public interface WalletCredentialService {
      * Fetches and stores a credential for a wallet.
      *
      * @param issuerId       The issuer ID.
-     * @param credentialType The type of credential.
+     * @param credentialConfigurationId The type of credential.
      * @param tokenResponse  The token response containing the access token.
      * @param credentialValidity The validity period of the credential.
      * @param locale         The locale for display purposes.
@@ -25,7 +25,7 @@ public interface WalletCredentialService {
      * @return The stored credential response.
      * @throws CredentialProcessingException If processing fails.
      */
-    VerifiableCredentialResponseDTO fetchAndStoreCredential(String issuerId, String credentialType,
+    VerifiableCredentialResponseDTO fetchAndStoreCredential(String issuerId, String credentialConfigurationId,
                                                             TokenResponseDTO tokenResponse, String credentialValidity,
                                                             String locale, String walletId, String base64Key)
             throws CredentialProcessingException, ExternalServiceUnavailableException;

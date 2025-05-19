@@ -63,7 +63,7 @@ public class WalletCredentialsControllerTest {
     private String credentialId = "cred456";
     private String walletKey = "encodedKey";
     private String issuer = "issuer1";
-    private String credentialType = "type1";
+    private String credentialConfigurationId = "type1";
     private String locale = "en";
     private String vcStorageExpiryLimit = "-1";
 
@@ -90,14 +90,14 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldDownloadCredentialSuccessfully() throws Exception {
         when(credentialUtilService.getTokenResponse(anyMap(), eq(issuer))).thenReturn(new TokenResponseDTO());
-        when(walletCredentialService.fetchAndStoreCredential(eq(issuer), eq(credentialType), any(), eq(vcStorageExpiryLimit), eq(locale), eq(walletId), eq(walletKey)))
+        when(walletCredentialService.fetchAndStoreCredential(eq(issuer), eq(credentialConfigurationId), any(), eq(vcStorageExpiryLimit), eq(locale), eq(walletId), eq(walletKey)))
                 .thenReturn(verifiableCredentialResponseDTO);
 
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .accept(MediaType.APPLICATION_JSON)
                         .param("issuer", issuer)
-                        .param("credential", credentialType)
+                        .param("credentialConfigurationId", credentialConfigurationId)
                         .param("vcStorageExpiryLimitInTimes", vcStorageExpiryLimit)
                         .param("locale", locale)
                         .sessionAttr("wallet_id", walletId)
@@ -115,7 +115,7 @@ public class WalletCredentialsControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("issuer", issuer)
-                        .param("credential", credentialType)
+                        .param("credentialConfigurationId", credentialConfigurationId)
                         .sessionAttr("wallet_id", "differentWalletId")
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
@@ -131,7 +131,7 @@ public class WalletCredentialsControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("issuer", issuer)
-                        .param("credential", credentialType)
+                        .param("credentialConfigurationId", credentialConfigurationId)
                         .sessionAttr("wallet_id", walletId))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
@@ -139,7 +139,7 @@ public class WalletCredentialsControllerTest {
     }
 
     @Test
-    public void shouldThrowInvalidRequestForMissingIssuerOrCredential() throws Exception {
+    public void shouldThrowInvalidRequestForMissingIssuerOrCredentialConfigurationId() throws Exception {
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -148,7 +148,21 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Issuer and credential type are required"));
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Issuer and credentialConfigurationId are required"));
+    }
+
+    @Test
+    public void shouldThrowInvalidRequestForMissingCredentialConfigurationId() throws Exception {
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("issuer", issuer)
+                        .param("locale", locale)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Issuer and credentialConfigurationId are required"));
     }
 
     @Test
@@ -159,7 +173,7 @@ public class WalletCredentialsControllerTest {
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("issuer", issuer)
-                        .param("credential", credentialType)
+                        .param("credentialConfigurationId", credentialConfigurationId)
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isServiceUnavailable())
@@ -175,7 +189,7 @@ public class WalletCredentialsControllerTest {
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("issuer", issuer)
-                        .param("credential", credentialType)
+                        .param("credentialConfigurationId", credentialConfigurationId)
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isServiceUnavailable())

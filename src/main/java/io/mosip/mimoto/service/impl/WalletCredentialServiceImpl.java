@@ -52,16 +52,16 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     }
 
     @Override
-    public VerifiableCredentialResponseDTO fetchAndStoreCredential(String issuerId, String credentialType,
+    public VerifiableCredentialResponseDTO fetchAndStoreCredential(String issuerId, String credentialConfigurationId,
                                                                    TokenResponseDTO tokenResponse, String credentialValidity,
                                                                    String locale, String walletId, String base64Key)
             throws CredentialProcessingException, ExternalServiceUnavailableException {
-        log.info("Fetching and storing credential for wallet: {}, issuer: {}, type: {}", walletId, issuerId, credentialType);
+        log.info("Fetching and storing credential for wallet: {}, issuer: {}, type: {}", walletId, issuerId, credentialConfigurationId);
 
         Set<String> issuers = Set.of("Mosip");
         if (issuers.contains(issuerId)){
-            if (repository.existsByIssuerIdAndCredentialTypeAndWalletId(issuerId, credentialType, walletId)) {
-                log.warn("Duplicate credential found for issuer: {}, type: {}, wallet: {}", issuerId, credentialType, walletId);
+            if (repository.existsByIssuerIdAndCredentialTypeAndWalletId(issuerId, credentialConfigurationId, walletId)) {
+                log.warn("Duplicate credential found for issuer: {}, type: {}, wallet: {}", issuerId, credentialConfigurationId, walletId);
                 throw new CredentialProcessingException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), "Duplicate credential for issuer and type");
             }
         }
@@ -69,7 +69,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         VerifiableCredentialResponseDTO credential = null;
 
             credential = credentialProcessor.processAndStoreCredential(
-                    tokenResponse, credentialType, walletId, base64Key, credentialValidity, issuerId, locale);
+                    tokenResponse, credentialConfigurationId, walletId, base64Key, credentialValidity, issuerId, locale);
 
         log.debug("Credential stored successfully: {}", credential.getCredentialId());
             return credential;

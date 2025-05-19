@@ -2968,7 +2968,7 @@
                                     "Missing required params": {
                                         "value": {
                                             "errorCode": "invalid_request",
-                                            "errorMessage": "Issuer and credential type are required"
+                                            "errorMessage": "Issuer and credentialConfiguration are required"
                                         }
                                     },
                                     "Wallet ID is null or blank": {
