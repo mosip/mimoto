@@ -12,17 +12,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VerifiableCredentialResponseDTO {
-    @JsonProperty("issuer_name")
+    @JsonProperty("issuer_display_name")
     @Schema(description = "Name of the issuer")
-    private String issuerName;
+    private String issuerDisplayName;
 
     @JsonProperty("issuer_logo")
     @Schema(description = "logo of the issuer")
     private String issuerLogo;
 
-    @JsonProperty("credential_type")
+    @JsonProperty("credential_type_display_name")
     @Schema(description = "Name of the credential type")
-    private String credentialType;
+    private String credentialTypeDisplayName;
 
     @JsonProperty("credential_type_logo")
     @Schema(description = "logo of the credential type")

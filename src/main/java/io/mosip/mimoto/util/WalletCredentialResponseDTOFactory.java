@@ -33,9 +33,9 @@ public class WalletCredentialResponseDTOFactory {
         }
 
         return VerifiableCredentialResponseDTO.builder()
-                .issuerName(issuerName)
+                .issuerDisplayName(issuerName)
                 .issuerLogo(issuerLogo)
-                .credentialType(credentialType)
+                .credentialTypeDisplayName(credentialType)
                 .credentialTypeLogo(credentialTypeLogo)
                 .credentialId(credentialId)
                 .build();

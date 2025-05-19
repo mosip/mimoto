@@ -74,9 +74,9 @@ public class WalletCredentialsControllerTest {
     public void setup() {
         MockitoAnnotations.openMocks(this);
         verifiableCredentialResponseDTO = VerifiableCredentialResponseDTO.builder()
-                .issuerName("issuerName123")
+                .issuerDisplayName("issuerName123")
                 .issuerLogo("issuerLogo")
-                .credentialType("credentialType123")
+                .credentialTypeDisplayName("credentialType123")
                 .credentialTypeLogo("credentialTypeLogo")
                 .credentialId("credentialId123")
                 .build();
@@ -106,7 +106,7 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.issuer_name").value("issuerName123"))
+                .andExpect(jsonPath("$.issuer_display_name").value("issuerName123"))
                 .andExpect(jsonPath("$.credential_id").value("credentialId123"));
     }
 
@@ -263,7 +263,8 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].issuer_name").value("issuerName123"));
+                .andExpect(jsonPath("$[0].issuer_display_name").value("issuerName123"))
+                .andExpect(jsonPath("$[0].credential_type_display_name").value("credentialType123"));
     }
 
     @Test
