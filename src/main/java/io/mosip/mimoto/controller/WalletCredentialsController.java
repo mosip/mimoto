@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
@@ -212,6 +213,47 @@ public class WalletCredentialsController {
             log.error("Error processing credential for walletId: {} and credentialId: {}", walletId, credentialId, e);
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
+        }
+    }
+    /**
+     * Deletes a credential by its ID
+     *
+     * @param walletId The ID of the wallet that owns the credential
+     * @param credentialId The ID of the credential to delete
+     * @return ResponseEntity with HTTP status 200 if successful, 404 if credential not found, or 500 for other errors
+     */
+    @Operation(summary = SwaggerLiteralConstants.WALLET_CREDENTIALS_DELETE_SUMMARY, description = SwaggerLiteralConstants.WALLET_CREDENTIALS_DELETE_DESCRIPTION)
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Credential successfully deleted"),
+            @ApiResponse(responseCode = "403", description = "Unauthorized access to wallet"),
+            @ApiResponse(responseCode = "404", description = "Credential not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = {@Content(mediaType = "application/json")})})
+    @DeleteMapping("/{credentialId}")
+    public ResponseEntity<?> deleteCredential(@PathVariable("walletId") String walletId,
+                                              @PathVariable("credentialId") String credentialId,
+                                              HttpSession httpSession) {
+        try {
+            log.info("Deleting credential with ID: {} for walletId: {}", credentialId, walletId);
+
+            WalletUtil.validateWalletId(httpSession, walletId);
+
+            // Delete the credential
+            walletCredentialService.deleteCredential(credentialId, walletId);
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (InvalidRequestException exception) {
+            log.error("Invalid request: {}", exception.getMessage());
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    exception,
+                    exception.getErrorCode(),
+                    HttpStatus.BAD_REQUEST,
+                    MediaType.APPLICATION_JSON);
+        } catch (CredentialNotFoundException exception) {
+            log.error("Credential not found: {}", exception.getMessage());
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    exception,
+                    exception.getErrorCode(),
+                    HttpStatus.NOT_FOUND,
+                    MediaType.APPLICATION_JSON);
         }
     }
 }

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -118,5 +119,18 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         }
     }
 
+    @Override
+    public void deleteCredential(String credentialId, String walletId) throws CredentialNotFoundException {
+        log.info("Deleting credential with ID: {} for wallet: {}", credentialId, walletId);
+
+        VerifiableCredential credential = repository.findByIdAndWalletId(credentialId, walletId)
+                .orElseThrow(() -> {
+                    log.warn("Credential not found: {} for wallet: {}", credentialId, walletId);
+                    return new CredentialNotFoundException(RESOURCE_NOT_FOUND.getErrorCode(), RESOURCE_NOT_FOUND.getErrorMessage());
+                });
+        // Delete the credential
+        repository.deleteById(credentialId);
+        log.info("Successfully deleted credential with ID: {}", credentialId);
+    }
 
 }

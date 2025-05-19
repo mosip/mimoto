@@ -1,0 +1,10 @@
+extraEnvVars:
+  - name: DB_DBUSER_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: db-common-secrets
+        key: db-dbuser-password
+  - name: MOSIP_MIMOTO_DATABASE_HOSTNAME
+    value: postgres-postresql.postgres
+  - name: MOSIP_MIMOTO_DATABASE_PORT
+    value: "5432"

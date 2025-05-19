@@ -375,6 +375,15 @@
 						"url": "{{HOST}}/wallets/<walletId>/unlock"
 					},
 					"response": []
+				},
+				{
+					"name": "Delete Wallet",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "{{HOST}}/wallets/<walletId>"
+					},
+					"response": []
 				}
 			]
 		},
@@ -521,6 +530,15 @@
 								}
 							]
 						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Credential",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "{{HOST}}/wallets/<walletId>/credentials/<credentialId>"
 					},
 					"response": []
 				}

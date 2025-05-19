@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service.impl;
 
+import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
@@ -70,6 +71,19 @@ public class WalletServiceImpl implements WalletService {
         return walletIds.stream()
                 .map(id -> WalletResponseDto.builder().walletId(id).build())
                 .collect(Collectors.toList());
+
+    }
+
+    @Override
+    public void deleteWallet(String userId, String walletId) throws InvalidRequestException{
+        validator.validateUserId(userId);
+        Wallet existingWallet = repository.findByUserIdAndId(userId, walletId)
+                .orElseThrow(() -> {
+                    log.warn("Wallet not found: {} for user: {}", walletId, userId);
+                    return new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet not found");
+                });
+        repository.delete(existingWallet);
+        log.info("Successfully deleted wallet with ID: {} for user: {}", walletId, userId);
 
     }
 }
