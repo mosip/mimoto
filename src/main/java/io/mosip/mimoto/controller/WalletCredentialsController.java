@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static io.mosip.mimoto.exception.ErrorConstants.CREDENTIAL_DOWNLOAD_EXCEPTION;
 
@@ -78,7 +79,7 @@ public class WalletCredentialsController {
     @ApiResponse(responseCode = "200", description = "Verifiable Credential downloaded and stored successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = VerifiableCredentialResponseDTO.class)))
     @ApiResponse(responseCode = "400", description = "Bad request - Wallet key is null / blank or Wallet ID is null / blank / mismatch with session Wallet ID or required params are missing / invalid", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "Invalid Wallet Id", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Invalid Wallet ID. Session and request Wallet ID do not match\"}"), @ExampleObject(name = "Wallet key not found in session", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet key not found in session\"}"), @ExampleObject(name = "Missing required params", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Issuer and credentialConfigurationId are required\"}"), @ExampleObject(name = "Wallet ID is null or blank", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet ID cannot be null or blank\"}"), @ExampleObject(name = "Issuer ID is null or blank", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Issuer ID cannot be null or blank\"}")}))
     @ApiResponse(responseCode = "500", description = "Internal server error - error occurred while serializing the VC response, encrypting the credential, or storing it", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "Credential already exists", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Duplicate credential for issuer and type\"}"), @ExampleObject(name = "Issuer config error", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Unable to fetch issuer configuration\"}"), @ExampleObject(name = "Failed to generate VC request", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Unable to generate credential request\"}"), @ExampleObject(name = "Signature verification failed", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}"), @ExampleObject(name = "Unexpected server error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")}))
-    @ApiResponse(responseCode = "503", description = "Service unavailable - error while fetching issuer or auth server wellknown, downloading credential, or DB connection failure", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "API is not accessible", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Failed to download and store the credential\"}"), @ExampleObject(name = "Failed to download credential", value = "{\"errorCode\": \"server_unavailable\", \"errorMessage\": \"Unable to download credential from issuer\"}"), @ExampleObject(name = "Database connection failure", value = "{\"errorCode\": \"database_unavailable\", \"errorMessage\": \"Failed to connect to the database\"}")}))
+    @ApiResponse(responseCode = "503", description = "Service unavailable - error while fetching issuer or auth server well-known, downloading credential, or DB connection failure", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "API is not accessible", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Failed to download and store the credential\"}"), @ExampleObject(name = "Failed to download credential", value = "{\"errorCode\": \"server_unavailable\", \"errorMessage\": \"Unable to download credential from issuer\"}"), @ExampleObject(name = "Database connection failure", value = "{\"errorCode\": \"database_unavailable\", \"errorMessage\": \"Failed to connect to the database\"}")}))
     @PostMapping
     public ResponseEntity<VerifiableCredentialResponseDTO> downloadCredential(
             @RequestHeader(value = "Accept-Language", required = false, defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
@@ -183,9 +184,19 @@ public class WalletCredentialsController {
     public ResponseEntity<InputStreamResource> getVerifiableCredential(
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
             @PathVariable("credentialId") @NotBlank(message = "Credential ID cannot be blank") String credentialId,
+            @RequestHeader(value = "Accept", required = true) String accept,
             @RequestParam(value = "locale", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             @RequestParam(value = "action", defaultValue = "inline") @Pattern(regexp = "^(inline|download)$", message = "Action must be 'inline' or 'download'") String action,
             HttpSession httpSession) throws InvalidRequestException {
+        if(!Objects.equals(accept, "application/pdf")) {
+            System.out.println("Invalid Accept header");
+            log.error("Invalid Accept header: {}", accept);
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Accept header must be application/pdf"),
+                    ErrorConstants.INVALID_REQUEST.getErrorCode(),
+                    HttpStatus.BAD_REQUEST,
+                    MediaType.APPLICATION_JSON);
+        }
 
         WalletUtil.validateWalletId(httpSession, walletId);
         String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);

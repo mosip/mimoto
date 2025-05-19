@@ -312,6 +312,7 @@ public class WalletCredentialsControllerTest {
                 .thenReturn(walletCredentialResponseDTO);
 
         mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .accept(MediaType.APPLICATION_PDF)
                         .header("Accept-Language", locale)
                         .param("action", "inline")
                         .sessionAttr("wallet_id", walletId)
@@ -327,6 +328,7 @@ public class WalletCredentialsControllerTest {
                 .thenReturn(walletCredentialResponseDTO);
 
         mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .accept(MediaType.APPLICATION_PDF)
                         .header("Accept-Language", locale)
                         .param("action", "download")
                         .sessionAttr("wallet_id", walletId)
@@ -334,6 +336,19 @@ public class WalletCredentialsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"credential.pdf\""))
                 .andExpect(content().contentType(MediaType.APPLICATION_PDF));
+    }
+
+    @Test
+    public void shouldThrowInvalidRequestForInvalidAcceptHeader() throws Exception {
+        mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .header("Accept-Language", locale)
+                        .param("Accept", "application/json")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("Accept header must be application/pdf"));
     }
 
     @Test
@@ -353,7 +368,7 @@ public class WalletCredentialsControllerTest {
                 .thenThrow(new CredentialNotFoundException(RESOURCE_NOT_FOUND.getErrorCode(), RESOURCE_NOT_FOUND.getErrorMessage()));
 
         mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
-                        .accept(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_PDF)
                         .header("Accept-Language", locale)
                         .param("action", "inline")
                         .sessionAttr("wallet_id", walletId)
@@ -375,7 +390,7 @@ public class WalletCredentialsControllerTest {
                 .thenThrow(new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Decryption failed"));
 
         mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
-                        .accept(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_PDF)
                         .header("Accept-Language", locale)
                         .param("action", "inline")
                         .sessionAttr("wallet_id", walletId)
@@ -391,7 +406,7 @@ public class WalletCredentialsControllerTest {
                 .thenThrow(new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "CORRUPTED_DATA"));
 
         mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
-                        .accept(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_PDF)
                         .header("Accept-Language", locale)
                         .param("action", "inline")
                         .sessionAttr("wallet_id", walletId)
