@@ -2,8 +2,6 @@ package io.mosip.mimoto.security.oauth2;
 
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
-import io.mosip.mimoto.exception.DecryptionException;
-import io.mosip.mimoto.service.UserMetadataService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,9 +29,6 @@ public class OAuth2AuthenticationSuccessHandlerTest {
     private OAuth2AuthenticationSuccessHandler successHandler;
 
     @Mock
-    private UserMetadataService userMetadataService;
-
-    @Mock
     private HttpServletRequest request;
 
     @Mock
@@ -50,7 +45,6 @@ public class OAuth2AuthenticationSuccessHandlerTest {
 
     private static final String INJI_WEB_URL = "https://example.com";
     private static final String CLIENT_REGISTRATION_ID = "google";
-    private static final String PROVIDER_SUBJECT_ID = "sub123";
     private static final String DISPLAY_NAME = "John Doe";
     private static final String PROFILE_PICTURE_URL = "https://example.com/profile.jpg";
     private static final String EMAIL = "john.doe@example.com";
@@ -58,126 +52,70 @@ public class OAuth2AuthenticationSuccessHandlerTest {
 
     @Before
     public void setUp() throws Exception {
-        // Set the injiWebUrl field using reflection to simulate @Value injection
         Field injiWebUrlField = OAuth2AuthenticationSuccessHandler.class.getDeclaredField("injiWebUrl");
         injiWebUrlField.setAccessible(true);
         injiWebUrlField.set(successHandler, INJI_WEB_URL);
 
-        // Mock session behavior
         when(request.getSession(false)).thenReturn(session);
     }
 
     @Test
-    public void onAuthenticationSuccessSetsSessionAttributesAndRedirects() throws IOException, ServletException, DecryptionException {
-        // Arrange
+    public void testOnAuthenticationSuccessSetsAttributesAndRedirects() throws Exception {
         when(oauth2Token.getAuthorizedClientRegistrationId()).thenReturn(CLIENT_REGISTRATION_ID);
         when(oauth2Token.getPrincipal()).thenReturn(oauth2User);
-        when(oauth2User.getAttribute("sub")).thenReturn(PROVIDER_SUBJECT_ID);
         when(oauth2User.getAttribute("name")).thenReturn(DISPLAY_NAME);
         when(oauth2User.getAttribute("picture")).thenReturn(PROFILE_PICTURE_URL);
         when(oauth2User.getAttribute("email")).thenReturn(EMAIL);
-        when(userMetadataService.updateOrInsertUserMetadata(
-                eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), eq(DISPLAY_NAME),
-                eq(PROFILE_PICTURE_URL), eq(EMAIL)))
-                .thenReturn(USER_ID);
+        when(oauth2User.getAttribute("userId")).thenReturn(USER_ID);
 
-        // Act
         successHandler.onAuthenticationSuccess(request, response, oauth2Token);
 
-        // Assert
-        verify(session).setAttribute(eq("clientRegistrationId"), eq(CLIENT_REGISTRATION_ID));
-        verify(session).setAttribute(eq(SessionKeys.USER_ID), eq(USER_ID));
-        verify(response).sendRedirect(eq(INJI_WEB_URL + "/login?status=success"));
-        verify(userMetadataService).updateOrInsertUserMetadata(
-                eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), eq(DISPLAY_NAME),
-                eq(PROFILE_PICTURE_URL), eq(EMAIL));
+        verify(session).setAttribute("clientRegistrationId", CLIENT_REGISTRATION_ID);
+        verify(session).setAttribute(SessionKeys.USER_ID, USER_ID);
+        verify(response).sendRedirect(INJI_WEB_URL + "/login?status=success");
 
-        // Verify UserMetadataDTO using ArgumentCaptor
         ArgumentCaptor<UserMetadataDTO> captor = ArgumentCaptor.forClass(UserMetadataDTO.class);
         verify(session).setAttribute(eq(SessionKeys.USER_METADATA), captor.capture());
-        UserMetadataDTO userMetadataDTO = captor.getValue();
-        assertEquals(DISPLAY_NAME, userMetadataDTO.getDisplayName());
-        assertEquals(PROFILE_PICTURE_URL, userMetadataDTO.getProfilePictureUrl());
-        assertEquals(EMAIL, userMetadataDTO.getEmail());
+
+        UserMetadataDTO dto = captor.getValue();
+        assertEquals(DISPLAY_NAME, dto.getDisplayName());
+        assertEquals(PROFILE_PICTURE_URL, dto.getProfilePictureUrl());
+        assertEquals(EMAIL, dto.getEmail());
     }
 
     @Test
-    public void onAuthenticationSuccessWithNullAttributesSetsSessionAttributesAndRedirects() throws IOException, ServletException, DecryptionException {
-        // Arrange
+    public void testOnAuthenticationSuccessWithNullAttributes() throws Exception {
         when(oauth2Token.getAuthorizedClientRegistrationId()).thenReturn(CLIENT_REGISTRATION_ID);
         when(oauth2Token.getPrincipal()).thenReturn(oauth2User);
-        when(oauth2User.getAttribute("sub")).thenReturn(PROVIDER_SUBJECT_ID);
         when(oauth2User.getAttribute("name")).thenReturn(null);
         when(oauth2User.getAttribute("picture")).thenReturn(null);
         when(oauth2User.getAttribute("email")).thenReturn(null);
-        when(userMetadataService.updateOrInsertUserMetadata(
-                eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), isNull(),
-                isNull(), isNull()))
-                .thenReturn(USER_ID);
+        when(oauth2User.getAttribute("userId")).thenReturn(USER_ID);
 
-        // Act
         successHandler.onAuthenticationSuccess(request, response, oauth2Token);
 
-        // Assert
-        verify(session).setAttribute(eq("clientRegistrationId"), eq(CLIENT_REGISTRATION_ID));
-        verify(session).setAttribute(eq(SessionKeys.USER_ID), eq(USER_ID));
-        verify(response).sendRedirect(eq(INJI_WEB_URL + "/login?status=success"));
-        verify(userMetadataService).updateOrInsertUserMetadata(
-                eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), isNull(),
-                isNull(), isNull());
+        verify(session).setAttribute("clientRegistrationId", CLIENT_REGISTRATION_ID);
+        verify(session).setAttribute(SessionKeys.USER_ID, USER_ID);
+        verify(response).sendRedirect(INJI_WEB_URL + "/login?status=success");
 
-        // Verify UserMetadataDTO using ArgumentCaptor
         ArgumentCaptor<UserMetadataDTO> captor = ArgumentCaptor.forClass(UserMetadataDTO.class);
         verify(session).setAttribute(eq(SessionKeys.USER_METADATA), captor.capture());
-        UserMetadataDTO userMetadataDTO = captor.getValue();
-        assertNull(userMetadataDTO.getDisplayName());
-        assertNull(userMetadataDTO.getProfilePictureUrl());
-        assertNull(userMetadataDTO.getEmail());
+
+        UserMetadataDTO dto = captor.getValue();
+        assertNull(dto.getDisplayName());
+        assertNull(dto.getProfilePictureUrl());
+        assertNull(dto.getEmail());
     }
 
     @Test
-    public void onAuthenticationSuccessWithNullSessionThrowsServletException() throws IOException {
-        // Arrange
+    public void testOnAuthenticationSuccessWithNullSessionThrows() throws IOException {
         when(request.getSession(false)).thenReturn(null);
 
-        // Act & Assert
-        try {
-            successHandler.onAuthenticationSuccess(request, response, oauth2Token);
-            fail("Expected ServletException");
-        } catch (ServletException e) {
-            assertEquals("Session not available", e.getMessage());
-        }
-        verifyNoInteractions(userMetadataService, session);
-        verify(response, never()).sendRedirect(anyString());
-    }
+        ServletException thrown = assertThrows(ServletException.class, () ->
+                successHandler.onAuthenticationSuccess(request, response, oauth2Token)
+        );
 
-    @Test
-    public void onAuthenticationSuccessWithServiceFailureThrowsIOException() throws IOException, ServletException, DecryptionException {
-        // Arrange
-        when(oauth2Token.getAuthorizedClientRegistrationId()).thenReturn(CLIENT_REGISTRATION_ID);
-        when(oauth2Token.getPrincipal()).thenReturn(oauth2User);
-        when(oauth2User.getAttribute("sub")).thenReturn(PROVIDER_SUBJECT_ID);
-        when(oauth2User.getAttribute("name")).thenReturn(DISPLAY_NAME);
-        when(oauth2User.getAttribute("picture")).thenReturn(PROFILE_PICTURE_URL);
-        when(oauth2User.getAttribute("email")).thenReturn(EMAIL);
-        when(userMetadataService.updateOrInsertUserMetadata(
-                eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), eq(DISPLAY_NAME),
-                eq(PROFILE_PICTURE_URL), eq(EMAIL)))
-                .thenThrow(new RuntimeException("Service failure"));
-
-        // Act & Assert
-        try {
-            successHandler.onAuthenticationSuccess(request, response, oauth2Token);
-            fail("Expected IOException");
-        } catch (RuntimeException e) {
-            assertEquals("Service failure", e.getMessage());
-        }
-        verify(session).setAttribute(eq("clientRegistrationId"), eq(CLIENT_REGISTRATION_ID));
-        verify(userMetadataService).updateOrInsertUserMetadata(
-                eq(PROVIDER_SUBJECT_ID), eq(CLIENT_REGISTRATION_ID), eq(DISPLAY_NAME),
-                eq(PROFILE_PICTURE_URL), eq(EMAIL));
-        verify(session, never()).setAttribute(eq(SessionKeys.USER_METADATA), any());
-        verify(session, never()).setAttribute(eq(SessionKeys.USER_ID), any());
+        assertEquals("Session not available", thrown.getMessage());
         verify(response, never()).sendRedirect(anyString());
     }
 }
