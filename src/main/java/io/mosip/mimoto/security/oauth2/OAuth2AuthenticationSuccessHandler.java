@@ -47,6 +47,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String userId = oAuth2User.getAttribute("userId");
         session.setAttribute(SessionKeys.USER_ID, userId);
 
-        response.sendRedirect(injiWebUrl + "/login?status=success");
+        response.sendRedirect(injiWebUrl + "/pin");
     }
 }
