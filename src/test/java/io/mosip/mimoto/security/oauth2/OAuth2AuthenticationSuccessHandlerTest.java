@@ -72,7 +72,7 @@ public class OAuth2AuthenticationSuccessHandlerTest {
 
         verify(session).setAttribute("clientRegistrationId", CLIENT_REGISTRATION_ID);
         verify(session).setAttribute(SessionKeys.USER_ID, USER_ID);
-        verify(response).sendRedirect(INJI_WEB_URL + "/login?status=success");
+        verify(response).sendRedirect(INJI_WEB_URL + "/pin");
 
         ArgumentCaptor<UserMetadataDTO> captor = ArgumentCaptor.forClass(UserMetadataDTO.class);
         verify(session).setAttribute(eq(SessionKeys.USER_METADATA), captor.capture());
@@ -96,7 +96,7 @@ public class OAuth2AuthenticationSuccessHandlerTest {
 
         verify(session).setAttribute("clientRegistrationId", CLIENT_REGISTRATION_ID);
         verify(session).setAttribute(SessionKeys.USER_ID, USER_ID);
-        verify(response).sendRedirect(INJI_WEB_URL + "/login?status=success");
+        verify(response).sendRedirect(INJI_WEB_URL + "/pin");
 
         ArgumentCaptor<UserMetadataDTO> captor = ArgumentCaptor.forClass(UserMetadataDTO.class);
         verify(session).setAttribute(eq(SessionKeys.USER_METADATA), captor.capture());
