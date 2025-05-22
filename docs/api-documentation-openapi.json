@@ -3442,16 +3442,16 @@
                                             "errorMessage": "Wallet name must be alphanumeric with allowed special characters"
                                         }
                                     },
-                                    "Invalid Wallet Pin": {
+                                    "Invalid Wallet Passcode": {
                                         "value": {
                                             "errorCode": "invalid_request",
-                                            "errorMessage": "PIN must be numeric with 4 or 6 digits"
+                                            "errorMessage": "Passcode must be numeric with 6 digits"
                                         }
                                     },
-                                    "Wallet Pin and confirm Pin Mismatch": {
+                                    "Entered Passcode and Confirm Passcode Mismatch": {
                                         "value": {
                                             "errorCode": "invalid_request",
-                                            "errorMessage": "Entered PIN and confirmation PIN do not match"
+                                            "errorMessage": "Entered Passcode and Confirm Passcode do not match"
                                         }
                                     }
                                 }
@@ -3845,10 +3845,10 @@
                                             "errorMessage": "User ID cannot be null or empty"
                                         }
                                     },
-                                    "Invalid Wallet Pin": {
+                                    "Invalid Wallet Passcode": {
                                         "value": {
                                             "errorCode": "invalid_request",
-                                            "errorMessage": "PIN must be numeric with 4 or 6 digits"
+                                            "errorMessage": "Passcode must be numeric with 6 digits"
                                         }
                                     }
                                 }

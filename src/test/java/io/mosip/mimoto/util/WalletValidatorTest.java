@@ -34,7 +34,7 @@ public class WalletValidatorTest {
             walletValidator.validateWalletPin("12");
         });
 
-        assertEquals("invalid_request --> PIN must be numeric with 4 or 6 digits", exception.getMessage());
+        assertEquals("invalid_request --> Passcode must be numeric with 6 digits", exception.getMessage());
     }
 
     @Test
