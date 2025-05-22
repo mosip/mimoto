@@ -3385,13 +3385,14 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/WalletRequestDto"
+                                "$ref": "#/components/schemas/CreateWalletRequestDto"
                             },
                             "examples": {
                                 "Create wallet request": {
                                     "value": {
-                                        "walletName": "wallet 123",
-                                        "walletPin": "1234"
+                                        "walletPin": "1234",
+                                        "confirmWalletPin": "1234",
+                                        "walletName": "wallet 123"
                                     }
                                 }
                             }
@@ -3445,6 +3446,12 @@
                                         "value": {
                                             "errorCode": "invalid_request",
                                             "errorMessage": "PIN must be numeric with 4 or 6 digits"
+                                        }
+                                    },
+                                    "Wallet Pin and confirm Pin Mismatch": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Entered PIN and confirmation PIN do not match"
                                         }
                                     }
                                 }
@@ -3782,7 +3789,14 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/WalletRequestDto"
+                                "$ref": "#/components/schemas/UnlockWalletRequestDto"
+                            },
+                            "examples": {
+                                "Unlock wallet request": {
+                                    "value": {
+                                        "walletPin": "1234"
+                                    }
+                                }
                             }
                         }
                     }
@@ -4060,7 +4074,28 @@
                     }
                 }
             },
-            "WalletRequestDto": {
+            "CreateWalletRequestDto": {
+                "type": "object",
+                "properties": {
+                    "walletPin": {
+                        "type": "string",
+                        "description": "PIN used to unlock the Wallet"
+                    },
+                    "confirmWalletPin": {
+                        "type": "string",
+                        "description": "Re-entered PIN used to confirm the Wallet PIN"
+                    },
+                    "walletName": {
+                        "type": "string",
+                        "description": "Name of the Wallet"
+                    }
+                },
+                "required": [
+                    "walletPin",
+                    "confirmWalletPin"
+                ]
+            },
+            "UnlockWalletRequestDto": {
                 "type": "object",
                 "properties": {
                     "walletName": {
@@ -4177,7 +4212,6 @@
                     }
                 }
             },
-
             "AppVIDGenerateRequestDTO": {
                 "type": "object",
                 "properties": {

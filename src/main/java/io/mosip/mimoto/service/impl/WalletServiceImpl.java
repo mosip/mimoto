@@ -34,12 +34,18 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public String createWallet(String userId, String name, String pin) throws InvalidRequestException {
+    public String createWallet(String userId, String name, String pin, String confirmPin) throws InvalidRequestException {
         log.info("Creating wallet for user: {}, name: {}", userId, name);
 
         validator.validateUserId(userId);
         validator.validateWalletName(name);
         validator.validateWalletPin(pin);
+        validator.validateWalletPin(confirmPin);
+
+        if (!pin.equals(confirmPin)) {
+            log.warn("Wallet PIN and confirm PIN are not matching: {}", userId);
+            throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Entered PIN and confirmation PIN do not match");
+        }
 
         String walletId = walletUtil.createWallet(userId, name, pin);
         log.debug("Wallet created successfully: {}", walletId);
