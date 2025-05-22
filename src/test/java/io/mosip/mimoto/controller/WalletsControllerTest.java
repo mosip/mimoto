@@ -107,7 +107,7 @@ public class WalletsControllerTest {
     public void shouldThrowExceptionIfReceivedPINAndConfirmPINDoNotMatch() throws Exception {
         createWalletRequestDto.setConfirmWalletPin("2345");
         when(walletService.createWallet(userId, walletName, walletPin, "2345"))
-                .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Entered Passcode and Confirm Passcode do not match"));
+                .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Entered PIN and Confirm PIN do not match"));
 
         mockMvc.perform(post("/wallets")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -118,7 +118,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Entered Passcode and Confirm Passcode do not match"));
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Entered PIN and Confirm PIN do not match"));
     }
 
     @Test

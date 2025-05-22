@@ -44,7 +44,7 @@ public class WalletServiceImpl implements WalletService {
 
         if (!pin.equals(confirmPin)) {
             log.warn("Wallet PIN and confirm PIN are not matching: {}", userId);
-            throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Entered Passcode and Confirm Passcode do not match");
+            throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Entered PIN and Confirm PIN do not match");
         }
 
         String walletId = walletUtil.createWallet(userId, name, pin);

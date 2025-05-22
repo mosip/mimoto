@@ -145,7 +145,7 @@ public class WalletServiceTest {
                 walletService.createWallet(userId, name, walletPin, walletConfirmPin));
 
         assertEquals("invalid_request", exception.getErrorCode());
-        assertEquals("invalid_request --> Entered Passcode and Confirm Passcode do not match", exception.getMessage());
+        assertEquals("invalid_request --> Entered PIN and Confirm PIN do not match", exception.getMessage());
     }
 
     @Test

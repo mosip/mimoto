@@ -3442,16 +3442,16 @@
                                             "errorMessage": "Wallet name must be alphanumeric with allowed special characters"
                                         }
                                     },
-                                    "Invalid Wallet Passcode": {
+                                    "Invalid Wallet PIN": {
                                         "value": {
                                             "errorCode": "invalid_request",
-                                            "errorMessage": "Passcode must be numeric with 6 digits"
+                                            "errorMessage": "PIN must be numeric with 6 digits"
                                         }
                                     },
                                     "Entered Passcode and Confirm Passcode Mismatch": {
                                         "value": {
                                             "errorCode": "invalid_request",
-                                            "errorMessage": "Entered Passcode and Confirm Passcode do not match"
+                                            "errorMessage": "Entered PIN and Confirm PIN do not match"
                                         }
                                     }
                                 }
@@ -3845,10 +3845,10 @@
                                             "errorMessage": "User ID cannot be null or empty"
                                         }
                                     },
-                                    "Invalid Wallet Passcode": {
+                                    "Invalid Wallet PIN": {
                                         "value": {
                                             "errorCode": "invalid_request",
-                                            "errorMessage": "Passcode must be numeric with 6 digits"
+                                            "errorMessage": "PIN must be numeric with 6 digits"
                                         }
                                     }
                                 }
