@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
+import static io.mosip.mimoto.exception.ErrorConstants.WALLET_LOCKED;
 
 @Component
 @Slf4j
@@ -93,7 +94,7 @@ public class WalletUtil {
 
     public static void validateWalletId(HttpSession session, String walletIdFromRequest) {
         Object sessionWalletId = session.getAttribute(SessionKeys.WALLET_ID);
-        if (sessionWalletId == null) throw new InvalidRequestException("wallet_locked", "Wallet is locked");
+        if (sessionWalletId == null) throw new InvalidRequestException(WALLET_LOCKED.getErrorCode(), WALLET_LOCKED.getErrorMessage());
 
         String walletIdInSession = sessionWalletId.toString();
         if (!walletIdInSession.equals(walletIdFromRequest)) {
