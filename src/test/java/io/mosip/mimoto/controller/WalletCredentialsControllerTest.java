@@ -111,6 +111,21 @@ public class WalletCredentialsControllerTest {
     }
 
     @Test
+    public void shouldReturnErrorResponseWhenSessionDoesNotHaveWalletIdAndKey() throws Exception {
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header("Accept-Language", locale)
+                        .param("issuer", issuer)
+                        .param("credentialConfigurationId", credentialConfigurationId)
+                        .param("vcStorageExpiryLimitInTimes", vcStorageExpiryLimit)
+                        )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("wallet_locked"))
+                .andExpect(jsonPath("$.errorMessage").value("wallet_locked --> Wallet is locked"));
+    }
+
+    @Test
     public void shouldCallServiceWithCorrectParameters() throws Exception {
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)

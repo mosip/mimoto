@@ -84,6 +84,7 @@ public class WalletCredentialsController {
     public ResponseEntity<VerifiableCredentialResponseDTO> downloadCredential(
             @RequestHeader(value = "Accept-Language", required = false, defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
+            // TODO: Extract params map to DTO to handle validation internally
             @RequestParam Map<String, String> params,
             HttpSession httpSession) throws InvalidRequestException {
 
@@ -185,11 +186,10 @@ public class WalletCredentialsController {
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
             @PathVariable("credentialId") @NotBlank(message = "Credential ID cannot be blank") String credentialId,
             @RequestHeader(value = "Accept", required = true) String accept,
-            @RequestParam(value = "locale", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
+            @RequestHeader(value = "Accept-Language", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             @RequestParam(value = "action", defaultValue = "inline") @Pattern(regexp = "^(inline|download)$", message = "Action must be 'inline' or 'download'") String action,
             HttpSession httpSession) throws InvalidRequestException {
         if(!Objects.equals(accept, "application/pdf")) {
-            System.out.println("Invalid Accept header");
             log.error("Invalid Accept header: {}", accept);
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Accept header must be application/pdf"),
