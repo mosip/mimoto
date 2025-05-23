@@ -28,6 +28,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -73,7 +74,7 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldReturnWalletIdForSuccessfulWalletCreation() throws Exception {
-        when(walletService.createWallet(userId, walletName, walletPin, confirmWalletPin)).thenReturn(walletId);
+        when(walletService.createWallet(userId, walletName, walletPin, confirmWalletPin)).thenReturn(new WalletResponseDto(walletId, walletName));
 
         mockMvc.perform(post("/wallets")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -83,7 +84,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
-                .andExpect(content().string(walletId));
+                .andExpect(content().json("{\"walletId\": \"walletId123\",\"walletName\": \"My Wallet\"}", true));
     }
 
     @Test
@@ -123,8 +124,8 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldReturnListOfWalletIDsForValidUserId() throws Exception {
-        List<WalletResponseDto> wallets = List.of(new WalletResponseDto("wallet1"),
-                new WalletResponseDto("wallet2"));
+        List<WalletResponseDto> wallets = List.of(new WalletResponseDto("wallet1", "Wallet1"),
+                new WalletResponseDto("wallet2", "Wallet2"));
         when(walletService.getWallets(userId)).thenReturn(wallets);
 
         mockMvc.perform(get("/wallets")
@@ -133,7 +134,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
-                .andExpect(content().string("[{\"walletId\":\"wallet1\"},{\"walletId\":\"wallet2\"}]"));
+                .andExpect(content().string("[{\"walletId\":\"wallet1\",\"walletName\":\"Wallet1\"},{\"walletId\":\"wallet2\",\"walletName\":\"Wallet2\"}]"));
     }
 
     @Test
@@ -164,7 +165,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
-                .andExpect(content().string("{\"walletId\":\"walletId123\"}"))
+                .andExpect(content().string("{\"walletId\":\"walletId123\",\"walletName\":null}"))
                 .andReturn();
 
         String actualWalletKey = result.getRequest().getSession().getAttribute("wallet_key").toString();

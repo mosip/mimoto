@@ -3,9 +3,7 @@ package io.mosip.mimoto.service;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.InvalidRequestException;
 
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Service interface for managing wallets.
@@ -22,7 +20,7 @@ public interface WalletService {
      * @throws InvalidRequestException If the request is invalid.
      * Example: Wallet PIN and Confirm Wallet PIN received in request don't match
      */
-    String createWallet(String userId, String name, String pin, String confirmPin) throws InvalidRequestException;
+    WalletResponseDto createWallet(String userId, String name, String pin, String confirmPin) throws InvalidRequestException;
 
     /**
      * Retrieves the decrypted wallet key.

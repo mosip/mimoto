@@ -4,11 +4,11 @@ import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dbentity.WalletMetadata;
-import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.repository.WalletRepository;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +20,7 @@ import java.util.UUID;
 import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
 
 @Component
+@Slf4j
 public class WalletUtil {
 
     @Autowired
@@ -27,6 +28,13 @@ public class WalletUtil {
 
     @Autowired
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
+
+    public static void validateUserId(String userId) {
+        if (userId == null) {
+            log.error("User ID not found in session.");
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "User ID not found in session");
+        }
+    }
 
     public String decryptWalletKey(String encryptedWalletKey, String pin) {
         return encryptionDecryptionUtil.decryptWithPin(encryptedWalletKey, pin);
@@ -85,7 +93,7 @@ public class WalletUtil {
 
     public static void validateWalletId(HttpSession session, String walletIdFromRequest) {
         Object sessionWalletId = session.getAttribute(SessionKeys.WALLET_ID);
-        if (sessionWalletId == null) throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet ID is missing in session");
+        if (sessionWalletId == null) throw new InvalidRequestException("wallet_locked", "Wallet is locked");
 
         String walletIdInSession = sessionWalletId.toString();
         if (!walletIdInSession.equals(walletIdFromRequest)) {

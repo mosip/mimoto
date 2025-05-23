@@ -1,6 +1,7 @@
 package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dbentity.Wallet;
+import io.mosip.mimoto.dbentity.WalletMetadata;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.repository.WalletRepository;
@@ -15,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -63,13 +65,30 @@ public class WalletServiceTest {
         String newWalletId = UUID.randomUUID().toString();
         when(walletHelper.createWallet(userId, name, walletPin)).thenReturn(newWalletId);
 
-        String result = walletService.createWallet(userId, name, walletPin, walletConfirmPin);
+        WalletResponseDto result = walletService.createWallet(userId, name, walletPin, walletConfirmPin);
 
-        assertEquals(newWalletId, result);
+        assertEquals(newWalletId, result.getWalletId());
+        assertEquals("default", result.getWalletName());
         verify(walletValidator).validateUserId(userId);
         verify(walletValidator).validateWalletName(name);
         verify(walletValidator).validateWalletPin(walletPin);
         verify(walletHelper).createWallet(userId, name, walletPin);
+    }
+
+    @Test
+    public void shouldCreateWalletSuccessfullyIfWalletNameIsNotProvided() throws Exception {
+        String newWalletId = UUID.randomUUID().toString();
+        when(walletHelper.createWallet(userId, null, walletPin)).thenReturn(newWalletId);
+
+        WalletResponseDto result = walletService.createWallet(userId, null, walletPin, walletConfirmPin);
+
+        assertEquals(newWalletId, result.getWalletId());
+        assertNull(result.getWalletName());
+        verify(walletValidator).validateUserId(userId);
+        verify(walletValidator).validateWalletName(null);
+        verify(walletValidator).validateWalletPin(walletPin);
+
+        verify(walletHelper).createWallet(userId, null, walletPin);
     }
 
     @Test
@@ -99,26 +118,40 @@ public class WalletServiceTest {
 
     @Test
     public void shouldReturnListOfWalletResponseDtosForGivenUserId() {
-        List<String> walletIds = Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString());
-        when(walletRepository.findWalletIdByUserId(userId)).thenReturn(walletIds);
+        String walletId1 = UUID.randomUUID().toString();
+        String walletId2 = UUID.randomUUID().toString();
+        WalletMetadata walletMetadata = new WalletMetadata();
+        walletMetadata.setEncryptionAlgo("AES");
+        walletMetadata.setEncryptionType("symmetric");
+        walletMetadata.setName("Test Wallet");
+        List<String> walletIds = Arrays.asList(walletId1, walletId2);
+        List<String> walletNames = Arrays.asList(null, "Test Wallet");
+        Wallet wallet1 = new Wallet(
+                walletId1, "mock-user-id", "mock-encrypted-key", new WalletMetadata(), List.of(), Instant.now(), Instant.now()
+        );
+        Wallet wallet2 = new Wallet(
+                walletId2, "mock-user-id-2", "mock-encrypted-key", walletMetadata, List.of(), Instant.now(), Instant.now()
+        );
+        when(walletRepository.findWalletByUserId(userId)).thenReturn(List.of(wallet1, wallet2));
 
         List<WalletResponseDto> result = walletService.getWallets(userId);
 
         assertEquals(walletIds.size(), result.size());
         for (int i = 0; i < walletIds.size(); i++) {
             assertEquals(walletIds.get(i), result.get(i).getWalletId());
+            assertEquals(walletNames.get(i), result.get(i).getWalletName());
         }
-        verify(walletRepository).findWalletIdByUserId(userId);
+        verify(walletRepository).findWalletByUserId(userId);
     }
 
     @Test
     public void shouldReturnEmptyListIfNoWalletsFoundForGivenUserId() {
-        when(walletRepository.findWalletIdByUserId(userId)).thenReturn(List.of());
+        when(walletRepository.findWalletByUserId(userId)).thenReturn(List.of());
 
         List<WalletResponseDto> result = walletService.getWallets(userId);
 
         assertTrue(result.isEmpty());
-        verify(walletRepository).findWalletIdByUserId(userId);
+        verify(walletRepository).findWalletByUserId(userId);
     }
 
     @Test

@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Implementation of {@link WalletService} for managing wallets.
@@ -34,7 +33,7 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public String createWallet(String userId, String name, String pin, String confirmPin) throws InvalidRequestException {
+    public WalletResponseDto createWallet(String userId, String name, String pin, String confirmPin) throws InvalidRequestException {
         log.info("Creating wallet for user: {}, name: {}", userId, name);
 
         validator.validateUserId(userId);
@@ -48,8 +47,7 @@ public class WalletServiceImpl implements WalletService {
 
         String walletId = walletUtil.createWallet(userId, name, pin);
         log.debug("Wallet created successfully: {}", walletId);
-        return walletId;
-
+        return new WalletResponseDto(walletId, name);
     }
 
     @Override
@@ -72,15 +70,17 @@ public class WalletServiceImpl implements WalletService {
     public List<WalletResponseDto> getWallets(String userId) {
         log.info("Retrieving wallets for user: {}", userId);
 
-        List<String> walletIds = repository.findWalletIdByUserId(userId);
-        return walletIds.stream()
-                .map(id -> WalletResponseDto.builder().walletId(id).build())
-                .collect(Collectors.toList());
-
+        List<Wallet> wallets = repository.findWalletByUserId(userId);
+        return wallets.stream()
+                .map(wallet -> WalletResponseDto.builder()
+                        .walletId(wallet.getId())
+                        .walletName(wallet.getWalletMetadata().getName())
+                        .build())
+                .toList();
     }
 
     @Override
-    public void deleteWallet(String userId, String walletId) throws InvalidRequestException{
+    public void deleteWallet(String userId, String walletId) throws InvalidRequestException {
         validator.validateUserId(userId);
         Wallet existingWallet = repository.findByUserIdAndId(userId, walletId)
                 .orElseThrow(() -> {

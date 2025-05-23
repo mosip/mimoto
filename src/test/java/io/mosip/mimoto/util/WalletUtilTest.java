@@ -1,8 +1,11 @@
 package io.mosip.mimoto.util;
 
+import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.exception.DecryptionException;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.repository.WalletRepository;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,15 +16,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.crypto.SecretKey;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 @Slf4j
@@ -108,5 +109,19 @@ class WalletUtilTest {
         assertEquals(encryptionType, savedWallet.getWalletMetadata().getEncryptionType());
         assertNotNull(savedWallet.getProofSigningKeys());
         assertEquals(4, savedWallet.getProofSigningKeys().size());
+    }
+
+    // Tests for validateUserId
+    @Test
+    void testValidUserId() {
+        assertDoesNotThrow(() -> WalletUtil.validateUserId("validUserId"));
+    }
+
+    @Test
+    void testNullUserId() {
+        InvalidRequestException ex = assertThrows(InvalidRequestException.class, () -> WalletUtil.validateUserId(null));
+
+        assertEquals("invalid_request", ex.getErrorCode());
+        assertEquals("invalid_request --> User ID not found in session", ex.getMessage());
     }
 }
