@@ -2968,7 +2968,7 @@
                                     "Missing required params": {
                                         "value": {
                                             "errorCode": "invalid_request",
-                                            "errorMessage": "Issuer and credentialConfiguration are required"
+                                            "errorMessage": "Issuer and credentialConfigurationId are required"
                                         }
                                     },
                                     "Wallet ID is null or blank": {
@@ -3410,7 +3410,10 @@
                                 },
                                 "examples": {
                                     "Success response": {
-                                        "value": "d94a2e70-1234-4f2f-9eae-98765"
+                                        "value": {
+                                            "walletId": "d94a2e70-1234-4f2f-9eae-98765",
+                                            "walletName": "wallet 123"
+                                        }
                                     }
                                 }
                             }
@@ -3523,10 +3526,12 @@
                                     "Success response": {
                                         "value": [
                                             {
-                                                "walletId": "123e4567-e89b-12d3-a456-426614174000"
+                                                "walletId": "123e4567-e89b-12d3-a456-426614174000",
+                                                "walletName": "Wallet 123"
                                             },
                                             {
-                                                "walletId": "223e4567-e89b-12d3-a456-426614174001"
+                                                "walletId": "223e4567-e89b-12d3-a456-426614174001",
+                                                "walletName": "Wallet Main"
                                             }
                                         ]
                                     }
@@ -4117,6 +4122,10 @@
                     "walletId": {
                         "type": "string",
                         "description": "Unique identifier of the Wallet"
+                    },
+                    "walletName" : {
+                        "type": "string",
+                        "description": "Wallet name provided by the user"
                     }
                 }
             },
