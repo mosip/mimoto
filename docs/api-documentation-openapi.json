@@ -3448,7 +3448,7 @@
                                             "errorMessage": "PIN must be numeric with 6 digits"
                                         }
                                     },
-                                    "Entered Passcode and Confirm Passcode Mismatch": {
+                                    "Entered Pin and Confirm Pin Mismatch": {
                                         "value": {
                                             "errorCode": "invalid_request",
                                             "errorMessage": "Entered PIN and Confirm PIN do not match"
