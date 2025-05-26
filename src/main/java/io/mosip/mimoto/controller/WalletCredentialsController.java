@@ -95,7 +95,7 @@ public class WalletCredentialsController {
         String credentialConfigurationId = params.get("credentialConfigurationId");
         String credentialValidity = params.getOrDefault("vcStorageExpiryLimitInTimes", "-1");
 
-        if (issuerId == null || issuerId.isBlank() || credentialConfigurationId == null || credentialConfigurationId.isBlank()) {
+        if (StringUtils.isBlank(issuerId) || StringUtils.isBlank(credentialConfigurationId)) {
             log.error("Missing required parameters: issuer or credential");
             throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Issuer and credentialConfigurationId are required");
         }

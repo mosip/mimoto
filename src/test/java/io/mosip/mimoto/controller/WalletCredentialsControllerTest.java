@@ -106,8 +106,11 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.issuer_display_name").value("issuerName123"))
-                .andExpect(jsonPath("$.credential_id").value("credentialId123"));
+                .andExpect(jsonPath("$.issuerDisplayName").value("issuerName123"))
+                .andExpect(jsonPath("$.issuerLogo").value("issuerLogo"))
+                .andExpect(jsonPath("$.credentialTypeDisplayName").value("credentialType123"))
+                .andExpect(jsonPath("$.credentialTypeLogo").value("credentialTypeLogo"))
+                .andExpect(jsonPath("$.credentialId").value("credentialId123"));
     }
 
     @Test
@@ -278,8 +281,11 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].issuer_display_name").value("issuerName123"))
-                .andExpect(jsonPath("$[0].credential_type_display_name").value("credentialType123"));
+                .andExpect(jsonPath("$[0].issuerDisplayName").value("issuerName123"))
+                .andExpect(jsonPath("$[0].issuerLogo").value("issuerLogo"))
+                .andExpect(jsonPath("$[0].credentialTypeDisplayName").value("credentialType123"))
+                .andExpect(jsonPath("$[0].credentialId").value("credentialId123"))
+                .andExpect(jsonPath("$[0].credentialTypeLogo").value("credentialTypeLogo"));
     }
 
     @Test
