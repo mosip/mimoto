@@ -439,4 +439,8 @@ public class TestUtilities {
                 .credentialId(credentialId)
                 .build();
     }
+
+    public static String createRequestBody(Object request) throws JsonProcessingException {
+        return new ObjectMapper().writeValueAsString(request);
+    }
 }

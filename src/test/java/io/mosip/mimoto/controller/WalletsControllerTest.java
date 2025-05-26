@@ -3,6 +3,7 @@ package io.mosip.mimoto.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.CreateWalletRequestDto;
+import io.mosip.mimoto.dto.UnlockWalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
@@ -225,5 +226,112 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // Unlock wallet tests
+
+    @Test
+    public void shouldUnlockWalletSuccessfully() throws Exception {
+        UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
+        unlockRequest.setWalletPin(walletPin);
+
+        when(walletService.getWalletKey(userId, walletId, walletPin)).thenReturn("walletKey123");
+
+        MvcResult result = mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(unlockRequest))
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.walletId").value(walletId))
+                .andReturn();
+
+        // Verify session attributes were set correctly
+        assertEquals(walletId, result.getRequest().getSession().getAttribute(SessionKeys.WALLET_ID));
+        assertEquals("walletKey123", result.getRequest().getSession().getAttribute(SessionKeys.WALLET_KEY));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenUserIdIsMissingForUnlockWallet() throws Exception {
+        UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
+        unlockRequest.setWalletPin("1234");
+
+        MockHttpSession sessionWithoutUserId = new MockHttpSession();
+        sessionWithoutUserId.setAttribute("clientRegistrationId", "google");
+
+        mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(unlockRequest))
+                        .session(sessionWithoutUserId)
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> User ID not found in session"));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenWalletNotFoundForUnlock() throws Exception {
+        String nonExistentWalletId = "nonExistentWalletId";
+        UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
+        unlockRequest.setWalletPin(walletPin);
+
+        when(walletService.getWalletKey(userId, nonExistentWalletId, walletPin))
+                .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet not found"));
+
+        mockMvc.perform(post("/wallets/{walletId}/unlock", nonExistentWalletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(unlockRequest))
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Wallet not found"));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenInvalidPinProvidedForUnlock() throws Exception {
+        String invalidPin = "invalidPin";
+        UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
+        unlockRequest.setWalletPin(invalidPin);
+
+        when(walletService.getWalletKey(userId, walletId, invalidPin))
+                .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Invalid PIN provided"));
+
+        mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(unlockRequest))
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Invalid PIN provided"));
+    }
+
+    @Test
+    public void shouldThrowExceptionForServerErrorDuringUnlock() throws Exception {
+        UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
+        unlockRequest.setWalletPin(walletPin);
+
+        when(walletService.getWalletKey(userId, walletId, walletPin))
+                .thenThrow(new RuntimeException("Error decrypting wallet key"));
+
+        mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(unlockRequest))
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
+                .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
     }
 }
