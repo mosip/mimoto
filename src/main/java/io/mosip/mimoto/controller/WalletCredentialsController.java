@@ -65,18 +65,28 @@ public class WalletCredentialsController {
     /**
      * Downloads and stores a Verifiable Credential in the specified wallet.
      *
-     * @param walletId The unique identifier of the wallet.
+     * @param walletId                       The unique identifier of the wallet.
      * @param verifiableCredentialRequestDTO Request body parameters including issuer, credential type, storage expiry, and locale.
-     * @param httpSession The HTTP session containing wallet key and ID.
+     * @param httpSession                    The HTTP session containing wallet key and ID.
      * @return The stored Verifiable Credential details.
      * @throws InvalidRequestException If input parameters or session are invalid.
      */
     @Operation(summary = "Download and store a Verifiable Credential under a specific Wallet", description = "This API is secured using session-based authentication. Upon receiving a request, the session ID is extracted from the Cookie header and used to retrieve session details from Redis for authentication. It then retrieves the wallet key from the session and use it to decrypt the signing algorithm's secret key(which is used for signing the JWT in credential request) and encrypt the downloaded Verifiable Credential. If the process completes successfully, the credential is stored in the database and certain fields will be returned in the response. In case of any issues, an appropriate error response is returned.", operationId = "downloadCredential", security = @SecurityRequirement(name = "SessionAuth"), parameters = {
-        @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the wallet", schema = @Schema(type = "string")),
-        @Parameter(name = "issuer", in = ParameterIn.QUERY, required = true, description = "The identifier of the issuer", schema = @Schema(type = "string")),
-        @Parameter(name = "credentialConfigurationId", in = ParameterIn.QUERY, required = true, description = "The type of the credential", schema = @Schema(type = "string")),
-        @Parameter(name = "vcStorageExpiryLimitInTimes", in = ParameterIn.QUERY, description = "The expiration limit for the Verifiable Credential storage", schema = @Schema(type = "string", defaultValue = "-1")),
-        @Parameter(name = "Accept-Language", in = ParameterIn.HEADER, description = "The locale for the Verifiable Credential. It follows 2 letter language code", schema = @Schema(type = "string", defaultValue = "en"))})
+            @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the wallet", schema = @Schema(type = "string")),
+            @Parameter(name = "Accept-Language", in = ParameterIn.HEADER, description = "The locale for the Verifiable Credential. It follows 2 letter language code", schema = @Schema(type = "string", defaultValue = "en"))},
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Request body parameters including issuer, credential type, storage expiry, and locale.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = VerifiableCredentialRequestDTO.class),
+                            examples = @ExampleObject(
+                                    name = "VerifiableCredentialRequest Example",
+                                    value = "{ \"issuer\": \"issuerId\", \"credentialConfigurationId\": \"MockVerifiableCredential\", \"code\": \"authCode\", \"grantType\": \"authorization_code\", \"redirectUri\": \"https://example.com/cb\", \"codeVerifier\": \"verifier\" }"
+                            )
+                    )
+            )
+    )
     @ApiResponse(responseCode = "200", description = "Verifiable Credential downloaded and stored successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = VerifiableCredentialResponseDTO.class)))
     @ApiResponse(responseCode = "400", description = "Bad request - Wallet key is null / blank or Wallet ID is null / blank / mismatch with session Wallet ID or required params are missing / invalid", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "Invalid Wallet Id", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Invalid Wallet ID. Session and request Wallet ID do not match\"}"), @ExampleObject(name = "Wallet key not found in session", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet key not found in session\"}"), @ExampleObject(name = "Missing required params", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Issuer and credentialConfigurationId are required\"}"), @ExampleObject(name = "Wallet ID is null or blank", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet ID cannot be null or blank\"}"), @ExampleObject(name = "Issuer ID is null or blank", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Issuer ID cannot be null or blank\"}")}))
     @ApiResponse(responseCode = "500", description = "Internal server error - error occurred while serializing the VC response, encrypting the credential, or storing it", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "Credential already exists", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Duplicate credential for issuer and type\"}"), @ExampleObject(name = "Issuer config error", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Unable to fetch issuer configuration\"}"), @ExampleObject(name = "Failed to generate VC request", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Unable to generate credential request\"}"), @ExampleObject(name = "Signature verification failed", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}"), @ExampleObject(name = "Unexpected server error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")}))
@@ -124,15 +134,15 @@ public class WalletCredentialsController {
     /**
      * Fetches all credentials for a given wallet.
      *
-     * @param walletId The unique identifier of the wallet.
-     * @param locale The locale for credential retrieval.
+     * @param walletId    The unique identifier of the wallet.
+     * @param locale      The locale for credential retrieval.
      * @param httpSession The HTTP session containing wallet key and ID.
      * @return List of Verifiable Credential details.
      * @throws InvalidRequestException If session or wallet ID is invalid.
      */
     @Operation(summary = "Fetch all credentials for the given wallet", description = "This API is secured using session-based authentication. When a request is made, the session ID is extracted from the Cookie header and used to fetch session details from Redis for authentication. It then retrieves the wallet key from the session and uses it to decrypt all stored Verifiable Credentials for the given wallet. If successful, it returns a list of credentials otherwise an appropriate error is returned.", operationId = "fetchAllCredentialsForWallet", security = @SecurityRequirement(name = "SessionAuth"), parameters = {
-        @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the user's wallet from where the credential will be fetched", schema = @Schema(type = "string")),
-        @Parameter(name = "Accept-Language", in = ParameterIn.HEADER, description = "Locale is used to determine the language in which credentials should be rendered. It follows 2 letter language code", schema = @Schema(type = "string"))})
+            @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the user's wallet from where the credential will be fetched", schema = @Schema(type = "string")),
+            @Parameter(name = "Accept-Language", in = ParameterIn.HEADER, description = "Locale is used to determine the language in which credentials should be rendered. It follows 2 letter language code", schema = @Schema(type = "string"))})
     @ApiResponse(responseCode = "200", description = "Credentials retrieved successfully", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = VerifiableCredentialResponseDTO.class)), examples = @ExampleObject(value = SwaggerExampleConstants.FETCH_ALL_CREDENTIALS_OF_WALLET_SUCCESS)))
     @ApiResponse(responseCode = "400", description = "Bad request", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "Invalid Wallet Id", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Invalid Wallet ID. Session and request Wallet ID do not match\"}"), @ExampleObject(name = "Wallet key not found in session", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet key not found in session\"}")}))
     @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
@@ -157,19 +167,19 @@ public class WalletCredentialsController {
     /**
      * Fetches a specific Verifiable Credential as a PDF.
      *
-     * @param walletId The unique identifier of the wallet.
+     * @param walletId     The unique identifier of the wallet.
      * @param credentialId The unique identifier of the credential.
-     * @param locale The locale for credential retrieval.
-     * @param action The action (inline or download) for PDF display.
-     * @param httpSession The HTTP session containing wallet key and ID.
+     * @param locale       The locale for credential retrieval.
+     * @param action       The action (inline or download) for PDF display.
+     * @param httpSession  The HTTP session containing wallet key and ID.
      * @return The Verifiable Credential as a PDF stream.
      * @throws InvalidRequestException If session or parameters are invalid.
      */
     @Operation(summary = "Fetch a specific Verifiable Credential", description = "This API is protected using session-based authentication. When a request is received, the session ID is extracted from the Cookie header and used to fetch session data from Redis for user authentication. Upon successful authentication, the wallet key is retrieved from the session and used to decrypt the credential data obtained from the database.\n\nThe API retrieves a specific Verifiable Credential based on the provided wallet ID and credential ID. Depending on the action query parameter (inline or download) received in the request, the Content-Disposition header in the response is adjusted to either display the credential in the browser or prompt a file download. On success, the API returns the credential as a PDF byte stream. In case of any errors, an appropriate error response is returned.", operationId = "fetchVerifiableCredentialById", security = @SecurityRequirement(name = "SessionAuth"), parameters = {
-        @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the user's wallet", schema = @Schema(type = "string")),
-        @Parameter(name = "credentialId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the Verifiable Credential to be retrieved", schema = @Schema(type = "string")),
-        @Parameter(name = "Accept-Language", in = ParameterIn.QUERY, required = true, description = "Language preference in which the user expects the Verifiable Credential to be rendered", schema = @Schema(type = "string")),
-        @Parameter(name = "action", in = ParameterIn.QUERY, description = "Controls how the credential should be displayed. If sent as download, the response will include a header to download the file. Defaults to inline.", schema = @Schema(type = "string", defaultValue = "inline"))})
+            @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the user's wallet", schema = @Schema(type = "string")),
+            @Parameter(name = "credentialId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the Verifiable Credential to be retrieved", schema = @Schema(type = "string")),
+            @Parameter(name = "Accept-Language", in = ParameterIn.QUERY, required = true, description = "Language preference in which the user expects the Verifiable Credential to be rendered", schema = @Schema(type = "string")),
+            @Parameter(name = "action", in = ParameterIn.QUERY, description = "Controls how the credential should be displayed. If sent as download, the response will include a header to download the file. Defaults to inline.", schema = @Schema(type = "string", defaultValue = "inline"))})
     @ApiResponse(responseCode = "200", description = "Verifiable Credential fetched successfully", headers = @Header(name = HttpHeaders.CONTENT_DISPOSITION, description = "Indicates if the verifiable credential is displayed inline or downloaded", schema = @Schema(type = "string", example = "inline; filename=\"credential.pdf\"")), content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary"), examples = @ExampleObject(value = "PDF content in Binary Format")))
     @ApiResponse(responseCode = "400", description = "Bad request", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "Invalid Wallet Id", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Invalid Wallet ID. Session and request Wallet ID do not match\"}"), @ExampleObject(name = "Wallet key not found in session", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet key not found in session\"}")}))
     @ApiResponse(responseCode = "404", description = "Not Found - Credential not found for given Wallet ID and Credential ID", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "No credentials found", value = "{\"errorCode\": \"resource_not_found\", \"errorMessage\": \"The requested resource doesn’t exist.\"}")))
@@ -183,7 +193,7 @@ public class WalletCredentialsController {
             @RequestHeader(value = "Accept-Language", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             @RequestParam(value = "action", defaultValue = "inline") @Pattern(regexp = "^(inline|download)$", message = "Action must be 'inline' or 'download'") String action,
             HttpSession httpSession) throws InvalidRequestException {
-        if(!Objects.equals(accept, "application/pdf")) {
+        if (!Objects.equals(accept, "application/pdf")) {
             log.error("Invalid Accept header: {}", accept);
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Accept header must be application/pdf"),
@@ -218,10 +228,11 @@ public class WalletCredentialsController {
                     e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
     }
+
     /**
      * Deletes a credential by its ID
      *
-     * @param walletId The ID of the wallet that owns the credential
+     * @param walletId     The ID of the wallet that owns the credential
      * @param credentialId The ID of the credential to delete
      * @return ResponseEntity with HTTP status 200 if successful, 404 if credential not found, or 500 for other errors
      */

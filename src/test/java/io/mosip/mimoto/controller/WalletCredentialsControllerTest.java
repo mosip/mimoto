@@ -1,5 +1,6 @@
 package io.mosip.mimoto.controller;
 
+import com.jayway.jsonpath.JsonPath;
 import io.mosip.mimoto.dto.VerifiableCredentialRequestDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
@@ -35,6 +36,8 @@ import java.util.List;
 import static io.mosip.mimoto.exception.ErrorConstants.CREDENTIAL_FETCH_EXCEPTION;
 import static io.mosip.mimoto.exception.ErrorConstants.RESOURCE_NOT_FOUND;
 import static io.mosip.mimoto.util.TestUtilities.createRequestBody;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -220,7 +223,16 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("Missing required parameters: issuerId, Missing required parameters: credentialConfigurationId"));
+                .andExpect(result -> {
+                    String errorMessage = JsonPath.read(result.getResponse().getContentAsString(), "$.errorMessage");
+                    String[] messages = errorMessage.split(",\\s*");
+
+                   assertEquals(2, messages.length);
+                    assertThat(messages).anySatisfy(msg ->
+                            assertThat(msg.trim()).isEqualTo("Missing required parameters: issuerId"));
+                    assertThat(messages).anySatisfy(msg ->
+                            assertThat(msg.trim()).isEqualTo("Missing required parameters: credentialConfigurationId"));
+                });
     }
 
     @Test
