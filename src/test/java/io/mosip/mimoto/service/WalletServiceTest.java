@@ -69,11 +69,8 @@ public class WalletServiceTest {
         verify(walletValidator).validateUserId(userId);
         verify(walletValidator).validateWalletName(name);
 
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(walletValidator, times(2)).validateWalletPin(captor.capture());
-        List<String> capturedPins = captor.getAllValues();
-
-        assertThat(capturedPins, containsInAnyOrder(walletPin, walletConfirmPin));
+        verify(walletValidator).validateWalletPin(walletPin);
+        verify(walletHelper).createWallet(userId, name, walletPin);
     }
 
     @Test

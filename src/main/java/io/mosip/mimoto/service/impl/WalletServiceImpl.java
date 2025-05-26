@@ -40,7 +40,6 @@ public class WalletServiceImpl implements WalletService {
         validator.validateUserId(userId);
         validator.validateWalletName(name);
         validator.validateWalletPin(pin);
-        validator.validateWalletPin(confirmPin);
 
         if (!pin.equals(confirmPin)) {
             log.warn("Wallet PIN and confirm PIN are not matching: {}", userId);
