@@ -174,7 +174,7 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("Validation error in request parameters"));
+                .andExpect(jsonPath("$.errorMessage").value("Locale must be a 2-letter code"));
     }
 
     @Test
@@ -209,7 +209,7 @@ public class WalletCredentialsControllerTest {
     }
 
     @Test
-    public void shouldThrowInvalidRequestForMissingIssuerOrCredentialConfigurationId() throws Exception {
+    public void shouldThrowInvalidRequestForMissingIssuerAndCredentialConfigurationId() throws Exception {
         setIssuerAndCredentialConfigurationId(null, null);
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
                         .accept(MediaType.APPLICATION_JSON)
@@ -220,7 +220,7 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Issuer and credentialConfigurationId are required"));
+                .andExpect(jsonPath("$.errorMessage").value("Missing required parameters: issuerId, Missing required parameters: credentialConfigurationId"));
     }
 
     @Test
@@ -235,7 +235,7 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Issuer and credentialConfigurationId are required"));
+                .andExpect(jsonPath("$.errorMessage").value("Missing required parameters: credentialConfigurationId"));
     }
 
     @Test

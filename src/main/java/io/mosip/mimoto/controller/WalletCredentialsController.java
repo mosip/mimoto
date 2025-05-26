@@ -25,10 +25,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -39,7 +39,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import static io.mosip.mimoto.exception.ErrorConstants.CREDENTIAL_DOWNLOAD_EXCEPTION;
@@ -86,7 +85,7 @@ public class WalletCredentialsController {
     public ResponseEntity<VerifiableCredentialResponseDTO> downloadCredential(
             @RequestHeader(value = "Accept-Language", required = false, defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
-            @RequestBody VerifiableCredentialRequestDTO verifiableCredentialRequestDTO,
+            @RequestBody @Valid VerifiableCredentialRequestDTO verifiableCredentialRequestDTO,
             HttpSession httpSession) throws InvalidRequestException {
 
         WalletUtil.validateWalletId(httpSession, walletId);
@@ -94,11 +93,6 @@ public class WalletCredentialsController {
 
         String issuerId = verifiableCredentialRequestDTO.getIssuer();
         String credentialConfigurationId = verifiableCredentialRequestDTO.getCredentialConfigurationId();
-
-        if (StringUtils.isBlank(issuerId) || StringUtils.isBlank(credentialConfigurationId)) {
-            log.error("Missing required parameters: issuer or credential");
-            throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Issuer and credentialConfigurationId are required");
-        }
 
         log.info("Initiating token call for issuer: {}", issuerId);
         TokenResponseDTO tokenResponse;
