@@ -136,7 +136,7 @@ public class CredentialUtilService {
         Map<String, ProofTypesSupported> proofTypesSupported = credentialsSupportedResponse.getProofTypesSupported();
         SigningAlgorithm algorithm;
         if (proofTypesSupported.containsKey("jwt")) {
-            algorithm = SigningAlgorithm.fromString(proofTypesSupported.get("jwt").getProofSigningAlgValuesSupported().get(0));
+            algorithm = SigningAlgorithm.fromString(proofTypesSupported.get("jwt").getProofSigningAlgValuesSupported().getFirst());
         } else {
             algorithm = SigningAlgorithm.RS256;
         }
@@ -216,10 +216,10 @@ public class CredentialUtilService {
     public Map<String, Object> getPdfResourceFromVcProperties(LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties, CredentialsSupportedResponse credentialsSupportedResponse, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, String dataShareUrl, String credentialValidity) throws IOException, WriterException {
         Map<String, Object> data = new HashMap<>();
         LinkedHashMap<String, Object> rowProperties = new LinkedHashMap<>();
-        String backgroundColor = credentialsSupportedResponse.getDisplay().get(0).getBackgroundColor();
-        String backgroundImage = credentialsSupportedResponse.getDisplay().get(0).getBackgroundImage().getUri();
-        String textColor = credentialsSupportedResponse.getDisplay().get(0).getTextColor();
-        String credentialSupportedType = credentialsSupportedResponse.getDisplay().get(0).getName();
+        String backgroundColor = credentialsSupportedResponse.getDisplay().getFirst().getBackgroundColor();
+        String backgroundImage = credentialsSupportedResponse.getDisplay().getFirst().getBackgroundImage().getUri();
+        String textColor = credentialsSupportedResponse.getDisplay().getFirst().getTextColor();
+        String credentialSupportedType = credentialsSupportedResponse.getDisplay().getFirst().getName();
         String face = vcCredentialResponse.getCredential().getCredentialSubject().get("face") != null ? (String) vcCredentialResponse.getCredential().getCredentialSubject().get("face") : null;
 
         displayProperties.entrySet().stream()
@@ -302,9 +302,9 @@ public class CredentialUtilService {
         List<?> castedList = (List<?>) list;
         String response = "";
         if (castedList.isEmpty()) return "";
-        if (castedList.get(0) instanceof String) {
+        if (castedList.getFirst() instanceof String) {
             response = castedList.stream().map(String.class::cast).collect(Collectors.joining(", "));
-        } else if (castedList.get(0) instanceof Map) {
+        } else if (castedList.getFirst() instanceof Map) {
             response = ((List<Map<?, ?>>) castedList).stream()
                     .filter(obj -> LocaleUtils.matchesLocale(obj.get("language").toString(), locale))
                     .map(obj -> obj.get("value").toString())

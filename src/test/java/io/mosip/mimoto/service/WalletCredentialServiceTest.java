@@ -98,7 +98,7 @@ public class WalletCredentialServiceTest {
         expectedResponse.setCredentialId(credentialId);
 
         when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId)).thenReturn(false);
-        when(credentialProcessor.processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(mosipIssuerId), eq(locale)))
+        when(credentialProcessor.processAndStoreCredential(tokenResponse, credentialType, walletId, base64Key, credentialValidity, mosipIssuerId, locale))
                 .thenReturn(expectedResponse);
 
         VerifiableCredentialResponseDTO actualResponse = walletCredentialService.fetchAndStoreCredential(
@@ -106,7 +106,7 @@ public class WalletCredentialServiceTest {
 
         assertEquals(expectedResponse, actualResponse);
         verify(walletCredentialsRepository).existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId);
-        verify(credentialProcessor).processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(mosipIssuerId), eq(locale));
+        verify(credentialProcessor).processAndStoreCredential(tokenResponse, credentialType, walletId, base64Key, credentialValidity, mosipIssuerId, locale);
     }
 
     @Test
@@ -127,14 +127,14 @@ public class WalletCredentialServiceTest {
         VerifiableCredentialResponseDTO expectedResponse = new VerifiableCredentialResponseDTO();
         expectedResponse.setCredentialId(credentialId);
 
-        when(credentialProcessor.processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(issuerId), eq(locale)))
+        when(credentialProcessor.processAndStoreCredential(tokenResponse, credentialType, walletId, base64Key, credentialValidity, issuerId, locale))
                 .thenReturn(expectedResponse);
 
         VerifiableCredentialResponseDTO actualResponse = walletCredentialService.fetchAndStoreCredential(
                 issuerId, credentialType, tokenResponse, credentialValidity, locale, walletId, base64Key);
 
         assertEquals(expectedResponse, actualResponse);
-        verify(credentialProcessor).processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(issuerId), eq(locale));
+        verify(credentialProcessor).processAndStoreCredential(tokenResponse, credentialType, walletId, base64Key, credentialValidity, issuerId, locale);
     }
 
     @Test
@@ -151,7 +151,7 @@ public class WalletCredentialServiceTest {
         assertEquals("SERVICE_UNAVAILABLE", exception.getErrorCode());
         assertEquals("SERVICE_UNAVAILABLE --> Service unavailable", exception.getMessage());
         verify(walletCredentialsRepository).existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId);
-        verify(credentialProcessor).processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(mosipIssuerId), eq(locale));
+        verify(credentialProcessor).processAndStoreCredential(tokenResponse, credentialType, walletId, base64Key, credentialValidity, mosipIssuerId, locale);
     }
 
     @Test
@@ -169,7 +169,7 @@ public class WalletCredentialServiceTest {
             List<VerifiableCredentialResponseDTO> actualCredentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64Key, locale);
 
             assertEquals(1, actualCredentials.size());
-            assertEquals(responseDTO, actualCredentials.get(0));
+            assertEquals(responseDTO, actualCredentials.getFirst());
             verify(walletCredentialsRepository).findByWalletId(walletId);
             verify(issuersService).getIssuerConfig(issuerId, credentialType);
             factoryMock.verify(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerConfig, locale, credentialId));
@@ -191,7 +191,7 @@ public class WalletCredentialServiceTest {
             List<VerifiableCredentialResponseDTO> actualCredentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64Key, locale);
 
             assertEquals(1, actualCredentials.size());
-            assertEquals(responseDTO, actualCredentials.get(0));
+            assertEquals(responseDTO, actualCredentials.getFirst());
             verify(walletCredentialsRepository).findByWalletId(walletId);
             verify(issuersService).getIssuerConfig(issuerId, credentialType);
             factoryMock.verify(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(null, locale, credentialId));

@@ -9,10 +9,12 @@ import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.WalletUtil;
 import io.mosip.mimoto.util.WalletValidator;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Implementation of {@link WalletService} for managing wallets.
@@ -59,10 +61,7 @@ public class WalletServiceImpl implements WalletService {
 
         return repository.findByUserIdAndId(userId, walletId)
                 .map(wallet -> walletUtil.decryptWalletKey(wallet.getWalletKey(), pin))
-                .orElseThrow(() -> {
-                    log.warn("Wallet not found: {} for user: {}", walletId, userId);
-                    return new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet not found");
-                });
+                .orElseThrow(getWalletNotFoundExceptionSupplier(userId, walletId));
 
     }
 
@@ -83,12 +82,16 @@ public class WalletServiceImpl implements WalletService {
     public void deleteWallet(String userId, String walletId) throws InvalidRequestException {
         validator.validateUserId(userId);
         Wallet existingWallet = repository.findByUserIdAndId(userId, walletId)
-                .orElseThrow(() -> {
-                    log.warn("Wallet not found: {} for user: {}", walletId, userId);
-                    return new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet not found");
-                });
+                .orElseThrow(getWalletNotFoundExceptionSupplier(userId, walletId));
         repository.delete(existingWallet);
         log.info("Successfully deleted wallet with ID: {} for user: {}", walletId, userId);
+    }
 
+    @NotNull
+    private static Supplier<InvalidRequestException> getWalletNotFoundExceptionSupplier(String userId, String walletId) {
+        return () -> {
+            log.warn("Wallet not found: {} for user: {}", walletId, userId);
+            return new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet not found");
+        };
     }
 }
