@@ -2,8 +2,10 @@ package io.mosip.mimoto.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dto.WalletRequestDto;
+import io.mosip.mimoto.dto.CreateWalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
+import io.mosip.mimoto.exception.ErrorConstants;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.WalletValidator;
@@ -47,17 +49,22 @@ public class WalletsControllerTest {
     @MockBean
     private WalletService walletService;
 
-    WalletRequestDto walletRequestDto;
+    CreateWalletRequestDto createWalletRequestDto;
 
     MockHttpSession mockSession;
 
-    String userId;
+    String userId, walletName, walletPin, confirmWalletPin, walletId;
 
     @Before
     public void setUp() {
-        walletRequestDto = new WalletRequestDto();
-        walletRequestDto.setWalletName("My Wallet");
-        walletRequestDto.setWalletPin("1234");
+        walletName = "My Wallet";
+        walletPin = "1234";
+        confirmWalletPin = "1234";
+        walletId = "walletId123";
+        createWalletRequestDto = new CreateWalletRequestDto();
+        createWalletRequestDto.setWalletName(walletName);
+        createWalletRequestDto.setWalletPin(walletPin);
+        createWalletRequestDto.setConfirmWalletPin(confirmWalletPin);
         mockSession = new MockHttpSession();
         mockSession.setAttribute("clientRegistrationId", "google");
         mockSession.setAttribute(SessionKeys.USER_ID, "user123");
@@ -66,36 +73,53 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldReturnWalletIdForSuccessfulWalletCreation() throws Exception {
-        when(walletService.createWallet(userId, "My Wallet", "1234")).thenReturn("walletId123");
+        when(walletService.createWallet(userId, walletName, walletPin, confirmWalletPin)).thenReturn(walletId);
 
         mockMvc.perform(post("/wallets")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(walletRequestDto))
+                        .content(new ObjectMapper().writeValueAsString(createWalletRequestDto))
                         .session(mockSession)
-                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
-                .andExpect(content().string("walletId123"));
+                .andExpect(content().string(walletId));
     }
 
     @Test
     public void shouldThrowExceptionIfAnyErrorOccurredWhenCreatingWallet() throws Exception {
-        when(walletService.createWallet(userId, "My Wallet", "1234"))
+        when(walletService.createWallet(userId, walletName, walletPin, confirmWalletPin))
                 .thenThrow(new RuntimeException("Exception occurred when creating Wallet for given userId"));
 
         mockMvc.perform(post("/wallets")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(walletRequestDto))
+                        .content(new ObjectMapper().writeValueAsString(createWalletRequestDto))
                         .session(mockSession)
-                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
                 .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
     }
 
+    @Test
+    public void shouldThrowExceptionIfReceivedPINAndConfirmPINDoNotMatch() throws Exception {
+        createWalletRequestDto.setConfirmWalletPin("2345");
+        when(walletService.createWallet(userId, walletName, walletPin, "2345"))
+                .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Entered PIN and Confirm PIN do not match"));
+
+        mockMvc.perform(post("/wallets")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(createWalletRequestDto))
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Entered PIN and Confirm PIN do not match"));
+    }
 
     @Test
     public void shouldReturnListOfWalletIDsForValidUserId() throws Exception {
@@ -106,7 +130,7 @@ public class WalletsControllerTest {
         mockMvc.perform(get("/wallets")
                         .accept(MediaType.APPLICATION_JSON)
                         .session(mockSession)
-                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
                 .andExpect(content().string("[{\"walletId\":\"wallet1\"},{\"walletId\":\"wallet2\"}]"));
@@ -120,7 +144,7 @@ public class WalletsControllerTest {
                         .session(mockSession)
                         .accept(MediaType.APPLICATION_JSON)
                         .session(mockSession)
-                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
@@ -129,15 +153,15 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldReturnTheWalletIDAndStoreWalletKeyInSessionForValidUserAndWalletId() throws Exception {
-        when(walletService.getWalletKey(userId, "walletId123", "1234")).thenReturn("walletId123");
+        when(walletService.getWalletKey(userId, walletId, walletPin)).thenReturn(walletId);
         String expectedWalletKey = "walletId123";
 
-        MvcResult result = mockMvc.perform(post("/wallets/walletId123/unlock")
+        MvcResult result = mockMvc.perform(post(String.format("/wallets/%s/unlock", walletId))
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(walletRequestDto))
+                        .content(new ObjectMapper().writeValueAsString(createWalletRequestDto))
                         .session(mockSession)
-                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
                 .andExpect(content().string("{\"walletId\":\"walletId123\"}"))
@@ -149,14 +173,14 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldThrowExceptionIfAnyErrorOccurredWhileFetchingWalletDataForGivenUserIdAndWalletId() throws Exception {
-        when(walletService.getWalletKey(userId, "walletId123", "1234")).thenThrow(new RuntimeException("Exception occurred when fetching the wallet data for given walletId and userId"));
+        when(walletService.getWalletKey(userId, walletId, walletPin)).thenThrow(new RuntimeException("Exception occurred when fetching the wallet data for given walletId and userId"));
 
-        mockMvc.perform(post("/wallets/walletId123/unlock")
+        mockMvc.perform(post(String.format("/wallets/%s/unlock", walletId))
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(walletRequestDto))
+                        .content(new ObjectMapper().writeValueAsString(createWalletRequestDto))
                         .session(mockSession)
-                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
@@ -165,23 +189,23 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldDeleteWalletSuccessfully() throws Exception {
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/wallets/walletId123")
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(String.format("/wallets/%s", walletId))
                         .accept(MediaType.APPLICATION_JSON)
                         .session(mockSession)
-                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk());
     }
 
     @Test
     public void shouldClearSessionAttributesWhenDeletingCurrentWallet() throws Exception {
-        mockSession.setAttribute(SessionKeys.WALLET_ID, "walletId123");
+        mockSession.setAttribute(SessionKeys.WALLET_ID, walletId);
         mockSession.setAttribute(SessionKeys.WALLET_KEY, "walletKey123");
 
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/wallets/walletId123")
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(String.format("/wallets/%s", walletId))
                         .accept(MediaType.APPLICATION_JSON)
                         .session(mockSession)
-                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk());
 
@@ -194,10 +218,10 @@ public class WalletsControllerTest {
     public void shouldReturnUnauthorizedWhenUserIdIsMissingForDeleteWallet() throws Exception {
         MockHttpSession sessionWithoutUserId = new MockHttpSession();
 
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/wallets/walletId123")
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(String.format("/wallets/%s", walletId))
                         .accept(MediaType.APPLICATION_JSON)
                         .session(sessionWithoutUserId)
-                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isUnauthorized());
     }
