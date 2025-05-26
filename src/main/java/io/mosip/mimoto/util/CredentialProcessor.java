@@ -11,7 +11,6 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialRequest;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
-import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.impl.DataShareServiceImpl;
@@ -56,21 +55,20 @@ public class CredentialProcessor {
     /**
      * Processes and stores a credential using the provided token and parameters.
      *
-     * @param tokenResponse The token response containing the access token.
+     * @param tokenResponse             The token response containing the access token.
      * @param credentialConfigurationId The type of the credential.
-     * @param walletId The ID of the wallet.
-     * @param base64Key The Base64-encoded wallet key.
-     * @param credentialValidity The validity period of the credential.
-     * @param issuerId The ID of the issuer.
+     * @param walletId                  The ID of the wallet.
+     * @param base64Key                 The Base64-encoded wallet key.
+     * @param issuerId                  The ID of the issuer.
      * @return The stored VerifiableCredential.
-     * @throws InvalidRequestException If input parameters are invalid.
-     * @throws CredentialProcessingException If processing fails.
+     * @throws InvalidRequestException             If input parameters are invalid.
+     * @throws CredentialProcessingException       If processing fails.
      * @throws ExternalServiceUnavailableException If an external service is unavailable.
-     * @throws VCVerificationException If credential verification fails.
+     * @throws VCVerificationException             If credential verification fails.
      */
     public VerifiableCredentialResponseDTO processAndStoreCredential(
             TokenResponseDTO tokenResponse, String credentialConfigurationId, String walletId,
-            String base64Key, String credentialValidity, String issuerId, String locale)
+            String base64Key, String issuerId, String locale)
             throws InvalidRequestException, CredentialProcessingException, ExternalServiceUnavailableException, VCVerificationException {
         // Validate inputs
         if (tokenResponse == null || tokenResponse.getAccess_token() == null) {
@@ -162,18 +160,6 @@ public class CredentialProcessor {
                     "Unable to serialize credential response", e);
         }
 
-        String dataShareUrl;
-        try {
-            dataShareUrl = QRCodeType.OnlineSharing.equals(issuerConfig.getIssuerDTO().getQr_code_type())
-                    ? dataShareService.storeDataInDataShare(vcResponseAsJsonString, credentialValidity)
-                    : "";
-        } catch (Exception e) {
-            log.error("Failed to store credential in data share for issuerId: {}, credentialConfigurationId: {}", issuerId, credentialConfigurationId, e);
-            throw new CredentialProcessingException(
-                    CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(),
-                    "Unable to store credential in datashare", e);
-        }
-
         String encryptedCredentialData;
         try {
             encryptedCredentialData = encryptionDecryptionUtil.encryptCredential(vcResponseAsJsonString, base64Key);
@@ -184,28 +170,24 @@ public class CredentialProcessor {
                     "Unable to encrypt credential data", e);
         }
 
-        VerifiableCredential savedCredential =  saveCredential(walletId, encryptedCredentialData, issuerId, credentialConfigurationId, dataShareUrl, credentialValidity);
+        VerifiableCredential savedCredential =  saveCredential(walletId, encryptedCredentialData, issuerId, credentialConfigurationId);
         return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerConfig, locale, savedCredential.getId());
     }
 
     /**
      * Saves the credential to the repository.
      *
-     * @param walletId The wallet ID.
+     * @param walletId            The wallet ID.
      * @param encryptedCredential The encrypted credential data.
-     * @param issuerId The issuer ID.
-     * @param credentialType The credential type.
-     * @param dataShareUrl The data share URL.
-     * @param credentialValidity The credential validity.
+     * @param issuerId            The issuer ID.
+     * @param credentialType      The credential type.
      * @return The stored VerifiableCredential.
      */
     private VerifiableCredential saveCredential(String walletId, String encryptedCredential, String issuerId,
-                                                String credentialType, String dataShareUrl, String credentialValidity) {
+                                                String credentialType) {
         CredentialMetadata credentialMetadata = new CredentialMetadata();
         credentialMetadata.setIssuerId(issuerId);
         credentialMetadata.setCredentialType(credentialType);
-        credentialMetadata.setDataShareUrl(dataShareUrl);
-        credentialMetadata.setCredentialValidity(credentialValidity);
 
         VerifiableCredential verifiableCredential = new VerifiableCredential();
         verifiableCredential.setId(UUID.randomUUID().toString());

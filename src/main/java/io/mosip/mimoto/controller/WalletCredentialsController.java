@@ -27,6 +27,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -115,7 +116,7 @@ public class WalletCredentialsController {
 
         try {
             VerifiableCredentialResponseDTO credentialResponseDTO = walletCredentialService.fetchAndStoreCredential(
-                    issuerId, credentialConfigurationId, tokenResponse, credentialValidity, locale, walletId, base64EncodedWalletKey);
+                    issuerId, credentialConfigurationId, tokenResponse, locale, walletId, base64EncodedWalletKey);
             return ResponseEntity.status(HttpStatus.OK).body(credentialResponseDTO);
         } catch (ExternalServiceUnavailableException e) {
             return Utilities.getErrorResponseEntityWithoutWrapper(

@@ -126,11 +126,12 @@ public class CredentialUtilService {
         VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialEndpoint, MediaType.APPLICATION_JSON,
                 vcCredentialRequest, VCCredentialResponse.class, accessToken);
         log.debug("VC Credential Response is -> " + vcCredentialResponse);
-        if (vcCredentialResponse == null) throw new InvalidCredentialResourceException("VC Credential Issue API not accessible");
+        if (vcCredentialResponse == null)
+            throw new InvalidCredentialResourceException("VC Credential Issue API not accessible");
         return vcCredentialResponse;
     }
 
-    public VCCredentialRequest generateVCCredentialRequest(IssuerDTO issuerDTO, CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse, CredentialsSupportedResponse credentialsSupportedResponse, String accessToken, String walletId, String base64EncodedWalletKey,Boolean isLoginFlow) throws Exception {
+    public VCCredentialRequest generateVCCredentialRequest(IssuerDTO issuerDTO, CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse, CredentialsSupportedResponse credentialsSupportedResponse, String accessToken, String walletId, String base64EncodedWalletKey, Boolean isLoginFlow) throws Exception {
         String jwt;
 
         Map<String, ProofTypesSupported> proofTypesSupported = credentialsSupportedResponse.getProofTypesSupported();
@@ -365,13 +366,15 @@ public class CredentialUtilService {
             }
 
             // Generate PDF
+            // keep the datashare url and credential validity as defaults in downloading VC as PDF as logged-in user
+            // This is because generatePdfForVerifiableCredentials will be used by both logged-in and non-logged-in users
             ByteArrayInputStream pdfStream = generatePdfForVerifiableCredentials(
                     credentialMetadata.getCredentialType(),
                     vcCredentialResponse,
                     issuerDTO,
                     credentialsSupportedResponse,
-                    credentialMetadata.getDataShareUrl(),
-                    credentialMetadata.getCredentialValidity(),
+                    "",
+                    "-1",
                     locale
             );
 
@@ -384,7 +387,8 @@ public class CredentialUtilService {
         } catch (JsonProcessingException e) {
             log.error("Failed to parse decrypted credential for issuerId: {}, credentialType: {}", credentialMetadata.getIssuerId(), credentialMetadata.getCredentialType(), e);
             throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to parse decrypted credential");
-        } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException | InvalidWellknownResponseException | InvalidIssuerIdException e) {
+        } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
+                 InvalidWellknownResponseException | InvalidIssuerIdException e) {
             log.error("Failed to fetch issuer details or configuration for issuerId: {}", credentialMetadata.getIssuerId(), e);
             throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to fetch issuer configuration");
         } catch (Exception e) {
