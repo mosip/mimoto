@@ -3,6 +3,7 @@ package io.mosip.mimoto.controller;
 import io.mosip.mimoto.constant.SwaggerExampleConstants;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.dto.ErrorDTO;
+import io.mosip.mimoto.dto.VerifiableCredentialRequestDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
@@ -66,7 +67,7 @@ public class WalletCredentialsController {
      * Downloads and stores a Verifiable Credential in the specified wallet.
      *
      * @param walletId The unique identifier of the wallet.
-     * @param params Query parameters including issuer, credential type, storage expiry, and locale.
+     * @param verifiableCredentialRequestDTO Request body parameters including issuer, credential type, storage expiry, and locale.
      * @param httpSession The HTTP session containing wallet key and ID.
      * @return The stored Verifiable Credential details.
      * @throws InvalidRequestException If input parameters or session are invalid.
@@ -85,16 +86,14 @@ public class WalletCredentialsController {
     public ResponseEntity<VerifiableCredentialResponseDTO> downloadCredential(
             @RequestHeader(value = "Accept-Language", required = false, defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
-            // TODO: Extract params map to DTO to handle validation internally
-            @RequestParam Map<String, String> params,
+            @RequestBody VerifiableCredentialRequestDTO verifiableCredentialRequestDTO,
             HttpSession httpSession) throws InvalidRequestException {
 
         WalletUtil.validateWalletId(httpSession, walletId);
         String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
-        String issuerId = params.get("issuer");
-        String credentialConfigurationId = params.get("credentialConfigurationId");
-        String credentialValidity = params.getOrDefault("vcStorageExpiryLimitInTimes", "-1");
+        String issuerId = verifiableCredentialRequestDTO.getIssuer();
+        String credentialConfigurationId = verifiableCredentialRequestDTO.getCredentialConfigurationId();
 
         if (StringUtils.isBlank(issuerId) || StringUtils.isBlank(credentialConfigurationId)) {
             log.error("Missing required parameters: issuer or credential");
@@ -104,7 +103,7 @@ public class WalletCredentialsController {
         log.info("Initiating token call for issuer: {}", issuerId);
         TokenResponseDTO tokenResponse;
         try {
-            tokenResponse = credentialUtilService.getTokenResponse(params, issuerId);
+            tokenResponse = credentialUtilService.getTokenResponse(verifiableCredentialRequestDTO, issuerId);
         } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
                  InvalidWellknownResponseException e) {
             log.error("Error fetching token response for issuer: {}", issuerId, e);

@@ -14,6 +14,7 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import io.mosip.mimoto.dbentity.CredentialMetadata;
 import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dto.IssuerDTO;
+import io.mosip.mimoto.dto.VerifiableCredentialRequestDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
@@ -108,6 +109,10 @@ public class CredentialUtilService {
     public void init() {
         credentialsVerifier = new CredentialsVerifier();
         pixelPass = new PixelPass();
+    }
+
+    public TokenResponseDTO getTokenResponse(VerifiableCredentialRequestDTO verifiableCredentialRequest, String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+        return getTokenResponse(convertVerifiableCredentialRequestToMap(verifiableCredentialRequest), issuerId);
     }
 
     public TokenResponseDTO getTokenResponse(Map<String, String> params, String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
@@ -395,6 +400,16 @@ public class CredentialUtilService {
             log.error("Failed to generate PDF for credentialType: {}", credentialMetadata.getCredentialType(), e);
             throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to generate credential PDF");
         }
+    }
+
+    private Map<String, String> convertVerifiableCredentialRequestToMap(VerifiableCredentialRequestDTO verifiableCredentialRequest) {
+        Map<String, String> params = new HashMap<>();
+        params.put("code", verifiableCredentialRequest.getCode());
+        params.put("redirect_uri", verifiableCredentialRequest.getRedirectUri());
+        params.put("grant_type", verifiableCredentialRequest.getGrantType());
+        params.put("code_verifier", verifiableCredentialRequest.getCodeVerifier());
+
+        return params;
     }
 }
 
