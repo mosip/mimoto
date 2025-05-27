@@ -67,7 +67,7 @@ public class WalletCredentialsController {
      * Downloads and stores a Verifiable Credential in the specified wallet.
      *
      * @param walletId                       The unique identifier of the wallet.
-     * @param verifiableCredentialRequestDTO Request body parameters including issuer, credential type, storage expiry, and locale.
+     * @param verifiableCredentialRequest Request body parameters including issuer, credential type, storage expiry, and locale.
      * @param httpSession                    The HTTP session containing wallet key and ID.
      * @return The stored Verifiable Credential details.
      * @throws InvalidRequestException If input parameters or session are invalid.
@@ -96,19 +96,19 @@ public class WalletCredentialsController {
     public ResponseEntity<VerifiableCredentialResponseDTO> downloadCredential(
             @RequestHeader(value = "Accept-Language", required = false, defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
-            @RequestBody @Valid VerifiableCredentialRequestDTO verifiableCredentialRequestDTO,
+            @RequestBody @Valid VerifiableCredentialRequestDTO verifiableCredentialRequest,
             HttpSession httpSession) throws InvalidRequestException {
 
         validateWalletId(httpSession, walletId);
         String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
-        String issuerId = verifiableCredentialRequestDTO.getIssuer();
-        String credentialConfigurationId = verifiableCredentialRequestDTO.getCredentialConfigurationId();
+        String issuerId = verifiableCredentialRequest.getIssuer();
+        String credentialConfigurationId = verifiableCredentialRequest.getCredentialConfigurationId();
 
         log.info("Initiating token call for issuer: {}", issuerId);
         TokenResponseDTO tokenResponse;
         try {
-            tokenResponse = credentialUtilService.getTokenResponse(verifiableCredentialRequestDTO);
+            tokenResponse = credentialUtilService.getTokenResponse(verifiableCredentialRequest);
         } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
                  InvalidWellknownResponseException e) {
             log.error("Error fetching token response for issuer: {}", issuerId, e);
