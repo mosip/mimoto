@@ -17,8 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
-import static io.mosip.mimoto.exception.ErrorConstants.WALLET_LOCKED;
+import static io.mosip.mimoto.exception.ErrorConstants.*;
 
 @Component
 @Slf4j
@@ -34,7 +33,7 @@ public class WalletUtil {
         try {
             return encryptionDecryptionUtil.decryptWithPin(encryptedWalletKey, pin);
         } catch (Exception e) {
-            throw new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided " + e);
+            throw new InvalidRequestException(INVALID_PIN.getErrorCode(), INVALID_PIN.getErrorMessage() + " " + e);
         }
     }
 

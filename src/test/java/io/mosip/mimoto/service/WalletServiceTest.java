@@ -11,7 +11,6 @@ import io.mosip.mimoto.util.WalletValidator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -24,8 +23,6 @@ import java.util.UUID;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 
 @RunWith(MockitoJUnitRunner.class)
 public class WalletServiceTest {
@@ -44,6 +41,7 @@ public class WalletServiceTest {
 
     private String userId, name, walletId, walletPin, walletConfirmPin, encryptedWalletKey, decryptedWalletKey;
     private Wallet wallet;
+
     @Before
     public void setUp() {
         userId = UUID.randomUUID().toString();
@@ -61,7 +59,7 @@ public class WalletServiceTest {
     }
 
     @Test
-    public void shouldCreateWalletSuccessfully() throws Exception {
+    public void shouldCreateWalletSuccessfully() {
         String newWalletId = UUID.randomUUID().toString();
         when(walletHelper.createWallet(userId, name, walletPin)).thenReturn(newWalletId);
 
@@ -76,7 +74,7 @@ public class WalletServiceTest {
     }
 
     @Test
-    public void shouldCreateWalletSuccessfullyIfWalletNameIsNotProvided() throws Exception {
+    public void shouldCreateWalletSuccessfullyIfWalletNameIsNotProvided() {
         String newWalletId = UUID.randomUUID().toString();
         when(walletHelper.createWallet(userId, null, walletPin)).thenReturn(newWalletId);
 
@@ -92,7 +90,7 @@ public class WalletServiceTest {
     }
 
     @Test
-    public void shouldDecryptWalletKeySuccessfully() throws Exception {
+    public void shouldDecryptWalletKeySuccessfully() {
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
         when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenReturn(decryptedWalletKey);
 
@@ -114,6 +112,20 @@ public class WalletServiceTest {
         assertEquals("invalid_request --> Wallet not found", exception.getMessage());
         verify(walletRepository).findByUserIdAndId(userId, walletId);
         verifyNoInteractions(walletHelper);
+    }
+
+    @Test
+    public void shouldThrowInvalidPinErrorCodeExceptionWhenDecryptingWalletKeyWithInvalidPin() {
+        String invalidPin = "wrongPin";
+        when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
+        when(walletHelper.decryptWalletKey(encryptedWalletKey, invalidPin)).thenThrow(new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided"));
+
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+                walletService.getWalletKey(userId, walletId, invalidPin));
+
+        verify(walletRepository).findByUserIdAndId(userId, walletId);
+        assertEquals("invalid_pin", exception.getErrorCode());
+        assertEquals("invalid_pin --> Invalid PIN or wallet key provided", exception.getMessage());
     }
 
     @Test
@@ -155,7 +167,7 @@ public class WalletServiceTest {
     }
 
     @Test
-    public void shouldThrowInvalidRequestExceptionIfAnyErrorOccurredWhileCreatingWallet() throws Exception {
+    public void shouldThrowInvalidRequestExceptionIfAnyErrorOccurredWhileCreatingWallet() {
         when(walletHelper.createWallet(userId, name, walletPin)).thenThrow(new InvalidRequestException("INVALID_REQUEST", "Test Exception"));
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
@@ -167,7 +179,7 @@ public class WalletServiceTest {
     }
 
     @Test
-    public void shouldThrowInvalidRequestExceptionIfReceivedPINAndConfirmPINDoNotMatch() throws Exception {
+    public void shouldThrowInvalidRequestExceptionIfReceivedPINAndConfirmPINDoNotMatch() {
         walletConfirmPin = "2345";
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->

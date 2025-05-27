@@ -182,7 +182,7 @@ public class WalletsControllerTest {
     public void shouldReturnUnauthorizedWhenUserIdIsMissingForDeleteWallet() throws Exception {
         mockSession.clearAttributes();
         MockHttpSession sessionWithoutUserId = mockSession;
-        doThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "User ID cannot be null or empty")).when(walletService).deleteWallet(null,walletId);
+        doThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "User ID cannot be null or empty")).when(walletService).deleteWallet(null, walletId);
 
         mockMvc.perform(delete(String.format("/wallets/%s", walletId))
                         .accept(MediaType.APPLICATION_JSON)
@@ -196,9 +196,9 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldReturnBadRequestWhenInvalidRequestExceptionIsThrownByService() throws Exception {
-        doThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet not found")).when(walletService).deleteWallet(userId,walletId);
+        doThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet not found")).when(walletService).deleteWallet(userId, walletId);
 
-        mockMvc.perform(delete("/wallets/"+walletId)
+        mockMvc.perform(delete("/wallets/" + walletId)
                         .accept(MediaType.APPLICATION_JSON)
                         .session(mockSession)
                         .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
@@ -283,7 +283,7 @@ public class WalletsControllerTest {
         unlockRequest.setWalletPin(invalidPin);
 
         when(walletService.getWalletKey(userId, walletId, invalidPin))
-                .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Invalid PIN provided"));
+                .thenThrow(new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided"));
 
         mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -293,8 +293,8 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("Invalid PIN provided"));
+                .andExpect(jsonPath("$.errorCode").value("invalid_pin"))
+                .andExpect(jsonPath("$.errorMessage").value("Invalid PIN or wallet key provided"));
     }
 
     @Test

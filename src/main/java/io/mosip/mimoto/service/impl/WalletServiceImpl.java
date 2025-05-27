@@ -62,11 +62,13 @@ public class WalletServiceImpl implements WalletService {
         return repository.findByUserIdAndId(userId, walletId)
                 .map(wallet -> walletUtil.decryptWalletKey(wallet.getWalletKey(), pin))
                 .orElseThrow(getWalletNotFoundExceptionSupplier(userId, walletId));
-
     }
 
     @Override
     public List<WalletResponseDto> getWallets(String userId) {
+        log.debug("validating user ID provided");
+        validator.validateUserId(userId);
+
         log.info("Retrieving wallets for user: {}", userId);
 
         List<Wallet> wallets = repository.findWalletByUserId(userId);
