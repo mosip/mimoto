@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service;
 
+import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dbentity.WalletMetadata;
 import io.mosip.mimoto.dto.WalletResponseDto;
@@ -14,6 +15,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.mock.web.MockHttpSession;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -39,6 +41,8 @@ public class WalletServiceTest {
     @InjectMocks
     private WalletServiceImpl walletService;
 
+    MockHttpSession mockSession;
+
     private String userId, name, walletId, walletPin, walletConfirmPin, encryptedWalletKey, decryptedWalletKey;
     private Wallet wallet;
 
@@ -51,6 +55,11 @@ public class WalletServiceTest {
         name = "default";
         encryptedWalletKey = "encryptedKey";
         decryptedWalletKey = "decryptedKey";
+
+        mockSession = new MockHttpSession();
+        mockSession.setAttribute("clientRegistrationId", "google");
+        mockSession.setAttribute(SessionKeys.USER_ID, "user123");
+        mockSession.setAttribute(SessionKeys.WALLET_ID, walletId);
 
         wallet = new Wallet();
         wallet.setId(walletId);
@@ -94,7 +103,7 @@ public class WalletServiceTest {
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
         when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenReturn(decryptedWalletKey);
 
-        String result = walletService.getWalletKey(userId, walletId, walletPin);
+        String result = walletService.getWalletKey(userId, walletId, walletPin, mockSession);
 
         assertEquals(decryptedWalletKey, result);
         verify(walletRepository).findByUserIdAndId(userId, walletId);
@@ -106,7 +115,7 @@ public class WalletServiceTest {
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.empty());
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-                walletService.getWalletKey(userId, walletId, walletPin));
+                walletService.getWalletKey(userId, walletId, walletPin, mockSession));
 
         assertEquals("invalid_request", exception.getErrorCode());
         assertEquals("invalid_request --> Wallet not found", exception.getMessage());
@@ -121,7 +130,7 @@ public class WalletServiceTest {
         when(walletHelper.decryptWalletKey(encryptedWalletKey, invalidPin)).thenThrow(new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided"));
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-                walletService.getWalletKey(userId, walletId, invalidPin));
+                walletService.getWalletKey(userId, walletId, invalidPin, mockSession));
 
         verify(walletRepository).findByUserIdAndId(userId, walletId);
         assertEquals("invalid_pin", exception.getErrorCode());

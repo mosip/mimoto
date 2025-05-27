@@ -40,8 +40,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
@@ -227,7 +226,7 @@ public class WalletCredentialsControllerTest {
                     String errorMessage = JsonPath.read(result.getResponse().getContentAsString(), "$.errorMessage");
                     String[] messages = errorMessage.split(",\\s*");
 
-                   assertEquals(2, messages.length);
+                    assertEquals(2, messages.length);
                     assertThat(messages).anySatisfy(msg ->
                             assertThat(msg.trim()).isEqualTo("Missing required parameters: issuerId"));
                     assertThat(messages).anySatisfy(msg ->
@@ -314,6 +313,21 @@ public class WalletCredentialsControllerTest {
     }
 
     @Test
+    public void shouldReturnErrorResponseOnFetchAllCredentialsForGivenWalletWhenSessionDoesNotHaveWalletId() throws Exception {
+        setIssuerAndCredentialConfigurationId(issuer, credentialConfigurationId);
+        mockMvc.perform(get("/wallets/{walletId}/credentials", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header("Accept-Language", locale)
+                        .sessionAttr("wallet_key", walletKey)
+                        .content(createRequestBody(verifiableCredentialRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("wallet_locked"))
+                .andExpect(jsonPath("$.errorMessage").value("Wallet is locked"));
+    }
+
+    @Test
     public void shouldThrowInvalidRequestForMissingWalletKeyInFetchAll() throws Exception {
         when(httpSession.getAttribute("wallet_key")).thenReturn(null);
 
@@ -377,13 +391,34 @@ public class WalletCredentialsControllerTest {
     public void shouldThrowInvalidRequestForInvalidAcceptHeader() throws Exception {
         mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
                         .header("Accept-Language", locale)
-                        .param("Accept", "application/json")
                         .accept(MediaType.APPLICATION_JSON)
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
                 .andExpect(jsonPath("$.errorMessage").value("Accept header must be application/pdf"));
+    }
+
+    @Test
+    public void shouldReturnErrorResponseOnGetVerifiableCredentialWhenSessionDoesNotHaveWalletId() throws Exception {
+        mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .header("Accept-Language", locale)
+                        .accept(MediaType.APPLICATION_PDF)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("wallet_locked"))
+                .andExpect(jsonPath("$.errorMessage").value("Wallet is locked"));
+    }
+
+    @Test
+    public void shouldReturnErrorResponseOnGetVerifiableCredentialWhenSessionDoesNotHaveWalletKey() throws Exception {
+        mockMvc.perform(get("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .header("Accept-Language", locale)
+                        .accept(MediaType.APPLICATION_PDF)
+                        .sessionAttr("wallet_id", walletId))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("Wallet key not found in session"));
     }
 
     @Test
@@ -454,10 +489,19 @@ public class WalletCredentialsControllerTest {
     // Tests for deleteCredential
     @Test
     public void shouldDeleteCredentialSuccessfully() throws Exception {
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+        mockMvc.perform(delete("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    public void shouldReturnErrorResponseOnDeleteCredentialWhenSessionDoesNotHaveWalletId() throws Exception {
+        mockMvc.perform(delete("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("wallet_locked"))
+                .andExpect(jsonPath("$.errorMessage").value("Wallet is locked"));
     }
 
     @Test
@@ -465,7 +509,7 @@ public class WalletCredentialsControllerTest {
         doThrow(new CredentialNotFoundException(RESOURCE_NOT_FOUND.getErrorCode(), RESOURCE_NOT_FOUND.getErrorMessage()))
                 .when(walletCredentialService).deleteCredential(credentialId, walletId);
 
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+        mockMvc.perform(delete("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isNotFound())
@@ -477,7 +521,7 @@ public class WalletCredentialsControllerTest {
     public void shouldThrowInvalidRequestForWalletIdMismatchInDeleteCredential() throws Exception {
         when(httpSession.getAttribute("wallet_id")).thenReturn("differentWalletId");
 
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+        mockMvc.perform(delete("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
                         .sessionAttr("wallet_id", "differentWalletId")
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())

@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static io.mosip.mimoto.exception.ErrorConstants.CREDENTIAL_DOWNLOAD_EXCEPTION;
+import static io.mosip.mimoto.util.WalletUtil.validateWalletId;
 
 /**
  * REST controller for managing wallet credentials.
@@ -98,7 +99,7 @@ public class WalletCredentialsController {
             @RequestBody @Valid VerifiableCredentialRequestDTO verifiableCredentialRequestDTO,
             HttpSession httpSession) throws InvalidRequestException {
 
-        WalletUtil.validateWalletId(httpSession, walletId);
+        validateWalletId(httpSession, walletId);
         String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
         String issuerId = verifiableCredentialRequestDTO.getIssuer();
@@ -153,7 +154,7 @@ public class WalletCredentialsController {
             @RequestHeader(value = "Accept-Language", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             HttpSession httpSession) throws InvalidRequestException {
 
-        WalletUtil.validateWalletId(httpSession, walletId);
+        validateWalletId(httpSession, walletId);
         String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
         log.info("Fetching all credentials for walletId: {}", walletId);
@@ -193,7 +194,7 @@ public class WalletCredentialsController {
             @RequestHeader(value = "Accept-Language", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             @RequestParam(value = "action", defaultValue = "inline") @Pattern(regexp = "^(inline|download)$", message = "Action must be 'inline' or 'download'") String action,
             HttpSession httpSession) throws InvalidRequestException {
-        if (!Objects.equals(accept, "application/pdf")) {
+        if (!Objects.equals(accept, MediaType.APPLICATION_PDF_VALUE)) {
             log.error("Invalid Accept header: {}", accept);
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Accept header must be application/pdf"),
@@ -202,11 +203,12 @@ public class WalletCredentialsController {
                     MediaType.APPLICATION_JSON);
         }
 
-        WalletUtil.validateWalletId(httpSession, walletId);
-        String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
-
-        log.info("Fetching credentialId: {} from walletId: {}", credentialId, walletId);
         try {
+            validateWalletId(httpSession, walletId);
+            String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
+
+            log.info("Fetching credentialId: {} from walletId: {}", credentialId, walletId);
+
             WalletCredentialResponseDTO walletCredentialResponseDTO = walletCredentialService.fetchVerifiableCredential(
                     walletId, credentialId, base64EncodedWalletKey, locale);
 
@@ -226,6 +228,10 @@ public class WalletCredentialsController {
             log.error("Error processing credential for walletId: {} and credentialId: {}", walletId, credentialId, e);
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
+        } catch (InvalidRequestException exception) {
+            log.error("Error processing credential for walletId: {} and credentialId: {}", walletId, credentialId, exception);
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    exception, exception.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
         }
     }
 
@@ -249,7 +255,7 @@ public class WalletCredentialsController {
         try {
             log.info("Deleting credential with ID: {} for walletId: {}", credentialId, walletId);
 
-            WalletUtil.validateWalletId(httpSession, walletId);
+            validateWalletId(httpSession, walletId);
 
             // Delete the credential
             walletCredentialService.deleteCredential(credentialId, walletId);

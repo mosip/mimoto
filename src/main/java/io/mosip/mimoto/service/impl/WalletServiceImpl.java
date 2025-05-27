@@ -8,6 +8,7 @@ import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.WalletUtil;
 import io.mosip.mimoto.util.WalletValidator;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,9 +54,10 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public String getWalletKey(String userId, String walletId, String pin) throws InvalidRequestException {
+    public String getWalletKey(String userId, String walletId, String pin, HttpSession httpSession) throws InvalidRequestException {
         log.info("Retrieving wallet key for user: {}, wallet: {}", userId, walletId);
 
+        WalletUtil.validateWalletId(httpSession, walletId);
         validator.validateUserId(userId);
         validator.validateWalletPin(pin);
 
