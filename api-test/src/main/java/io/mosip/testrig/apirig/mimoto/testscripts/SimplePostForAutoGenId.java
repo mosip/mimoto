@@ -108,7 +108,7 @@ public class SimplePostForAutoGenId extends MimotoUtil implements ITest {
 		inputJson = getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate());
 		inputJson = MimotoUtil.inputstringKeyWordHandeler(inputJson, testCaseName);
 
-		String outputJson = getJsonFromTemplate(testCaseDTO.getOutput(), testCaseDTO.getOutputTemplate());
+//		String outputJson = getJsonFromTemplate(testCaseDTO.getOutput(), testCaseDTO.getOutputTemplate());
 
 		if (testCaseDTO.getTemplateFields() != null && templateFields.length > 0) {
 			ArrayList<JSONObject> inputtestCases = AdminTestUtil.getInputTestCase(testCaseDTO);
