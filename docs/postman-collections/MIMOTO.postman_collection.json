@@ -343,7 +343,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\"walletName\" : \"default\",\n\"walletPin\":123456}"
+							"raw": "{\"walletName\" : \"default\",\n\"walletPin\":123456,\n\"confirmWalletPin\":123456}"
 						},
 						"url": "{{HOST}}/wallets"
 					},

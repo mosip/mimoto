@@ -20,8 +20,9 @@ public interface WalletService {
      * @param pin    The wallet PIN.
      * @return The created wallet ID.
      * @throws InvalidRequestException If the request is invalid.
+     * Example: Wallet PIN and Confirm Wallet PIN received in request don't match
      */
-    String createWallet(String userId, String name, String pin) throws InvalidRequestException;
+    String createWallet(String userId, String name, String pin, String confirmPin) throws InvalidRequestException;
 
     /**
      * Retrieves the decrypted wallet key.

@@ -2,14 +2,11 @@ package io.mosip.mimoto.security.oauth2;
 
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
-import io.mosip.mimoto.exception.DecryptionException;
-import io.mosip.mimoto.service.UserMetadataService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -22,8 +19,6 @@ import java.io.IOException;
 @Component
 @Slf4j
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
-    @Autowired
-    private UserMetadataService userMetadataService;
 
     @Value("${mosip.inji.web.url}")
     private String injiWebUrl;
@@ -32,39 +27,26 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         OAuth2AuthenticationToken oauth2Token = (OAuth2AuthenticationToken) authentication;
         OAuth2User oAuth2User = oauth2Token.getPrincipal();
+
         HttpSession session = request.getSession(false);
         if (session == null) {
             log.error("Session not available");
             throw new ServletException("Session not available");
         }
 
-        // Storing clientRegistrationId in the Redis session to verify it against the one in user metadata during profile retrieval
         String clientRegistrationId = oauth2Token.getAuthorizedClientRegistrationId();
         session.setAttribute("clientRegistrationId", clientRegistrationId);
 
-        // Extracting OAuth2 user information
-        String providerSubjectId = oAuth2User.getAttribute("sub");
-        String identityProvider = oauth2Token.getAuthorizedClientRegistrationId();
+        // Add user info to session for UI
         String displayName = oAuth2User.getAttribute("name");
         String profilePictureUrl = oAuth2User.getAttribute("picture");
         String email = oAuth2User.getAttribute("email");
 
-        // Call the service to update or insert the user metadata in the database
+        session.setAttribute(SessionKeys.USER_METADATA, new UserMetadataDTO(displayName, profilePictureUrl, email));
 
-        String userId = null;
-        try {
-            userId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
-        } catch (DecryptionException e) {
-            log.error("Failed to store the user info in the database", e);
-            String redirectUrl = injiWebUrl + "/login?status=error&error_message=" + "database_error";
-            response.sendRedirect(redirectUrl);
-        }
-        UserMetadataDTO userMetadataDTO = new UserMetadataDTO(displayName,
-                    profilePictureUrl,
-                    email);
-        session.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
+        String userId = oAuth2User.getAttribute("userId");
         session.setAttribute(SessionKeys.USER_ID, userId);
-        response.sendRedirect(injiWebUrl + "/login?status=success");
 
+        response.sendRedirect(injiWebUrl + "/pin");
     }
 }

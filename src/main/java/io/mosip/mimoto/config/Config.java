@@ -1,6 +1,7 @@
 package io.mosip.mimoto.config;
 
 import io.mosip.mimoto.exception.OAuth2AuthenticationException;
+import io.mosip.mimoto.security.oauth2.CustomOAuth2UserService;
 import io.mosip.mimoto.security.oauth2.OAuth2AuthenticationFailureHandler;
 import io.mosip.mimoto.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import io.mosip.mimoto.service.LogoutService;
@@ -71,6 +72,9 @@ public class Config {
     @Autowired
     private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
+    @Autowired
+    private CustomOAuth2UserService customOAuth2UserService;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, SessionRepository sessionRepository) throws Exception {
         if (!isCSRFEnable) {
@@ -106,9 +110,10 @@ public class Config {
 
     private void configureOAuth2Login(HttpSecurity http) throws Exception {
         http.oauth2Login(oauth2Login -> oauth2Login
-                .loginPage(injiWebUrl + "/login")
+                .loginPage(injiWebUrl + "/")
                 .authorizationEndpoint(authorization -> authorization.baseUri("/oauth2/authorize"))
                 .redirectionEndpoint(redirect -> redirect.baseUri("/oauth2/callback/*"))
+                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                 .successHandler(oAuth2AuthenticationSuccessHandler)
                 .failureHandler(oAuth2AuthenticationFailureHandler)
         );
