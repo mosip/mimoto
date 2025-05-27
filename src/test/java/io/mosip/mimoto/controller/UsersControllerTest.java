@@ -16,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -24,9 +25,9 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
-
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -73,7 +74,7 @@ class UsersControllerTest {
     }
 
     @Test
-    void getUserProfileOnlyFromCacheSuccessWithMockMvc() throws Exception {
+    void getUserProfileOnlyFromCacheSuccess() throws Exception {
         UserMetadataDTO userMetadataDTO = new UserMetadataDTO(DECRYPTED_DISPLAY_NAME, DECRYPTED_PROFILE_PIC, DECRYPTED_EMAIL, WALLET_ID);
         mockHttpSession.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
 
@@ -88,7 +89,7 @@ class UsersControllerTest {
     }
 
     @Test
-    void getUserProfileOnlyFromDatabaseSuccessWithMockMvc() throws Exception {
+    void getUserProfileOnlyFromDatabaseSuccess() throws Exception {
         UserMetadata userMetadata = new UserMetadata();
         userMetadata.setDisplayName(ENCRYPTED_DISPLAY_NAME);
         userMetadata.setProfilePictureUrl(ENCRYPTED_PROFILE_PIC);
@@ -109,10 +110,16 @@ class UsersControllerTest {
                 .andExpect(jsonPath("$.displayName").value(DECRYPTED_DISPLAY_NAME))
                 .andExpect(jsonPath("$.profilePictureUrl").value(DECRYPTED_PROFILE_PIC))
                 .andExpect(jsonPath("$.email").value(DECRYPTED_EMAIL));
+        // assert that the user metadata is stored in the session
+        UserMetadataDTO userMetadataDTO = (UserMetadataDTO) mockHttpSession.getAttribute(SessionKeys.USER_METADATA);
+        assertEquals(DECRYPTED_DISPLAY_NAME, userMetadataDTO.getDisplayName());
+        assertEquals(DECRYPTED_PROFILE_PIC, userMetadataDTO.getProfilePictureUrl());
+        assertEquals(DECRYPTED_EMAIL, userMetadataDTO.getEmail());
+        assertNull(userMetadataDTO.getWalletId());
     }
 
     @Test
-    void getUserProfileOnlyUserNotFoundWithMockMvc() throws Exception {
+    void getUserProfileOnlyUserNotFound() throws Exception {
         mockHttpSession.setAttribute(SessionKeys.USER_METADATA, null);
         mockHttpSession.setAttribute("clientRegistrationId", IDENTITY_PROVIDER);
         when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(PROVIDER_SUBJECT_ID, IDENTITY_PROVIDER))
@@ -127,7 +134,7 @@ class UsersControllerTest {
     }
 
     @Test
-    void getUserProfileOnlyDecryptionExceptionWithMockMvc() throws Exception {
+    void getUserProfileOnlyDecryptionException() throws Exception {
         UserMetadata userMetadata = new UserMetadata();
         userMetadata.setDisplayName(ENCRYPTED_DISPLAY_NAME);
         userMetadata.setProfilePictureUrl(ENCRYPTED_PROFILE_PIC);
@@ -147,7 +154,7 @@ class UsersControllerTest {
     }
 
     @Test
-    void getUserProfileOnlyMissingIdentityProviderWithMockMvc() throws Exception {
+    void getUserProfileOnlyMissingIdentityProvider() throws Exception {
         mockHttpSession.setAttribute(SessionKeys.USER_METADATA, null);
         mockHttpSession.setAttribute("clientRegistrationId", null);
 

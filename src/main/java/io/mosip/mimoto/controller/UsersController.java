@@ -71,6 +71,7 @@ public class UsersController {
                         encryptionService.decrypt(userMetadata.getEmail()),
                         null
                 );
+                session.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
             } catch (OAuth2AuthenticationException exception) {
                 log.error("Error occurred while retrieving user profile: ", exception);
                 return Utilities.getErrorResponseEntityWithoutWrapper(
