@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorDTO handleInvalidRequest(InvalidRequestException ex) {
         log.error("Invalid request parameters: ", ex);
-        return new ErrorDTO(ex.getErrorCode(), ex.getMessage());
+        return new ErrorDTO(ex.getErrorCode(), ex.getErrorText());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

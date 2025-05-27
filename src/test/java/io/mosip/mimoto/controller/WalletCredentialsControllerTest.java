@@ -130,7 +130,7 @@ public class WalletCredentialsControllerTest {
                 )
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("wallet_locked"))
-                .andExpect(jsonPath("$.errorMessage").value("wallet_locked --> Wallet is locked"));
+                .andExpect(jsonPath("$.errorMessage").value("Wallet is locked"));
     }
 
     @Test
@@ -193,7 +193,7 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Invalid Wallet ID. Session and request Wallet ID do not match"));
+                .andExpect(jsonPath("$.errorMessage").value("Invalid Wallet ID. Session and request Wallet ID do not match"));
     }
 
     @Test
@@ -208,7 +208,7 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_id", walletId))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Wallet key not found in session"));
+                .andExpect(jsonPath("$.errorMessage").value("Wallet key not found in session"));
     }
 
     @Test
@@ -323,7 +323,7 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_id", walletId))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Wallet key not found in session"));
+                .andExpect(jsonPath("$.errorMessage").value("Wallet key not found in session"));
     }
 
     @Test
@@ -337,7 +337,7 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Invalid Wallet ID. Session and request Wallet ID do not match"));
+                .andExpect(jsonPath("$.errorMessage").value("Invalid Wallet ID. Session and request Wallet ID do not match"));
     }
 
     // Tests for getVerifiableCredential

@@ -116,7 +116,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Entered PIN and Confirm PIN do not match"));
+                .andExpect(jsonPath("$.errorMessage").value("Entered PIN and Confirm PIN do not match"));
     }
 
     @Test
@@ -191,7 +191,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> User ID cannot be null or empty"));
+                .andExpect(jsonPath("$.errorMessage").value("User ID cannot be null or empty"));
     }
 
     @Test
@@ -205,7 +205,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Wallet not found"));
+                .andExpect(jsonPath("$.errorMessage").value("Wallet not found"));
     }
 
     // Unlock wallet tests
@@ -252,7 +252,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> User ID cannot be null or empty"));
+                .andExpect(jsonPath("$.errorMessage").value("User ID cannot be null or empty"));
     }
 
     @Test
@@ -273,7 +273,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Wallet not found"));
+                .andExpect(jsonPath("$.errorMessage").value("Wallet not found"));
     }
 
     @Test
@@ -294,7 +294,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Invalid PIN provided"));
+                .andExpect(jsonPath("$.errorMessage").value("Invalid PIN provided"));
     }
 
     @Test
