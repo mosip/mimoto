@@ -57,7 +57,6 @@ public class WalletServiceImpl implements WalletService {
     public String getWalletKey(String userId, String walletId, String pin, HttpSession httpSession) throws InvalidRequestException {
         log.info("Retrieving wallet key for user: {}, wallet: {}", userId, walletId);
 
-        WalletUtil.validateWalletId(httpSession, walletId);
         validator.validateUserId(userId);
         validator.validateWalletPin(pin);
 

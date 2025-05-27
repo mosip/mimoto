@@ -21,4 +21,7 @@ public class UserMetadataDTO implements Serializable {
 
     @Schema(description = "Email of the user provided by the Identity Provider")
     private String email;
+
+    @Schema(description = "Wallet id of the user in use")
+    private String walletId;
 }

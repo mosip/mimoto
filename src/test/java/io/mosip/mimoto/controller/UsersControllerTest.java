@@ -59,6 +59,7 @@ class UsersControllerTest {
     private static final String DECRYPTED_DISPLAY_NAME = "Test User";
     private static final String DECRYPTED_PROFILE_PIC = "https://test.com/pic.jpg";
     private static final String DECRYPTED_EMAIL = "test@example.com";
+    private static final String WALLET_ID = "test-wallet-id";
 
     @BeforeEach
     void setUp() {
@@ -73,7 +74,7 @@ class UsersControllerTest {
 
     @Test
     void getUserProfileOnlyFromCacheSuccessWithMockMvc() throws Exception {
-        UserMetadataDTO userMetadataDTO = new UserMetadataDTO(DECRYPTED_DISPLAY_NAME, DECRYPTED_PROFILE_PIC, DECRYPTED_EMAIL);
+        UserMetadataDTO userMetadataDTO = new UserMetadataDTO(DECRYPTED_DISPLAY_NAME, DECRYPTED_PROFILE_PIC, DECRYPTED_EMAIL, WALLET_ID);
         mockHttpSession.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
 
         mockMvc.perform(get("/users/me")
@@ -82,7 +83,8 @@ class UsersControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.displayName").value(DECRYPTED_DISPLAY_NAME))
                 .andExpect(jsonPath("$.profilePictureUrl").value(DECRYPTED_PROFILE_PIC))
-                .andExpect(jsonPath("$.email").value(DECRYPTED_EMAIL));
+                .andExpect(jsonPath("$.email").value(DECRYPTED_EMAIL))
+                .andExpect(jsonPath("$.walletId").value("test-wallet-id"));
     }
 
     @Test

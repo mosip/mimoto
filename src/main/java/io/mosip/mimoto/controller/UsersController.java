@@ -63,14 +63,14 @@ public class UsersController {
             try {
                 userMetadata = fetchUserMetadata(authentication.getName(), identityProvider);
 
+                // In case of fetching user info from DB, walletId is null.
+                // Here login is required as data is unavailable in session
                 userMetadataDTO = new UserMetadataDTO(
                         encryptionService.decrypt(userMetadata.getDisplayName()),
                         encryptionService.decrypt(userMetadata.getProfilePictureUrl()),
-                        encryptionService.decrypt(userMetadata.getEmail())
+                        encryptionService.decrypt(userMetadata.getEmail()),
+                        null
                 );
-
-                // Store in session for future use
-                session.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
             } catch (OAuth2AuthenticationException exception) {
                 log.error("Error occurred while retrieving user profile: ", exception);
                 return Utilities.getErrorResponseEntityWithoutWrapper(
@@ -89,6 +89,11 @@ public class UsersController {
                 );
             }
         } else {
+            // If data is available in cache, take walletId also from cache
+            Object walletIdObj = session.getAttribute(SessionKeys.WALLET_ID);
+            if (walletIdObj instanceof String walletId) {
+                userMetadataDTO.setWalletId(walletId);
+            }
             log.info("Retrieved user metadata from cache");
         }
 

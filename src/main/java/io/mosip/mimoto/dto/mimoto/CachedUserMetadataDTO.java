@@ -11,23 +11,20 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+//TODO: remove this unused DTO
 public class CachedUserMetadataDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @JsonProperty("display_name")
     @Schema(description = "Display name of the user provided by the Identity Provider")
     private String displayName;
 
-    @JsonProperty("profile_picture_url")
     @Schema(description = "Profile picture of the user provided by the Identity Provider")
     private String profilePictureUrl;
 
-    @JsonProperty("email")
     @Schema(description = "Email of the user provided by the Identity Provider")
     private String email;
 
-    @JsonProperty("wallet_id")
     @Schema(description = "Wallet id of the user in use")
     private String walletId;
 }
