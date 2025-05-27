@@ -46,5 +46,6 @@ public class VCCredentialProperties {
     @NotEmpty
     private List<@NotBlank String> type;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Map<String, Object> credentialStatus;
 }
