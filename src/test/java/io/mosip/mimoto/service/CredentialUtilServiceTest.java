@@ -64,7 +64,8 @@ public class CredentialUtilServiceTest {
 
     private Map<String, String> tokenRequestParams = Map.of(
             "grant_type", "client_credentials",
-            "client_id", "test-client"
+            "client_id", "test-client",
+            "issuer", "issuer1"
     );
     IssuerDTO issuerDTO;
     TokenResponseDTO expectedTokenResponse;
@@ -98,7 +99,7 @@ public class CredentialUtilServiceTest {
 
     @Test
     public void shouldReturnTokenResponseForValidTokenEndpoint() throws Exception {
-        TokenResponseDTO actualTokenResponse = credentialUtilService.getTokenResponse(tokenRequestParams, issuerId);
+        TokenResponseDTO actualTokenResponse = credentialUtilService.getTokenResponse(tokenRequestParams);
 
         assertEquals(expectedTokenResponse, actualTokenResponse);
     }
@@ -109,7 +110,7 @@ public class CredentialUtilServiceTest {
                 .thenReturn(null);
 
         IdpException actualException = assertThrows(IdpException.class, () -> {
-            credentialUtilService.getTokenResponse(tokenRequestParams, issuerId);
+            credentialUtilService.getTokenResponse(tokenRequestParams);
         });
 
         assertEquals("RESIDENT-APP-034 --> Exception occurred while performing the authorization", actualException.getMessage());
@@ -221,7 +222,7 @@ public class CredentialUtilServiceTest {
 
         ByteArrayInputStream actualPDFByteArray =
                 credentialUtilService.generatePdfForVerifiableCredentials("CredentialType1", vcCredentialResponse, issuerDTO, issuerConfig.getCredentialConfigurationsSupported().get("CredentialType1"), "https://datashare_url", "once", "en");
-        
+
         String expectedText = extractTextFromPdf(expectedPDFByteArray);
         String actualText = extractTextFromPdf(actualPDFByteArray);
 

@@ -108,7 +108,7 @@ public class WalletCredentialsController {
         log.info("Initiating token call for issuer: {}", issuerId);
         TokenResponseDTO tokenResponse;
         try {
-            tokenResponse = credentialUtilService.getTokenResponse(verifiableCredentialRequestDTO, issuerId);
+            tokenResponse = credentialUtilService.getTokenResponse(verifiableCredentialRequestDTO);
         } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
                  InvalidWellknownResponseException e) {
             log.error("Error fetching token response for issuer: {}", issuerId, e);

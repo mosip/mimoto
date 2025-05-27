@@ -99,7 +99,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldDownloadCredentialSuccessfully() throws Exception {
         setIssuerAndCredentialConfigurationId(issuer, credentialConfigurationId);
-        when(credentialUtilService.getTokenResponse(eq(verifiableCredentialRequest), eq(issuer))).thenReturn(new TokenResponseDTO());
+        when(credentialUtilService.getTokenResponse(eq(verifiableCredentialRequest))).thenReturn(new TokenResponseDTO());
         when(walletCredentialService.fetchAndStoreCredential(eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey)))
                 .thenReturn(verifiableCredentialResponseDTO);
 
@@ -143,7 +143,7 @@ public class WalletCredentialsControllerTest {
                 .sessionAttr("wallet_id", walletId)
                 .sessionAttr("wallet_key", walletKey));
 
-        verify(credentialUtilService).getTokenResponse(eq(verifiableCredentialRequest), eq(issuer));
+        verify(credentialUtilService).getTokenResponse(eq(verifiableCredentialRequest));
         verify(walletCredentialService
         ).fetchAndStoreCredential(eq(issuer), eq(credentialConfigurationId), any(), eq("fr"), eq(walletId), eq(walletKey));
     }
@@ -252,7 +252,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldThrowServiceUnavailableForTokenResponseFailure() throws Exception {
         setIssuerAndCredentialConfigurationId(issuer, credentialConfigurationId);
-        when(credentialUtilService.getTokenResponse(eq(verifiableCredentialRequest), eq(issuer)))
+        when(credentialUtilService.getTokenResponse(eq(verifiableCredentialRequest)))
                 .thenThrow(new ApiNotAccessibleException("API not accessible"));
 
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
@@ -267,7 +267,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldThrowServiceUnavailableForExternalServiceFailure() throws Exception {
         setIssuerAndCredentialConfigurationId(issuer, credentialConfigurationId);
-        when(credentialUtilService.getTokenResponse(anyMap(), eq(issuer))).thenReturn(new TokenResponseDTO());
+        when(credentialUtilService.getTokenResponse(anyMap())).thenReturn(new TokenResponseDTO());
         when(walletCredentialService.fetchAndStoreCredential(anyString(), anyString(), any(), anyString(), anyString(), anyString()))
                 .thenThrow(new ExternalServiceUnavailableException("Service unavailable", "Service unavailable"));
 

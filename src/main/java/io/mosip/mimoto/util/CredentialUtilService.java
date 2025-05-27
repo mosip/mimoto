@@ -111,11 +111,12 @@ public class CredentialUtilService {
         pixelPass = new PixelPass();
     }
 
-    public TokenResponseDTO getTokenResponse(VerifiableCredentialRequestDTO verifiableCredentialRequest, String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
-        return getTokenResponse(convertVerifiableCredentialRequestToMap(verifiableCredentialRequest), issuerId);
+    public TokenResponseDTO getTokenResponse(VerifiableCredentialRequestDTO verifiableCredentialRequest) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+        return getTokenResponse(convertVerifiableCredentialRequestToMap(verifiableCredentialRequest));
     }
 
-    public TokenResponseDTO getTokenResponse(Map<String, String> params, String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+    public TokenResponseDTO getTokenResponse(Map<String, String> params) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+        String issuerId = params.get("issuer");
         IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
         CredentialIssuerConfiguration credentialIssuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
         String tokenEndpoint = idpService.getTokenEndpoint(credentialIssuerConfiguration);
@@ -408,6 +409,7 @@ public class CredentialUtilService {
         params.put("redirect_uri", verifiableCredentialRequest.getRedirectUri());
         params.put("grant_type", verifiableCredentialRequest.getGrantType());
         params.put("code_verifier", verifiableCredentialRequest.getCodeVerifier());
+        params.put("issuer", verifiableCredentialRequest.getIssuer());
 
         return params;
     }

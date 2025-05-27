@@ -4,9 +4,9 @@ import com.google.common.collect.Lists;
 import io.mosip.kernel.core.util.JsonUtils;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.mimoto.*;
-import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.exception.BaseUncheckedException;
+import io.mosip.mimoto.exception.IdpException;
 import io.mosip.mimoto.service.RestClientService;
-import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.*;
@@ -25,10 +25,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
-import static io.mosip.mimoto.util.TestUtilities.*;
-
 import java.util.Arrays;
 
+import static io.mosip.mimoto.util.TestUtilities.getTokenResponseDTO;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -126,7 +125,7 @@ public class IdpControllerTest {
     @Test
     public void shouldReturnTokenResponseForValidIssuerAndParams() throws Exception {
         String issuer = "test-issuer";
-        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer))).thenReturn(getTokenResponseDTO());
+        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap())).thenReturn(getTokenResponseDTO());
 
         mockMvc.perform(post("/get-token/{issuer}", issuer)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -151,7 +150,7 @@ public class IdpControllerTest {
     @Test
     public void shouldReturnBadRequestWithErrorIfTokenResponseIsNull() throws Exception {
         String issuer = "test-issuer";
-        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer)))
+        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap()))
                 .thenThrow(new IdpException("Exception occurred while performing the authorization"));
 
         mockMvc.perform(post("/get-token/{issuer}", issuer)
