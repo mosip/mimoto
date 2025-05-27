@@ -111,17 +111,37 @@ class WalletUtilTest {
         assertEquals(4, savedWallet.getProofSigningKeys().size());
     }
 
-    // Tests for validateUserId
     @Test
-    void testValidUserId() {
-        assertDoesNotThrow(() -> WalletUtil.validateUserId("validUserId"));
+    void testValidWalletId() {
+        HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute(SessionKeys.WALLET_ID)).thenReturn("wallet-123");
+        assertDoesNotThrow(() -> WalletUtil.validateWalletId(session, "wallet-123"));
     }
 
     @Test
-    void testNullUserId() {
-        InvalidRequestException ex = assertThrows(InvalidRequestException.class, () -> WalletUtil.validateUserId(null));
+    void testMissingWalletIdInSession() {
+        HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute(SessionKeys.WALLET_ID)).thenReturn(null);
+        InvalidRequestException ex = assertThrows(InvalidRequestException.class,
+                () -> WalletUtil.validateWalletId(session, "wallet-123"));
+        assertEquals("wallet_locked", ex.getErrorCode());
+        assertEquals("wallet_locked --> Wallet is locked", ex.getMessage());
+    }
 
+    @Test
+    void testMismatchedWalletId() {
+        HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute(SessionKeys.WALLET_ID)).thenReturn("wallet-abc");
+        InvalidRequestException ex = assertThrows(InvalidRequestException.class,
+                () -> WalletUtil.validateWalletId(session, "wallet-123"));
         assertEquals("invalid_request", ex.getErrorCode());
-        assertEquals("invalid_request --> User ID not found in session", ex.getMessage());
+        assertEquals("invalid_request --> Invalid Wallet ID. Session and request Wallet ID do not match", ex.getMessage());
+    }
+
+    @Test
+    void testNonStringWalletIdInSession() {
+        HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute(SessionKeys.WALLET_ID)).thenReturn(12345);
+        assertDoesNotThrow(() -> WalletUtil.validateWalletId(session, "12345"));
     }
 }

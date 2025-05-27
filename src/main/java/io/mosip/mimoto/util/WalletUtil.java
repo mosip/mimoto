@@ -30,15 +30,12 @@ public class WalletUtil {
     @Autowired
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
-    public static void validateUserId(String userId) {
-        if (userId == null) {
-            log.error("User ID not found in session.");
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "User ID not found in session");
-        }
-    }
-
     public String decryptWalletKey(String encryptedWalletKey, String pin) {
-        return encryptionDecryptionUtil.decryptWithPin(encryptedWalletKey, pin);
+        try {
+            return encryptionDecryptionUtil.decryptWithPin(encryptedWalletKey, pin);
+        } catch (Exception e) {
+            throw new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided " + e);
+        }
     }
 
     public String createWallet(String userId, String walletName, String pin) {
@@ -88,13 +85,15 @@ public class WalletUtil {
 
     public static String getSessionWalletKey(HttpSession session) {
         Object key = session.getAttribute(SessionKeys.WALLET_KEY);
-        if (key == null) throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet key not found in session");
+        if (key == null)
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet key not found in session");
         return key.toString();
     }
 
     public static void validateWalletId(HttpSession session, String walletIdFromRequest) {
         Object sessionWalletId = session.getAttribute(SessionKeys.WALLET_ID);
-        if (sessionWalletId == null) throw new InvalidRequestException(WALLET_LOCKED.getErrorCode(), WALLET_LOCKED.getErrorMessage());
+        if (sessionWalletId == null)
+            throw new InvalidRequestException(WALLET_LOCKED.getErrorCode(), WALLET_LOCKED.getErrorMessage());
 
         String walletIdInSession = sessionWalletId.toString();
         if (!walletIdInSession.equals(walletIdFromRequest)) {

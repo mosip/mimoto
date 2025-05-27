@@ -2,13 +2,12 @@ package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
-import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.CreateWalletRequestDto;
+import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.UnlockWalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.service.WalletService;
-import io.mosip.mimoto.util.WalletUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -54,7 +53,7 @@ public class WalletsController {
      * @param httpSession The HTTP session containing user details.
      * @return The unique identifier of the created wallet.
      * @throws InvalidRequestException If the request is invalid.
-     * Example: Wallet PIN and Confirm Wallet PIN received in request don't match
+     *                                 Example: Wallet PIN and Confirm Wallet PIN received in request don't match
      */
     @Operation(
             summary = "Create a new wallet",
@@ -84,7 +83,6 @@ public class WalletsController {
             @RequestBody @Valid CreateWalletRequestDto wallet,
             HttpSession httpSession) throws InvalidRequestException {
         String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
-        WalletUtil.validateUserId(userId);
         log.info("Creating wallet for user: {}, name: {}", userId, wallet.getWalletName());
         WalletResponseDto walletResponseDto = walletService.createWallet(userId, wallet.getWalletName(), wallet.getWalletPin(), wallet.getConfirmWalletPin());
         return ResponseEntity.status(HttpStatus.OK).body(walletResponseDto);
@@ -110,7 +108,6 @@ public class WalletsController {
     @GetMapping
     public ResponseEntity<List<WalletResponseDto>> getWallets(HttpSession httpSession) throws InvalidRequestException {
         String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
-        WalletUtil.validateUserId(userId);
         log.info("Retrieving wallets for user: {}", userId);
         List<WalletResponseDto> response = walletService.getWallets(userId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -143,7 +140,6 @@ public class WalletsController {
             @RequestBody @Valid UnlockWalletRequestDto wallet,
             HttpSession httpSession) throws InvalidRequestException {
         String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
-        WalletUtil.validateUserId(userId);
         log.info("Unlocking wallet: {} for user: {}", walletId, userId);
         String walletKey = walletService.getWalletKey(userId, walletId, wallet.getWalletPin());
         httpSession.setAttribute(SessionKeys.WALLET_KEY, walletKey);
@@ -173,10 +169,6 @@ public class WalletsController {
     @DeleteMapping("/{walletId}")
     public ResponseEntity<Void> deleteWallet(@PathVariable("walletId") String walletId, HttpSession httpSession) {
         String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
-        if (userId == null) {
-            log.error("User ID is missing in session");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         walletService.deleteWallet(userId, walletId); // sessionWalletId is not needed from client, pass walletId for validation
 
         String sessionWalletId = (String) httpSession.getAttribute(SessionKeys.WALLET_ID);

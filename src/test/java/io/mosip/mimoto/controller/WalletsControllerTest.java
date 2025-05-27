@@ -7,9 +7,8 @@ import io.mosip.mimoto.dto.UnlockWalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.util.GlobalExceptionHandler;
 import io.mosip.mimoto.service.WalletService;
-import io.mosip.mimoto.util.WalletValidator;
+import io.mosip.mimoto.util.GlobalExceptionHandler;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,14 +26,14 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.util.List;
+import java.util.Objects;
 
+import static io.mosip.mimoto.util.TestUtilities.createRequestBody;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {WalletsController.class, GlobalExceptionHandler.class})
@@ -42,9 +41,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @EnableWebMvc
 @EnableWebSecurity
 public class WalletsControllerTest {
-    @MockBean
-    private WalletValidator walletValidator;
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -153,45 +149,11 @@ public class WalletsControllerTest {
                 .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
     }
 
-    @Test
-    public void shouldReturnTheWalletIDAndStoreWalletKeyInSessionForValidUserAndWalletId() throws Exception {
-        when(walletService.getWalletKey(userId, walletId, walletPin)).thenReturn(walletId);
-        String expectedWalletKey = "walletId123";
-
-        MvcResult result = mockMvc.perform(post(String.format("/wallets/%s/unlock", walletId))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(createWalletRequestDto))
-                        .session(mockSession)
-                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
-                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"walletId\":\"walletId123\",\"walletName\":null}"))
-                .andReturn();
-
-        String actualWalletKey = result.getRequest().getSession().getAttribute("wallet_key").toString();
-        assertEquals(expectedWalletKey, actualWalletKey);
-    }
-
-    @Test
-    public void shouldThrowExceptionIfAnyErrorOccurredWhileFetchingWalletDataForGivenUserIdAndWalletId() throws Exception {
-        when(walletService.getWalletKey(userId, walletId, walletPin)).thenThrow(new RuntimeException("Exception occurred when fetching the wallet data for given walletId and userId"));
-
-        mockMvc.perform(post(String.format("/wallets/%s/unlock", walletId))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(createWalletRequestDto))
-                        .session(mockSession)
-                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
-                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
-                .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
-    }
+    // Test for deleting a wallet
 
     @Test
     public void shouldDeleteWalletSuccessfully() throws Exception {
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(String.format("/wallets/%s", walletId))
+        mockMvc.perform(delete(String.format("/wallets/%s", walletId))
                         .accept(MediaType.APPLICATION_JSON)
                         .session(mockSession)
                         .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
@@ -204,7 +166,7 @@ public class WalletsControllerTest {
         mockSession.setAttribute(SessionKeys.WALLET_ID, walletId);
         mockSession.setAttribute(SessionKeys.WALLET_KEY, "walletKey123");
 
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(String.format("/wallets/%s", walletId))
+        mockMvc.perform(delete(String.format("/wallets/%s", walletId))
                         .accept(MediaType.APPLICATION_JSON)
                         .session(mockSession)
                         .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
@@ -218,14 +180,32 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldReturnUnauthorizedWhenUserIdIsMissingForDeleteWallet() throws Exception {
-        MockHttpSession sessionWithoutUserId = new MockHttpSession();
+        mockSession.clearAttributes();
+        MockHttpSession sessionWithoutUserId = mockSession;
+        doThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "User ID cannot be null or empty")).when(walletService).deleteWallet(null,walletId);
 
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(String.format("/wallets/%s", walletId))
+        mockMvc.perform(delete(String.format("/wallets/%s", walletId))
                         .accept(MediaType.APPLICATION_JSON)
                         .session(sessionWithoutUserId)
                         .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> User ID cannot be null or empty"));
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenInvalidRequestExceptionIsThrownByService() throws Exception {
+        doThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet not found")).when(walletService).deleteWallet(userId,walletId);
+
+        mockMvc.perform(delete("/wallets/"+walletId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user("user123").roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> Wallet not found"));
     }
 
     // Unlock wallet tests
@@ -249,16 +229,18 @@ public class WalletsControllerTest {
                 .andReturn();
 
         // Verify session attributes were set correctly
-        assertEquals(walletId, result.getRequest().getSession().getAttribute(SessionKeys.WALLET_ID));
+        assertEquals(walletId, Objects.requireNonNull(result.getRequest().getSession()).getAttribute(SessionKeys.WALLET_ID));
         assertEquals("walletKey123", result.getRequest().getSession().getAttribute(SessionKeys.WALLET_KEY));
     }
 
     @Test
     public void shouldThrowExceptionWhenUserIdIsMissingForUnlockWallet() throws Exception {
         UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
-        unlockRequest.setWalletPin("1234");
-
-        MockHttpSession sessionWithoutUserId = new MockHttpSession();
+        unlockRequest.setWalletPin(walletPin);
+        when(walletService.getWalletKey(null, walletId, walletPin))
+                .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "User ID cannot be null or empty"));
+        mockSession.clearAttributes();
+        MockHttpSession sessionWithoutUserId = mockSession;
         sessionWithoutUserId.setAttribute("clientRegistrationId", "google");
 
         mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
@@ -270,7 +252,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> User ID not found in session"));
+                .andExpect(jsonPath("$.errorMessage").value("invalid_request --> User ID cannot be null or empty"));
     }
 
     @Test
@@ -327,6 +309,22 @@ public class WalletsControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .content(createRequestBody(unlockRequest))
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
+                .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
+    }
+
+    @Test
+    public void shouldThrowExceptionIfAnyErrorOccurredWhileFetchingWalletDataForGivenUserIdAndWalletId() throws Exception {
+        when(walletService.getWalletKey(userId, walletId, walletPin)).thenThrow(new RuntimeException("Exception occurred when fetching the wallet data for given walletId and userId"));
+
+        mockMvc.perform(post(String.format("/wallets/%s/unlock", walletId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(createWalletRequestDto))
                         .session(mockSession)
                         .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
