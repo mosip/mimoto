@@ -110,7 +110,7 @@ public class Config {
 
     private void configureOAuth2Login(HttpSecurity http) throws Exception {
         http.oauth2Login(oauth2Login -> oauth2Login
-                .loginPage(injiWebUrl + "/login")
+                .loginPage(injiWebUrl + "/")
                 .authorizationEndpoint(authorization -> authorization.baseUri("/oauth2/authorize"))
                 .redirectionEndpoint(redirect -> redirect.baseUri("/oauth2/callback/*"))
                 .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
