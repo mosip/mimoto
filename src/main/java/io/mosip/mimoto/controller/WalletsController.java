@@ -7,6 +7,7 @@ import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.UnlockWalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.InvalidRequestException;
+import io.mosip.mimoto.exception.UnAuthorizationAccessException;
 import io.mosip.mimoto.service.WalletService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,6 +29,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static io.mosip.mimoto.constant.SwaggerLiteralConstants.RETRIEVE_ALL_WALLETS_DESCRIPTION;
+import static io.mosip.mimoto.constant.SwaggerLiteralConstants.RETRIEVE_ALL_WALLETS_SUMMARY;
 
 
 /**
@@ -81,7 +85,7 @@ public class WalletsController {
     @PostMapping
     public ResponseEntity<WalletResponseDto> createWallet(
             @RequestBody @Valid CreateWalletRequestDto wallet,
-            HttpSession httpSession) throws InvalidRequestException {
+            HttpSession httpSession) throws InvalidRequestException, UnAuthorizationAccessException {
         String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
         log.info("Creating wallet for user: {}, name: {}", userId, wallet.getWalletName());
         WalletResponseDto walletResponseDto = walletService.createWallet(userId, wallet.getWalletName(), wallet.getWalletPin(), wallet.getConfirmWalletPin());
@@ -96,8 +100,8 @@ public class WalletsController {
      * @throws InvalidRequestException If the request fails.
      */
     @Operation(
-            summary = "Retrieve all wallets for the user",
-            description = "This API is secured using session-based authentication. The session ID is extracted from the Cookie header to authenticate the user. The user's ID is obtained from the session stored in Redis, and all wallets associated with the user are fetched from the database. If successful, the list of wallets is returned; otherwise, an appropriate error response is returned.",
+            summary = RETRIEVE_ALL_WALLETS_SUMMARY,
+            description = RETRIEVE_ALL_WALLETS_DESCRIPTION,
             operationId = "getWallets",
             security = @SecurityRequirement(name = "SessionAuth")
     )

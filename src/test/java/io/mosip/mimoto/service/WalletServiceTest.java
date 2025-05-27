@@ -5,6 +5,7 @@ import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dbentity.WalletMetadata;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.InvalidRequestException;
+import io.mosip.mimoto.exception.UnAuthorizationAccessException;
 import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.service.impl.WalletServiceImpl;
 import io.mosip.mimoto.util.WalletUtil;
@@ -80,6 +81,19 @@ public class WalletServiceTest {
         verify(walletValidator).validateWalletName(name);
         verify(walletValidator).validateWalletPin(walletPin);
         verify(walletHelper).createWallet(userId, name, walletPin);
+    }
+
+
+    @Test
+    public void shouldThrowUnAuthorizedAccessExceptionOnCreatingWalletIfUserIdNotFoundInSession() {
+        // In case of userId (or any key) not available in session, the default value will be null.
+        doThrow(new UnAuthorizationAccessException("unauthorized", "User ID not found in session")).when(walletValidator).validateUserId(null);
+
+        UnAuthorizationAccessException exception = assertThrows(UnAuthorizationAccessException.class, () ->
+                walletService.createWallet(null, name, walletPin, walletConfirmPin));
+
+        assertEquals("unauthorized", exception.getErrorCode());
+        assertEquals("unauthorized --> User ID not found in session", exception.getMessage());
     }
 
     @Test

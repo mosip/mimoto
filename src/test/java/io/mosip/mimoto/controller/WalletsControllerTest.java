@@ -7,6 +7,7 @@ import io.mosip.mimoto.dto.UnlockWalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
+import io.mosip.mimoto.exception.UnAuthorizationAccessException;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
 import org.junit.Before;
@@ -69,6 +70,8 @@ public class WalletsControllerTest {
         userId = (String) mockSession.getAttribute(SessionKeys.USER_ID);
     }
 
+    // Test for creating a wallet
+
     @Test
     public void shouldReturnWalletIdForSuccessfulWalletCreation() throws Exception {
         when(walletService.createWallet(userId, walletName, walletPin, confirmWalletPin)).thenReturn(new WalletResponseDto(walletId, walletName));
@@ -118,6 +121,26 @@ public class WalletsControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
                 .andExpect(jsonPath("$.errorMessage").value("Entered PIN and Confirm PIN do not match"));
     }
+
+    @Test
+    public void shouldReturnUnauthorizedWhenUserIdIsMissingForCreateWallet() throws Exception {
+        mockSession.clearAttributes();
+        MockHttpSession sessionWithoutUserId = mockSession;
+        doThrow(new UnAuthorizationAccessException(ErrorConstants.UNAUTHORIZED_ACCESS.getErrorCode(), "User ID not found in session")).when(walletService).createWallet(null, walletName, walletPin, confirmWalletPin);
+
+        mockMvc.perform(post("/wallets")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(createWalletRequestDto))
+                        .session(sessionWithoutUserId)
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value("unauthorized"))
+                .andExpect(jsonPath("$.errorMessage").value("User ID not found in session"));
+    }
+
+    // Test for fetching wallets
 
     @Test
     public void shouldReturnListOfWalletIDsForValidUserId() throws Exception {

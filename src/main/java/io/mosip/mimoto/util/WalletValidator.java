@@ -2,7 +2,9 @@ package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
+import io.mosip.mimoto.exception.UnAuthorizationAccessException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +29,11 @@ public class WalletValidator {
      */
     public void validateUserId(String userId) throws InvalidRequestException {
         log.debug("Validating User: {}", userId);
-        if (userId == null || userId.trim().isEmpty()) {
+        if(userId == null){
+            log.warn("User ID is not available in the session");
+            throw new UnAuthorizationAccessException(ErrorConstants.UNAUTHORIZED_ACCESS.getErrorCode(), "User ID not found in session");
+        }
+        if (StringUtils.isBlank(userId)) {
             log.warn("Invalid user ID: null or empty");
             throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "User ID cannot be null or empty");
         }

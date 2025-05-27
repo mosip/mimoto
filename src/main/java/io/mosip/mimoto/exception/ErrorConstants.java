@@ -37,6 +37,7 @@ public enum ErrorConstants {
     CREDENTIAL_DOWNLOAD_EXCEPTION("credential_download_error", "Failed to download and store the credential"),
     CREDENTIAL_FETCH_EXCEPTION("credential_fetch_error", "Failed to fetch the credential"),
 
+    UNAUTHORIZED_ACCESS("unauthorized", "You are not authorized to access this resource"),
     WALLET_LOCKED("wallet_locked", "Wallet is locked"),
     INVALID_PIN("invalid_pin", "Invalid PIN or wallet key provided");
 

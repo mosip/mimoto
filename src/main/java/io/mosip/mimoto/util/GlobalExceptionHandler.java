@@ -4,11 +4,15 @@ import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
 import io.mosip.mimoto.exception.InvalidRequestException;
+import io.mosip.mimoto.exception.UnAuthorizationAccessException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -41,6 +45,13 @@ public class GlobalExceptionHandler {
     public ErrorDTO handleExternalServiceUnavailable(ExternalServiceUnavailableException ex) {
         log.error("Connection to external service failed: ", ex);
         return new ErrorDTO(ex.getErrorCode(), ex.getMessage());
+    }
+
+    @ExceptionHandler(UnAuthorizationAccessException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorDTO handleUnAuthorizedAccess(UnAuthorizationAccessException ex) {
+        log.error("UnAuthorized access detected: ", ex);
+        return new ErrorDTO(ex.getErrorCode(), ex.getErrorText());
     }
 
     @ExceptionHandler(InvalidRequestException.class)

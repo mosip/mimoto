@@ -3372,7 +3372,7 @@
                     "Wallets"
                 ],
                 "summary": "Create a new wallet",
-                "description": "This API is secured using session-based authentication. The session ID is extracted from the Cookie header and used to retrieve session details from Redis for authentication. The user ID is then obtained from the session and along with the provided wallet name and PIN is used to create a new wallet in the database. If the wallet is created successfully, a unique identifier for the wallet is returned otherwise an appropriate error response is provided.",
+                "description": "This API is secured using session-based authentication. The session ID is extracted from the Cookie header and used to retrieve session details from Redis for authentication. The user ID is then obtained from the session and along with the provided wallet name and PIN is used to create a new wallet in the database. If the wallet is created successfully, response including unique identifier of the wallet and and the provided name is returned otherwise an appropriate error response is provided.",
                 "operationId": "createWallet",
                 "security": [
                     {
@@ -3392,7 +3392,7 @@
                                     "value": {
                                         "walletPin": "1234",
                                         "confirmWalletPin": "1234",
-                                        "walletName": "wallet 123"
+                                        "walletName": "My Personal Wallet"
                                     }
                                 }
                             }
@@ -3405,14 +3405,13 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "string",
-                                    "description": "Unique identifier of the Wallet stored in the database"
+                                    "$ref": "#/components/schemas/WalletResponseDTO"
                                 },
                                 "examples": {
                                     "Success response": {
                                         "value": {
                                             "walletId": "d94a2e70-1234-4f2f-9eae-98765",
-                                            "walletName": "wallet 123"
+                                            "walletName": "My Personal Wallet"
                                         }
                                     }
                                 }
@@ -3427,12 +3426,6 @@
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "User ID is not present in session": {
-                                        "value": {
-                                            "errorCode": "invalid_request",
-                                            "errorMessage": "User ID not found in session"
-                                        }
-                                    },
                                     "Invalid User ID": {
                                         "value": {
                                             "errorCode": "invalid_request",
@@ -3455,6 +3448,24 @@
                                         "value": {
                                             "errorCode": "invalid_request",
                                             "errorMessage": "Entered PIN and Confirm PIN do not match"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized user creating a wallet",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User ID is not present in session": {
+                                        "value": {
+                                            "errorCode": "unauthorized",
+                                            "errorMessage": "User ID not found in session"
                                         }
                                     }
                                 }
@@ -4099,6 +4110,19 @@
                     "walletPin",
                     "confirmWalletPin"
                 ]
+            },
+            "WalletResponseDTO": {
+                "type": "object",
+                "properties": {
+                    "walletId": {
+                        "type": "string",
+                        "description": "Unique identifier of the Wallet"
+                    },
+                    "walletName": {
+                        "type": "string",
+                        "description": "Wallet name provided by the user"
+                    }
+                }
             },
             "UnlockWalletRequestDto": {
                 "type": "object",
