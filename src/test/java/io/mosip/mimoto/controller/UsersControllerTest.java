@@ -74,7 +74,7 @@ class UsersControllerTest {
     }
 
     @Test
-    void getUserProfileOnlyFromCacheSuccess() throws Exception {
+    void getUserProfileInfoFromCacheSuccess() throws Exception {
         UserMetadataDTO userMetadataDTO = new UserMetadataDTO(DECRYPTED_DISPLAY_NAME, DECRYPTED_PROFILE_PIC, DECRYPTED_EMAIL, WALLET_ID);
         mockHttpSession.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
 
@@ -89,7 +89,7 @@ class UsersControllerTest {
     }
 
     @Test
-    void getUserProfileOnlyFromDatabaseSuccess() throws Exception {
+    void getUserProfileInfoFromDatabaseSuccess() throws Exception {
         UserMetadata userMetadata = new UserMetadata();
         userMetadata.setDisplayName(ENCRYPTED_DISPLAY_NAME);
         userMetadata.setProfilePictureUrl(ENCRYPTED_PROFILE_PIC);
@@ -119,7 +119,7 @@ class UsersControllerTest {
     }
 
     @Test
-    void getUserProfileOnlyUserNotFound() throws Exception {
+    void getUserProfileInfoWhenUserNotFoundInDB() throws Exception {
         mockHttpSession.setAttribute(SessionKeys.USER_METADATA, null);
         mockHttpSession.setAttribute("clientRegistrationId", IDENTITY_PROVIDER);
         when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(PROVIDER_SUBJECT_ID, IDENTITY_PROVIDER))
@@ -128,13 +128,13 @@ class UsersControllerTest {
         mockMvc.perform(get("/users/me")
                         .with(SecurityMockMvcRequestPostProcessors.user(DECRYPTED_DISPLAY_NAME).roles("USER"))
                         .session(mockHttpSession))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value(ErrorConstants.INVALID_USER.getErrorCode()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value("unauthorized"))
                 .andExpect(jsonPath("$.errorMessage").value("User not found. Please check your credentials or login again"));
     }
 
     @Test
-    void getUserProfileOnlyDecryptionException() throws Exception {
+    void getUserProfileInfoWhenDecryptionExceptionOccursWhileProcessingDataFromDB() throws Exception {
         UserMetadata userMetadata = new UserMetadata();
         userMetadata.setDisplayName(ENCRYPTED_DISPLAY_NAME);
         userMetadata.setProfilePictureUrl(ENCRYPTED_PROFILE_PIC);
@@ -154,14 +154,15 @@ class UsersControllerTest {
     }
 
     @Test
-    void getUserProfileOnlyMissingIdentityProvider() throws Exception {
+    void getUserProfileInfoWhenIdentityProviderIsMissing() throws Exception {
         mockHttpSession.setAttribute(SessionKeys.USER_METADATA, null);
         mockHttpSession.setAttribute("clientRegistrationId", null);
 
         mockMvc.perform(get("/users/me")
                         .with(SecurityMockMvcRequestPostProcessors.user(DECRYPTED_DISPLAY_NAME).roles("USER"))
                         .session(mockHttpSession))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value(ErrorConstants.INVALID_USER.getErrorCode()));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value("unauthorized"))
+                .andExpect(jsonPath("$.errorMessage").value("User not found. Please check your credentials or login again"));
     }
 }

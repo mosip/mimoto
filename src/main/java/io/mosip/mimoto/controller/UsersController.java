@@ -8,7 +8,7 @@ import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.ErrorConstants;
-import io.mosip.mimoto.exception.OAuth2AuthenticationException;
+import io.mosip.mimoto.exception.UnAuthorizationAccessException;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.service.EncryptionService;
 import io.mosip.mimoto.util.Utilities;
@@ -53,7 +53,7 @@ public class UsersController {
     @ApiResponse(responseCode = "404", description = "User data not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User not found", value = "{\"errorCode\": \"invalid_user\", \"errorMessage\": \"User not found. Please check your credentials or login again\"}")))
     @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserMetadataDTO> getUserProfileInfo(Authentication authentication, HttpSession session) {
+    public ResponseEntity<UserMetadataDTO> getUserProfileInfo(Authentication authentication, HttpSession session) throws UnAuthorizationAccessException {
         UserMetadataDTO userMetadataDTO = (UserMetadataDTO) session.getAttribute(SessionKeys.USER_METADATA);
 
         if (userMetadataDTO == null) {
@@ -72,12 +72,12 @@ public class UsersController {
                         null
                 );
                 session.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
-            } catch (OAuth2AuthenticationException exception) {
+            } catch (UnAuthorizationAccessException exception) {
                 log.error("Error occurred while retrieving user profile: ", exception);
                 return Utilities.getErrorResponseEntityWithoutWrapper(
                         exception,
                         ErrorConstants.INVALID_USER.getErrorCode(),
-                        exception.getStatus(),
+                        HttpStatus.UNAUTHORIZED,
                         MediaType.APPLICATION_JSON
                 );
             } catch (DecryptionException e) {
@@ -101,7 +101,10 @@ public class UsersController {
         return ResponseEntity.status(HttpStatus.OK).body(userMetadataDTO);
     }
 
-    private UserMetadata fetchUserMetadata(String providerSubjectId, String identityProvider) throws OAuth2AuthenticationException {
-        return userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider).orElseThrow(() -> new OAuth2AuthenticationException(ErrorConstants.INVALID_USER.getErrorCode(), "User not found. Please check your credentials or login again", HttpStatus.NOT_FOUND));
+    private UserMetadata fetchUserMetadata(String providerSubjectId, String identityProvider) throws UnAuthorizationAccessException {
+        return userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider).
+                orElseThrow(() ->
+                        new UnAuthorizationAccessException(ErrorConstants.UNAUTHORIZED_ACCESS.getErrorCode(), "User not found. Please check your credentials or login again")
+                );
     }
 }
