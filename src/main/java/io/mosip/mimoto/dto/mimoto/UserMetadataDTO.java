@@ -1,6 +1,6 @@
 package io.mosip.mimoto.dto.mimoto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,5 +23,6 @@ public class UserMetadataDTO implements Serializable {
     private String email;
 
     @Schema(description = "Wallet id of the user in use")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String walletId;
 }
