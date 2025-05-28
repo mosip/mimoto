@@ -365,7 +365,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"walletName\": \"default\",\n    \"walletPin\": 123456\n}",
+							"raw": "{\n    \"walletName\": \"default\",\n    \"walletPin\": 123456,\n    \"confirmWalletPin\": 123456\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -570,10 +570,10 @@
 						"auth": {
 							"type": "oauth2",
 							"oauth2": {
+								"clientSecret": "{{clientSecret}}",
+								"clientId": "{{clientId}}",
 								"accessTokenUrl": "https://oauth2.googleapis.com/token",
 								"scope": "profile email",
-								"clientSecret": "<client-secret>",
-								"clientId": "<client-id>",
 								"redirect_uri": "http://localhost:8099/v1/mimoto/oauth2/callback/google",
 								"useBrowser": false,
 								"authUrl": "https://accounts.google.com/o/oauth2/auth?prompt=select_account",

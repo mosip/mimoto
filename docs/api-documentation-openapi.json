@@ -2716,6 +2716,12 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User data not available in DB" : {
+                                        "errorCode": "unauthorized",
+                                        "errorMessage": "User not found. Please check your credentials or login again"
+                                    }
                                 }
                             }
                         }
@@ -2832,9 +2838,9 @@
                                 "examples": {
                                     "Success response": {
                                         "value": {
-                                            "issuerName": "Mosip",
+                                            "issuerDisplayName": "Mosip",
                                             "issuerLogo": "https://example.com/logo.png",
-                                            "credentialType": "MosipVerifiableCredential",
+                                            "credentialTypeDisplayName": "National Identity Department Mosip",
                                             "credentialTypeLogo": "https://example.com/credential-logo.png",
                                             "credentialId": "1234567890"
                                         }
@@ -3019,9 +3025,9 @@
                                     "Success response": {
                                         "value": [
                                             {
-                                                "issuerName": "Mosip",
+                                                "issuerDisplayName": "Mosip",
                                                 "issuerLogo": "https://example.com/logo.png",
-                                                "credentialType": "MosipVerifiableCredential",
+                                                "credentialTypeDisplayName": "National Identity Department Mosip",
                                                 "credentialTypeLogo": "https://example.com/credential-logo.png",
                                                 "credentialId": "1234567890"
                                             }
@@ -3157,6 +3163,16 @@
                             "default": "en"
                         },
                         "description": "Language preference in which the user expects the Verifiable Credential to be rendered. Input should be a 2-letter code (e.g., 'en' for English, 'fr' for French). If not provided, defaults to 'en'."
+                    },
+                    {
+                        "name": "Accept",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "application/pdf"
+                        },
+                        "description": "The Accept header must be set to application/pdf to indicate that the response should be in PDF format. If not provided or set to a different value, the API will return a 400 Bad Request error."
                     }
                 ],
                 "responses": {
@@ -4082,7 +4098,7 @@
             "VerifiableCredentialResponseDTO": {
                 "type": "object",
                 "properties": {
-                    "issuerName": {
+                    "issuerDisplayName": {
                         "type": "string",
                         "description": "Name of the Issuer"
                     },
@@ -4090,7 +4106,7 @@
                         "type": "string",
                         "description": "Logo of the Issuer"
                     },
-                    "credentialType": {
+                    "credentialTypeDisplayName": {
                         "type": "string",
                         "description": "The name of the Credential Type issued by the Issuer"
                     },
