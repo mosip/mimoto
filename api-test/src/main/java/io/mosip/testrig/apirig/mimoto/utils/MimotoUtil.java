@@ -6,6 +6,7 @@ import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.HashMap;
 
 import javax.ws.rs.core.MediaType;
@@ -159,6 +160,22 @@ public class MimotoUtil extends AdminTestUtil {
 		
 		if (jsonString.contains(GlobalConstants.TIMESTAMP)) {
 			jsonString = replaceKeywordValue(jsonString, GlobalConstants.TIMESTAMP, generateCurrentUTCTimeStamp());
+		}
+		
+		if (jsonString.contains("$UNIQUENONCEVALUEFORESIGNET$")) {
+			jsonString = replaceKeywordValue(jsonString, "$UNIQUENONCEVALUEFORESIGNET$",
+					String.valueOf(Calendar.getInstance().getTimeInMillis()));
+		}
+		
+		if (jsonString.contains("$SUNBIRDINSURANCEAUTHFACTORTYPE$")) {
+			String authFactorType = MimotoConfigManager
+					.getproperty(MimotoConstants.SUNBIRD_INSURANCE_AUTH_FACTOR_TYPE_STRING);
+
+			String valueToReplace = (authFactorType != null && !authFactorType.isBlank()) ? authFactorType
+					: MimotoConstants.SUNBIRD_INSURANCE_AUTH_FACTOR_TYPE;
+
+			jsonString = replaceKeywordValue(jsonString, "$SUNBIRDINSURANCEAUTHFACTORTYPE$", valueToReplace);
+
 		}
 		
 		if (jsonString.contains("$POLICYNUMBERFORSUNBIRDRC$")) {
