@@ -48,12 +48,43 @@ public class UsersController {
      * @param session        The HTTP session
      * @return ResponseEntity containing user metadata
      */
-    @Operation(summary = "Retrieve user metadata", description = "First attempts to retrieve user metadata from the session cache. If not available, fetches from the database. This API is secured using session-based authentication.", operationId = "getUserProfile", security = @SecurityRequirement(name = "SessionAuth"))
-    @ApiResponse(responseCode = "200", description = "User profile retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserMetadataDTO.class), examples = @ExampleObject(name = "Success response", value = SwaggerExampleConstants.FETCH_USER_PROFILE_SUCCESS)))
-    @ApiResponse(responseCode = "404", description = "User data not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User not found", value = "{\"errorCode\": \"invalid_user\", \"errorMessage\": \"User not found. Please check your credentials or login again\"}")))
-    @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
+    @Operation(
+            summary = "Retrieve user metadata",
+            description = "First attempts to retrieve user metadata from the session cache. If not available, fetches from the database. This API is secured using session-based authentication.",
+            operationId = "getUserProfile",
+            security = @SecurityRequirement(name = "SessionAuth")
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "User profile retrieved successfully",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = UserMetadataDTO.class),
+                    examples = {
+                            @ExampleObject(name = "Success response from DB", value = SwaggerExampleConstants.FETCH_USER_PROFILE_FROM_DB_SUCCESS),
+                            @ExampleObject(name = "Success response from cache", value = SwaggerExampleConstants.FETCH_USER_CACHE_PROFILE_SUCCESS)
+                    }
+            )
+    )
+    @ApiResponse(responseCode = "401", description = "User data not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User not found", value = "{\"errorCode\": \"unauthorized\", \"errorMessage\": \"User not found. Please check your credentials or login again\"}")))
+    @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {
+            @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}"),
+            @ExampleObject(name = "Decryption Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"Failed to process user data\"}"),
+    }))
+    @ApiResponse(
+            responseCode = "503",
+            description = "Service unavailable",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorDTO.class),
+                    examples = @ExampleObject(
+                            name = "Database connection failure",
+                            value = "{\"errorCode\": \"database_unavailable\", \"errorMessage\": \"Failed to connect to the database\"}"
+                    )
+            )
+    )
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserMetadataDTO> getUserProfileInfo(Authentication authentication, HttpSession session) throws UnAuthorizationAccessException {
+    public ResponseEntity<UserMetadataDTO> getUserProfileInfo(Authentication authentication, HttpSession session) throws Exception {
         UserMetadataDTO userMetadataDTO = (UserMetadataDTO) session.getAttribute(SessionKeys.USER_METADATA);
 
         if (userMetadataDTO == null) {

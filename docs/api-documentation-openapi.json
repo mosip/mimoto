@@ -2669,14 +2669,14 @@
                 ]
             }
         },
-        "/users/me/db": {
+        "/users/me": {
             "get": {
                 "tags": [
                     "Users"
                 ],
-                "summary": "Retrieve user metadata from the database",
-                "description": "This API is secured using session-based authentication. When a request is made, the server retrieves the session ID from the Cookie header and uses it to fetch session details from Redis. From the session, it extracts the user's unique identifier (typically the sub field provided by the identity provider) along with the clientRegistrationId. These values are then used to retrieve the user's metadata from the database. If successful, the API returns the user's profile information. If any issue occurs such as missing user data or server error then an appropriate error response is returned.",
-                "operationId": "getUserProfileFromDB",
+                "summary": "Retrieve user metadata",
+                "description": "First attempts to retrieve user metadata from the session cache. If not available, fetches from the database. This API is secured using session-based authentication.",
+                "operationId": "getUserProfile",
                 "security": [
                     {
                         "SessionAuth": []
@@ -2684,109 +2684,26 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "User profile retrieved successfully from the Database",
+                        "description": "User profile retrieved successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/UserMetadataDTO"
                                 },
                                 "examples": {
-                                    "Success response": {
+                                    "Success response from DB": {
                                         "value": {
                                             "display_name": "John Doe",
                                             "profile_picture_url": "https://example.com/profile.jpg",
                                             "email": "john.doe@example.com"
                                         }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "User data not found in the database",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                },
-                                "examples": {
-                                    "User not found in the Database": {
-                                        "value": {
-                                            "errorCode": "invalid_user",
-                                            "errorMessage": "User not found. Please check your credentials or login again"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error - any error occurred while decrypting the data or fetching the data from the database",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                },
-                                "examples": {
-                                    "Unexpected Server Error": {
-                                        "value": {
-                                            "errorCode": "internal_server_error",
-                                            "errorMessage": "We are unable to process request now"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "503": {
-                        "description": "Service unavailable",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                },
-                                "examples": {
-                                    "Database connection failure": {
-                                        "value": {
-                                            "errorCode": "database_unavailable",
-                                            "errorMessage": "Failed to connect to the database"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/users/me/cache": {
-            "get": {
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Retrieve user metadata from the stored redis session",
-                "description": "This API is secured using session-based authentication. When a request is made, the server retrieves the session ID from the Cookie header and uses it to fetch session details from Redis. It then attempts to retrieve the user's metadata directly from the session. If the metadata is available, the API returns the user's profile information otherwise an appropriate error response is returned.",
-                "operationId": "getUserProfileFromCache",
-                "security": [
-                    {
-                        "SessionAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "User profile retrieved successfully from the session",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UserMetadataDTO"
-                                },
-                                "examples": {
-                                    "Success response": {
+                                    },
+                                    "Success response from cache": {
                                         "value": {
                                             "display_name": "John Doe",
                                             "profile_picture_url": "https://example.com/profile.jpg",
                                             "email": "john.doe@example.com",
-                                            "walletId": "123e4567-e89b-12d3-a456-426614174000"
+                                            "walletId": "w-1234-5678-90ab-cdef"
                                         }
                                     }
                                 }
@@ -2794,17 +2711,17 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "User data not found",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "User metadata not found in session": {
+                                    "User not found": {
                                         "value": {
-                                            "errorCode": "session_invalid_or_expired",
-                                            "errorMessage": "User session is missing or expired. Please log in again."
+                                            "errorCode": "unauthorized",
+                                            "errorMessage": "User not found. Please check your credentials or login again"
                                         }
                                     }
                                 }
@@ -2823,6 +2740,30 @@
                                         "value": {
                                             "errorCode": "internal_server_error",
                                             "errorMessage": "We are unable to process request now"
+                                        }
+                                    },
+                                    "Decryption Error": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "Failed to process user data"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Database connection failure": {
+                                        "value": {
+                                            "errorCode": "database_unavailable",
+                                            "errorMessage": "Failed to connect to the database"
                                         }
                                     }
                                 }
@@ -4091,30 +4032,11 @@
                         "type": "string",
                         "format": "email",
                         "description": "The email address of the user provided by the Identity Provider"
-                    }
-                }
-            },
-            "CachedUserMetadataDTO": {
-                "type": "object",
-                "properties": {
-                    "display_name": {
-                        "type": "string",
-                        "description": "The display name of the user provided by the Identity Provider"
                     },
-                    "profile_picture_url": {
-                        "type": "string",
-                        "format": "uri",
-                        "description": "The URL of the user's profile picture provided by the Identity Provider"
-                    },
-                    "email": {
+                    "walletId": {
                         "type": "string",
                         "format": "email",
-                        "description": "The email address of the user provided by the Identity Provider"
-                    },
-                    "wallet_id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "The active wallet id of the user"
+                        "description": "The unique identifier of the user's wallet. This is available if data is fetched from session else its null"
                     }
                 }
             },
