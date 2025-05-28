@@ -3625,6 +3625,7 @@
                 }
             },
             "delete": {
+                //TODO: update right path
                 "tags": [
                     "Wallet Credentials"
                 ],
@@ -3829,7 +3830,8 @@
                         "schema": {
                             "type": "string"
                         },
-                        "description": "Unique identifier of the wallet to be unlocked"
+                        "description": "Unique identifier of the wallet to be unlocked",
+                        "example": "123e4567-e89b-12d3-a456-426614174000"
                     }
                 ],
                 "requestBody": {
@@ -3860,7 +3862,8 @@
                                 "examples": {
                                     "Success response": {
                                         "value": {
-                                            "walletId": "123e4567-e89b-12d3-a456-426614174000"
+                                            "walletId": "123e4567-e89b-12d3-a456-426614174000",
+                                            "walletName": "My Personal Wallet"
                                         }
                                     }
                                 }
@@ -3868,19 +3871,13 @@
                         }
                     },
                     "400": {
-                        "description": "Invalid Wallets fetching request",
+                        "description": "Invalid Wallet unlock request",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "User ID is not present in session": {
-                                        "value": {
-                                            "errorCode": "invalid_request",
-                                            "errorMessage": "User ID not found in session"
-                                        }
-                                    },
                                     "Wallet not found": {
                                         "value": {
                                             "errorCode": "invalid_request",
@@ -3897,6 +3894,30 @@
                                         "value": {
                                             "errorCode": "invalid_request",
                                             "errorMessage": "PIN must be numeric with 6 digits"
+                                        }
+                                    },
+                                    "Incorrect Wallet PIN": {
+                                        "value": {
+                                            "errorCode": "invalid_pin",
+                                            "errorMessage": "Invalid PIN or wallet key provided"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized user unlocking wallet",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User ID is not present in session": {
+                                        "value": {
+                                            "errorCode": "unauthorized",
+                                            "errorMessage": "User ID not found in session"
                                         }
                                     }
                                 }
@@ -4181,7 +4202,7 @@
                     },
                     "walletName" : {
                         "type": "string",
-                        "description": "Wallet name provided by the user"
+                        "description": "Name of the Wallet"
                     }
                 }
             },
