@@ -3538,7 +3538,7 @@
                                         "value": [
                                             {
                                                 "walletId": "123e4567-e89b-12d3-a456-426614174000",
-                                                "walletName": "Wallet 123"
+                                                "walletName": "My Personal Wallet"
                                             },
                                             {
                                                 "walletId": "223e4567-e89b-12d3-a456-426614174001",
@@ -3558,9 +3558,27 @@
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "User ID is not present in session": {
+                                    "Invalid User ID": {
                                         "value": {
                                             "errorCode": "invalid_request",
+                                            "errorMessage": "User ID cannot be null or empty"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized user creating a wallet",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User ID is not present in session": {
+                                        "value": {
+                                            "errorCode": "unauthorized",
                                             "errorMessage": "User ID not found in session"
                                         }
                                     }
