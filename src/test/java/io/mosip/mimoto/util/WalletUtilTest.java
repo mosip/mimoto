@@ -1,8 +1,10 @@
 package io.mosip.mimoto.util;
 
+import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.Wallet;
-import io.mosip.mimoto.exception.DecryptionException;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.repository.WalletRepository;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,15 +15,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.crypto.SecretKey;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Slf4j
@@ -47,7 +46,7 @@ class WalletUtilTest {
     private String encryptionType;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         pin = "1234";
         name = "default";
         userId = UUID.randomUUID().toString();
@@ -60,7 +59,7 @@ class WalletUtilTest {
     }
 
     @Test
-    void shouldDecryptWalletKeySuccessfully() throws DecryptionException {
+    void shouldDecryptWalletKeySuccessfully() {
         when(encryptionDecryptionUtil.decryptWithPin(encryptedWalletKey, pin)).thenReturn(decryptedWalletKey);
 
         String decrypted = walletUtil.decryptWalletKey(encryptedWalletKey, pin);
@@ -69,7 +68,18 @@ class WalletUtilTest {
     }
 
     @Test
-    void shouldCreateNewWalletSuccessfully() throws Exception {
+    void shouldThrowErrorWhenDecryptionOfWalletKeyFails() {
+        when(encryptionDecryptionUtil.decryptWithPin(encryptedWalletKey, pin)).thenThrow(new RuntimeException("Failed to decrypt with PIN"));
+
+        InvalidRequestException ex = assertThrows(InvalidRequestException.class,
+                () -> walletUtil.decryptWalletKey(encryptedWalletKey, pin));
+        assertEquals("invalid_pin", ex.getErrorCode());
+        assertEquals("invalid_pin --> Invalid PIN or wallet key provided java.lang.RuntimeException: Failed to decrypt with PIN", ex.getMessage());
+    }
+
+
+    @Test
+    void shouldCreateNewWalletSuccessfully() {
         when(encryptionDecryptionUtil.encryptKeyWithPin(any(SecretKey.class), any(String.class))).thenReturn(encryptedWalletKey);
         when(encryptionDecryptionUtil.encryptWithAES(any(SecretKey.class), any(byte[].class))).thenReturn(encryptedPrivateKey);
 
@@ -79,7 +89,7 @@ class WalletUtilTest {
     }
 
     @Test
-    void shouldCreateEd25519WalletSuccessfully() throws Exception {
+    void shouldCreateEd25519WalletSuccessfully() {
         when(encryptionDecryptionUtil.encryptKeyWithPin(any(SecretKey.class), any(String.class))).thenReturn(encryptedWalletKey);
         when(encryptionDecryptionUtil.encryptWithAES(any(SecretKey.class), any(byte[].class))).thenReturn(encryptedPrivateKey);
 
@@ -89,7 +99,7 @@ class WalletUtilTest {
     }
 
     @Test
-    void shouldVerifyWalletObjectOnCreateNewWallet() throws Exception {
+    void shouldVerifyWalletObjectOnCreateNewWallet() {
         when(encryptionDecryptionUtil.encryptKeyWithPin(any(SecretKey.class), any(String.class))).thenReturn(encryptedWalletKey);
         when(encryptionDecryptionUtil.encryptWithAES(any(SecretKey.class), any(byte[].class))).thenReturn(encryptedPrivateKey);
 
@@ -108,5 +118,39 @@ class WalletUtilTest {
         assertEquals(encryptionType, savedWallet.getWalletMetadata().getEncryptionType());
         assertNotNull(savedWallet.getProofSigningKeys());
         assertEquals(4, savedWallet.getProofSigningKeys().size());
+    }
+
+    @Test
+    void testValidWalletId() {
+        HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute(SessionKeys.WALLET_ID)).thenReturn("wallet-123");
+        assertDoesNotThrow(() -> WalletUtil.validateWalletId(session, "wallet-123"));
+    }
+
+    @Test
+    void testMissingWalletIdInSession() {
+        HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute(SessionKeys.WALLET_ID)).thenReturn(null);
+        InvalidRequestException ex = assertThrows(InvalidRequestException.class,
+                () -> WalletUtil.validateWalletId(session, "wallet-123"));
+        assertEquals("wallet_locked", ex.getErrorCode());
+        assertEquals("wallet_locked --> Wallet is locked", ex.getMessage());
+    }
+
+    @Test
+    void testMismatchedWalletId() {
+        HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute(SessionKeys.WALLET_ID)).thenReturn("wallet-abc");
+        InvalidRequestException ex = assertThrows(InvalidRequestException.class,
+                () -> WalletUtil.validateWalletId(session, "wallet-123"));
+        assertEquals("invalid_request", ex.getErrorCode());
+        assertEquals("invalid_request --> Invalid Wallet ID. Session and request Wallet ID do not match", ex.getMessage());
+    }
+
+    @Test
+    void testNonStringWalletIdInSession() {
+        HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute(SessionKeys.WALLET_ID)).thenReturn(12345);
+        assertDoesNotThrow(() -> WalletUtil.validateWalletId(session, "12345"));
     }
 }

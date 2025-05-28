@@ -1,6 +1,5 @@
 package io.mosip.mimoto.dbentity;
 
-import jakarta.persistence.Column;
 import lombok.Data;
 @Data
 public class WalletMetadata {

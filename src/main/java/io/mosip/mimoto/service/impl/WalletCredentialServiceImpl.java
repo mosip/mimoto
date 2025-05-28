@@ -1,7 +1,6 @@
 package io.mosip.mimoto.service.impl;
 
 import io.mosip.mimoto.dbentity.VerifiableCredential;
-import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.IssuerConfig;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
@@ -15,14 +14,14 @@ import io.mosip.mimoto.util.CredentialUtilService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.WalletCredentialResponseDTOFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 import static io.mosip.mimoto.exception.ErrorConstants.*;
 
@@ -52,27 +51,26 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     }
 
     @Override
-    public VerifiableCredentialResponseDTO fetchAndStoreCredential(String issuerId, String credentialType,
-                                                                   TokenResponseDTO tokenResponse, String credentialValidity,
+    public VerifiableCredentialResponseDTO fetchAndStoreCredential(String issuerId, String credentialConfigurationId,
+                                                                   TokenResponseDTO tokenResponse,
                                                                    String locale, String walletId, String base64Key)
             throws CredentialProcessingException, ExternalServiceUnavailableException {
-        log.info("Fetching and storing credential for wallet: {}, issuer: {}, type: {}", walletId, issuerId, credentialType);
+        log.info("Fetching and storing credential for wallet: {}, issuer: {}, type: {}", walletId, issuerId, credentialConfigurationId);
 
         Set<String> issuers = Set.of("Mosip");
-        if (issuers.contains(issuerId)){
-            if (repository.existsByIssuerIdAndCredentialTypeAndWalletId(issuerId, credentialType, walletId)) {
-                log.warn("Duplicate credential found for issuer: {}, type: {}, wallet: {}", issuerId, credentialType, walletId);
-                throw new CredentialProcessingException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), "Duplicate credential for issuer and type");
-            }
+        if (issuers.contains(issuerId) && repository.existsByIssuerIdAndCredentialTypeAndWalletId(issuerId, credentialConfigurationId, walletId)) {
+            log.warn("Duplicate credential found for issuer: {}, type: {}, wallet: {}", issuerId, credentialConfigurationId, walletId);
+            throw new InvalidRequestException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), "Duplicate credential for issuer and type");
         }
 
-        VerifiableCredentialResponseDTO credential = null;
+
+        VerifiableCredentialResponseDTO credential;
 
             credential = credentialProcessor.processAndStoreCredential(
-                    tokenResponse, credentialType, walletId, base64Key, credentialValidity, issuerId, locale);
+                    tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale);
 
         log.debug("Credential stored successfully: {}", credential.getCredentialId());
-            return credential;
+        return credential;
 
     }
 
@@ -92,7 +90,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
                 log.error("Failed to fetch issuer details for issuerId: {}", issuerId, e);
             }
             return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerConfig, locale, credential.getId());
-        }).collect(Collectors.toList());
+        }).toList();
 
     }
 
@@ -102,10 +100,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
             throws CredentialNotFoundException, CredentialProcessingException {
         log.info("Fetching credential: {} for wallet: {}", credentialId, walletId);
         VerifiableCredential credential = repository.findByIdAndWalletId(credentialId, walletId)
-                .orElseThrow(() -> {
-                    log.warn("Credential not found: {} for wallet: {}", credentialId, walletId);
-                    return new CredentialNotFoundException(RESOURCE_NOT_FOUND.getErrorCode(), RESOURCE_NOT_FOUND.getErrorMessage());
-                });
+                .orElseThrow(getCredentialNotFoundExceptionSupplier(walletId, credentialId));
 
         try {
             String decryptedCredential = encryptionDecryptionUtil.decryptCredential(credential.getCredential(), base64Key);
@@ -123,14 +118,18 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     public void deleteCredential(String credentialId, String walletId) throws CredentialNotFoundException {
         log.info("Deleting credential with ID: {} for wallet: {}", credentialId, walletId);
 
-        VerifiableCredential credential = repository.findByIdAndWalletId(credentialId, walletId)
-                .orElseThrow(() -> {
-                    log.warn("Credential not found: {} for wallet: {}", credentialId, walletId);
-                    return new CredentialNotFoundException(RESOURCE_NOT_FOUND.getErrorCode(), RESOURCE_NOT_FOUND.getErrorMessage());
-                });
+        repository.findByIdAndWalletId(credentialId, walletId)
+                .orElseThrow(getCredentialNotFoundExceptionSupplier(walletId, credentialId));
         // Delete the credential
         repository.deleteById(credentialId);
         log.info("Successfully deleted credential with ID: {}", credentialId);
     }
 
+    @NotNull
+    private static Supplier<CredentialNotFoundException> getCredentialNotFoundExceptionSupplier(String walletId, String credentialId) {
+        return () -> {
+            log.warn("Credential not found: {} for wallet: {}", credentialId, walletId);
+            return new CredentialNotFoundException(RESOURCE_NOT_FOUND.getErrorCode(), RESOURCE_NOT_FOUND.getErrorMessage());
+        };
+    }
 }

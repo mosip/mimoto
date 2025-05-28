@@ -62,7 +62,6 @@ public class WalletCredentialServiceTest {
     private final String credentialId = "cred123";
     private final String base64Key = "ZHVtbXlrZXkxMjM0NTY3OA=="; // Base64 of "dummykey12345678"
     private final String locale = "en";
-    private final String credentialValidity = "1";
 
     private TokenResponseDTO tokenResponse;
     private VerifiableCredential verifiableCredential;
@@ -98,23 +97,23 @@ public class WalletCredentialServiceTest {
         expectedResponse.setCredentialId(credentialId);
 
         when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId)).thenReturn(false);
-        when(credentialProcessor.processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(mosipIssuerId), eq(locale)))
+        when(credentialProcessor.processAndStoreCredential(tokenResponse, credentialType, walletId, base64Key, mosipIssuerId, locale))
                 .thenReturn(expectedResponse);
 
         VerifiableCredentialResponseDTO actualResponse = walletCredentialService.fetchAndStoreCredential(
-                mosipIssuerId, credentialType, tokenResponse, credentialValidity, locale, walletId, base64Key);
+                mosipIssuerId, credentialType, tokenResponse, locale, walletId, base64Key);
 
         assertEquals(expectedResponse, actualResponse);
         verify(walletCredentialsRepository).existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId);
-        verify(credentialProcessor).processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(mosipIssuerId), eq(locale));
+        verify(credentialProcessor).processAndStoreCredential(tokenResponse, credentialType, walletId, base64Key, mosipIssuerId, locale);
     }
 
     @Test
     public void shouldThrowDuplicateCredentialExceptionForMosipIssuer() {
         when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId("Mosip", credentialType, walletId)).thenReturn(true);
 
-        CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
-                walletCredentialService.fetchAndStoreCredential("Mosip", credentialType, tokenResponse, credentialValidity, locale, walletId, base64Key));
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+                walletCredentialService.fetchAndStoreCredential("Mosip", credentialType, tokenResponse, locale, walletId, base64Key));
 
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertEquals("credential_download_error --> Duplicate credential for issuer and type", exception.getMessage());
@@ -127,14 +126,14 @@ public class WalletCredentialServiceTest {
         VerifiableCredentialResponseDTO expectedResponse = new VerifiableCredentialResponseDTO();
         expectedResponse.setCredentialId(credentialId);
 
-        when(credentialProcessor.processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(issuerId), eq(locale)))
+        when(credentialProcessor.processAndStoreCredential(tokenResponse, credentialType, walletId, base64Key, issuerId, locale))
                 .thenReturn(expectedResponse);
 
         VerifiableCredentialResponseDTO actualResponse = walletCredentialService.fetchAndStoreCredential(
-                issuerId, credentialType, tokenResponse, credentialValidity, locale, walletId, base64Key);
+                issuerId, credentialType, tokenResponse, locale, walletId, base64Key);
 
         assertEquals(expectedResponse, actualResponse);
-        verify(credentialProcessor).processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(issuerId), eq(locale));
+        verify(credentialProcessor).processAndStoreCredential(tokenResponse, credentialType, walletId, base64Key, issuerId, locale);
     }
 
     @Test
@@ -142,16 +141,16 @@ public class WalletCredentialServiceTest {
         String mosipIssuerId = "Mosip"; // Use Mosip to trigger repository check
 
         when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId)).thenReturn(false);
-        when(credentialProcessor.processAndStoreCredential(any(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString()))
+        when(credentialProcessor.processAndStoreCredential(any(), anyString(), anyString(), anyString(), anyString(), anyString()))
                 .thenThrow(new ExternalServiceUnavailableException("SERVICE_UNAVAILABLE", "Service unavailable"));
 
         ExternalServiceUnavailableException exception = assertThrows(ExternalServiceUnavailableException.class, () ->
-                walletCredentialService.fetchAndStoreCredential(mosipIssuerId, credentialType, tokenResponse, credentialValidity, locale, walletId, base64Key));
+                walletCredentialService.fetchAndStoreCredential(mosipIssuerId, credentialType, tokenResponse, locale, walletId, base64Key));
 
         assertEquals("SERVICE_UNAVAILABLE", exception.getErrorCode());
         assertEquals("SERVICE_UNAVAILABLE --> Service unavailable", exception.getMessage());
         verify(walletCredentialsRepository).existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId);
-        verify(credentialProcessor).processAndStoreCredential(eq(tokenResponse), eq(credentialType), eq(walletId), eq(base64Key), eq(credentialValidity), eq(mosipIssuerId), eq(locale));
+        verify(credentialProcessor).processAndStoreCredential(tokenResponse, credentialType, walletId, base64Key, mosipIssuerId, locale);
     }
 
     @Test
@@ -169,7 +168,7 @@ public class WalletCredentialServiceTest {
             List<VerifiableCredentialResponseDTO> actualCredentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64Key, locale);
 
             assertEquals(1, actualCredentials.size());
-            assertEquals(responseDTO, actualCredentials.get(0));
+            assertEquals(responseDTO, actualCredentials.getFirst());
             verify(walletCredentialsRepository).findByWalletId(walletId);
             verify(issuersService).getIssuerConfig(issuerId, credentialType);
             factoryMock.verify(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerConfig, locale, credentialId));
@@ -191,7 +190,7 @@ public class WalletCredentialServiceTest {
             List<VerifiableCredentialResponseDTO> actualCredentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64Key, locale);
 
             assertEquals(1, actualCredentials.size());
-            assertEquals(responseDTO, actualCredentials.get(0));
+            assertEquals(responseDTO, actualCredentials.getFirst());
             verify(walletCredentialsRepository).findByWalletId(walletId);
             verify(issuersService).getIssuerConfig(issuerId, credentialType);
             factoryMock.verify(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(null, locale, credentialId));

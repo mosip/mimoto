@@ -88,7 +88,7 @@ public class GoogleTokenService implements TokenService {
             log.error("Failed to store the user info in the database", e);
             throw new RuntimeException();
         }
-        sessionManager.setupSession(request, provider, new UserMetadataDTO(name, picture, email), userId);
+        sessionManager.setupSession(request, provider, new UserMetadataDTO(name, picture, email,null), userId);
         securityContextManager.setupSecurityContext(createOAuth2Token(provider, sub, name, picture, email), request, response);
     }
 

@@ -49,7 +49,7 @@ public class CredentialsControllerTest {
     @Before
     public void setUp() throws Exception {
         tokenResponseDTO = TestUtilities.getTokenResponseDTO();
-        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer))).thenReturn(tokenResponseDTO);
+        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap())).thenReturn(tokenResponseDTO);
         requestContent = EntityUtils.toString(new UrlEncodedFormEntity(List.of(
                 new BasicNameValuePair("grant_type", "authorization_code"),
                 new BasicNameValuePair("code", "test-code"),
@@ -76,7 +76,7 @@ public class CredentialsControllerTest {
 
     @Test
     public void throwExceptionOnFetchingTokenResponseFailure() throws Exception {
-        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer)))
+        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap()))
                 .thenThrow(new IdpException("Exception occurred while performing the authorization"));
 
         mockMvc.perform(post("/credentials/download")
@@ -90,7 +90,7 @@ public class CredentialsControllerTest {
 
     @Test
     public void throwExceptionOnFetchingIssuerOrAuthServerWellknownFailureDuringTokenGeneration() throws Exception {
-        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap(), Mockito.eq(issuer)))
+        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap()))
                 .thenThrow(new ApiNotAccessibleException());
 
         mockMvc.perform(post("/credentials/download")

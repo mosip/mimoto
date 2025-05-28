@@ -4,8 +4,6 @@ import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
 import io.mosip.mimoto.exception.InvalidRequestException;
-import jakarta.servlet.http.HttpServletRequest;
-import org.apache.struts.mock.MockHttpServletRequest;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,12 +12,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.lang.reflect.Method;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GlobalExceptionHandlerTest {
@@ -107,7 +105,7 @@ public class GlobalExceptionHandlerTest {
 
         // Assert
         assertEquals(errorCode, result.getErrorCode());
-        assertEquals(errorCode + " --> " + errorMessage, result.getErrorMessage());
+        assertEquals(errorMessage, result.getErrorMessage());
 
         // Verify ResponseStatus annotation
         Method method = GlobalExceptionHandler.class.getMethod("handleInvalidRequest", InvalidRequestException.class);

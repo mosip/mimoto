@@ -4,11 +4,11 @@ import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dbentity.WalletMetadata;
-import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.model.SigningAlgorithm;
 import io.mosip.mimoto.repository.WalletRepository;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -17,9 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
+import static io.mosip.mimoto.exception.ErrorConstants.*;
 
 @Component
+@Slf4j
 public class WalletUtil {
 
     @Autowired
@@ -29,7 +30,11 @@ public class WalletUtil {
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
     public String decryptWalletKey(String encryptedWalletKey, String pin) {
-        return encryptionDecryptionUtil.decryptWithPin(encryptedWalletKey, pin);
+        try {
+            return encryptionDecryptionUtil.decryptWithPin(encryptedWalletKey, pin);
+        } catch (Exception e) {
+            throw new InvalidRequestException(INVALID_PIN.getErrorCode(), INVALID_PIN.getErrorMessage() + " " + e);
+        }
     }
 
     public String createWallet(String userId, String walletName, String pin) {
@@ -79,13 +84,15 @@ public class WalletUtil {
 
     public static String getSessionWalletKey(HttpSession session) {
         Object key = session.getAttribute(SessionKeys.WALLET_KEY);
-        if (key == null) throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet key not found in session");
+        if (key == null)
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet key not found in session");
         return key.toString();
     }
 
     public static void validateWalletId(HttpSession session, String walletIdFromRequest) {
         Object sessionWalletId = session.getAttribute(SessionKeys.WALLET_ID);
-        if (sessionWalletId == null) throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet ID is missing in session");
+        if (sessionWalletId == null)
+            throw new InvalidRequestException(WALLET_LOCKED.getErrorCode(), WALLET_LOCKED.getErrorMessage());
 
         String walletIdInSession = sessionWalletId.toString();
         if (!walletIdInSession.equals(walletIdFromRequest)) {

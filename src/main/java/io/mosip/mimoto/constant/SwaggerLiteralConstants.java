@@ -79,6 +79,9 @@ public class SwaggerLiteralConstants {
     public static final String USERS_DESCRIPTION = "All the User Profile related endpoints";
 
     /* Wallets Controller */
+    public static final String RETRIEVE_ALL_WALLETS_SUMMARY = "Retrieve all wallets for the user";
+    public static final String RETRIEVE_ALL_WALLETS_DESCRIPTION = "This API is secured using session-based authentication. The session ID is extracted from the Cookie header to authenticate the user. The user's ID is obtained from the session stored in Redis, and all wallets associated with the user are fetched from the database. If successful, the list of wallets is returned; otherwise, an appropriate error response is returned.";
+
     public static final String WALLETS_NAME = "Wallets";
     public static final String WALLETS_DESCRIPTION = "All the Wallet related endpoints";
     public static final String WALLETS_DELETE_SUMMARY = "Delete a wallet";

@@ -31,7 +31,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Map;
 
-import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
+import static io.mosip.mimoto.exception.PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION;
 
 @RestController
 @RequestMapping(value = "/credentials")
@@ -60,7 +60,7 @@ public class CredentialsController {
             String credentialValidity = params.get("vcStorageExpiryLimitInTimes");
             String locale = params.get("locale");
             log.info("Initiated Token Call");
-            TokenResponseDTO response = credentialUtilService.getTokenResponse(params, issuerId);
+            TokenResponseDTO response = credentialUtilService.getTokenResponse(params);
 
             log.info("Initiated Download Credential Call");
             ByteArrayInputStream inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response, credentialValidity, locale);
@@ -74,13 +74,13 @@ public class CredentialsController {
             return Utilities.handleErrorResponse(exception, MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
         } catch (InvalidCredentialResourceException invalidCredentialResourceException) {
             log.error("Exception occurred while pushing the data to data share ", invalidCredentialResourceException);
-            return Utilities.handleErrorResponse(invalidCredentialResourceException, MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST,MediaType.APPLICATION_JSON);
+            return Utilities.handleErrorResponse(invalidCredentialResourceException, MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
         } catch (VCVerificationException exception) {
             log.error("Exception occurred while verification of the verifiable Credential" + exception);
-            return Utilities.handleErrorResponse(exception, MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST,MediaType.APPLICATION_JSON);
+            return Utilities.handleErrorResponse(exception, MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
         } catch (Exception exception) {
             log.error("Exception occurred while generating pdf ", exception);
-            return Utilities.handleErrorResponse(exception, MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR,MediaType.APPLICATION_JSON);
+            return Utilities.handleErrorResponse(exception, MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
     }
 }

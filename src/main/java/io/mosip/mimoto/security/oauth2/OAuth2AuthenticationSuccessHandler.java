@@ -42,7 +42,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String profilePictureUrl = oAuth2User.getAttribute("picture");
         String email = oAuth2User.getAttribute("email");
 
-        session.setAttribute(SessionKeys.USER_METADATA, new UserMetadataDTO(displayName, profilePictureUrl, email));
+        session.setAttribute(SessionKeys.USER_METADATA, new UserMetadataDTO(displayName, profilePictureUrl, email, null));
 
         String userId = oAuth2User.getAttribute("userId");
         session.setAttribute(SessionKeys.USER_ID, userId);
