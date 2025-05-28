@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service.impl;
 
+import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
@@ -8,6 +9,7 @@ import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.WalletUtil;
 import io.mosip.mimoto.util.WalletValidator;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,15 +55,21 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public String getWalletKey(String userId, String walletId, String pin) throws InvalidRequestException {
-        log.info("Retrieving wallet key for user: {}, wallet: {}", userId, walletId);
+    public WalletResponseDto unlockWallet(String walletId, String pin, HttpSession httpSession) throws InvalidRequestException {
+        String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
+        log.info("Unlocking wallet for user: {}, wallet: {}", userId, walletId);
 
         validator.validateUserId(userId);
         validator.validateWalletPin(pin);
 
-        return repository.findByUserIdAndId(userId, walletId)
-                .map(wallet -> walletUtil.decryptWalletKey(wallet.getWalletKey(), pin))
+        Wallet wallet = repository.findByUserIdAndId(userId, walletId)
                 .orElseThrow(getWalletNotFoundExceptionSupplier(userId, walletId));
+
+        String decryptedWalletKey = walletUtil.decryptWalletKey(wallet.getWalletKey(), pin);
+        httpSession.setAttribute(SessionKeys.WALLET_KEY, decryptedWalletKey);
+        httpSession.setAttribute(SessionKeys.WALLET_ID, walletId);
+
+        return new WalletResponseDto(walletId, wallet.getWalletMetadata().getName());
     }
 
     @Override

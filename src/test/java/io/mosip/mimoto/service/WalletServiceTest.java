@@ -59,13 +59,17 @@ public class WalletServiceTest {
 
         mockSession = new MockHttpSession();
         mockSession.setAttribute("clientRegistrationId", "google");
-        mockSession.setAttribute(SessionKeys.USER_ID, "user123");
-        mockSession.setAttribute(SessionKeys.WALLET_ID, walletId);
+        mockSession.setAttribute(SessionKeys.USER_ID, userId);
 
         wallet = new Wallet();
         wallet.setId(walletId);
         wallet.setUserId(userId);
         wallet.setWalletKey(encryptedWalletKey);
+        WalletMetadata walletMetadata = new WalletMetadata();
+        walletMetadata.setEncryptionAlgo("AES");
+        walletMetadata.setEncryptionType("symmetric");
+        walletMetadata.setName("default");
+        wallet.setWalletMetadata(walletMetadata);
     }
 
     @Test
@@ -113,15 +117,18 @@ public class WalletServiceTest {
     }
 
     @Test
-    public void shouldDecryptWalletKeySuccessfully() {
+    public void shouldUnlockWalletSuccessfully() {
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
         when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenReturn(decryptedWalletKey);
 
-        String result = walletService.getWalletKey(userId, walletId, walletPin);
+        WalletResponseDto result = walletService.unlockWallet(walletId, walletPin, mockSession);
 
-        assertEquals(decryptedWalletKey, result);
         verify(walletRepository).findByUserIdAndId(userId, walletId);
         verify(walletHelper).decryptWalletKey(encryptedWalletKey, walletPin);
+        assertEquals(walletId, result.getWalletId());
+        assertEquals("default", result.getWalletName());
+        assertEquals(decryptedWalletKey, mockSession.getAttribute(SessionKeys.WALLET_KEY));
+        assertEquals(walletId, mockSession.getAttribute(SessionKeys.WALLET_ID));
     }
 
     @Test
@@ -129,7 +136,7 @@ public class WalletServiceTest {
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.empty());
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-                walletService.getWalletKey(userId, walletId, walletPin));
+                walletService.unlockWallet(walletId, walletPin, mockSession));
 
         assertEquals("invalid_request", exception.getErrorCode());
         assertEquals("invalid_request --> Wallet not found", exception.getMessage());
@@ -144,7 +151,7 @@ public class WalletServiceTest {
         when(walletHelper.decryptWalletKey(encryptedWalletKey, invalidPin)).thenThrow(new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided"));
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-                walletService.getWalletKey(userId, walletId, invalidPin));
+                walletService.unlockWallet(walletId, invalidPin, mockSession));
 
         verify(walletRepository).findByUserIdAndId(userId, walletId);
         assertEquals("invalid_pin", exception.getErrorCode());
