@@ -60,7 +60,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         Set<String> issuers = Set.of("Mosip");
         if (issuers.contains(issuerId) && repository.existsByIssuerIdAndCredentialTypeAndWalletId(issuerId, credentialConfigurationId, walletId)) {
             log.warn("Duplicate credential found for issuer: {}, type: {}, wallet: {}", issuerId, credentialConfigurationId, walletId);
-            throw new CredentialProcessingException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), "Duplicate credential for issuer and type");
+            throw new InvalidRequestException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), "Duplicate credential for issuer and type");
         }
 
 

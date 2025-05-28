@@ -2898,6 +2898,12 @@
                                             "errorCode": "invalid_request",
                                             "errorMessage": "credentialConfigurationId cannot be blank"
                                         }
+                                    },
+                                    "Credential already exists for given Issuer and Credential Type in the wallet": {
+                                        "value": {
+                                            "errorCode": "credential_download_error",
+                                            "errorMessage": "Duplicate credential for issuer and type"
+                                        }
                                     }
                                 }
                             }
@@ -2911,12 +2917,6 @@
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "Credential already exists for given Issuer and Credential Type": {
-                                        "value": {
-                                            "errorCode": "credential_download_error",
-                                            "errorMessage": "Duplicate credential for issuer and type"
-                                        }
-                                    },
                                     "Exception occurred while fetching Issuer config": {
                                         "value": {
                                             "errorCode": "credential_download_error",

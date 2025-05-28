@@ -5,10 +5,7 @@ import io.mosip.mimoto.dto.VerifiableCredentialRequestDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
-import io.mosip.mimoto.exception.ApiNotAccessibleException;
-import io.mosip.mimoto.exception.CredentialNotFoundException;
-import io.mosip.mimoto.exception.CredentialProcessingException;
-import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
+import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.util.CredentialUtilService;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
@@ -33,8 +30,7 @@ import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.List;
 
-import static io.mosip.mimoto.exception.ErrorConstants.CREDENTIAL_FETCH_EXCEPTION;
-import static io.mosip.mimoto.exception.ErrorConstants.RESOURCE_NOT_FOUND;
+import static io.mosip.mimoto.exception.ErrorConstants.*;
 import static io.mosip.mimoto.util.TestUtilities.createRequestBody;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -116,6 +112,25 @@ public class WalletCredentialsControllerTest {
                 .andExpect(jsonPath("$.credentialTypeDisplayName").value("credentialType123"))
                 .andExpect(jsonPath("$.credentialTypeLogo").value("credentialTypeLogo"))
                 .andExpect(jsonPath("$.credentialId").value("credentialId123"));
+    }
+
+    @Test
+    public void shouldReturnErroResponseWhenRequestedCredentialIsAlreadyAvailableInWallet() throws Exception {
+        setIssuerAndCredentialConfigurationId(issuer, credentialConfigurationId);
+        when(credentialUtilService.getTokenResponse(eq(verifiableCredentialRequest))).thenReturn(new TokenResponseDTO());
+        when(walletCredentialService.fetchAndStoreCredential(eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey)))
+                .thenThrow(new InvalidRequestException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), "Duplicate credential for issuer and type"));
+
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header("Accept-Language", locale)
+                        .content(createRequestBody(verifiableCredentialRequest))
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("credential_download_error"))
+                .andExpect(jsonPath("$.errorMessage").value("Duplicate credential for issuer and type"));
     }
 
     @Test

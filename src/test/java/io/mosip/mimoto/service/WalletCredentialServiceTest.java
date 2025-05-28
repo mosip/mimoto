@@ -112,7 +112,7 @@ public class WalletCredentialServiceTest {
     public void shouldThrowDuplicateCredentialExceptionForMosipIssuer() {
         when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId("Mosip", credentialType, walletId)).thenReturn(true);
 
-        CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
                 walletCredentialService.fetchAndStoreCredential("Mosip", credentialType, tokenResponse, locale, walletId, base64Key));
 
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
