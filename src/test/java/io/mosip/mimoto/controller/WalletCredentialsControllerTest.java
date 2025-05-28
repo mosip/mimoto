@@ -228,9 +228,9 @@ public class WalletCredentialsControllerTest {
 
                     assertEquals(2, messages.length);
                     assertThat(messages).anySatisfy(msg ->
-                            assertThat(msg.trim()).isEqualTo("Missing required parameters: issuerId"));
+                            assertThat(msg.trim()).isEqualTo("issuerId cannot be blank"));
                     assertThat(messages).anySatisfy(msg ->
-                            assertThat(msg.trim()).isEqualTo("Missing required parameters: credentialConfigurationId"));
+                            assertThat(msg.trim()).isEqualTo("credentialConfigurationId cannot be blank"));
                 });
     }
 
@@ -240,13 +240,13 @@ public class WalletCredentialsControllerTest {
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(createRequestBody(verifiableCredentialRequest))
+                        .content("{\"issuer\":\"issuer1\",\"code\":null,\"grantType\":null,\"redirectUri\":null,\"codeVerifier\":null}")
                         .header("Accept-Language", "fr")
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_request"))
-                .andExpect(jsonPath("$.errorMessage").value("Missing required parameters: credentialConfigurationId"));
+                .andExpect(jsonPath("$.errorMessage").value("credentialConfigurationId cannot be blank"));
     }
 
     @Test

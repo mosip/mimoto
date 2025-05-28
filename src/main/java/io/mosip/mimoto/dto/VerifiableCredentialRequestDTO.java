@@ -11,11 +11,11 @@ import lombok.Setter;
 @Setter
 public class VerifiableCredentialRequestDTO {
     @Schema(description = "The unique identifier of the issuer")
-    @NotBlank(message = "Missing required parameters: issuerId")
+    @NotBlank(message = "issuerId cannot be blank")
     String issuer;
 
     @Schema(description = "The unique identifier of the credential type from the issuer well-known configuration")
-    @NotBlank(message = "Missing required parameters: credentialConfigurationId")
+    @NotBlank(message = "credentialConfigurationId cannot be blank")
     String credentialConfigurationId;
 
     @Schema(description = "The authorization code received from the authorization server")

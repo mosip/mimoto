@@ -2693,17 +2693,17 @@
                                 "examples": {
                                     "Success response from DB": {
                                         "value": {
-                                            "display_name": "John Doe",
-                                            "profile_picture_url": "https://example.com/profile.jpg",
+                                            "displayName": "John Doe",
+                                            "profilePictureUrl": "https://example.com/profile.jpg",
                                             "email": "john.doe@example.com"
                                         }
                                     },
                                     "Success response from cache": {
                                         "value": {
-                                            "display_name": "John Doe",
-                                            "profile_picture_url": "https://example.com/profile.jpg",
+                                            "displayName": "John Doe",
+                                            "profilePictureUrl": "john.doe@example.com",
                                             "email": "john.doe@example.com",
-                                            "walletId": "w-1234-5678-90ab-cdef"
+                                            "walletId": "123e4567-e89b-12d3-a456-426614174000"
                                         }
                                     }
                                 }
@@ -2716,14 +2716,6 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
-                                },
-                                "examples": {
-                                    "User not found": {
-                                        "value": {
-                                            "errorCode": "unauthorized",
-                                            "errorMessage": "User not found. Please check your credentials or login again"
-                                        }
-                                    }
                                 }
                             }
                         }
@@ -2795,69 +2787,34 @@
                             "type": "string"
                         },
                         "description": "Unique identifier of the user's wallet where the credential will be stored"
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en"
+                        },
+                        "description": "Locale is used to determine the language in which credential's issuer display details should be stored. Input should be a 2-letter code (e.g., 'en' for English, 'fr' for French). If not provided, defaults to 'en'."
                     }
                 ],
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "multipart/form-data": {
+                        "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "grant_type": {
-                                        "type": "string",
-                                        "description": "OAuth 2.0 grant type, typically 'authorization_code'"
-                                    },
-                                    "code": {
-                                        "type": "string",
-                                        "description": "Authorization code received from the identity provider"
-                                    },
-                                    "redirect_uri": {
-                                        "type": "string",
-                                        "description": "Redirect URI used in the OAuth 2.0 flow"
-                                    },
-                                    "code_verifier": {
-                                        "type": "string",
-                                        "description": "PKCE code verifier associated with the authorization code"
-                                    },
-                                    "issuer": {
-                                        "type": "string",
-                                        "description": "Unique identifier of the credential Issuer"
-                                    },
-                                    "credential": {
-                                        "type": "string",
-                                        "description": "Type of the credential to be downloaded"
-                                    },
-                                    "vcStorageExpiryLimitInTimes": {
-                                        "type": "string",
-                                        "description": "Optional limit for how many times the user is allowed to share the Verifiable Credential. If not provided, it defaults to -1"
-                                    },
-                                    "locale": {
-                                        "type": "string",
-                                        "description": "Language preference in which the user expects the Verifiable Credential to be rendered"
-                                    }
-                                },
-                                "required": [
-                                    "grant_type",
-                                    "code",
-                                    "redirect_uri",
-                                    "code_verifier",
-                                    "issuer",
-                                    "credential",
-                                    "locale"
-                                ]
+                                "$ref": "#/components/schemas/VerifiableCredentialRequestDTO"
                             },
                             "examples": {
-                                "Default Example": {
+                                "Default download": {
                                     "value": {
-                                        "grant_type": "authorization_code",
-                                        "code": "abc123",
-                                        "redirect_uri": "https://example.com/redirect",
-                                        "code_verifier": "xyz-secret-verifier",
                                         "issuer": "Mosip",
-                                        "credential": "MosipVerifiableCredential",
-                                        "vcStorageExpiryLimitInTimes": "1",
-                                        "locale": "en"
+                                        "credentialConfigurationId": "MosipVerifiableCredential",
+                                        "code": "abc123",
+                                        "grant_type": "authorization_code",
+                                        "redirectUri": "https://example.com/redirect",
+                                        "codeVerifier": "xyz-secret-verifier"
                                     }
                                 }
                             }
@@ -2875,11 +2832,11 @@
                                 "examples": {
                                     "Success response": {
                                         "value": {
-                                            "issuer_name": "Mosip",
-                                            "issuer_logo": "https://example.com/logo.png",
-                                            "credential_type": "MosipVerifiableCredential",
-                                            "credential_type_logo": "https://example.com/credential-logo.png",
-                                            "credential_id": "1234567890"
+                                            "issuerName": "Mosip",
+                                            "issuerLogo": "https://example.com/logo.png",
+                                            "credentialType": "MosipVerifiableCredential",
+                                            "credentialTypeLogo": "https://example.com/credential-logo.png",
+                                            "credentialId": "1234567890"
                                         }
                                     }
                                 }
@@ -2887,41 +2844,53 @@
                         }
                     },
                     "400": {
-                        "description": "Bad request - Wallet key is null / blank or Wallet ID is null / blank / mismatch with session Wallet ID or required params are missing / invalid",
+                        "description": "Bad request - Wallet key is null / blank or Wallet ID is null / blank / mismatch with session Wallet ID or required params are missing / invalid or any invalid request data",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
+                                    "Wallet ID is null or blank": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Wallet ID cannot be blank"
+                                        }
+                                    },
+                                    "Invalid Accept-Language header": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Locale must be a 2-letter code"
+                                        }
+                                    },
                                     "Invalid Wallet Id": {
                                         "value": {
                                             "errorCode": "invalid_request",
                                             "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
                                         }
                                     },
-                                    "Wallet key not found in session": {
+                                    "Wallet Id not found in session": {
+                                        "value": {
+                                            "errorCode": "wallet_locked",
+                                            "errorMessage": "Wallet is locked"
+                                        }
+                                    },
+                                    "Wallet key not found in session" : {
                                         "value": {
                                             "errorCode": "invalid_request",
                                             "errorMessage": "Wallet key not found in session"
                                         }
                                     },
-                                    "Missing required params": {
+                                    "Invalid issuer": {
                                         "value": {
                                             "errorCode": "invalid_request",
-                                            "errorMessage": "Issuer and credentialConfigurationId are required"
+                                            "errorMessage": "issuerId cannot be blank"
                                         }
                                     },
-                                    "Wallet ID is null or blank": {
+                                    "Invalid credentialConfigurationId": {
                                         "value": {
                                             "errorCode": "invalid_request",
-                                            "errorMessage": "Wallet ID cannot be null or blank"
-                                        }
-                                    },
-                                    "Issuer ID is null or blank": {
-                                        "value": {
-                                            "errorCode": "invalid_request",
-                                            "errorMessage": "Issuer ID cannot be null or blank"
+                                            "errorMessage": "credentialConfigurationId cannot be blank"
                                         }
                                     }
                                 }
@@ -3025,13 +2994,14 @@
                         "description": "Unique identifier of the user's wallet from where the credential will be fetched"
                     },
                     {
-                        "name": "locale",
-                        "in": "query",
-                        "required": true,
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "required": false,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "default": "en"
                         },
-                        "description": "Locale is used to determine the language in which credentials should be rendered"
+                        "description": "Language preference in which the user expects the Verifiable Credential to be rendered. Input should be a 2-letter code (e.g., 'en' for English, 'fr' for French). If not provided, defaults to 'en'."
                     }
                 ],
                 "responses": {
@@ -3049,11 +3019,11 @@
                                     "Success response": {
                                         "value": [
                                             {
-                                                "issuer_name": "Mosip",
-                                                "issuer_logo": "https://example.com/logo.png",
-                                                "credential_type": "MosipVerifiableCredential",
-                                                "credential_type_logo": "https://example.com/credential-logo.png",
-                                                "credential_id": "1234567890"
+                                                "issuerName": "Mosip",
+                                                "issuerLogo": "https://example.com/logo.png",
+                                                "credentialType": "MosipVerifiableCredential",
+                                                "credentialTypeLogo": "https://example.com/credential-logo.png",
+                                                "credentialId": "1234567890"
                                             }
                                         ]
                                     }
@@ -3075,10 +3045,22 @@
                                             "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
                                         }
                                     },
+                                    "Wallet ID is not available in session" : {
+                                        "value": {
+                                            "errorCode": "wallet_locked",
+                                            "errorMessage": "Wallet is locked"
+                                        }
+                                    },
                                     "Wallet key not found in session": {
                                         "value": {
                                             "errorCode": "invalid_request",
                                             "errorMessage": "Wallet key not found in session"
+                                        }
+                                    },
+                                    "Invalid Accept-Language header": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Locale must be a 2-letter code"
                                         }
                                     }
                                 }
@@ -3157,15 +3139,6 @@
                         "description": "Unique identifier of the Verifiable Credential to be retrieved"
                     },
                     {
-                        "name": "locale",
-                        "in": "query",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Language preference in which the user expects the Verifiable Credential to be rendered"
-                    },
-                    {
                         "name": "action",
                         "in": "query",
                         "required": false,
@@ -3174,6 +3147,16 @@
                             "default": "inline"
                         },
                         "description": "Controls how the credential should be displayed. If it is sent as download, the response will include a header to download the file. For any other value or if not provided, it defaults to inline to preview the file in the browser."
+                    },
+                    {
+                        "name": "Accept-Language",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "en"
+                        },
+                        "description": "Language preference in which the user expects the Verifiable Credential to be rendered. Input should be a 2-letter code (e.g., 'en' for English, 'fr' for French). If not provided, defaults to 'en'."
                     }
                 ],
                 "responses": {
@@ -3216,10 +3199,28 @@
                                             "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
                                         }
                                     },
+                                    "Wallet ID is not available in session" : {
+                                        "value": {
+                                            "errorCode": "wallet_locked",
+                                            "errorMessage": "Wallet is locked"
+                                        }
+                                    },
                                     "Wallet key not found in session": {
                                         "value": {
                                             "errorCode": "invalid_request",
                                             "errorMessage": "Wallet key not found in session"
+                                        }
+                                    },
+                                    "Invalid Accept-Language header": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Locale must be a 2-letter code"
+                                        }
+                                    },
+                                    "Invalid Accept header" : {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Accept header must be application/pdf"
                                         }
                                     }
                                 }
@@ -3305,6 +3306,104 @@
                         }
                     }
                 }
+            },
+            "delete": {
+                "tags": [
+                    "Wallet Credentials"
+                ],
+                "summary": "Delete a credential from a wallet",
+                "description": "This endpoint allows you to delete a specific credential from a wallet. The API is secured using session-based authentication. The session ID is extracted from the Cookie header to authenticate the user. The wallet ID is validated against the session to ensure the user has access to the wallet. If the credential is successfully deleted, a 200 OK response is returned.",
+                "operationId": "deleteCredential",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Unique identifier of the wallet containing the credential"
+                    },
+                    {
+                        "name": "credentialId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Unique identifier of the credential to be deleted"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Credential successfully deleted"
+                    },
+                    "400": {
+                        "description": "Provided request is invalid",
+                        "content": {
+                          "application/json": {
+                              "schema": {
+                                "$ref": "#/components/schemas/Error"
+                              },
+                              "examples": {
+                                "Invalid Wallet Id": {
+                                  "value": {
+                                    "errorCode": "invalid_request",
+                                    "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                  }
+                                },
+                                "Wallet ID is not available in session" : {
+                                  "value": {
+                                    "errorCode": "wallet_locked",
+                                    "errorMessage": "Wallet is locked"
+                                  }
+                                }
+                              }
+                          }
+                        }
+                    },
+                    "404": {
+                        "description": "Credential not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Credential not found": {
+                                        "value": {
+                                            "errorCode": "resource_not_found",
+                                            "errorMessage": "The requested resource doesn’t exist."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/wallets": {
@@ -3351,7 +3450,7 @@
                                 "examples": {
                                     "Success response": {
                                         "value": {
-                                            "walletId": "d94a2e70-1234-4f2f-9eae-98765",
+                                            "walletId": "123e4567-e89b-12d3-a456-426614174000",
                                             "walletName": "My Personal Wallet"
                                         }
                                     }
@@ -3557,99 +3656,6 @@
                                         "value": {
                                             "errorCode": "database_unavailable",
                                             "errorMessage": "Failed to connect to the database"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "delete": {
-                //TODO: update right path
-                "tags": [
-                    "Wallet Credentials"
-                ],
-                "summary": "Delete a credential from a wallet",
-                "description": "This endpoint allows you to delete a specific credential from a wallet. The API is secured using session-based authentication. The session ID is extracted from the Cookie header to authenticate the user. The wallet ID is validated against the session to ensure the user has access to the wallet. If the credential is successfully deleted, a 200 OK response is returned.",
-                "operationId": "deleteCredential",
-                "security": [
-                    {
-                        "SessionAuth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "walletId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Unique identifier of the wallet containing the credential"
-                    },
-                    {
-                        "name": "credentialId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Unique identifier of the credential to be deleted"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Credential successfully deleted"
-                    },
-                    "403": {
-                        "description": "Unauthorized access to wallet",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                },
-                                "examples": {
-                                    "Invalid Wallet Id": {
-                                        "value": {
-                                            "errorCode": "invalid_request",
-                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Credential not found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                },
-                                "examples": {
-                                    "Credential not found": {
-                                        "value": {
-                                            "errorCode": "resource_not_found",
-                                            "errorMessage": "The requested resource doesn’t exist."
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                },
-                                "examples": {
-                                    "Unexpected Server Error": {
-                                        "value": {
-                                            "errorCode": "internal_server_error",
-                                            "errorMessage": "We are unable to process request now"
                                         }
                                     }
                                 }
@@ -4040,26 +4046,59 @@
                     }
                 }
             },
+            "VerifiableCredentialRequestDTO": {
+              "type": "object",
+              "properties": {
+                "issuer": {
+                  "type": "string",
+                  "description": "The unique identifier of the issuer"
+                },
+                "credentialConfigurationId": {
+                  "type": "string",
+                  "description": "The unique identifier of the credential type from the issuer well-known configuration"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "The authorization code received from the authorization server"
+                },
+                "grantType": {
+                  "type": "string",
+                  "description": "The grant type for the authorization request"
+                },
+                "redirectUri": {
+                  "type": "string",
+                  "description": "The redirect URI for the authorization request"
+                },
+                "codeVerifier": {
+                  "type": "string",
+                  "description": "The code verifier used for PKCE (Proof Key for Code Exchange)"
+                }
+              },
+              "required": [
+                "issuer",
+                "credentialConfigurationId"
+              ]
+            },
             "VerifiableCredentialResponseDTO": {
                 "type": "object",
                 "properties": {
-                    "issuer_name": {
+                    "issuerName": {
                         "type": "string",
                         "description": "Name of the Issuer"
                     },
-                    "issuer_logo": {
+                    "issuerLogo": {
                         "type": "string",
                         "description": "Logo of the Issuer"
                     },
-                    "credential_type": {
+                    "credentialType": {
                         "type": "string",
                         "description": "The name of the Credential Type issued by the Issuer"
                     },
-                    "credential_type_logo": {
+                    "credentialTypeLogo": {
                         "type": "string",
                         "description": "Logo of the Credential Type"
                     },
-                    "credential_id": {
+                    "credentialId": {
                         "type": "string",
                         "description": "Unique Identifier of the Credential in the database"
                     }
