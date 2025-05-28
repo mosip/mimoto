@@ -3569,7 +3569,7 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized user creating a wallet",
+                        "description": "Unauthorized user fetching wallets",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3746,23 +3746,37 @@
                         "description": "Wallet successfully deleted"
                     },
                     "401": {
-                        "description": "Unauthorized access",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Wallet not found",
+                        "description": "Unauthorized user deleting a wallet",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
+                                    "User ID is not present in session": {
+                                        "value": {
+                                            "errorCode": "unauthorized",
+                                            "errorMessage": "User ID not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid wallet deletion request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Invalid User ID": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "User ID cannot be null or empty"
+                                        }
+                                    },
                                     "Wallet not found": {
                                         "value": {
                                             "errorCode": "invalid_request",
