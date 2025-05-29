@@ -1,18 +1,14 @@
 package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.dto.ErrorDTO;
-import io.mosip.mimoto.exception.ErrorConstants;
-import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
-import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.exception.UnAuthorizationAccessException;
-import jakarta.servlet.http.HttpServletRequest;
+import io.mosip.mimoto.dto.resident.CredentialRequestResponseDTO;
+import io.mosip.mimoto.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -20,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
@@ -31,6 +28,15 @@ public class GlobalExceptionHandler {
     public ErrorDTO handleGenericException(Exception ex) {
         log.error("An unexpected error occurred: ", ex);
         return new ErrorDTO(ErrorConstants.INTERNAL_SERVER_ERROR.getErrorCode(), ErrorConstants.INTERNAL_SERVER_ERROR.getErrorMessage());
+    }
+
+    @ExceptionHandler( value = InvalidInputException.class)
+    public ResponseEntity<CredentialRequestResponseDTO> handleInvalidInput(InvalidInputException ex) {
+        CredentialRequestResponseDTO credentialRequestResponseDTO = new CredentialRequestResponseDTO();
+        ErrorDTO errors = new ErrorDTO(ex.getErrorCode(), ex.getMessage());
+        credentialRequestResponseDTO.setVersion("1.0");
+        credentialRequestResponseDTO.setErrors(Collections.singletonList(errors));
+        return new ResponseEntity<>(credentialRequestResponseDTO, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(DataAccessResourceFailureException.class)
