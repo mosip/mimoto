@@ -216,7 +216,7 @@ public class CryptoCoreUtil {
     private static byte[] symmetricDecrypt(SecretKey key, byte[] data, byte[] aad) {
         byte[] output = null;
         try {
-            Cipher cipher = Cipher.getInstance("AES/GCM/PKCS5Padding");
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             byte[] randomIV = Arrays.copyOfRange(data, data.length - cipher.getBlockSize(), data.length);
             SecretKeySpec keySpec = new SecretKeySpec(key.getEncoded(), "AES");
             GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(128, randomIV);
@@ -237,7 +237,7 @@ public class CryptoCoreUtil {
         byte[] output = null;
         Cipher cipher;
         try {
-            cipher = Cipher.getInstance("AES/GCM/PKCS5Padding");
+            cipher = Cipher.getInstance("AES/GCM/NoPadding");
             SecretKeySpec keySpec = new SecretKeySpec(key.getEncoded(), "AES");
             GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(128, nonce);
             cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmParameterSpec);
