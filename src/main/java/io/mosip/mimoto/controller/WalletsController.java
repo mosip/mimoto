@@ -9,6 +9,7 @@ import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.UnAuthorizationAccessException;
 import io.mosip.mimoto.service.WalletService;
+import io.mosip.mimoto.util.WalletUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -51,11 +52,11 @@ public class WalletsController {
     }
 
     /**
-     * Creates a new wallet for a user.
+     * Creates a new Wallet for a user.
      *
-     * @param wallet      The wallet creation request containing name and PIN.
+     * @param wallet      The Wallet creation request containing name and PIN.
      * @param httpSession The HTTP session containing user details.
-     * @return The unique identifier of the created wallet.
+     * @return The unique identifier of the created Wallet.
      * @throws InvalidRequestException If the request is invalid.
      *                                 Example: Wallet PIN and Confirm Wallet PIN received in request don't match
      */
@@ -96,7 +97,7 @@ public class WalletsController {
      * Retrieves all wallets for the authenticated user.
      *
      * @param httpSession The HTTP session containing user details.
-     * @return List of wallet details.
+     * @return List of Wallet details.
      * @throws InvalidRequestException If the request fails.
      */
     @Operation(
@@ -121,8 +122,8 @@ public class WalletsController {
     /**
      * Unlocks an existing wallet by retrieving its key and storing it in the session.
      *
-     * @param walletId    The unique identifier of the wallet.
-     * @param wallet      The request containing the wallet PIN.
+     * @param walletId    The unique identifier of the Wallet.
+     * @param wallet      The request containing the Wallet PIN.
      * @param httpSession The HTTP session containing user details.
      * @return The wallet details if unlocked successfully.
      * @throws InvalidRequestException If the wallet or PIN is invalid.
@@ -157,11 +158,12 @@ public class WalletsController {
     }
 
     /**
-     * Deletes a wallet by its ID
+     * Deletes a Wallet by its ID
      *
-     * @param walletId    The ID of the wallet to delete
+     * @param walletId    The ID of the Wallet to delete
      * @param httpSession The HTTP session containing user details
      * @return ResponseEntity with HTTP status 200 if successful, 401 if unauthorized
+     * @throws InvalidRequestException If input parameters or session are invalid.
      */
     @Operation(
             summary = SwaggerLiteralConstants.WALLETS_DELETE_SUMMARY,
@@ -171,22 +173,25 @@ public class WalletsController {
             parameters = {@Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the wallet to be deleted", schema = @Schema(type = "string"))}
     )
     @ApiResponse(responseCode = "200", description = "Wallet successfully deleted")
-    @ApiResponse(responseCode = "400", description = "Invalid wallet creation request", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {
+    @ApiResponse(responseCode = "400", description = "Invalid Wallet deletion request", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {
             @ExampleObject(name = "Invalid User ID", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"User ID cannot be null or empty\"}"),
-            @ExampleObject(name = "Wallet not found", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet not found\"}")}))
-    @ApiResponse(responseCode = "401", description = "Unauthorized access", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User ID not found in session", value = "{\"errorCode\": \"unauthorized\", \"errorMessage\": \"User ID not found in session\"}")))
+            @ExampleObject(name = "Invalid Wallet ID", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Invalid Wallet ID. Session and request Wallet ID do not match\"}"),
+            @ExampleObject(name = "Wallet ID not found in session", value = "{\"errorCode\": \"wallet_locked\", \"errorMessage\": \"Wallet is locked\"}"),
+            @ExampleObject(name = "Wallet not found in database", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet not found\"}")}))
+    @ApiResponse(responseCode = "401", description = "Unauthorized user deleting a Wallet", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User ID not found in session", value = "{\"errorCode\": \"unauthorized\", \"errorMessage\": \"User ID not found in session\"}")))
     @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
     @DeleteMapping("/{walletId}")
     public ResponseEntity<Void> deleteWallet(@PathVariable("walletId") String walletId, HttpSession httpSession) {
         String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
-        walletService.deleteWallet(userId, walletId); // sessionWalletId is not needed from client, pass walletId for validation
-
         String sessionWalletId = (String) httpSession.getAttribute(SessionKeys.WALLET_ID);
-        if (sessionWalletId != null && sessionWalletId.equals(walletId)) {
+        if (sessionWalletId != null) {
+            WalletUtil.validateWalletId(httpSession, walletId);
             httpSession.removeAttribute(SessionKeys.WALLET_KEY);
             httpSession.removeAttribute(SessionKeys.WALLET_ID);
-            log.info("Cleared wallet session attributes for walletId: {}", walletId);
         }
+
+        walletService.deleteWallet(userId, walletId);
+        log.info("Cleared Wallet session attributes for Wallet with Id: {}", walletId);
         return ResponseEntity.ok().build();
     }
 }
