@@ -699,15 +699,6 @@
             <artifactId>central-publishing-maven-plugin</artifactId>
             <version>${central.publishing.maven.plugin.version}</version>
                 <extensions>true</extensions>
-                 <executions>
-                    <execution>
-                        <id>default-deploy</id>
-                        <phase>deploy</phase>
-                        <goals>
-                            <goal>deploy</goal>
-                        </goals>
-                    </execution>
-                </executions>
                 <configuration>
                     <publishingServerId>ossrh</publishingServerId>
                     <autoPublish>false</autoPublish>
