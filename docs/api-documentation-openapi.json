@@ -2869,13 +2869,13 @@
                                             "errorMessage": "Locale must be a 2-letter code"
                                         }
                                     },
-                                    "Invalid Wallet Id": {
+                                    "Invalid Wallet ID": {
                                         "value": {
                                             "errorCode": "invalid_request",
                                             "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
                                         }
                                     },
-                                    "Wallet Id not found in session": {
+                                    "Wallet ID not found in session": {
                                         "value": {
                                             "errorCode": "wallet_locked",
                                             "errorMessage": "Wallet is locked"
@@ -3686,8 +3686,8 @@
                 "tags": [
                     "Wallets"
                 ],
-                "summary": "Delete a wallet",
-                "description": "This endpoint allows you to delete a specific wallet. The API is secured using session-based authentication. The session ID is extracted from the Cookie header to authenticate the user. The user's ID is obtained from the session and used to validate ownership of the wallet before deletion. If the wallet is successfully deleted, a 200 OK response is returned.",
+                "summary": "Delete a Wallet",
+                "description": "This endpoint allows you to delete a specific wallet. The API is secured using session-based authentication. The session ID is extracted from the Cookie header to authenticate the user. The user's ID is obtained from the session and used to validate ownership of the Wallet before deletion. If the Wallet is successfully deleted, a 200 OK response is returned; otherwise, an appropriate error response is returned.",
                 "operationId": "deleteWallet",
                 "security": [
                     {
@@ -3702,7 +3702,7 @@
                         "schema": {
                             "type": "string"
                         },
-                        "description": "Unique identifier of the wallet to be deleted"
+                        "description": "Unique identifier of the Wallet to be deleted"
                     }
                 ],
                 "responses": {
@@ -3710,14 +3710,14 @@
                         "description": "Wallet successfully deleted"
                     },
                     "401": {
-                        "description": "Unauthorized user deleting a wallet",
+                        "description": "Unauthorized user deleting a Wallet",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "User ID is not present in session": {
+                                    "User ID not found in session": {
                                         "value": {
                                             "errorCode": "unauthorized",
                                             "errorMessage": "User ID not found in session"
@@ -3741,7 +3741,19 @@
                                             "errorMessage": "User ID cannot be null or empty"
                                         }
                                     },
-                                    "Wallet not found": {
+                                    "Invalid Wallet ID": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                        }
+                                    },
+                                    "Wallet ID not found in session": {
+                                        "value": {
+                                            "errorCode": "wallet_locked",
+                                            "errorMessage": "Wallet is locked"
+                                        }
+                                    },
+                                    "Wallet not found in database": {
                                         "value": {
                                             "errorCode": "invalid_request",
                                             "errorMessage": "Wallet not found"

@@ -91,9 +91,9 @@ public class WalletCredentialsController {
     @ApiResponse(responseCode = "200", description = "Verifiable Credential downloaded and stored successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = VerifiableCredentialResponseDTO.class)))
     @ApiResponse(responseCode = "400", description = "Bad request - Wallet key is null / blank or Wallet ID is null / blank / mismatch with session Wallet ID or required params are missing / invalid", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {
             @ExampleObject(name = "Invalid header Accept-Language", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Locale must be a 2-letter code\"}"),
-            @ExampleObject(name = "Wallet Id is empty or blank", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet ID cannot be blank\"}"),
+            @ExampleObject(name = "Wallet ID is empty or blank", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet ID cannot be blank\"}"),
             @ExampleObject(name = "Wallet ID not found in session", value = "{\"errorCode\": \"wallet_locked\", \"errorMessage\": \"Wallet is locked\"}"),
-            @ExampleObject(name = "Invalid Wallet Id", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Invalid Wallet ID. Session and request Wallet ID do not match\"}"),
+            @ExampleObject(name = "Invalid Wallet ID", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Invalid Wallet ID. Session and request Wallet ID do not match\"}"),
             @ExampleObject(name = "Wallet key not found in session", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet key not found in session\"}"),
             @ExampleObject(name = "Invalid issuer", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"issuerId cannot be blank\"}"),
             @ExampleObject(name = "Invalid credentialConfigurationId", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"credentialConfigurationId cannot be blank\"}")}))
