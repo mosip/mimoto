@@ -93,6 +93,7 @@
         <springdoc.version>1.5.10</springdoc.version>
         <jjwt-version>0.9.1</jjwt-version>
         <postgresql.version>42.7.2</postgresql.version>
+        <central.publishing.maven.plugin.version>0.7.0</central.publishing.maven.plugin.version>
         <sonar.coverage.exclusions>
             **/constant/**,**/config/**,**/httpfilter/**,**/cache/**,**/dto/**,**/entity/**,**/dbentity/**,**/model/**,**/exception/**,**/repository/**,**/security/**,**/*Config.java,**/*BootApplication.java,**/*VertxApplication.java,**/cbeffutil/**,**/core/http/**,**/util/**
         </sonar.coverage.exclusions>
@@ -507,11 +508,29 @@
     <repositories>
         <repository>
             <id>ossrh</id>
-            <name>Central Repository</name>
+            <name>LegacyMavenSnapshot</name>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
             <layout>default</layout>
             <snapshots>
                 <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>ossrh-central</id>
+            <name>MavenCentralRepository</name>
+            <url>https://central.sonatype.com/repository/maven-snapshots</url>
+            <layout>default</layout>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>central</id>
+            <name>MavenCentral</name>
+            <layout>default</layout>
+            <url>https://repo1.maven.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
             </snapshots>
         </repository>
         <repository>
@@ -676,14 +695,22 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.14</version>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>${central.publishing.maven.plugin.version}</version>
                 <extensions>true</extensions>
+                 <executions>
+                    <execution>
+                        <id>default-deploy</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>deploy</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                    <publishingServerId>ossrh</publishingServerId>
+                    <autoPublish>false</autoPublish>
                 </configuration>
             </plugin>
 
