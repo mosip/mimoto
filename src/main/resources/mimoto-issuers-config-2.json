@@ -1,0 +1,108 @@
+{
+  "issuers": [
+    {
+      "issuer_id": "Mock",
+      "credential_issuer": "Mock",
+      "credential_issuer_host": "https://injicertify-mock.released.mosip.net",
+      "display": [
+        {
+          "name": "Mock Identity",
+          "logo": {
+            "url": "https://mosip.github.io/inji-config/logos/mosipid-logo.png",
+            "alt_text": "mosip-logo"
+          },
+          "title": "Mock Identity",
+          "description": "Download Mock Identity Credential",
+          "language": "en"
+        }
+      ],
+      "protocol": "OpenId4VCI",
+      "client_id": "mpartner-default-mimoto-mock-oidc",
+      "client_alias": "mpartner-default-mimoto-mock-oidc",
+      "wellknown_endpoint": "https://injicertify-mock.released.mosip.net/v1/certify/issuance/.well-known/openid-credential-issuer",
+      "redirect_uri": "io.mosip.residentapp.inji://oauthredirect",
+      "authorization_audience": "https://esignet-mock.released.mosip.net/v1/esignet/oauth/v2/token",
+      "token_endpoint": "https://api.qa-inji1.mosip.net/v1/mimoto/get-token/Mock",
+      "proxy_token_endpoint": "https://esignet-mock.released.mosip.net/v1/esignet/oauth/v2/token",
+      "qr_code_type": "EmbeddedVC",
+      "enabled": "true"
+    },
+    {
+      "issuer_id": "Mosip",
+      "protocol": "OpenId4VCI",
+      "display": [
+        {
+          "name": "National Identity Department (Released)",
+          "logo": {
+            "url": "https://mosip.github.io/inji-config/logos/mosipid-logo.png",
+            "alt_text": "mosip-logo"
+          },
+          "title": "National Identity Department",
+          "description": "Download MOSIP National / Foundational Identity Credential",
+          "language": "en"
+        },
+        {
+          "name": "دائرة الهوية الوطنية",
+          "logo": {
+            "url": "https://mosip.github.io/inji-config/logos/mosipid-logo.png",
+            "alt_text": "شعار موسيب"
+          },
+          "title": "دائرة الهوية الوطنية",
+          "description": "قم بتنزيل بيانات اعتماد الهوية الوطنية / التأسيسية MOSIP",
+          "language": "ar"
+        },
+        {
+          "name": "राष्ट्रीय पहचान विभाग",
+          "logo": {
+            "url": "https://mosip.github.io/inji-config/logos/mosipid-logo.png",
+            "alt_text": "मोसिप लोगो"
+          },
+          "title": "राष्ट्रीय पहचान विभाग",
+          "description": "MOSIP नेशनल/फाउंडेशनल आइडेंटिटी क्रेडेंशियल डाउनलोड करेंं",
+          "language": "hi"
+        },
+        {
+          "name": "ರಾಷ್ಟ್ರೀಯ ಗುರುತಿನ ಇಲಾಖೆ",
+          "logo": {
+            "url": "https://mosip.github.io/inji-config/logos/mosipid-logo.png",
+            "alt_text": "mosip ಲೋಗೋ"
+          },
+          "title": "ರಾಷ್ಟ್ರೀಯ ಗುರುತಿನ ಇಲಾಖೆ",
+          "description": "MOSIP ರಾಷ್ಟ್ರೀಯ / ಫೌಂಡೇಶನಲ್ ಐಡೆಂಟಿಟಿ ರುಜುವಾತು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+          "language": "kn"
+        },
+        {
+          "name": "தேசிய அடையாளத் துறை",
+          "logo": {
+            "url": "https://mosip.github.io/inji-config/logos/mosipid-logo.png",
+            "alt_text": "mosip லோகோ"
+          },
+          "title": "தேசிய அடையாளத் துறை",
+          "description": "MOSIP தேசிய / அடிப்படை அடையாளச் சான்றிதழைப் பதிவிறக்கவும்",
+          "language": "ta"
+        },
+        {
+          "name": "National Identity Department",
+          "logo": {
+            "url": "https://mosip.github.io/inji-config/logos/mosipid-logo.png",
+            "alt_text": "logo ng mosip"
+          },
+          "title": "National Identity Department",
+          "description": "I-download ang MOSIP National / Foundational Identity Credential",
+          "language": "fil"
+        }
+      ],
+      "client_id": "0VnKGbm4wF1iRVTJAJ-NbAlKNDU77vJ1ue1UUAsKRtA",
+      "wellknown_endpoint": "https://injicertify-mosipid.released.mosip.net/v1/certify/issuance/.well-known/openid-credential-issuer",
+      "redirect_uri": "io.mosip.residentapp.inji://oauthredirect",
+      "authorization_audience": "https://esignet-mosipid.released.mosip.net/v1/esignet/oauth/v2/token",
+      "token_endpoint": "http://localhost:8099/v1/mimoto/get-token/Mosip",
+      "proxy_token_endpoint": "https://esignet-mosipid.released.mosip.net/v1/esignet/oauth/v2/token",
+      "client_alias": "mpartner-default-mimoto-mosipid-oidc",
+      "qr_code_type": "OnlineSharing",
+      "enabled": "true",
+      "credential_issuer": "Mosip",
+      "credential_issuer_host": "https://injicertify-mosipid.released.mosip.net"
+    }
+  ]
+}
