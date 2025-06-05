@@ -24,7 +24,7 @@ Before you begin, ensure you have:
       spring.security.oauth2.client.registration.google.client-id=${mosip.injiweb.google.client.id}
       spring.security.oauth2.client.registration.google.client-secret=${mosip.injiweb.google.client.secret}
       ```
-Make sure value of `mosip.injiweb.google.client.id` and `mosip.injiweb.google.client.secret` are set in the environment.
+    -  Make sure value of `mosip.injiweb.google.client.id` and `mosip.injiweb.google.client.secret` are set in the environment.
 2. **Authorized Host URL**:
     - Register the base domain of your mimoto in Google Developer Console, e.g., `https://your-mimoto-domain`.
 
@@ -40,31 +40,35 @@ Make sure value of `mosip.injiweb.google.client.id` and `mosip.injiweb.google.cl
 sequenceDiagram
     participant User
     participant Browser
-    participant Application
+    participant mimoto
     participant GoogleOAuth2
+    participant Redis
 
     User->>Browser: Navigate to Login Page
-    Browser->>Application: Request Login
-    Application->>GoogleOAuth2: Redirect to Google Login
+    Browser->>mimoto: Request Login
+    mimoto->>GoogleOAuth2: Redirect to Google Login
     GoogleOAuth2->>User: Prompt for Credentials
     User->>GoogleOAuth2: Enter Credentials
-    GoogleOAuth2->>Application: Validate Access Token
-    Application->>Browser: Redirect to Dashboard
-    Browser->>User: Display Dashboard
+    GoogleOAuth2->>mimoto: Send Authorization Code
+    mimoto->>GoogleOAuth2: Exchange Code for Access Token
+    GoogleOAuth2->>mimoto: Return Access Token & User Info
+    mimoto->>Redis: Store Session ID and User Metadata
+    mimoto->>Browser: Set Session ID in Cookie / Response
+    Browser->>User: Redirect to Dashboard
  ```    
 ### Authenticated API Access Flow
 ```mermaid
  sequenceDiagram
     participant User
     participant Browser
-    participant Application
+    participant mimoto
     participant Redis
 
     User->>Browser: Request API
-    Browser->>Application: Send API Request with Session ID
-    Application->>Redis: Validate Session ID
-    Redis->>Application: Return User Metadata
-    Application->>Browser: Respond with Data
+    Browser->>mimoto: Send API Request with Session ID
+    mimoto->>Redis: Validate Session ID
+    Redis->>mimoto: Return User Metadata
+    mimoto->>Browser: Respond with Data
 ```
 ---
 ## Key Points
