@@ -20,8 +20,8 @@ import java.io.IOException;
 @Slf4j
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    @Value("${mosip.inji.web.url}")
-    private String injiWebUrl;
+    @Value("${mosip.inji.web.authentication.success.redirect.url}")
+    private String authenticationSuccessRedirectUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -47,6 +47,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String userId = oAuth2User.getAttribute("userId");
         session.setAttribute(SessionKeys.USER_ID, userId);
 
-        response.sendRedirect(injiWebUrl + "/user/passcode");
+        response.sendRedirect(authenticationSuccessRedirectUrl);
     }
 }
