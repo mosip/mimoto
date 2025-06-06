@@ -42,7 +42,7 @@ SecretKey aesKey = KeyGenerationUtil.generateEncryptionKey("AES", 256);
 - The AES key is encrypted using AES/GCM/NoPadding and stored as:
 
     ```Base64(salt + IV + ciphertext)```
-- The original PIN and AES key are never stored.
+- The original PIN and raw AES key are never stored—only the AES key encrypted with a PIN-derived key is saved.
 
 ### 2. 🔓 **Wallet Unlock (Session Start)**
 When the user wants to access the wallet, they re-enter their PIN via an unlock API.
@@ -50,16 +50,16 @@ When the user wants to access the wallet, they re-enter their PIN via an unlock 
 - The system retrieves the encrypted wallet key.
 - Extracts the salt and IV.
 - Derives the decryption key from the entered PIN and stored salt.
-- Decrypts the AES wallet key.
-- The decrypted AES key is then Base64-encoded and stored in the HTTP session.
+- The ```decryptWithPin``` method from the ```keyManager``` library handles the decryption and returns the Base64-encoded AES wallet key.
+- The Base64-encoded AES key is stored in the HTTP session.
 ### 3. 🔐 **In-Session Operations**
 Once the AES wallet key is in session:
-- It is used to encrypt or decrypt sensitive data like credentials or keys.
+- It is Base64-decoded and used to encrypt or decrypt sensitive data like credentials or keys.
 -  The user does not need to re-enter the PIN during the session.
 -  Encryption and decryption continue using AES/GCM/NoPadding for both confidentiality and integrity.
 
 ### 4. 🔚 **Session End / Logout**
-- The decrypted AES key is removed from the session.
+- The Base64-encoded AES key is removed from the session.
 - On the next login, in unlock wallet API, the user must provide their PIN again to decrypt the key.
 
 ---
@@ -81,14 +81,14 @@ F --> G[DB]
         H[Wallet Unlock] --> I[Retrieve Encrypted Key<br>from DB]
         I --> J[Extract Salt & IV]
         J --> K[Derive Key<br>from Entered PIN]
-        K --> L[Decrypt AES Key]
-        L --> M[Store AES Key<br>in Session]
+        K --> L[Receive Base64 AES Key<br>from decryptWithPin]
+        L --> M[Store Base64 AES Key<br>in Session]
     end
 
     %% Session Operations
-    M --> N[Session Ops:<br>Encrypt/Decrypt Data]
+    M --> N[Session Ops:<br>Base64 Decode Key → Encrypt/Decrypt Data]
     N --> O[Session End / Logout]
-    O --> P[Clear AES Key<br>from Session]
+    O --> P[Remove Base64 AES Key<br>from Session]
     P --> H
 
     %% Style classes
