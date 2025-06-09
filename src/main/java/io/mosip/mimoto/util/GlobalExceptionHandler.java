@@ -1,13 +1,13 @@
 package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.dto.ErrorDTO;
-import io.mosip.mimoto.exception.ErrorConstants;
-import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
-import io.mosip.mimoto.exception.InvalidRequestException;
+import io.mosip.mimoto.dto.resident.CredentialRequestResponseDTO;
+import io.mosip.mimoto.exception.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSourceResolvable;
 import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 @ResponseBody
@@ -25,6 +28,15 @@ public class GlobalExceptionHandler {
     public ErrorDTO handleGenericException(Exception ex) {
         log.error("An unexpected error occurred: ", ex);
         return new ErrorDTO(ErrorConstants.INTERNAL_SERVER_ERROR.getErrorCode(), ErrorConstants.INTERNAL_SERVER_ERROR.getErrorMessage());
+    }
+
+    @ExceptionHandler( value = InvalidInputException.class)
+    public ResponseEntity<CredentialRequestResponseDTO> handleInvalidInput(InvalidInputException ex) {
+        CredentialRequestResponseDTO credentialRequestResponseDTO = new CredentialRequestResponseDTO();
+        ErrorDTO errors = new ErrorDTO(ex.getErrorCode(), ex.getMessage());
+        credentialRequestResponseDTO.setVersion("1.0");
+        credentialRequestResponseDTO.setErrors(Collections.singletonList(errors));
+        return new ResponseEntity<>(credentialRequestResponseDTO, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(DataAccessResourceFailureException.class)
@@ -41,11 +53,18 @@ public class GlobalExceptionHandler {
         return new ErrorDTO(ex.getErrorCode(), ex.getMessage());
     }
 
+    @ExceptionHandler(UnAuthorizationAccessException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorDTO handleUnAuthorizedAccess(UnAuthorizationAccessException ex) {
+        log.error("UnAuthorized access detected: ", ex);
+        return new ErrorDTO(ex.getErrorCode(), ex.getErrorText());
+    }
+
     @ExceptionHandler(InvalidRequestException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorDTO handleInvalidRequest(InvalidRequestException ex) {
         log.error("Invalid request parameters: ", ex);
-        return new ErrorDTO(ex.getErrorCode(), ex.getMessage());
+        return new ErrorDTO(ex.getErrorCode(), ex.getErrorText());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -81,8 +100,11 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorDTO handleHandlerMethodValidationException(HandlerMethodValidationException ex) {
         log.error("Validation error in handler method: {}", ex.getMessage());
-        // You might want to extract more detailed information if available in this exception
-        return new ErrorDTO(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Validation error in request parameters");
+        String errorMessage = ex.getAllValidationResults()
+                .stream()
+                .flatMap(r -> r.getResolvableErrors().stream())
+                .map(MessageSourceResolvable::getDefaultMessage)
+                .collect(Collectors.joining(", "));
+        return new ErrorDTO(ErrorConstants.INVALID_REQUEST.getErrorCode(), errorMessage);
     }
-
 }

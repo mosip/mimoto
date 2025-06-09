@@ -432,11 +432,15 @@ public class TestUtilities {
 
     public static VerifiableCredentialResponseDTO getVerifiableCredentialResponseDTO(String issuerName, String issuerLogo, String credentialType, String credentialTypeLogo, String credentialId) {
         return VerifiableCredentialResponseDTO.builder()
-                .issuerName(issuerName)
+                .issuerDisplayName(issuerName)
                 .issuerLogo(issuerLogo)
-                .credentialType(credentialType)
+                .credentialTypeDisplayName(credentialType)
                 .credentialTypeLogo(credentialTypeLogo)
                 .credentialId(credentialId)
                 .build();
+    }
+
+    public static String createRequestBody(Object request) throws JsonProcessingException {
+        return new ObjectMapper().writeValueAsString(request);
     }
 }

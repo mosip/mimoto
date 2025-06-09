@@ -43,7 +43,7 @@ public class OAuth2AuthenticationSuccessHandlerTest {
     @Mock
     private OAuth2User oauth2User;
 
-    private static final String INJI_WEB_URL = "https://example.com";
+    private static final String AUTH_SUCCESS_REDIRECT_URL = "https://example.com/passcode";
     private static final String CLIENT_REGISTRATION_ID = "google";
     private static final String DISPLAY_NAME = "John Doe";
     private static final String PROFILE_PICTURE_URL = "https://example.com/profile.jpg";
@@ -52,9 +52,9 @@ public class OAuth2AuthenticationSuccessHandlerTest {
 
     @Before
     public void setUp() throws Exception {
-        Field injiWebUrlField = OAuth2AuthenticationSuccessHandler.class.getDeclaredField("injiWebUrl");
+        Field injiWebUrlField = OAuth2AuthenticationSuccessHandler.class.getDeclaredField("authenticationSuccessRedirectUrl");
         injiWebUrlField.setAccessible(true);
-        injiWebUrlField.set(successHandler, INJI_WEB_URL);
+        injiWebUrlField.set(successHandler, AUTH_SUCCESS_REDIRECT_URL);
 
         when(request.getSession(false)).thenReturn(session);
     }
@@ -72,7 +72,7 @@ public class OAuth2AuthenticationSuccessHandlerTest {
 
         verify(session).setAttribute("clientRegistrationId", CLIENT_REGISTRATION_ID);
         verify(session).setAttribute(SessionKeys.USER_ID, USER_ID);
-        verify(response).sendRedirect(INJI_WEB_URL + "/pin");
+        verify(response).sendRedirect(AUTH_SUCCESS_REDIRECT_URL);
 
         ArgumentCaptor<UserMetadataDTO> captor = ArgumentCaptor.forClass(UserMetadataDTO.class);
         verify(session).setAttribute(eq(SessionKeys.USER_METADATA), captor.capture());
@@ -96,7 +96,7 @@ public class OAuth2AuthenticationSuccessHandlerTest {
 
         verify(session).setAttribute("clientRegistrationId", CLIENT_REGISTRATION_ID);
         verify(session).setAttribute(SessionKeys.USER_ID, USER_ID);
-        verify(response).sendRedirect(INJI_WEB_URL + "/pin");
+        verify(response).sendRedirect(AUTH_SUCCESS_REDIRECT_URL);
 
         ArgumentCaptor<UserMetadataDTO> captor = ArgumentCaptor.forClass(UserMetadataDTO.class);
         verify(session).setAttribute(eq(SessionKeys.USER_METADATA), captor.capture());

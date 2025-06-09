@@ -5,11 +5,10 @@ import io.mosip.mimoto.constant.SwaggerExampleConstants;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.dto.ErrorDTO;
-import io.mosip.mimoto.dto.mimoto.CachedUserMetadataDTO;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.ErrorConstants;
-import io.mosip.mimoto.exception.OAuth2AuthenticationException;
+import io.mosip.mimoto.exception.UnAuthorizationAccessException;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.service.EncryptionService;
 import io.mosip.mimoto.util.Utilities;
@@ -31,9 +30,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static io.mosip.mimoto.exception.ErrorConstants.SESSION_EXPIRED_OR_INVALID;
-import static io.mosip.mimoto.util.Utilities.getErrorResponseEntityFromPlatformErrorMessage;
-
 @Slf4j
 @RestController
 @RequestMapping(value = "/users/me")
@@ -45,64 +41,101 @@ public class UsersController {
     @Autowired
     private EncryptionService encryptionService;
 
-    @Operation(summary = "Retrieve user metadata from the database", description = "This API is secured using session-based authentication. When a request is made, the server retrieves the session ID from the Cookie header and uses it to fetch session details from Redis. From the session, it extracts the user's unique identifier (typically the sub field provided by the identity provider) along with the clientRegistrationId. These values are then used to retrieve the user's metadata from the database. If successful, the API returns the user's profile information. If any issue occurs such as missing user data or server error then an appropriate error response is returned.", operationId = "getUserProfileFromDB", security = @SecurityRequirement(name = "SessionAuth"))
-    @ApiResponse(responseCode = "200", description = "User profile retrieved successfully from the Database", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserMetadataDTO.class), examples = @ExampleObject(name = "Success response", value = SwaggerExampleConstants.FETCH_USER_PROFILE_SUCCESS)))
-    @ApiResponse(responseCode = "404", description = "User data not found in the database", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User not found in the Database", value = "{\"errorCode\": \"invalid_user\", \"errorMessage\": \"User not found. Please check your credentials or login again\"}")))
-    @ApiResponse(responseCode = "500", description = "Internal server error - any error occurred while decrypting the data or fetching the data from the database", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
-    @ApiResponse(responseCode = "503", description = "Service unavailable", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Database connection failure", value = "{\"errorCode\": \"database_unavailable\", \"errorMessage\": \"Failed to connect to the database\"}")))
-    @GetMapping("/db")
-    public ResponseEntity<UserMetadataDTO> getUserProfile(Authentication authentication, HttpSession session) {
+    /**
+     * Retrieves user profile information, first checking the cache and then the database if needed
+     *
+     * @param authentication The authentication object containing user information
+     * @param session        The HTTP session
+     * @return ResponseEntity containing user metadata
+     */
+    @Operation(
+            summary = "Retrieve user metadata",
+            description = "First attempts to retrieve user metadata from the session cache. If not available, fetches from the database. This API is secured using session-based authentication.",
+            operationId = "getUserProfile",
+            security = @SecurityRequirement(name = "SessionAuth")
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "User profile retrieved successfully",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = UserMetadataDTO.class),
+                    examples = {
+                            @ExampleObject(name = "Success response from DB", value = SwaggerExampleConstants.FETCH_USER_PROFILE_FROM_DB_SUCCESS),
+                            @ExampleObject(name = "Success response from cache", value = SwaggerExampleConstants.FETCH_USER_CACHE_PROFILE_SUCCESS)
+                    }
+            )
+    )
+    @ApiResponse(responseCode = "401", description = "User data not found", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User not found", value = "{\"errorCode\": \"unauthorized\", \"errorMessage\": \"User not found. Please check your credentials or login again\"}")))
+    @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {
+            @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}"),
+            @ExampleObject(name = "Decryption Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"Failed to process user data\"}"),
+    }))
+    @ApiResponse(
+            responseCode = "503",
+            description = "Service unavailable",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ErrorDTO.class),
+                    examples = @ExampleObject(
+                            name = "Database connection failure",
+                            value = "{\"errorCode\": \"database_unavailable\", \"errorMessage\": \"Failed to connect to the database\"}"
+                    )
+            )
+    )
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserMetadataDTO> getUserProfileInfo(Authentication authentication, HttpSession session) throws Exception {
+        UserMetadataDTO userMetadataDTO = (UserMetadataDTO) session.getAttribute(SessionKeys.USER_METADATA);
 
-        String identityProvider = (String) session.getAttribute("clientRegistrationId");
-        UserMetadata userMetadata = null;
-        try {
-            userMetadata = fetchUserMetadata(authentication.getName(), identityProvider);
-        } catch (OAuth2AuthenticationException exception) {
-            log.error("Error occurred while retrieving user profile : ", exception);
-            return Utilities.getErrorResponseEntityWithoutWrapper(exception, ErrorConstants.INVALID_USER.getErrorCode(), exception.getStatus(), null);
-        }
+        if (userMetadataDTO == null) {
+            log.info("User metadata not found in cache, fetching from database");
+            String identityProvider = (String) session.getAttribute("clientRegistrationId");
+            UserMetadata userMetadata;
+            try {
+                userMetadata = fetchUserMetadata(authentication.getName(), identityProvider);
 
-        UserMetadataDTO userMetadataDTO = null;
-        try {
-            userMetadataDTO = new UserMetadataDTO(encryptionService.decrypt(userMetadata.getDisplayName()),
-                    encryptionService.decrypt(userMetadata.getProfilePictureUrl()),
-                    encryptionService.decrypt(userMetadata.getEmail()));
-        } catch (DecryptionException e) {
-            throw new RuntimeException(e);
+                // In case of fetching user info from DB, walletId is null.
+                // Here login is required as data is unavailable in session
+                userMetadataDTO = new UserMetadataDTO(
+                        encryptionService.decrypt(userMetadata.getDisplayName()),
+                        encryptionService.decrypt(userMetadata.getProfilePictureUrl()),
+                        encryptionService.decrypt(userMetadata.getEmail()),
+                        null
+                );
+                session.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
+            } catch (UnAuthorizationAccessException exception) {
+                log.error("Error occurred while retrieving user profile: ", exception);
+                return Utilities.getErrorResponseEntityWithoutWrapper(
+                        exception,
+                        ErrorConstants.INVALID_USER.getErrorCode(),
+                        HttpStatus.UNAUTHORIZED,
+                        MediaType.APPLICATION_JSON
+                );
+            } catch (DecryptionException e) {
+                log.error("Error occurred while decrypting user data: ", e);
+                return Utilities.getErrorResponseEntityWithoutWrapper(
+                        new RuntimeException("Failed to process user data"),
+                        ErrorConstants.INTERNAL_SERVER_ERROR.getErrorCode(),
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        MediaType.APPLICATION_JSON
+                );
+            }
+        } else {
+            // If data is available in cache, take walletId also from cache
+            Object walletIdObj = session.getAttribute(SessionKeys.WALLET_ID);
+            if (walletIdObj instanceof String walletId) {
+                userMetadataDTO.setWalletId(walletId);
+            }
+            log.info("Retrieved user metadata from cache");
         }
 
         return ResponseEntity.status(HttpStatus.OK).body(userMetadataDTO);
-
     }
 
-    private UserMetadata fetchUserMetadata(String providerSubjectId, String identityProvider) throws OAuth2AuthenticationException {
-        return userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider).orElseThrow(() -> new OAuth2AuthenticationException(ErrorConstants.INVALID_USER.getErrorCode(), "User not found. Please check your credentials or login again", HttpStatus.NOT_FOUND));
-    }
-
-    @Operation(summary = "Retrieve user metadata from the stored redis session", description = "This API is secured using session-based authentication. When a request is made, the server retrieves the session ID from the Cookie header and uses it to fetch session details from Redis. It then attempts to retrieve the user's metadata directly from the session. If the metadata is available, the API returns the user's profile information otherwise an appropriate error response is returned.", operationId = "getUserProfileFromCache", security = @SecurityRequirement(name = "SessionAuth"))
-    @ApiResponse(responseCode = "200", description = "User profile retrieved successfully from the session", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CachedUserMetadataDTO.class), examples = @ExampleObject(name = "Success response", value = SwaggerExampleConstants.FETCH_USER_CACHE_PROFILE_SUCCESS)))
-    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User metadata not found in session", value = "{\"errorCode\": \"session_invalid_or_expired\", \"errorMessage\": \"User session is missing or expired. Please log in again.\"}")))
-    @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
-    @GetMapping("/cache")
-    public ResponseEntity<CachedUserMetadataDTO> getUserProfileFromCache(HttpSession session) {
-
-        UserMetadataDTO userMetadataDTO = (UserMetadataDTO) session.getAttribute(SessionKeys.USER_METADATA);
-        if (userMetadataDTO == null) {
-            log.error("User info is not present in the session");
-            return getErrorResponseEntityFromPlatformErrorMessage(SESSION_EXPIRED_OR_INVALID, HttpStatus.UNAUTHORIZED, MediaType.APPLICATION_JSON);
-        }
-
-        CachedUserMetadataDTO cachedUserMetadataDTO = new CachedUserMetadataDTO();
-        cachedUserMetadataDTO.setDisplayName(userMetadataDTO.getDisplayName());
-        cachedUserMetadataDTO.setEmail(userMetadataDTO.getEmail());
-        cachedUserMetadataDTO.setProfilePictureUrl(userMetadataDTO.getProfilePictureUrl());
-        Object walletIdObj = session.getAttribute(SessionKeys.WALLET_ID);
-        if (walletIdObj instanceof String walletId) {
-            cachedUserMetadataDTO.setWalletId(walletId);
-        } else {
-            cachedUserMetadataDTO.setWalletId(null);
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(cachedUserMetadataDTO);
+    private UserMetadata fetchUserMetadata(String providerSubjectId, String identityProvider) throws UnAuthorizationAccessException {
+        return userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider).
+                orElseThrow(() ->
+                        new UnAuthorizationAccessException(ErrorConstants.UNAUTHORIZED_ACCESS.getErrorCode(), "User not found. Please check your credentials or login again")
+                );
     }
 }

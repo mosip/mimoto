@@ -68,7 +68,12 @@ fi
         echo "Invalid input. Please respond with Y (yes) or N (no)."
       fi
     done
-
+  echo "Choose the namespace to run the onboarder in:"
+      read -p "Enter the custom namespace: " custom_ns
+            if [[ -z "$custom_ns" ]]; then
+              echo "No namespace provided; EXITING."
+              exit 1;
+            fi
   echo "Do you have public domain & valid SSL? (Y/n) "
   echo "Y: if you have public domain & valid ssl certificate"
   echo "n: if you don't have a public domain and a valid SSL certificate. It will add an ssl certificate in onboarder docker. Only recommended in testing env."
@@ -83,7 +88,7 @@ fi
     ENABLE_INSECURE='--set onboarding.configmaps.onboarding.ENABLE_INSECURE=true';
   fi
 
-  NS=injiweb
+  export NS=$custom_ns
   CHART_VERSION=0.0.1-develop
 
   echo Create $NS namespace
@@ -106,6 +111,10 @@ fi
     $NFS_OPTION \
     $S3_OPTION \
     --set onboarding.variables.push_reports_to_s3=$push_reports_to_s3 \
+    --set extraEnvVars[0].name=customnamespace,extraEnvVars[0].value=$NS \
+    --set extraEnvVarsCM[0]=global \
+    --set extraEnvVarsCM[1]=keycloak-env-vars \
+    --set extraEnvVarsCM[2]=keycloak-host \
     $ENABLE_INSECURE \
     -f values.yaml \
     --version $CHART_VERSION \
@@ -113,11 +122,11 @@ fi
 
     echo Updating mimoto-oidc-keystore-password value
     kubectl -n $NS create secret generic mimoto-oidc-keystore-password --from-literal=mimoto-oidc-keystore-password='mosip123' --dry-run=client -o yaml | kubectl apply -f -
-    ./copy_cm_func.sh secret mimoto-oidc-keystore-password injiweb config-server
+    ./copy_cm_func.sh secret mimoto-oidc-keystore-password $NS config-server
 
     echo Updating Mimoto wallet binding partner api key and Mimoto OIDC Partner Client ID
-    ./copy_cm_func.sh secret mimoto-wallet-binding-partner-api-key injiweb config-server
-    ./copy_cm_func.sh secret mimoto-oidc-partner-clientid injiweb config-server
+    ./copy_cm_func.sh secret mimoto-wallet-binding-partner-api-key $NS config-server
+    ./copy_cm_func.sh secret mimoto-oidc-partner-clientid $NS config-server
     kubectl -n config-server set env --keys=mimoto-wallet-binding-partner-api-key --from secret/mimoto-wallet-binding-partner-api-key deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
     kubectl -n config-server set env --keys=mimoto-oidc-partner-clientid --from secret/mimoto-oidc-partner-clientid deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
     kubectl -n config-server set env --keys=mimoto-oidc-keystore-password --from secret/mimoto-oidc-keystore-password deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_

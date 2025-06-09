@@ -14,6 +14,7 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import io.mosip.mimoto.dbentity.CredentialMetadata;
 import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dto.IssuerDTO;
+import io.mosip.mimoto.dto.VerifiableCredentialRequestDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
@@ -110,7 +111,12 @@ public class CredentialUtilService {
         pixelPass = new PixelPass();
     }
 
-    public TokenResponseDTO getTokenResponse(Map<String, String> params, String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+    public TokenResponseDTO getTokenResponse(VerifiableCredentialRequestDTO verifiableCredentialRequest) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+        return getTokenResponse(convertVerifiableCredentialRequestToMap(verifiableCredentialRequest));
+    }
+
+    public TokenResponseDTO getTokenResponse(Map<String, String> params) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+        String issuerId = params.get("issuer");
         IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
         CredentialIssuerConfiguration credentialIssuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
         String tokenEndpoint = idpService.getTokenEndpoint(credentialIssuerConfiguration);
@@ -126,17 +132,18 @@ public class CredentialUtilService {
         VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialEndpoint, MediaType.APPLICATION_JSON,
                 vcCredentialRequest, VCCredentialResponse.class, accessToken);
         log.debug("VC Credential Response is -> " + vcCredentialResponse);
-        if (vcCredentialResponse == null) throw new InvalidCredentialResourceException("VC Credential Issue API not accessible");
+        if (vcCredentialResponse == null)
+            throw new InvalidCredentialResourceException("VC Credential Issue API not accessible");
         return vcCredentialResponse;
     }
 
-    public VCCredentialRequest generateVCCredentialRequest(IssuerDTO issuerDTO, CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse, CredentialsSupportedResponse credentialsSupportedResponse, String accessToken, String walletId, String base64EncodedWalletKey,Boolean isLoginFlow) throws Exception {
+    public VCCredentialRequest generateVCCredentialRequest(IssuerDTO issuerDTO, CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse, CredentialsSupportedResponse credentialsSupportedResponse, String accessToken, String walletId, String base64EncodedWalletKey, Boolean isLoginFlow) throws Exception {
         String jwt;
 
         Map<String, ProofTypesSupported> proofTypesSupported = credentialsSupportedResponse.getProofTypesSupported();
         SigningAlgorithm algorithm;
         if (proofTypesSupported.containsKey("jwt")) {
-            algorithm = SigningAlgorithm.fromString(proofTypesSupported.get("jwt").getProofSigningAlgValuesSupported().get(0));
+            algorithm = SigningAlgorithm.fromString(proofTypesSupported.get("jwt").getProofSigningAlgValuesSupported().getFirst());
         } else {
             algorithm = SigningAlgorithm.RS256;
         }
@@ -216,10 +223,10 @@ public class CredentialUtilService {
     public Map<String, Object> getPdfResourceFromVcProperties(LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties, CredentialsSupportedResponse credentialsSupportedResponse, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, String dataShareUrl, String credentialValidity) throws IOException, WriterException {
         Map<String, Object> data = new HashMap<>();
         LinkedHashMap<String, Object> rowProperties = new LinkedHashMap<>();
-        String backgroundColor = credentialsSupportedResponse.getDisplay().get(0).getBackgroundColor();
-        String backgroundImage = credentialsSupportedResponse.getDisplay().get(0).getBackgroundImage().getUri();
-        String textColor = credentialsSupportedResponse.getDisplay().get(0).getTextColor();
-        String credentialSupportedType = credentialsSupportedResponse.getDisplay().get(0).getName();
+        String backgroundColor = credentialsSupportedResponse.getDisplay().getFirst().getBackgroundColor();
+        String backgroundImage = credentialsSupportedResponse.getDisplay().getFirst().getBackgroundImage().getUri();
+        String textColor = credentialsSupportedResponse.getDisplay().getFirst().getTextColor();
+        String credentialSupportedType = credentialsSupportedResponse.getDisplay().getFirst().getName();
         String face = vcCredentialResponse.getCredential().getCredentialSubject().get("face") != null ? (String) vcCredentialResponse.getCredential().getCredentialSubject().get("face") : null;
 
         displayProperties.entrySet().stream()
@@ -302,9 +309,9 @@ public class CredentialUtilService {
         List<?> castedList = (List<?>) list;
         String response = "";
         if (castedList.isEmpty()) return "";
-        if (castedList.get(0) instanceof String) {
+        if (castedList.getFirst() instanceof String) {
             response = castedList.stream().map(String.class::cast).collect(Collectors.joining(", "));
-        } else if (castedList.get(0) instanceof Map) {
+        } else if (castedList.getFirst() instanceof Map) {
             response = ((List<Map<?, ?>>) castedList).stream()
                     .filter(obj -> LocaleUtils.matchesLocale(obj.get("language").toString(), locale))
                     .map(obj -> obj.get("value").toString())
@@ -365,13 +372,15 @@ public class CredentialUtilService {
             }
 
             // Generate PDF
+            // keep the datashare url and credential validity as defaults in downloading VC as PDF as logged-in user
+            // This is because generatePdfForVerifiableCredentials will be used by both logged-in and non-logged-in users
             ByteArrayInputStream pdfStream = generatePdfForVerifiableCredentials(
                     credentialMetadata.getCredentialType(),
                     vcCredentialResponse,
                     issuerDTO,
                     credentialsSupportedResponse,
-                    credentialMetadata.getDataShareUrl(),
-                    credentialMetadata.getCredentialValidity(),
+                    "",
+                    "-1",
                     locale
             );
 
@@ -384,13 +393,25 @@ public class CredentialUtilService {
         } catch (JsonProcessingException e) {
             log.error("Failed to parse decrypted credential for issuerId: {}, credentialType: {}", credentialMetadata.getIssuerId(), credentialMetadata.getCredentialType(), e);
             throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to parse decrypted credential");
-        } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException | InvalidWellknownResponseException | InvalidIssuerIdException e) {
+        } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
+                 InvalidWellknownResponseException | InvalidIssuerIdException e) {
             log.error("Failed to fetch issuer details or configuration for issuerId: {}", credentialMetadata.getIssuerId(), e);
             throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to fetch issuer configuration");
         } catch (Exception e) {
             log.error("Failed to generate PDF for credentialType: {}", credentialMetadata.getCredentialType(), e);
             throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to generate credential PDF");
         }
+    }
+
+    private Map<String, String> convertVerifiableCredentialRequestToMap(VerifiableCredentialRequestDTO verifiableCredentialRequest) {
+        Map<String, String> params = new HashMap<>();
+        params.put("code", verifiableCredentialRequest.getCode());
+        params.put("redirect_uri", verifiableCredentialRequest.getRedirectUri());
+        params.put("grant_type", verifiableCredentialRequest.getGrantType());
+        params.put("code_verifier", verifiableCredentialRequest.getCodeVerifier());
+        params.put("issuer", verifiableCredentialRequest.getIssuer());
+
+        return params;
     }
 }
 

@@ -33,11 +33,11 @@ public class SwaggerExampleConstants {
             }
             """;
 
-    public static final String FETCH_USER_PROFILE_SUCCESS = """
+    public static final String FETCH_USER_PROFILE_FROM_DB_SUCCESS = """
             {
                 "display_name": "John Doe",
                 "profile_picture_url": "https://example.com/profile.jpg",
-                "email": "john.doe@example.com"
+                "email": "john.doe@example.com",
             }
             """;
     public static final String FETCH_USER_CACHE_PROFILE_SUCCESS = """

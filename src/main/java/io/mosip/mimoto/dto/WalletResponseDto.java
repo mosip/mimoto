@@ -11,5 +11,6 @@ import lombok.Data;
 public class WalletResponseDto {
     @Schema(description = "Unique identifier of the Wallet")
     String walletId;
-
+    @Schema(description = "Wallet name provided by user")
+    String walletName;
 }
