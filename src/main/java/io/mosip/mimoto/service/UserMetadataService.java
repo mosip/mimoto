@@ -24,6 +24,22 @@ public class UserMetadataService {
         this.encryptionService = encryptionService;
     }
 
+    public UserMetadata getUserMetadata(String providerSubjectId, String identityProvider)
+            throws DecryptionException {
+        return repository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider)
+                .map(user -> {
+                    try {
+                        user.setDisplayName(encryptionService.decrypt(user.getDisplayName()));
+                        user.setProfilePictureUrl(encryptionService.decrypt(user.getProfilePictureUrl()));
+                        user.setEmail(encryptionService.decrypt(user.getEmail()));
+                    } catch (DecryptionException e) {
+                        throw new RuntimeException("Failed to decrypt user metadata", e);
+                    }
+                    return user;
+                })
+                .orElse(null);
+    }
+
     public String updateOrInsertUserMetadata(String providerSubjectId, String identityProvider,
                                              String displayName, String profilePictureUrl, String email)
             throws EncryptionException, DecryptionException {
