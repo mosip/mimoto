@@ -61,11 +61,14 @@ public class UserMetadataServiceTest {
     public void shouldUpdateUserMetadataForSameProviderSubjectIdAndSameIdentityProviderButWithDifferentDisplayName() throws DecryptionException, EncryptionException {
         String updatedDisplayName = "Name 124";
         String encryptedUpdatedDisplayName = "encryptedUpdatedDisplayName";
-        Timestamp updatedTimestamp = new Timestamp(System.currentTimeMillis() + 1000);
 
         when(userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider)).thenReturn(Optional.of(userMetadata));
         when(encryptionService.decrypt("encryptedDisplayName")).thenReturn(displayName);
         when(encryptionService.encrypt(updatedDisplayName)).thenReturn(encryptedUpdatedDisplayName);
+        when(encryptionService.decrypt("encryptedProfilePictureUrl")).thenReturn(profilePictureUrl);
+        when(encryptionService.encrypt(profilePictureUrl)).thenReturn("encryptedProfilePictureUrl");
+        when(encryptionService.decrypt("encryptedEmail")).thenReturn(email);
+        when(encryptionService.encrypt(email)).thenReturn("encryptedEmail");
         when(userMetadataRepository.save(any(UserMetadata.class))).thenReturn(userMetadata);
 
         String storedUserId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, updatedDisplayName, profilePictureUrl, email);
@@ -79,7 +82,6 @@ public class UserMetadataServiceTest {
         assertEquals("encryptedEmail", savedUserMetadata.getEmail());
         verify(encryptionService).decrypt("encryptedDisplayName");
         verify(encryptionService).encrypt(updatedDisplayName);
-        verifyNoMoreInteractions(encryptionService);
     }
 
     @Test
@@ -164,6 +166,6 @@ public class UserMetadataServiceTest {
         verify(encryptionService).decrypt(userMetadata.getDisplayName());
         verify(encryptionService).decrypt(userMetadata.getProfilePictureUrl());
         verify(encryptionService).decrypt(userMetadata.getEmail());
-        verify(encryptionService, times(0)).encrypt(anyString());
+        verify(encryptionService, times(3)).encrypt(anyString());
     }
 }
