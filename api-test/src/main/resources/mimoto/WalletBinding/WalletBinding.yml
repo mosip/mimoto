@@ -277,6 +277,7 @@ WalletBinding:
       validityCheckRequired: true
       restMethod: post
       checkErrorsOnlyInResponse: true
+      allowedErrorCodes: IDA-MLC-007,binding_auth_failed
       inputTemplate: mimoto/WalletBinding/WalletBinding
       outputTemplate: mimoto/error
       input: '{
@@ -299,7 +300,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "binding_auth_failed"
+      "errorCode": "IDA-MLC-007"
     }
   ],      
         "sendOtpResp": {
@@ -357,6 +358,7 @@ WalletBinding:
       validityCheckRequired: true
       restMethod: post
       checkErrorsOnlyInResponse: true
+      allowedErrorCodes: IDA-MLC-007,binding_auth_failed
       inputTemplate: mimoto/WalletBinding/WalletBinding
       outputTemplate: mimoto/error
       input: '{
@@ -379,7 +381,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "binding_auth_failed"
+      "errorCode": "IDA-MLC-007"
     }
   ],      
         "sendOtpResp": {
@@ -1812,6 +1814,7 @@ WalletBinding:
       validityCheckRequired: true
       restMethod: post
       checkErrorsOnlyInResponse: true
+      allowedErrorCodes: IDA-MLC-007,binding_auth_failed
       inputTemplate: mimoto/WalletBinding/WalletBinding
       outputTemplate: mimoto/error
       input: '{
@@ -1834,7 +1837,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "binding_auth_failed"
+      "errorCode": "IDA-MLC-007"
     }
   ],      
         "sendOtpResp": {
@@ -1892,6 +1895,7 @@ WalletBinding:
       validityCheckRequired: true
       restMethod: post
       checkErrorsOnlyInResponse: true
+      allowedErrorCodes: IDA-MLC-007,binding_auth_failed
       inputTemplate: mimoto/WalletBinding/WalletBinding
       outputTemplate: mimoto/error
       input: '{
@@ -1914,7 +1918,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "binding_auth_failed"
+      "errorCode": "IDA-MLC-007"
     }
   ],      
         "sendOtpResp": {
