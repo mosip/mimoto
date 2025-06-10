@@ -277,7 +277,7 @@ WalletBinding:
       validityCheckRequired: true
       restMethod: post
       checkErrorsOnlyInResponse: true
-      allowedErrorCodes: IDA-MLC-007,binding_auth_failed
+      allowedErrorCodes: IDA-MLC-009,binding_auth_failed
       inputTemplate: mimoto/WalletBinding/WalletBinding
       outputTemplate: mimoto/error
       input: '{
@@ -300,7 +300,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "IDA-MLC-007"
+      "errorCode": "IDA-MLC-009"
     }
   ],      
         "sendOtpResp": {
@@ -358,7 +358,7 @@ WalletBinding:
       validityCheckRequired: true
       restMethod: post
       checkErrorsOnlyInResponse: true
-      allowedErrorCodes: IDA-MLC-007,binding_auth_failed
+      allowedErrorCodes: IDA-MLC-009,binding_auth_failed
       inputTemplate: mimoto/WalletBinding/WalletBinding
       outputTemplate: mimoto/error
       input: '{
@@ -381,7 +381,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "IDA-MLC-007"
+      "errorCode": "IDA-MLC-009"
     }
   ],      
         "sendOtpResp": {
@@ -1814,7 +1814,7 @@ WalletBinding:
       validityCheckRequired: true
       restMethod: post
       checkErrorsOnlyInResponse: true
-      allowedErrorCodes: IDA-MLC-007,binding_auth_failed
+      allowedErrorCodes: IDA-MLC-009,binding_auth_failed
       inputTemplate: mimoto/WalletBinding/WalletBinding
       outputTemplate: mimoto/error
       input: '{
@@ -1837,7 +1837,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "IDA-MLC-007"
+      "errorCode": "IDA-MLC-009"
     }
   ],      
         "sendOtpResp": {
@@ -1895,7 +1895,7 @@ WalletBinding:
       validityCheckRequired: true
       restMethod: post
       checkErrorsOnlyInResponse: true
-      allowedErrorCodes: IDA-MLC-007,binding_auth_failed
+      allowedErrorCodes: IDA-MLC-009,binding_auth_failed
       inputTemplate: mimoto/WalletBinding/WalletBinding
       outputTemplate: mimoto/error
       input: '{
@@ -1918,7 +1918,7 @@ WalletBinding:
       output: '{
   "errors": [
     {
-      "errorCode": "IDA-MLC-007"
+      "errorCode": "IDA-MLC-009"
     }
   ],      
         "sendOtpResp": {
