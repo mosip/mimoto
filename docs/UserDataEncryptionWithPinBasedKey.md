@@ -104,9 +104,9 @@ F --> G[DB]
     Q[Session Timeout] --> O
 
     %% Style classes
-    classDef stylePrimary fill:#ADD8E6,stroke:#000080,stroke-width:2px;
-    classDef styleSuccess fill:#90EE90,stroke:#006400,stroke-width:2px;
-    classDef styleWarning fill:#FFD700,stroke:#B8860B,stroke-width:2px;
+    classDef stylePrimary fill:#ADD8E6,stroke:#000080,stroke-width:2px,color:#000000;
+    classDef styleSuccess fill:#90EE90,stroke:#006400,stroke-width:2px,color:#000000;
+    classDef styleWarning fill:#FFD700,stroke:#B8860B,stroke-width:2px,color:#000000;
 
     class A,B,C,D,E,F,G,H,I,J,K,L,M,N stylePrimary
     class O,P,Q styleWarning
