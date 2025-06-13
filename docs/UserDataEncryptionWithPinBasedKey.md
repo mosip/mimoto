@@ -57,8 +57,17 @@ Once the AES wallet key is in session:
 - It is Base64-decoded and used to encrypt or decrypt sensitive data like credentials or keys.
 -  The user does not need to re-enter the PIN during the session.
 -  Encryption and decryption continue using AES/GCM/NoPadding for both confidentiality and integrity.
+### 4. 🔐 **Session Timeout Configuration**
+The property
+```properties
+server.servlet.session.timeout=30m
+```
+in ```application-default.properties``` sets the HTTP session timeout to 30 minutes.
+This means that if a user is inactive for 30 minutes, their session will automatically expire,
+requiring them to log in again. Adjust this value to control how long user sessions remain active after inactivity.
 
-### 4. 🔚 **Session End / Logout**
+### 5. 🔚 **Session End / Logout**
+
 - The Base64-encoded AES key is removed from the session.
 - On the next login, in unlock wallet API, the user must provide their PIN again to decrypt the key.
 
@@ -91,10 +100,15 @@ F --> G[DB]
     O --> P[Remove Base64 AES Key<br>from Session]
     P --> H
 
+    %% Session Timeout Node
+    Q[Session Timeout] --> O
+
     %% Style classes
-    classDef styleA fill:#D0F0C0,stroke:#3C8039,stroke-width:2px;
-    classDef styleP fill:#F0D0C0,stroke:#803C39,stroke-width:2px;
-    class A,H styleA
-    class O styleP
+    classDef stylePrimary fill:#CCE5FF,stroke:#336699,stroke-width:2px;
+    classDef styleSuccess fill:#D0F0C0,stroke:#3C8039,stroke-width:2px;
+    classDef styleWarning fill:#FFD9B3,stroke:#CC6600,stroke-width:2px;
+
+    class A,B,C,D,E,F,G,H,I,J,K,L,M,N stylePrimary
+    class O,P,Q styleWarning
 ```
 This flow ensures that sensitive user data is securely encrypted and accessible only to the user who knows the PIN.
