@@ -1,6 +1,7 @@
 package io.mosip.mimoto.repository;
 
 import io.mosip.mimoto.dbentity.VerifiableCredential;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,9 +11,10 @@ import java.util.Optional;
 
 @Repository
 public interface WalletCredentialsRepository extends JpaRepository<VerifiableCredential, String> {
-    List<VerifiableCredential> findByWalletId(String walletId);
     Optional<VerifiableCredential> findByIdAndWalletId(String id,  String walletId);
 
     @Query(value = "SELECT EXISTS (SELECT 1 FROM verifiable_credentials WHERE credential_metadata->>'issuerId' = :issuerId AND credential_metadata->>'credentialType' = :credentialType AND wallet_id = :walletId)", nativeQuery = true)
     boolean existsByIssuerIdAndCredentialTypeAndWalletId(@Param("issuerId") String issuerId, @Param("credentialType") String credentialType, @Param("walletId") String walletId);
+
+    List<VerifiableCredential> findByWalletIdOrderByCreatedAtDesc(String walletId);
 }

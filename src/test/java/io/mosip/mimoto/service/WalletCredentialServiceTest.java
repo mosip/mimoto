@@ -158,7 +158,7 @@ public class WalletCredentialServiceTest {
         VerifiableCredentialResponseDTO responseDTO = new VerifiableCredentialResponseDTO();
         responseDTO.setCredentialId(credentialId);
 
-        when(walletCredentialsRepository.findByWalletId(walletId)).thenReturn(List.of(verifiableCredential));
+        when(walletCredentialsRepository.findByWalletIdOrderByCreatedAtDesc(walletId)).thenReturn(List.of(verifiableCredential));
         when(issuersService.getIssuerConfig(issuerId, credentialType)).thenReturn(issuerConfig);
 
         try (MockedStatic<WalletCredentialResponseDTOFactory> factoryMock = mockStatic(WalletCredentialResponseDTOFactory.class)) {
@@ -169,7 +169,7 @@ public class WalletCredentialServiceTest {
 
             assertEquals(1, actualCredentials.size());
             assertEquals(responseDTO, actualCredentials.getFirst());
-            verify(walletCredentialsRepository).findByWalletId(walletId);
+            verify(walletCredentialsRepository).findByWalletIdOrderByCreatedAtDesc(walletId);
             verify(issuersService).getIssuerConfig(issuerId, credentialType);
             factoryMock.verify(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerConfig, locale, credentialId));
         }
@@ -180,7 +180,7 @@ public class WalletCredentialServiceTest {
         VerifiableCredentialResponseDTO responseDTO = new VerifiableCredentialResponseDTO();
         responseDTO.setCredentialId(credentialId);
 
-        when(walletCredentialsRepository.findByWalletId(walletId)).thenReturn(List.of(verifiableCredential));
+        when(walletCredentialsRepository.findByWalletIdOrderByCreatedAtDesc(walletId)).thenReturn(List.of(verifiableCredential));
         when(issuersService.getIssuerConfig(issuerId, credentialType)).thenThrow(new ApiNotAccessibleException("API error"));
 
         try (MockedStatic<WalletCredentialResponseDTOFactory> factoryMock = mockStatic(WalletCredentialResponseDTOFactory.class)) {
@@ -191,7 +191,7 @@ public class WalletCredentialServiceTest {
 
             assertEquals(1, actualCredentials.size());
             assertEquals(responseDTO, actualCredentials.getFirst());
-            verify(walletCredentialsRepository).findByWalletId(walletId);
+            verify(walletCredentialsRepository).findByWalletIdOrderByCreatedAtDesc(walletId);
             verify(issuersService).getIssuerConfig(issuerId, credentialType);
             factoryMock.verify(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(null, locale, credentialId));
         }
