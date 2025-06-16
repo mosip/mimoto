@@ -39,7 +39,7 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf
   mimoto-service:
     container_name: 'Mimoto-Service'
-    image: 'mosipid/mimoto:0.17.0'
+    image: 'mosipid/mimoto:0.17.1'
     user: root
     ports:
       - '8099:8099'
