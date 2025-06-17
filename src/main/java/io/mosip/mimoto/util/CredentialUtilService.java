@@ -366,7 +366,7 @@ public class CredentialUtilService {
 
             // Find credentials supported response for the credential type
             CredentialsSupportedResponse credentialsSupportedResponse = issuerConfig.getCredentialsSupportedResponse();
-            if (credentialsSupportedResponse == null || !credentialsSupportedResponse.getCredentialDefinition().getType().contains(credentialMetadata.getCredentialType())) {
+            if (credentialsSupportedResponse == null || !credentialsSupportedResponse.getCredentialDefinition().getType().containsAll(vcCredentialResponse.getCredential().getType())) {
                 log.error("Credentials supported response not found for credentialType: {}", credentialMetadata.getCredentialType());
                 throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Invalid credential type configuration");
             }
