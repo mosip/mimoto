@@ -15,6 +15,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.SkipException;
 
@@ -27,6 +28,7 @@ import io.mosip.testrig.apirig.testrunner.OTPListener;
 import io.mosip.testrig.apirig.utils.AdminTestUtil;
 import io.mosip.testrig.apirig.utils.ConfigManager;
 import io.mosip.testrig.apirig.utils.GlobalConstants;
+import io.mosip.testrig.apirig.utils.GlobalMethods;
 import io.mosip.testrig.apirig.utils.RestClient;
 import io.mosip.testrig.apirig.utils.SkipTestCaseHandler;
 import io.restassured.response.Response;
@@ -57,6 +59,15 @@ public class MimotoUtil extends AdminTestUtil {
 		return otpEnabled;
 	}
 	
+	public static boolean isCaptchaEnabled() {
+		String temp = MimotoUtil.getValueFromEsignetActuator(MimotoConstants.CLASS_PATH_APPLICATION_PROPERTIES,
+				MimotoConstants.MOSIP_ESIGNET_CAPTCHA_REQUIRED);
+		if(temp.isEmpty()) {
+			return false;
+		}
+		return true;	
+	}
+	
 	public static TestCaseDTO changeContextURLByFlag(TestCaseDTO testCaseDTO) {
 		if (!(System.getenv("useOldContextURL") == null) && !(System.getenv("useOldContextURL").isBlank())
 				&& System.getenv("useOldContextURL").equalsIgnoreCase("true")) {
@@ -82,6 +93,14 @@ public class MimotoUtil extends AdminTestUtil {
 		
 		String endpoint = testCaseDTO.getEndPoint();
 		String inputJson = testCaseDTO.getInput();
+		
+		//When the captcha is enabled we cannot execute the test case as we can not generate the captcha token
+		if (isCaptchaEnabled() == true) {
+			GlobalMethods.reportCaptchaStatus(GlobalConstants.CAPTCHA_ENABLED, true);
+			throw new SkipException(GlobalConstants.CAPTCHA_ENABLED_MESSAGE);
+		}else {
+			GlobalMethods.reportCaptchaStatus(GlobalConstants.CAPTCHA_ENABLED, false);
+		}
 		
 		if (MosipTestRunner.skipAll == true) {
 			throw new SkipException(GlobalConstants.PRE_REQUISITE_FAILED_MESSAGE);
@@ -322,5 +341,154 @@ public class MimotoUtil extends AdminTestUtil {
 			return "";
 		}
 
+	}
+	
+	public static JSONArray esignetActiveProfiles = null;
+	
+	public static JSONArray esignetActuatorResponseArray = null;
+	
+	public static JSONArray getActiveProfilesFromActuator(String url, String key) {
+		JSONArray activeProfiles = null;
+
+		try {
+			Response response = RestClient.getRequest(url, MediaType.APPLICATION_JSON, MediaType.APPLICATION_JSON);
+			JSONObject responseJson = new JSONObject(response.getBody().asString());
+
+			// If the key exists in the response, return the associated JSONArray
+			if (responseJson.has(key)) {
+				activeProfiles = responseJson.getJSONArray(key);
+			} else {
+				logger.warn("The key '" + key + "' was not found in the response.");
+			}
+
+		} catch (Exception e) {
+			// Handle other errors like network issues, etc.
+			logger.error("Error fetching active profiles from the actuator: " + e.getMessage());
+		}
+
+		return activeProfiles;
+	}
+	
+	public static String getValueFromEsignetActuator(String section, String key) {
+		String value = null;
+
+		// Try to fetch profiles if not already fetched
+		if (esignetActiveProfiles == null || esignetActiveProfiles.length() == 0) {
+			esignetActiveProfiles = getActiveProfilesFromActuator(MimotoConstants.ESIGNET_ACTUATOR_URL,
+					MimotoConstants.ACTIVE_PROFILES);
+		}
+
+		// Normalize the key
+		String keyForEnvVariableSection = key.toUpperCase().replace("-", "_").replace(".", "_");
+
+		// Try fetching the value from different sections
+		value = getValueFromEsignetActuator(MimotoConstants.SYSTEM_ENV_SECTION, keyForEnvVariableSection,
+				MimotoConstants.ESIGNET_ACTUATOR_URL);
+
+		// Fallback to other sections if value is not found
+		if (value == null || value.isBlank()) {
+			value = getValueFromEsignetActuator(MimotoConstants.CLASS_PATH_APPLICATION_PROPERTIES, key,
+					MimotoConstants.ESIGNET_ACTUATOR_URL);
+		}
+
+		if (value == null || value.isBlank()) {
+			value = getValueFromEsignetActuator(MimotoConstants.CLASS_PATH_APPLICATION_DEFAULT_PROPERTIES, key,
+					MimotoConstants.ESIGNET_ACTUATOR_URL);
+		}
+
+		// Try profiles from active profiles if available
+		if (value == null || value.isBlank()) {
+			if (esignetActiveProfiles != null && esignetActiveProfiles.length() > 0) {
+				for (int i = 0; i < esignetActiveProfiles.length(); i++) {
+					String propertySection = esignetActiveProfiles.getString(i).equals(MimotoConstants.DEFAULT_STRING)
+							? MimotoConstants.MOSIP_CONFIG_APPLICATION_HYPHEN_STRING
+									+ esignetActiveProfiles.getString(i) + MimotoConstants.DOT_PROPERTIES_STRING
+							: esignetActiveProfiles.getString(i) + MimotoConstants.DOT_PROPERTIES_STRING;
+
+					value = getValueFromEsignetActuator(propertySection, key, MimotoConstants.ESIGNET_ACTUATOR_URL);
+
+					if (value != null && !value.isBlank()) {
+						break;
+					}
+				}
+			} else {
+				logger.warn("No active profiles were retrieved.");
+			}
+		}
+
+		// Fallback to a default section
+		if (value == null || value.isBlank()) {
+			value = getValueFromEsignetActuator(MimotoConfigManager.getEsignetActuatorPropertySection(), key,
+					MimotoConstants.ESIGNET_ACTUATOR_URL);
+		}
+
+		// Final fallback to the original section if no value was found
+		if (value == null || value.isBlank()) {
+			value = getValueFromEsignetActuator(section, key, MimotoConstants.ESIGNET_ACTUATOR_URL);
+		}
+
+		// Log the final result or an error message if not found
+		if (value == null || value.isBlank()) {
+			logger.error("Value not found for section: " + section + ", key: " + key);
+		}
+
+		return value;
+	}
+	
+	public static String getValueFromEsignetActuator(String section, String key, String url) {
+		// Combine the cache key to uniquely identify each request
+		String actuatorCacheKey = url + section + key;
+
+		// Check if the value is already cached
+		String value = actuatorValueCache.get(actuatorCacheKey);
+		if (value != null && !value.isEmpty()) {
+			return value; // Return cached value if available
+		}
+
+		try {
+			// Fetch the actuator response array if it's not already populated
+			if (esignetActuatorResponseArray == null) {
+				Response response = RestClient.getRequest(url, MediaType.APPLICATION_JSON, MediaType.APPLICATION_JSON);
+				JSONObject responseJson = new JSONObject(response.getBody().asString());
+				esignetActuatorResponseArray = responseJson.getJSONArray("propertySources");
+			}
+
+			// Loop through the "propertySources" to find the matching section and key
+			for (int i = 0, size = esignetActuatorResponseArray.length(); i < size; i++) {
+				JSONObject eachJson = esignetActuatorResponseArray.getJSONObject(i);
+				// Check if the section matches
+				if (eachJson.get("name").toString().contains(section)) {
+					// Get the value from the properties object
+					JSONObject properties = eachJson.getJSONObject(GlobalConstants.PROPERTIES);
+					if (properties.has(key)) {
+						value = properties.getJSONObject(key).get(GlobalConstants.VALUE).toString();
+						// Log the value if debug is enabled
+						if (MimotoConfigManager.IsDebugEnabled()) {
+							logger.info("Actuator: " + url + " key: " + key + " value: " + value);
+						}
+						break; // Exit the loop once the value is found
+					} else {
+						logger.warn("Key '" + key + "' not found in section '" + section + "'.");
+					}
+				}
+			}
+
+			// Cache the retrieved value for future lookups
+			if (value != null && !value.isEmpty()) {
+				actuatorValueCache.put(actuatorCacheKey, value);
+			} else {
+				logger.warn("No value found for section: " + section + ", key: " + key);
+			}
+
+			return value;
+		} catch (JSONException e) {
+			// Handle JSON parsing exceptions separately
+			logger.error("JSON parsing error for section: " + section + ", key: " + key + " - " + e.getMessage());
+			return null; // Return null if JSON parsing fails
+		} catch (Exception e) {
+			// Catch any other exceptions (e.g., network issues)
+			logger.error("Error fetching value for section: " + section + ", key: " + key + " - " + e.getMessage());
+			return null; // Return null if any other exception occurs
+		}
 	}
 }
