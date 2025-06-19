@@ -15,7 +15,6 @@ SendOTP:
     "individualIdType": "UIN"
 }'
       output: '{
-        "maskedMobile": "$IGNORE$",
         "maskedEmail": "XXsXXeXXaXXoXXtXXn@gmail.com"
 }'
 
@@ -35,7 +34,6 @@ SendOTP:
     "individualIdType": "UIN"
 }'
       output: '{
-        "maskedMobile": "$IGNORE$",
         "maskedEmail": "XXsXXeXXaXXoXXtXXn@gmail.com"
 }'
 

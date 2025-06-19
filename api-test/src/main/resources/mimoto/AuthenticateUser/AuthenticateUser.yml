@@ -28,8 +28,6 @@ AuthenticateUser:
     }'
       output: '{
   "sendOtpResp":{
-        "maskedMobile": "$IGNORE$",
-        "sendOtpResTemplate":"esignet/SendOtp/SendOtpResult",
-        "maskedEmail": "$IGNORE$"
+        "sendOtpResTemplate":"esignet/SendOtp/SendOtpResult"
     }
 }'

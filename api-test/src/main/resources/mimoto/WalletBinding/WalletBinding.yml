@@ -28,7 +28,6 @@ WalletBinding:
 }'
       output: '{
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -63,7 +62,6 @@ WalletBinding:
 }'
       output: '{
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -103,7 +101,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -143,7 +140,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -183,7 +179,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -223,7 +218,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -263,7 +257,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -304,7 +297,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -344,7 +336,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -385,7 +376,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -425,7 +415,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -465,7 +454,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -506,7 +494,6 @@ WalletBinding:
     }
   ],        
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -547,7 +534,6 @@ WalletBinding:
     }
   ],        
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -588,7 +574,6 @@ WalletBinding:
     }
   ],        
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -629,7 +614,6 @@ WalletBinding:
     }
   ],        
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -670,7 +654,6 @@ WalletBinding:
     }
   ],        
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -711,7 +694,6 @@ WalletBinding:
     }
   ],       
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -752,7 +734,6 @@ WalletBinding:
     }
   ],       
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -793,7 +774,6 @@ WalletBinding:
     }
   ],       
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -834,7 +814,6 @@ WalletBinding:
     }
   ],       
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -875,7 +854,6 @@ WalletBinding:
     }
   ],       
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -916,7 +894,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -957,7 +934,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -998,7 +974,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1039,7 +1014,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1080,7 +1054,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1120,7 +1093,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1160,7 +1132,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1200,7 +1171,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1240,7 +1210,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1280,7 +1249,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1320,7 +1288,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1360,7 +1327,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1400,7 +1366,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1440,7 +1405,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1480,7 +1444,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1520,7 +1483,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1560,7 +1522,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1600,7 +1561,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1640,7 +1600,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1680,7 +1639,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1720,7 +1678,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1760,7 +1717,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1800,7 +1756,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1841,7 +1796,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1881,7 +1835,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1922,7 +1875,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -1962,7 +1914,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2002,7 +1953,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2043,7 +1993,6 @@ WalletBinding:
     }
   ],        
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2084,7 +2033,6 @@ WalletBinding:
     }
   ],        
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2125,7 +2073,6 @@ WalletBinding:
     }
   ],        
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2166,7 +2113,6 @@ WalletBinding:
     }
   ],        
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2206,7 +2152,6 @@ WalletBinding:
     }
   ],        
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2247,7 +2192,6 @@ WalletBinding:
     }
   ],       
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2288,7 +2232,6 @@ WalletBinding:
     }
   ],       
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2329,7 +2272,6 @@ WalletBinding:
     }
   ],       
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2370,7 +2312,6 @@ WalletBinding:
     }
   ],       
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2410,7 +2351,6 @@ WalletBinding:
     }
   ],       
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2450,7 +2390,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2491,7 +2430,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2532,7 +2470,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2573,7 +2510,6 @@ WalletBinding:
     }
   ],      
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2613,7 +2549,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2653,7 +2588,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2693,7 +2627,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2733,7 +2666,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2773,7 +2705,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2813,7 +2744,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2853,7 +2783,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2893,7 +2822,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2933,7 +2861,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -2973,7 +2900,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -3013,7 +2939,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -3053,7 +2978,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -3093,7 +3017,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
            
        }
@@ -3133,7 +3056,6 @@ WalletBinding:
     }
   ],
         "sendOtpResp": {
-           "maskedMobile": "$IGNORE$",
            "sendOtpResTemplate":"mimoto/BindingOtp/BindingOtpResult"
        }
 }'

@@ -15,7 +15,6 @@ BindingOtp:
       "otpChannels": [{channel: "EMAIL"}]
 }'
       output: '{
-        "maskedMobile": "$IGNORE$"
 }'
 
    Mimoto_BindingOtp_Valid_vid_All_Smoke:
@@ -34,7 +33,6 @@ BindingOtp:
       "otpChannels": [{channel: "EMAIL"}]
 }'
       output: '{
-        "maskedMobile": "$IGNORE$"
 }'
 
    Mimoto_BindingOtp_UIN_Invalid_individualId_Neg:
@@ -180,8 +178,7 @@ BindingOtp:
       outputTemplate: mimoto/error
       input: '{
       "requestTime": "$TIMESTAMP$",
-      "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
-      "otpChannels": [{channel: "$IGNORE$"}]
+      "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$"
 }'
       output: '{
   "errors": [
@@ -246,8 +243,7 @@ BindingOtp:
       outputTemplate: mimoto/error
       input: '{
       "requestTime": "$TIMESTAMP$",
-      "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
-      "otpChannels": "$IGNORE$"
+      "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$"
 }'
       output: '{
   "errors": [
@@ -377,7 +373,6 @@ BindingOtp:
       inputTemplate: mimoto/BindingOtp/BindingOtp
       outputTemplate: mimoto/error
       input: '{
-      "requestTime": "$IGNORE$",
       "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
       "otpChannels": [{channel: "EMAIL"}]
 }'
@@ -554,8 +549,7 @@ BindingOtp:
       outputTemplate: mimoto/error
       input: '{
       "requestTime": "$TIMESTAMP$",
-      "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
-      "otpChannels": [{channel: "$IGNORE$"}]
+      "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$"
 }'
       output: '{
   "errors": [
@@ -620,8 +614,7 @@ BindingOtp:
       outputTemplate: mimoto/error
       input: '{
       "requestTime": "$TIMESTAMP$",
-      "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
-      "otpChannels": "$IGNORE$"
+      "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$"
 }'
       output: '{
   "errors": [
@@ -751,7 +744,6 @@ BindingOtp:
       inputTemplate: mimoto/BindingOtp/BindingOtp
       outputTemplate: mimoto/error
       input: '{
-      "requestTime": "$IGNORE$",
       "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
       "otpChannels": [{channel: "EMAIL"}]
 }'
