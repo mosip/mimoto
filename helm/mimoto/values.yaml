@@ -377,8 +377,8 @@ volumePermissions:
   enabled: true
   image:
     registry: docker.io
-    repository: bitnami/bitnami-shell
-    tag: "10"
+    repository: bitnami/os-shell
+    tag: "latest"
     pullPolicy: Always
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
