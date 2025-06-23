@@ -40,9 +40,9 @@ public class MimotoConfigManager extends ConfigManager{
 	public static String getEsignetBaseUrl() {
 		String esignetBaseUrl = null;
 		if (getproperty("runPlugin").equals("mosipid")) {
-			esignetBaseUrl = "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", "mosip.esignet.mosipid.host");
+			esignetBaseUrl = "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", getproperty("mosipid-identity-esignet-host"));
 		} else if (getproperty("runPlugin").equals("mockid")) {
-			esignetBaseUrl = "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", "mosip.esignet.mock.host");
+			esignetBaseUrl = "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", getproperty("mock-identity-esignet-host"));
 		}
 
 		return esignetBaseUrl;

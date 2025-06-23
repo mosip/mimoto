@@ -78,7 +78,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     public List<VerifiableCredentialResponseDTO> fetchAllCredentialsForWallet(String walletId, String base64Key, String locale) {
         log.info("Fetching all credentials for wallet: {}", walletId);
 
-        List<VerifiableCredential> credentials = repository.findByWalletId(walletId);
+        List<VerifiableCredential> credentials = repository.findByWalletIdOrderByCreatedAtDesc(walletId);
 
         return credentials.stream().map(credential -> {
             String issuerId = credential.getCredentialMetadata().getIssuerId();

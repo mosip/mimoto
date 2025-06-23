@@ -1,6 +1,7 @@
 package io.mosip.mimoto.service.impl;
 
 import io.mosip.mimoto.constant.SessionKeys;
+import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.InvalidRequestException;
@@ -83,6 +84,15 @@ public class GoogleTokenService implements TokenService {
 
         String userId = null;
         try {
+             UserMetadata userMetadata = userMetadataService.getUserMetadata(sub, provider);
+             if (userMetadata != null) {
+                if (name == null || name.isBlank()) {
+                    name = userMetadata.getDisplayName();
+                }
+                if (picture == null || picture.isBlank()) {
+                    picture = userMetadata.getProfilePictureUrl();
+                }
+            }
             userId = userMetadataService.updateOrInsertUserMetadata(sub, provider, name, picture, email);
         } catch (DecryptionException e) {
             log.error("Failed to store the user info in the database", e);

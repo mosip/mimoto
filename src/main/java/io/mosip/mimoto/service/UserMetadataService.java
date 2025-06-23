@@ -24,23 +24,46 @@ public class UserMetadataService {
         this.encryptionService = encryptionService;
     }
 
+    public UserMetadata getUserMetadata(String providerSubjectId, String identityProvider)
+            throws DecryptionException {
+        return repository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider)
+                .map(user -> {
+                    try {
+                        UserMetadata decryptedUser = new UserMetadata();
+                        decryptedUser.setId(user.getId()); // Copy all needed fields
+                        decryptedUser.setProviderSubjectId(user.getProviderSubjectId());
+                        decryptedUser.setIdentityProvider(user.getIdentityProvider());
+
+                        decryptedUser.setDisplayName(encryptionService.decrypt(user.getDisplayName()));
+                        decryptedUser.setProfilePictureUrl(encryptionService.decrypt(user.getProfilePictureUrl()));
+                        decryptedUser.setEmail(encryptionService.decrypt(user.getEmail()));
+
+                        return decryptedUser;
+                    } catch (DecryptionException e) {
+                        throw new RuntimeException("Failed to decrypt user metadata", e);
+                    }
+                })
+                .orElse(null);
+    }
+
     public String updateOrInsertUserMetadata(String providerSubjectId, String identityProvider,
                                              String displayName, String profilePictureUrl, String email)
             throws EncryptionException, DecryptionException {
         Timestamp now = new Timestamp(System.currentTimeMillis());
-        Optional<UserMetadata> existingUser = repository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider);
-        if (existingUser.isPresent()) {
-            return updateUser(existingUser.get(), displayName, profilePictureUrl, email, now);
+        UserMetadata existingUser = getUserMetadata(providerSubjectId, identityProvider);
+        if (null != existingUser) {
+            return updateUser(existingUser, displayName, profilePictureUrl, email, now);
         } else {
             return createUser(providerSubjectId, identityProvider, displayName, profilePictureUrl, email, now);
         }
     }
 
     private String updateUser(UserMetadata user, String displayName, String profilePictureUrl, String email, Timestamp now)
-            throws EncryptionException, DecryptionException {
-        boolean updated = updateIfChanged(user::getDisplayName, user::setDisplayName, displayName)
-                || updateIfChanged(user::getProfilePictureUrl, user::setProfilePictureUrl, profilePictureUrl)
-                || updateIfChanged(user::getEmail, user::setEmail, email);
+            throws EncryptionException {
+        boolean updated = updateIfChanged(user::getDisplayName, user::setDisplayName, displayName);
+        updated = updateIfChanged(user::getProfilePictureUrl, user::setProfilePictureUrl, profilePictureUrl) || updated;
+        updated = updateIfChanged(user::getEmail, user::setEmail, email) || updated;
+
         if (updated) {
             user.setUpdatedAt(now);
             repository.save(user);
@@ -49,13 +72,10 @@ public class UserMetadataService {
     }
 
     private boolean updateIfChanged(Supplier<String> getter, Consumer<String> setter, String newValue)
-            throws EncryptionException, DecryptionException {
-        String current = encryptionService.decrypt(getter.get());
-        if (!current.equals(newValue)) {
-            setter.accept(encryptionService.encrypt(newValue));
-            return true;
-        }
-        return false;
+            throws EncryptionException {
+        String current = getter.get();
+        setter.accept(encryptionService.encrypt(newValue));
+        return !current.equals(newValue);
     }
 
     private String createUser(String providerSubjectId, String identityProvider, String displayName,
