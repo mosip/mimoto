@@ -386,18 +386,18 @@ public class MimotoUtil extends AdminTestUtil {
 				MimotoConstants.ESIGNET_ACTUATOR_URL);
 
 		// Fallback to other sections if value is not found
-		if (value == null || value.isBlank()) {
+		if (value == null) {
 			value = getValueFromEsignetActuator(MimotoConstants.CLASS_PATH_APPLICATION_PROPERTIES, key,
 					MimotoConstants.ESIGNET_ACTUATOR_URL);
 		}
 
-		if (value == null || value.isBlank()) {
+		if (value == null) {
 			value = getValueFromEsignetActuator(MimotoConstants.CLASS_PATH_APPLICATION_DEFAULT_PROPERTIES, key,
 					MimotoConstants.ESIGNET_ACTUATOR_URL);
 		}
 
 		// Try profiles from active profiles if available
-		if (value == null || value.isBlank()) {
+		if (value == null) {
 			if (esignetActiveProfiles != null && esignetActiveProfiles.length() > 0) {
 				for (int i = 0; i < esignetActiveProfiles.length(); i++) {
 					String propertySection = esignetActiveProfiles.getString(i).equals(MimotoConstants.DEFAULT_STRING)
@@ -407,7 +407,7 @@ public class MimotoUtil extends AdminTestUtil {
 
 					value = getValueFromEsignetActuator(propertySection, key, MimotoConstants.ESIGNET_ACTUATOR_URL);
 
-					if (value != null && !value.isBlank()) {
+					if (value != null) {
 						break;
 					}
 				}
@@ -417,18 +417,18 @@ public class MimotoUtil extends AdminTestUtil {
 		}
 
 		// Fallback to a default section
-		if (value == null || value.isBlank()) {
+		if (value == null) {
 			value = getValueFromEsignetActuator(MimotoConfigManager.getEsignetActuatorPropertySection(), key,
 					MimotoConstants.ESIGNET_ACTUATOR_URL);
 		}
 
 		// Final fallback to the original section if no value was found
-		if (value == null || value.isBlank()) {
+		if (value == null) {
 			value = getValueFromEsignetActuator(section, key, MimotoConstants.ESIGNET_ACTUATOR_URL);
 		}
 
 		// Log the final result or an error message if not found
-		if (value == null || value.isBlank()) {
+		if (value == null) {
 			logger.error("Value not found for section: " + section + ", key: " + key);
 		}
 
@@ -441,7 +441,7 @@ public class MimotoUtil extends AdminTestUtil {
 
 		// Check if the value is already cached
 		String value = actuatorValueCache.get(actuatorCacheKey);
-		if (value != null && !value.isEmpty()) {
+		if (value != null) {
 			return value; // Return cached value if available
 		}
 
@@ -474,7 +474,7 @@ public class MimotoUtil extends AdminTestUtil {
 			}
 
 			// Cache the retrieved value for future lookups
-			if (value != null && !value.isEmpty()) {
+			if (value != null) {
 				actuatorValueCache.put(actuatorCacheKey, value);
 			} else {
 				logger.warn("No value found for section: " + section + ", key: " + key);
