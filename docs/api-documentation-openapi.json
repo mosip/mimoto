@@ -2719,8 +2719,10 @@
                                 },
                                 "examples": {
                                     "User data not available in DB" : {
-                                        "errorCode": "unauthorized",
-                                        "errorMessage": "User not found. Please check your credentials or login again"
+                                        "value": {
+                                            "errorCode": "unauthorized",
+                                            "errorMessage": "User not found. Please check your credentials or login again"
+                                        }
                                     }
                                 }
                             }
@@ -4024,6 +4026,18 @@
                                         "value": {
                                             "errorCode": "INVALID_REQUEST",
                                             "errorMessage": "Bearer ID token required."
+                                        }
+                                    },
+                                    "InvalidToken": {
+                                        "value": {
+                                            "errorCode": "invalid_token",
+                                            "errorMessage": "An error occurred while attempting to decode the Jwt: Signed JWT rejected: Invalid signature"
+                                        }
+                                    },
+                                    "ExpiredToken": {
+                                        "value": {
+                                            "errorCode": "invalid_token",
+                                            "errorMessage": "An error occurred while attempting to decode the Jwt: Jwt expired at 2025-06-10T12:00:00Z"
                                         }
                                     }
                                 }
