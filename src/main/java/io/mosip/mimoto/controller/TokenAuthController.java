@@ -45,12 +45,12 @@ public class TokenAuthController {
     @Operation(
             summary = "Login and create session using OAuth2 ID token",
             description = """
-        This API accepts an OAuth2 ID token in the Authorization header and establishes a session 
-        by populating the Spring Security context.
+                    This API accepts an OAuth2 ID token in the Authorization header and establishes a session 
+                    by populating the Spring Security context.
 
-        Fetch the ID token from a supported OAuth2 provider (such as Google or Microsoft) and provide 
-        it in the request as a Bearer token.
-        """,
+                    Fetch the ID token from a supported OAuth2 provider (such as Google or Microsoft) and provide 
+                    it in the request as a Bearer token.
+                    """,
             operationId = "loginWithOAuth2IdToken",
             security = @SecurityRequirement(name = "bearerAuth"),
             parameters = {
@@ -87,34 +87,33 @@ public class TokenAuthController {
                                     schema = @Schema(implementation = io.mosip.mimoto.dto.ErrorDTO.class),
                                     examples = {
                                             @ExampleObject(name = "UnsupportedProvider", value = """
-                    {
-                      "errorCode": "INVALID_REQUEST",
-                      "errorMessage": "Unsupported provider: provider123"
-                    }
-                    """),
+                                                    {
+                                                      "errorCode": "INVALID_REQUEST",
+                                                      "errorMessage": "Unsupported provider: provider123"
+                                                    }
+                                                    """),
                                             @ExampleObject(name = "MissingToken", value = """
-                    {
-                      "errorCode": "INVALID_REQUEST",
-                      "errorMessage": "Bearer ID token required."
-                    }
-                    """)
+                                                    {
+                                                      "errorCode": "INVALID_REQUEST",
+                                                      "errorMessage": "Bearer ID token required."
+                                                    }
+                                                    """),
+                                            @ExampleObject(name = "InvalidToken", value = """
+                                                    {
+                                                      "errorCode": "invalid_token",
+                                                      "errorMessage": "An error occurred while attempting to decode the Jwt: Signed JWT rejected: Invalid signature"
+                                                    }
+                                                    """),
+                                            @ExampleObject(name = "ExpiredToken", value = """
+                                                    {
+                                                      "errorCode": "invalid_token",
+                                                      "errorMessage": "An error occurred while attempting to decode the Jwt: Jwt expired at 2025-06-10T12:00:00Z"
+                                                    }
+                                                    """
+                                            )
                                     }
                             )
                     ),
-                    @ApiResponse(
-                            responseCode = "401",
-                            description = "Unauthorized - Invalid or expired token.",
-                            content = @Content(
-                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @Schema(implementation = io.mosip.mimoto.dto.ErrorDTO.class),
-                                    examples = @ExampleObject(name = "InvalidToken", value = """
-                {
-                  "errorCode": "invalid_token",
-                  "errorMessage": "Invalid token format"
-                }
-                """)
-                            )
-                    )
             }
     )
     @PostMapping("/auth/{provider}/token-login")

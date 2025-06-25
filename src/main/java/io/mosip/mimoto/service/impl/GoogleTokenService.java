@@ -112,10 +112,6 @@ public class GoogleTokenService implements TokenService {
             log.error("Invalid audience: {}", jwt.getAudience());
             throw new OAuth2AuthenticationException("invalid_audience", INVALID_AUDIENCE_ERROR, HttpStatus.UNAUTHORIZED);
         }
-        if (jwt.getExpiresAt() == null || jwt.getExpiresAt().isBefore(Instant.now())) {
-            log.error("Token expired");
-            throw new OAuth2AuthenticationException("token_expired", TOKEN_EXPIRED_ERROR, HttpStatus.UNAUTHORIZED);
-        }
         return jwt;
     }
 
