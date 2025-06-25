@@ -3990,24 +3990,6 @@
                             }
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized - Invalid or expired token.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                },
-                                "examples": {
-                                    "InvalidToken": {
-                                        "value": {
-                                            "errorCode": "invalid_token",
-                                            "errorMessage": "Invalid token format"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
                     "400": {
                         "description": "Bad Request - Missing/invalid header or unsupported provider.",
                         "content": {

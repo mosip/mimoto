@@ -114,22 +114,6 @@ public class TokenAuthController {
                                     }
                             )
                     ),
-                    @ApiResponse(
-                            responseCode = "401",
-                            description = "Unauthorized - Invalid or expired token.",
-                            content = @Content(
-                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @Schema(implementation = io.mosip.mimoto.dto.ErrorDTO.class),
-                                    examples = @ExampleObject(name = "InvalidToken", value = """
-                                            {
-                                              "errorCode": "invalid_token",
-                                              "errorMessage": "Invalid token format"
-                                            }
-                                            """
-                                    )
-                            )
-                    )
-
             }
     )
     @PostMapping("/auth/{provider}/token-login")
