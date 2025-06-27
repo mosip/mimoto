@@ -83,6 +83,7 @@ public class MosipTestRunner {
 			SkipTestCaseHandler.loadTestcaseToBeSkippedList("testCaseSkippedList.txt");
 			GlobalMethods.setModuleNameAndReCompilePattern(MimotoConfigManager.getproperty("moduleNamePattern"));
 			setLogLevels();
+			MimotoConfigManager.getEsignetBaseUrl();
 
 			HealthChecker healthcheck = new HealthChecker();
 			healthcheck.setCurrentRunningModule(BaseTestCase.currentModule);
