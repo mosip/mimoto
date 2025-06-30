@@ -1,8 +1,8 @@
 package io.mosip.mimoto.service;
 
-import io.mosip.mimoto.model.UserMetadata;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.EncryptionException;
+import io.mosip.mimoto.model.UserMetadata;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,12 +12,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -33,7 +32,7 @@ public class UserMetadataServiceTest {
     private UserMetadataService userMetadataService;
 
     private String providerSubjectId, identityProvider, displayName, profilePictureUrl, email, userId;
-    private Timestamp now;
+    private Instant now;
     private UserMetadata userMetadata;
 
     @Before
@@ -43,7 +42,7 @@ public class UserMetadataServiceTest {
         displayName = "Name 123";
         profilePictureUrl = "http://profile.pic";
         email = "name.123@example.com";
-        now = new Timestamp(System.currentTimeMillis());
+        now = Instant.now();
         userId = UUID.randomUUID().toString();
 
         userMetadata = new UserMetadata();
