@@ -1,12 +1,11 @@
 package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.exception.KeyGenerationException;
-import io.mosip.mimoto.model.SigningAlgorithm;
+import io.mosip.mimoto.constant.SigningAlgorithm;
 import org.junit.Test;
 
 import javax.crypto.SecretKey;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

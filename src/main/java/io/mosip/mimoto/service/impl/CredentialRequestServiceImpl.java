@@ -3,7 +3,7 @@ package io.mosip.mimoto.service.impl;
 import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.*;
-import io.mosip.mimoto.model.SigningAlgorithm;
+import io.mosip.mimoto.constant.SigningAlgorithm;
 import io.mosip.mimoto.repository.ProofSigningKeyRepository;
 import io.mosip.mimoto.service.CredentialRequestService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;

@@ -1,7 +1,7 @@
 package io.mosip.mimoto.util;
 
 import com.nimbusds.jwt.SignedJWT;
-import io.mosip.mimoto.model.SigningAlgorithm;
+import io.mosip.mimoto.constant.SigningAlgorithm;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.BeforeClass;
