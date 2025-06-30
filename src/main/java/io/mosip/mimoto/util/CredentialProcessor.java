@@ -177,7 +177,7 @@ public class CredentialProcessor {
         }
 
         VerifiableCredential savedCredential =  saveCredential(walletId, encryptedCredentialData, issuerId, credentialConfigurationId);
-        return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerConfig, locale, savedCredential.getId());
+        return VerifiableCredentialResponseDTO.fromIssuerConfig(issuerConfig, locale, savedCredential.getId());
     }
 
     /**

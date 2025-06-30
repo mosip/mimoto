@@ -13,12 +13,11 @@ import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
+import io.mosip.mimoto.service.CredentialPDFGeneratorService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.WalletCredentialService;
-import io.mosip.mimoto.service.CredentialPDFGeneratorService;
 import io.mosip.mimoto.util.CredentialProcessor;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
-import io.mosip.mimoto.util.WalletCredentialResponseDTOFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,7 +98,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
                      InvalidWellknownResponseException e) {
                 log.error("Failed to fetch issuer details for issuerId: {}", issuerId, e);
             }
-            return WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerConfig, locale, credential.getId());
+            return VerifiableCredentialResponseDTO.fromIssuerConfig(issuerConfig, locale, credential.getId());
         }).toList();
 
     }

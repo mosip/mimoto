@@ -12,7 +12,6 @@ import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.service.impl.WalletCredentialServiceImpl;
 import io.mosip.mimoto.util.CredentialProcessor;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
-import io.mosip.mimoto.util.WalletCredentialResponseDTOFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -161,8 +160,8 @@ public class WalletCredentialServiceTest {
         when(walletCredentialsRepository.findByWalletIdOrderByCreatedAtDesc(walletId)).thenReturn(List.of(verifiableCredential));
         when(issuersService.getIssuerConfig(issuerId, credentialType)).thenReturn(issuerConfig);
 
-        try (MockedStatic<WalletCredentialResponseDTOFactory> factoryMock = mockStatic(WalletCredentialResponseDTOFactory.class)) {
-            factoryMock.when(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerConfig, locale, credentialId))
+        try (MockedStatic<VerifiableCredentialResponseDTO> factoryMock = mockStatic(VerifiableCredentialResponseDTO.class)) {
+            factoryMock.when(() -> VerifiableCredentialResponseDTO.fromIssuerConfig(issuerConfig, locale, credentialId))
                     .thenReturn(responseDTO);
 
             List<VerifiableCredentialResponseDTO> actualCredentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64Key, locale);
@@ -171,7 +170,7 @@ public class WalletCredentialServiceTest {
             assertEquals(responseDTO, actualCredentials.getFirst());
             verify(walletCredentialsRepository).findByWalletIdOrderByCreatedAtDesc(walletId);
             verify(issuersService).getIssuerConfig(issuerId, credentialType);
-            factoryMock.verify(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(issuerConfig, locale, credentialId));
+            factoryMock.verify(() -> VerifiableCredentialResponseDTO.fromIssuerConfig(issuerConfig, locale, credentialId));
         }
     }
 
@@ -183,8 +182,8 @@ public class WalletCredentialServiceTest {
         when(walletCredentialsRepository.findByWalletIdOrderByCreatedAtDesc(walletId)).thenReturn(List.of(verifiableCredential));
         when(issuersService.getIssuerConfig(issuerId, credentialType)).thenThrow(new ApiNotAccessibleException("API error"));
 
-        try (MockedStatic<WalletCredentialResponseDTOFactory> factoryMock = mockStatic(WalletCredentialResponseDTOFactory.class)) {
-            factoryMock.when(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(null, locale, credentialId))
+        try (MockedStatic<VerifiableCredentialResponseDTO> factoryMock = mockStatic(VerifiableCredentialResponseDTO.class)) {
+            factoryMock.when(() -> VerifiableCredentialResponseDTO.fromIssuerConfig(null, locale, credentialId))
                     .thenReturn(responseDTO);
 
             List<VerifiableCredentialResponseDTO> actualCredentials = walletCredentialService.fetchAllCredentialsForWallet(walletId, base64Key, locale);
@@ -193,7 +192,7 @@ public class WalletCredentialServiceTest {
             assertEquals(responseDTO, actualCredentials.getFirst());
             verify(walletCredentialsRepository).findByWalletIdOrderByCreatedAtDesc(walletId);
             verify(issuersService).getIssuerConfig(issuerId, credentialType);
-            factoryMock.verify(() -> WalletCredentialResponseDTOFactory.buildCredentialResponseDTO(null, locale, credentialId));
+            factoryMock.verify(() -> VerifiableCredentialResponseDTO.fromIssuerConfig(null, locale, credentialId));
         }
     }
 
