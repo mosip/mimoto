@@ -21,14 +21,17 @@ import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static io.mosip.mimoto.exception.ErrorConstants.*;
 
@@ -38,6 +41,10 @@ import static io.mosip.mimoto.exception.ErrorConstants.*;
 @Slf4j
 @Service
 public class WalletCredentialServiceImpl implements WalletCredentialService {
+
+    @Value("${mosip.inji.wallet.issuersWithSingleVcLimit:Mosip}")
+    private String issuersWithSingleVcLimit;
+
     private final WalletCredentialsRepository repository;
     private final IssuersService issuersService;
     private final CredentialProcessor credentialProcessor;
@@ -66,7 +73,9 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
             throws CredentialProcessingException, ExternalServiceUnavailableException {
         log.info("Fetching and storing credential for wallet: {}, issuer: {}, type: {}", walletId, issuerId, credentialConfigurationId);
 
-        Set<String> issuers = Set.of("Mosip");
+        Set<String> issuers = Arrays.stream(issuersWithSingleVcLimit.split(","))
+                .map(String::trim)
+                .collect(Collectors.toSet());
         if (issuers.contains(issuerId) && repository.existsByIssuerIdAndCredentialTypeAndWalletId(issuerId, credentialConfigurationId, walletId)) {
             log.warn("Duplicate credential found for issuer: {}, type: {}, wallet: {}", issuerId, credentialConfigurationId, walletId);
             throw new InvalidRequestException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), "Duplicate credential for issuer and type");

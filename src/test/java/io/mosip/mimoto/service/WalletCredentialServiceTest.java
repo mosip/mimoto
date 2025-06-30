@@ -21,6 +21,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.ByteArrayInputStream;
+import java.lang.reflect.Field;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +68,7 @@ public class WalletCredentialServiceTest {
     private IssuerConfig issuerConfig;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         tokenResponse = new TokenResponseDTO();
         tokenResponse.setAccess_token("accessToken");
 
@@ -87,6 +88,10 @@ public class WalletCredentialServiceTest {
         CredentialIssuerWellKnownResponse wellKnownResponse = new CredentialIssuerWellKnownResponse();
         CredentialsSupportedResponse credentialsSupportedResponse = new CredentialsSupportedResponse();
         issuerConfig = new IssuerConfig(issuerDTO, wellKnownResponse, credentialsSupportedResponse);
+
+        Field field = WalletCredentialServiceImpl.class.getDeclaredField("issuersWithSingleVcLimit");
+        field.setAccessible(true);
+        field.set(walletCredentialService, "Mosip");
     }
 
     @Test
