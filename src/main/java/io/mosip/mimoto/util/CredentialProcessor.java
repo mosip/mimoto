@@ -17,6 +17,7 @@ import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.CredentialVerifierService;
 import io.mosip.mimoto.service.IssuersService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -77,23 +78,23 @@ public class CredentialProcessor {
             String base64Key, String issuerId, String locale)
             throws InvalidRequestException, CredentialProcessingException, ExternalServiceUnavailableException, VCVerificationException {
         // Validate inputs
-        if (tokenResponse == null || tokenResponse.getAccess_token() == null) {
+        if (tokenResponse == null || StringUtils.isBlank(tokenResponse.getAccess_token())) {
             log.error("Invalid token response: null or missing access token");
             throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Token response or access token cannot be null");
         }
-        if (credentialConfigurationId == null || credentialConfigurationId.isBlank()) {
+        if (StringUtils.isBlank(credentialConfigurationId )) {
             log.error("Invalid credential type: null or blank");
             throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Credential type cannot be null or blank");
         }
-        if (walletId == null || walletId.isBlank()) {
+        if (StringUtils.isBlank(walletId)) {
             log.error("Invalid wallet ID: null or blank");
             throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet ID cannot be null or blank");
         }
-        if (base64Key == null || base64Key.isBlank()) {
+        if (StringUtils.isBlank(base64Key)) {
             log.error("Invalid wallet key: null or blank");
             throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Wallet key cannot be null or blank");
         }
-        if (issuerId == null || issuerId.isBlank()) {
+        if (StringUtils.isBlank(issuerId)) {
             log.error("Invalid issuer ID: null or blank");
             throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Issuer ID cannot be null or blank");
         }
