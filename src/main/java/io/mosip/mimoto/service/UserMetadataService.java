@@ -29,7 +29,7 @@ public class UserMetadataService {
                 .map(user -> {
                     try {
                         UserMetadata decryptedUser = new UserMetadata();
-                        decryptedUser.setId(user.getId()); // Copy all needed fields
+                        decryptedUser.setId(user.getId());
                         decryptedUser.setProviderSubjectId(user.getProviderSubjectId());
                         decryptedUser.setIdentityProvider(user.getIdentityProvider());
 
@@ -45,7 +45,7 @@ public class UserMetadataService {
                 .orElse(null);
     }
 
-    public String updateOrInsertUserMetadata(String providerSubjectId, String identityProvider,
+    public String updateOrCreateUserMetadata(String providerSubjectId, String identityProvider,
                                              String displayName, String profilePictureUrl, String email)
             throws EncryptionException, DecryptionException {
         Instant now = Instant.now();

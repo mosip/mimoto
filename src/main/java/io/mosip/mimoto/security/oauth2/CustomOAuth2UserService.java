@@ -91,7 +91,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private String updateUserMetadata(Map<String, Object> attributes, ProviderDataConfig provider, String registrationId) {
         String providerSubjectId = safeGet(attributes, StringUtils.defaultIfBlank(provider.getUserNameAttribute(), "sub"));
         try {
-            return userMetadataService.updateOrInsertUserMetadata(
+            return userMetadataService.updateOrCreateUserMetadata(
                     providerSubjectId,
                     registrationId,
                     safeGet(attributes, "name"),

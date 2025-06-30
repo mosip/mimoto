@@ -90,7 +90,7 @@ public class WalletCredentialServiceTest {
     }
 
     @Test
-    public void shouldFetchAndStoreCredentialSuccessfully() throws Exception {
+    public void shouldDownloadVCAndStoreInDBSuccessfully() throws Exception {
         String mosipIssuerId = "Mosip";
         VerifiableCredentialResponseDTO expectedResponse = new VerifiableCredentialResponseDTO();
         expectedResponse.setCredentialId(credentialId);
@@ -99,7 +99,7 @@ public class WalletCredentialServiceTest {
         when(credentialProcessor.downloadCredentialAndStoreInDB(tokenResponse, credentialType, walletId, base64Key, mosipIssuerId, locale))
                 .thenReturn(expectedResponse);
 
-        VerifiableCredentialResponseDTO actualResponse = walletCredentialService.fetchAndStoreCredential(
+        VerifiableCredentialResponseDTO actualResponse = walletCredentialService.downloadVCAndStoreInDB(
                 mosipIssuerId, credentialType, tokenResponse, locale, walletId, base64Key);
 
         assertEquals(expectedResponse, actualResponse);
@@ -112,7 +112,7 @@ public class WalletCredentialServiceTest {
         when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId("Mosip", credentialType, walletId)).thenReturn(true);
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-                walletCredentialService.fetchAndStoreCredential("Mosip", credentialType, tokenResponse, locale, walletId, base64Key));
+                walletCredentialService.downloadVCAndStoreInDB("Mosip", credentialType, tokenResponse, locale, walletId, base64Key));
 
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertEquals("credential_download_error --> Duplicate credential for issuer and type", exception.getMessage());
@@ -128,7 +128,7 @@ public class WalletCredentialServiceTest {
         when(credentialProcessor.downloadCredentialAndStoreInDB(tokenResponse, credentialType, walletId, base64Key, issuerId, locale))
                 .thenReturn(expectedResponse);
 
-        VerifiableCredentialResponseDTO actualResponse = walletCredentialService.fetchAndStoreCredential(
+        VerifiableCredentialResponseDTO actualResponse = walletCredentialService.downloadVCAndStoreInDB(
                 issuerId, credentialType, tokenResponse, locale, walletId, base64Key);
 
         assertEquals(expectedResponse, actualResponse);
@@ -144,7 +144,7 @@ public class WalletCredentialServiceTest {
                 .thenThrow(new ExternalServiceUnavailableException("SERVICE_UNAVAILABLE", "Service unavailable"));
 
         ExternalServiceUnavailableException exception = assertThrows(ExternalServiceUnavailableException.class, () ->
-                walletCredentialService.fetchAndStoreCredential(mosipIssuerId, credentialType, tokenResponse, locale, walletId, base64Key));
+                walletCredentialService.downloadVCAndStoreInDB(mosipIssuerId, credentialType, tokenResponse, locale, walletId, base64Key));
 
         assertEquals("SERVICE_UNAVAILABLE", exception.getErrorCode());
         assertEquals("SERVICE_UNAVAILABLE --> Service unavailable", exception.getMessage());

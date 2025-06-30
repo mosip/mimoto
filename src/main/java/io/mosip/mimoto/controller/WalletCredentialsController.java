@@ -126,7 +126,7 @@ public class WalletCredentialsController {
         log.info("Fetching and storing Verifiable Credential for walletId: {}", walletId);
 
         try {
-            VerifiableCredentialResponseDTO credentialResponseDTO = walletCredentialService.fetchAndStoreCredential(
+            VerifiableCredentialResponseDTO credentialResponseDTO = walletCredentialService.downloadVCAndStoreInDB(
                     issuerId, credentialConfigurationId, tokenResponse, locale, walletId, base64EncodedWalletKey);
             return ResponseEntity.status(HttpStatus.OK).body(credentialResponseDTO);
         } catch (ExternalServiceUnavailableException e) {

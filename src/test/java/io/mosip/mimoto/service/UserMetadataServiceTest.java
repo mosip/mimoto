@@ -70,7 +70,7 @@ public class UserMetadataServiceTest {
         when(encryptionService.encrypt(email)).thenReturn("encryptedEmail");
         when(userMetadataRepository.save(any(UserMetadata.class))).thenReturn(userMetadata);
 
-        String storedUserId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, updatedDisplayName, profilePictureUrl, email);
+        String storedUserId = userMetadataService.updateOrCreateUserMetadata(providerSubjectId, identityProvider, updatedDisplayName, profilePictureUrl, email);
 
         assertEquals(userId, storedUserId);
         ArgumentCaptor<UserMetadata> userMetadataCaptor = ArgumentCaptor.forClass(UserMetadata.class);
@@ -103,7 +103,7 @@ public class UserMetadataServiceTest {
         when(encryptionService.encrypt(email)).thenReturn("encryptedEmail");
         when(userMetadataRepository.save(any(UserMetadata.class))).thenReturn(newUserMetadata);
 
-        String storedUserId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, newIdentityProvider, displayName, profilePictureUrl, email);
+        String storedUserId = userMetadataService.updateOrCreateUserMetadata(providerSubjectId, newIdentityProvider, displayName, profilePictureUrl, email);
 
         assertEquals(newUserId, storedUserId);
         ArgumentCaptor<UserMetadata> userMetadataCaptor = ArgumentCaptor.forClass(UserMetadata.class);
@@ -137,7 +137,7 @@ public class UserMetadataServiceTest {
         when(encryptionService.encrypt(email)).thenReturn("encryptedEmail");
         when(userMetadataRepository.save(any(UserMetadata.class))).thenReturn(newUserMetadata);
 
-        String storedUserId = userMetadataService.updateOrInsertUserMetadata(newProviderSubjectId, identityProvider, displayName, profilePictureUrl, email);
+        String storedUserId = userMetadataService.updateOrCreateUserMetadata(newProviderSubjectId, identityProvider, displayName, profilePictureUrl, email);
 
         assertEquals(newUserId, storedUserId);
         ArgumentCaptor<UserMetadata> userMetadataCaptor = ArgumentCaptor.forClass(UserMetadata.class);
@@ -158,7 +158,7 @@ public class UserMetadataServiceTest {
         when(encryptionService.decrypt(userMetadata.getProfilePictureUrl())).thenReturn(profilePictureUrl);
         when(encryptionService.decrypt(userMetadata.getEmail())).thenReturn(email);
 
-        String storedUserId = userMetadataService.updateOrInsertUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
+        String storedUserId = userMetadataService.updateOrCreateUserMetadata(providerSubjectId, identityProvider, displayName, profilePictureUrl, email);
 
         assertEquals(userId, storedUserId);
         verify(userMetadataRepository, times(0)).save(any(UserMetadata.class));

@@ -92,7 +92,7 @@ public class WalletCredentialsControllerTest {
     public void shouldDownloadCredentialSuccessfully() throws Exception {
         setIssuerAndCredentialConfigurationId(issuer, credentialConfigurationId);
         when(idpService.getTokenResponse(eq(verifiableCredentialRequest))).thenReturn(new TokenResponseDTO());
-        when(walletCredentialService.fetchAndStoreCredential(eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey)))
+        when(walletCredentialService.downloadVCAndStoreInDB(eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey)))
                 .thenReturn(verifiableCredentialResponseDTO);
 
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
@@ -114,7 +114,7 @@ public class WalletCredentialsControllerTest {
     public void shouldReturnErroResponseWhenRequestedCredentialIsAlreadyAvailableInWallet() throws Exception {
         setIssuerAndCredentialConfigurationId(issuer, credentialConfigurationId);
         when(idpService.getTokenResponse(eq(verifiableCredentialRequest))).thenReturn(new TokenResponseDTO());
-        when(walletCredentialService.fetchAndStoreCredential(eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey)))
+        when(walletCredentialService.downloadVCAndStoreInDB(eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey)))
                 .thenThrow(new InvalidRequestException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), "Duplicate credential for issuer and type"));
 
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
@@ -156,7 +156,7 @@ public class WalletCredentialsControllerTest {
 
         verify(idpService).getTokenResponse(eq(verifiableCredentialRequest));
         verify(walletCredentialService
-        ).fetchAndStoreCredential(eq(issuer), eq(credentialConfigurationId), any(), eq("fr"), eq(walletId), eq(walletKey));
+        ).downloadVCAndStoreInDB(eq(issuer), eq(credentialConfigurationId), any(), eq("fr"), eq(walletId), eq(walletKey));
     }
 
     @Test
@@ -170,7 +170,7 @@ public class WalletCredentialsControllerTest {
                 .sessionAttr("wallet_key", walletKey));
 
         // Default value for vcStorageExpiryLimit is -1 and locale is "en"
-        verify(walletCredentialService).fetchAndStoreCredential(any(), any(), any(), eq("en"), eq(walletId), eq(walletKey));
+        verify(walletCredentialService).downloadVCAndStoreInDB(any(), any(), any(), eq("en"), eq(walletId), eq(walletKey));
     }
 
     @Test
@@ -279,7 +279,7 @@ public class WalletCredentialsControllerTest {
     public void shouldThrowServiceUnavailableForExternalServiceFailure() throws Exception {
         setIssuerAndCredentialConfigurationId(issuer, credentialConfigurationId);
         when(idpService.getTokenResponse(anyMap())).thenReturn(new TokenResponseDTO());
-        when(walletCredentialService.fetchAndStoreCredential(anyString(), anyString(), any(), anyString(), anyString(), anyString()))
+        when(walletCredentialService.downloadVCAndStoreInDB(anyString(), anyString(), any(), anyString(), anyString(), anyString()))
                 .thenThrow(new ExternalServiceUnavailableException("Service unavailable", "Service unavailable"));
 
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)

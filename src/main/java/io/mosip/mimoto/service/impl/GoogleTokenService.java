@@ -82,7 +82,7 @@ public class GoogleTokenService implements TokenService {
                     picture = userMetadata.getProfilePictureUrl();
                 }
             }
-            userId = userMetadataService.updateOrInsertUserMetadata(sub, provider, name, picture, email);
+            userId = userMetadataService.updateOrCreateUserMetadata(sub, provider, name, picture, email);
         } catch (DecryptionException e) {
             log.error("Failed to store the user info in the database", e);
             throw new RuntimeException();
