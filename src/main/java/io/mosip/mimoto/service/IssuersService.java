@@ -12,7 +12,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.io.IOException;
 
 public interface IssuersService {
-    IssuersDTO getIssuers(String search) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException;
+    IssuersDTO getIssuers(String search) throws ApiNotAccessibleException, IOException;
 
     IssuerDTO getIssuerDetails(String issuerId) throws ApiNotAccessibleException, IOException, InvalidIssuerIdException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException;
 
@@ -20,5 +20,5 @@ public interface IssuersService {
 
     CredentialIssuerConfiguration getIssuerConfiguration(String issuerId) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException;
 
-    IssuerConfig getIssuerConfig(String issuerId, @NotBlank String credentialType) throws ApiNotAccessibleException, IOException, InvalidIssuerIdException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException;
+    IssuerConfig getIssuerConfig(String issuerId, @NotBlank String credentialType) throws ApiNotAccessibleException, InvalidIssuerIdException;
 }
