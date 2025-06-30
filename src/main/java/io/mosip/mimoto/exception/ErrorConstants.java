@@ -39,7 +39,10 @@ public enum ErrorConstants {
 
     UNAUTHORIZED_ACCESS("unauthorized", "You are not authorized to access this resource"),
     WALLET_LOCKED("wallet_locked", "Wallet is locked"),
-    INVALID_PIN("invalid_pin", "Invalid PIN or wallet key provided");
+    INVALID_PIN("invalid_pin", "Invalid PIN or wallet key provided"),
+
+    WALLET_TEMPORARILY_LOCKED("wallet_temporarily_locked", "Wallet is temporarily locked due to multiple failed attempts"),
+    WALLET_PERMANENTLY_LOCKED("wallet_permanently_locked", "Wallet is permanently locked due to too many failed attempts");
 
     private final String errorCode;
     private final String errorMessage;

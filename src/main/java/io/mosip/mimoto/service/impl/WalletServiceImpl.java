@@ -1,10 +1,13 @@
 package io.mosip.mimoto.service.impl;
 
 import io.mosip.mimoto.constant.SessionKeys;
+import io.mosip.mimoto.dbentity.PasscodeMetadata;
 import io.mosip.mimoto.dbentity.Wallet;
+import io.mosip.mimoto.dbentity.WalletMetadata;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
+import io.mosip.mimoto.exception.WalletUnlockEligibilityException;
 import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.WalletUtil;
@@ -55,6 +58,18 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
+    public void getWalletUnlockEligibility(String walletId, HttpSession httpSession) throws InvalidRequestException {
+        String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
+        log.info("Unlocking wallet for user: {}, wallet: {}", userId, walletId);
+
+        validator.validateUserId(userId);
+        Wallet wallet = repository.findByUserIdAndId(userId, walletId)
+                .orElseThrow(getWalletNotFoundExceptionSupplier(userId, walletId));
+        validateWalletUnlockEligibility(wallet);
+    }
+
+
+    @Override
     public WalletResponseDto unlockWallet(String walletId, String pin, HttpSession httpSession) throws InvalidRequestException {
         String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
         log.info("Unlocking wallet for user: {}, wallet: {}", userId, walletId);
@@ -65,11 +80,72 @@ public class WalletServiceImpl implements WalletService {
         Wallet wallet = repository.findByUserIdAndId(userId, walletId)
                 .orElseThrow(getWalletNotFoundExceptionSupplier(userId, walletId));
 
-        String decryptedWalletKey = walletUtil.decryptWalletKey(wallet.getWalletKey(), pin);
-        httpSession.setAttribute(SessionKeys.WALLET_KEY, decryptedWalletKey);
-        httpSession.setAttribute(SessionKeys.WALLET_ID, walletId);
+        WalletMetadata walletMetadata = wallet.getWalletMetadata();
+        PasscodeMetadata passcodeMetadata = walletMetadata.getPasscodeMetadata();
 
+        // Check if the wallet is locked temporarily or permanently
+        validateWalletUnlockEligibility(wallet);
+
+        // Allow the user to unlock the wallet only if it is not locked temporarily or permanently
+        try {
+            String decryptedWalletKey = walletUtil.decryptWalletKey(wallet.getWalletKey(), pin);
+            httpSession.setAttribute(SessionKeys.WALLET_KEY, decryptedWalletKey);
+            httpSession.setAttribute(SessionKeys.WALLET_ID, walletId);
+
+            //Reset Wallet metadata details
+            walletMetadata.setLockUntil(0);
+            passcodeMetadata.setRemainingLockCycles(3);
+            passcodeMetadata.setRetryRemainingAttempts(5);
+            repository.save(wallet);
+        } catch (Exception ex) {
+            log.error("Failed to unlock the Wallet: {} due to the error: {}", walletId, ex.getMessage(), ex);
+            int currentRetryRemainingAttempts = passcodeMetadata.getRetryRemainingAttempts() - 1;
+            passcodeMetadata.setRetryRemainingAttempts(currentRetryRemainingAttempts);
+
+            // TODO:  Handle the error scenarios for the database connection
+            repository.save(wallet);
+            log.info("Stored updated retry remaining attempts details into the database");
+
+            if (currentRetryRemainingAttempts == 0) {
+                int currentRemainingLockCycles = passcodeMetadata.getRemainingLockCycles() - 1;
+                passcodeMetadata.setRemainingLockCycles(currentRemainingLockCycles);
+                long oneHourInMillis = 60 * 60 * 1000;
+                walletMetadata.setLockUntil(System.currentTimeMillis() + oneHourInMillis);
+
+                // TODO:  Handle the error scenarios for the database connection
+                repository.save(wallet);
+                log.info("Stored updated remaining lock cycles details into the database");
+
+                validateWalletUnlockEligibility(wallet);
+            } else {
+                throw ex;
+            }
+        }
         return new WalletResponseDto(walletId, wallet.getWalletMetadata().getName());
+    }
+
+    private void validateWalletUnlockEligibility(Wallet wallet) throws WalletUnlockEligibilityException {
+        WalletMetadata walletMetadata = wallet.getWalletMetadata();
+        PasscodeMetadata passcodeMetadata = walletMetadata.getPasscodeMetadata();
+        long currentTimeInMilliseconds = System.currentTimeMillis();
+        String walletId = wallet.getId();
+
+        // Reset the data if the Wallet temporarily lock time period is expired
+        if (passcodeMetadata.getRemainingLockCycles() > 0 && walletMetadata.getLockUntil() != 0 && currentTimeInMilliseconds > walletMetadata.getLockUntil()) {
+            walletMetadata.setLockUntil(0);
+            passcodeMetadata.setRetryRemainingAttempts(5);
+            repository.save(wallet);
+        }
+
+        if (passcodeMetadata.getRetryRemainingAttempts() == 0) {
+            if (passcodeMetadata.getRemainingLockCycles() > 0) {
+                log.warn("Wallet: {} is temporarily locked until: {}, user cannot unlock it", walletId, walletMetadata.getLockUntil());
+                throw new WalletUnlockEligibilityException(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage());
+            } else {
+                log.warn("Wallet: {} is permanently locked due to too many failed attempts", walletId);
+                throw new WalletUnlockEligibilityException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage());
+            }
+        }
     }
 
     @Override

@@ -1,6 +1,7 @@
 package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.constant.SessionKeys;
+import io.mosip.mimoto.dbentity.PasscodeMetadata;
 import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dbentity.WalletMetadata;
@@ -45,7 +46,8 @@ public class WalletUtil {
     public String saveWallet(String userId, String walletName, String walletPin, SecretKey encryptionKey, String encryptionAlgorithm, String encryptionType) {
 
         String walletId = UUID.randomUUID().toString();
-        WalletMetadata walletMetadata = createWalletMetadata(walletName, encryptionAlgorithm, encryptionType);
+        PasscodeMetadata passcodeMetadata = new PasscodeMetadata();
+        WalletMetadata walletMetadata = createWalletMetadata(walletName, encryptionAlgorithm, encryptionType, passcodeMetadata);
         String walletKey = encryptionDecryptionUtil.encryptKeyWithPin(encryptionKey, walletPin);
         Wallet newWallet = Wallet.builder()
                 .id(walletId)
@@ -61,11 +63,13 @@ public class WalletUtil {
         return walletId;
     }
 
-    private WalletMetadata createWalletMetadata(String walletName, String encryptionAlgorithm, String encryptionType) {
+    private WalletMetadata createWalletMetadata(String walletName, String encryptionAlgorithm, String encryptionType, PasscodeMetadata passcodeMetadata) {
         WalletMetadata walletMetadata = new WalletMetadata();
         walletMetadata.setEncryptionAlgo(encryptionAlgorithm);
         walletMetadata.setEncryptionType(encryptionType);
         walletMetadata.setName(walletName);
+        walletMetadata.setLockUntil(0);
+        walletMetadata.setPasscodeMetadata(passcodeMetadata);
         return walletMetadata;
     }
 

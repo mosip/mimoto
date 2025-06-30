@@ -23,6 +23,8 @@ public interface WalletService {
      */
     WalletResponseDto createWallet(String userId, String name, String pin, String confirmPin) throws InvalidRequestException;
 
+    void getWalletUnlockEligibility(String walletId, HttpSession httpSession) throws InvalidRequestException;
+
     /**
      * Unlocks a wallet for a user.
      *
