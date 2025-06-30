@@ -22,7 +22,6 @@ import io.mosip.mimoto.service.impl.PresentationServiceImpl;
 import io.mosip.mimoto.util.LocaleUtils;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -66,12 +65,9 @@ public class CredentialPDFGeneratorService {
     @Autowired
     private Utilities utilities;
 
-    PixelPass pixelPass;
+    @Autowired
+    private PixelPass pixelPass;
 
-    @PostConstruct
-    public void init() {
-        pixelPass = new PixelPass();
-    }
 
     public ByteArrayInputStream generatePdfForVerifiableCredentials(String credentialType, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
         LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties = loadDisplayPropertiesFromWellknown(vcCredentialResponse, credentialsSupportedResponse, locale);

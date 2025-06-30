@@ -17,7 +17,8 @@ public class CredentialVerifierImpl implements CredentialVerifierService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private final CredentialsVerifier credentialsVerifier = new CredentialsVerifier();
+    @Autowired
+    private CredentialsVerifier credentialsVerifier;
 
     public boolean verify(VCCredentialResponse response) throws JsonProcessingException, VCVerificationException {
         String credentialString = objectMapper.writeValueAsString(response.getCredential());

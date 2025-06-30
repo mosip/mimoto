@@ -227,11 +227,4 @@ class CredentialPDFGeneratorServiceTest {
             assertNotNull(result);
         }
     }
-
-    @Test
-    void testInitMethod() {
-        CredentialPDFGeneratorService service = new CredentialPDFGeneratorService();
-        service.init();
-        assertNotNull(ReflectionTestUtils.getField(service, "pixelPass"));
-    }
 }
