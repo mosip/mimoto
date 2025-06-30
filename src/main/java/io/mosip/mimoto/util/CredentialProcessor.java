@@ -59,7 +59,7 @@ public class CredentialProcessor {
     }
 
     /**
-     * Processes and stores a credential using the provided token and parameters.
+     * Download credential and stores a credential using the provided token and parameters.
      *
      * @param tokenResponse             The token response containing the access token.
      * @param credentialConfigurationId The type of the credential.
@@ -72,7 +72,7 @@ public class CredentialProcessor {
      * @throws ExternalServiceUnavailableException If an external service is unavailable.
      * @throws VCVerificationException             If credential verification fails.
      */
-    public VerifiableCredentialResponseDTO processAndStoreCredential(
+    public VerifiableCredentialResponseDTO downloadCredentialAndStoreInDB(
             TokenResponseDTO tokenResponse, String credentialConfigurationId, String walletId,
             String base64Key, String issuerId, String locale)
             throws InvalidRequestException, CredentialProcessingException, ExternalServiceUnavailableException, VCVerificationException {

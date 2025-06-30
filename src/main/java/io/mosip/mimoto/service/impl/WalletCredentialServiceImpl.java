@@ -75,7 +75,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
 
         VerifiableCredentialResponseDTO credential;
 
-            credential = credentialProcessor.processAndStoreCredential(
+            credential = credentialProcessor.downloadCredentialAndStoreInDB(
                     tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale);
 
         log.debug("Credential stored successfully: {}", credential.getCredentialId());
