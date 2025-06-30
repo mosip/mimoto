@@ -1,0 +1,56 @@
+OAuthDetailsRequestSunBirdCForGoogleLogin:
+   Mimoto_ESignet_OAuthDetailsRequest_GoogleLogin_SunBirdC_all_Valid_Smoke_sid:
+      endPoint: $ESIGNETMOCKBASEURL$/v1/esignet/authorization/v2/oauth-details
+      description: Getting auth details for downloading sunbird credentials with google login
+      uniqueIdentifier: TC_Mimoto_OAuthDetailsRequestSunBirdCForGoogleLogin_01
+      role: resident
+      restMethod: post
+      checkErrorsOnlyInResponse: true
+      inputTemplate: mimoto/LoginFlow/DownloadStayProtectedIssuerCredentialWithGoogleLogin/OAuthDetailsRequestSunBirdC/OAuthDetailsRequestSunBirdC
+      outputTemplate: mimoto/LoginFlow/DownloadStayProtectedIssuerCredentialWithGoogleLogin/OAuthDetailsRequestSunBirdC/OAuthDetailsRequestSunBirdCResult
+      input: '{
+      	"requestTime": "$TIMESTAMP$",
+      	"clientId": "$GETCLIENTIDFORINSURANCEFROMMIMOTOACTUATOR$",
+      	"scope": "sunbird_rc_insurance_vc_ldp",
+      	"responseType": "code",
+      	"redirectUri": "$INJIREDIRECTURI$",
+      	"display": "popup",
+	    "prompt": "login",
+	    "acrValues": "mosip:idp:acr:knowledge",
+	    "nonce": "$UNIQUENONCEVALUEFORESIGNET$",
+	    "state": "eree2311",
+	    "claimsLocales": "en",
+	    "codeChallenge": "$CODECHALLENGE$",
+        "codeChallengeMethod": "S256"
+}'
+      output: '{
+       
+}'
+
+   Mimoto_ESignet_OAuthDetailsRequest_GoogleLogin_SunBirdC_MultipleVC_all_Valid_Smoke_sid:
+      endPoint: $ESIGNETMOCKBASEURL$/v1/esignet/authorization/v2/oauth-details
+      description: Getting auth details for downloading multiple sunbird credentials with google login
+      uniqueIdentifier: TC_Mimoto_OAuthDetailsRequestSunBirdCForGoogleLogin_02
+      role: resident
+      restMethod: post
+      checkErrorsOnlyInResponse: true
+      inputTemplate: mimoto/LoginFlow/DownloadStayProtectedIssuerCredentialWithGoogleLogin/OAuthDetailsRequestSunBirdC/OAuthDetailsRequestSunBirdC
+      outputTemplate: mimoto/LoginFlow/DownloadStayProtectedIssuerCredentialWithGoogleLogin/OAuthDetailsRequestSunBirdC/OAuthDetailsRequestSunBirdCResult
+      input: '{
+      	"requestTime": "$TIMESTAMP$",
+      	"clientId": "$GETCLIENTIDFORINSURANCEFROMMIMOTOACTUATOR$",
+      	"scope": "sunbird_rc_insurance_vc_ldp",
+      	"responseType": "code",
+      	"redirectUri": "$INJIREDIRECTURI$",
+      	"display": "popup",
+	    "prompt": "login",
+	    "acrValues": "mosip:idp:acr:knowledge",
+	    "nonce": "$UNIQUENONCEVALUEFORESIGNET$",
+	    "state": "eree2311",
+	    "claimsLocales": "en",
+	    "codeChallenge": "$CODECHALLENGE$",
+        "codeChallengeMethod": "S256"
+}'
+      output: '{
+       
+}'

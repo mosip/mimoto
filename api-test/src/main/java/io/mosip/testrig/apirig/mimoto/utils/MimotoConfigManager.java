@@ -41,7 +41,6 @@ public class MimotoConfigManager extends ConfigManager{
 		String esignetBaseUrl = null;
 		if (getproperty("runPlugin").equals("mosipid")) {
 			esignetBaseUrl = "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", getproperty("mosipid-identity-esignet-host"));
-			
 		} else if (getproperty("runPlugin").equals("mockid")) {
 			esignetBaseUrl = "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", getproperty("mock-identity-esignet-host"));
 		}
@@ -52,7 +51,7 @@ public class MimotoConfigManager extends ConfigManager{
 	}
 	
 	public static String getEsignetSunBirdBaseURL() {
-		return "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", getproperty("mosip-esignet-insurance-host"));
+		return "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", getproperty("sunbirdrc-insurance-esignet-host"));
 	}
 
 }

@@ -173,6 +173,180 @@
 		</classes>
 	</test>
 	
+	<test name="GoogleLoginToken">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/Authorization/GoogleLoginToken/GoogleLoginToken.yml" />
+			<parameter name="idKeyName"	value="sessionCookie" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="GetUserProfile">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/Users/GetUserProfile/GetUserProfile.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.GetWithParam" />
+		</classes>
+	</test>
+	<test name="CreateWallet">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet.yml" />
+			<parameter name="idKeyName"	value="walletId,walletName" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="UnlockWallet">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/Wallet/UnlockWallet/UnlockWallet.yml" />
+			<parameter name="pathParams"	value="walletId" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithPathParamsAndCookie" />
+		</classes>
+	</test>
+	<test name="OAuthDetailsRequestForGoogleLogin">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/DownloadMosipIssuerCredential/OAuthDetailsRequest/OAuthDetailsRequest.yml" />
+			<parameter name="idKeyName"	value="transactionId,encodedResp" />
+			<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="AuthenticateUserForGoogleLogin">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/DownloadMosipIssuerCredential/AuthenticateUser/AuthenticateUser.yml" />
+			<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithAutogenIdWithOtpGenerate" />
+		</classes>
+	</test>
+	<test name="AuthorizationCodeForGoogleLogin">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/DownloadMosipIssuerCredential/AuthorizationCode/AuthorizationCode.yml" />
+			<parameter name="prerequisite" value="Yes" />
+			<parameter name="idKeyName"	value="code" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="DownloadMosipIssuerCredentialWithGoogleLogin">
+		<parameter name="pathParams"	value="walletId" />
+		<parameter name="idKeyName"	value="credentialId" />
+		<parameter name="headers"	value="Accept-Language" />
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/DownloadMosipIssuerCredential/DownloadIssuerCredential/DownloadIssuerCredential.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithPathParamsHeadersAndCookieForAutoGenId" />
+		</classes>
+	</test>
+	<test name="OAuthDetailsRequestSunBirdCForGoogleLogin">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/DownloadStayProtectedIssuerCredentialWithGoogleLogin/OAuthDetailsRequestSunBirdC/OAuthDetailsRequestSunBirdC.yml" />
+			<parameter name="idKeyName"	value="transactionId,encodedResp" />
+			<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="AuthenticateUserSunBirdCForGoogleLogin">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/DownloadStayProtectedIssuerCredentialWithGoogleLogin/AuthenticateUserSunBirdC/AuthenticateUserSunBirdC.yml" />
+			<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.SimplePost" />
+		</classes>
+	</test>
+	<test name="AuthorizationCodeSunBirdCForGoogleLogin">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/DownloadStayProtectedIssuerCredentialWithGoogleLogin/AuthorizationCodeSunBirdC/AuthorizationCodeSunBirdC.yml" />
+			<parameter name="idKeyName"	value="code" />
+			<parameter name="prerequisite" value="Yes" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.SimplePostForAutoGenId" />
+		</classes>
+	</test>
+	<test name="DownloadIssuerCredentialWithGoogleLogin">
+		<parameter name="pathParams"	value="walletId" />
+		<parameter name="idKeyName"	value="credentialId" />
+		<parameter name="headers"	value="Accept-Language" />
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/DownloadStayProtectedIssuerCredentialWithGoogleLogin/DownloadIssuerCredential/DownloadIssuerCredential.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithPathParamsHeadersAndCookieForAutoGenId" />
+		</classes>
+	</test>
+	<test name="FetchAllCredentials">
+		<parameter name="pathParams"	value="walletId" />
+		<parameter name="headers"	value="Accept-Language" />
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/DownloadMosipIssuerCredential/FetchAllCredentials/FetchAllCredentials.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.GetWithParamAndHeader" />
+		</classes>
+	</test>
+	<test name="ViewCredential">
+		<parameter name="pathParams"	value="walletId,credentialId" />
+		<parameter name="headers"	value="Accept-Language" />
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/DownloadMosipIssuerCredential/ViewCredential/ViewCredential.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.GetWithParamAndHeader" />
+		</classes>
+	</test>
+	<test name="DeleteCredentials">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/DownloadMosipIssuerCredential/DeleteCredentials/DeleteCredentials.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.DeleteWithParam" />
+		</classes>
+	</test>
+	<test name="GetWallets">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/Wallet/GetWallets/GetWallets.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.GetWithParam" />
+		</classes>
+	</test>
+	<test name="DeleteWallet">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/Wallet/DeleteWallet/DeleteWallet.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.DeleteWithParam" />
+		</classes>
+	</test>
+	<test name="UnlockWalletAfterDelete">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/Wallet/UnlockWalletAfterDelete/UnlockWalletAfterDelete.yml" />
+			<parameter name="pathParams"	value="walletId" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithPathParamsAndCookie" />
+		</classes>
+	</test>
+	<test name="Logout">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/Authorization/Logout/Logout.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.SimplePost" />
+		</classes>
+	</test>
+	<test name="GetUserProfileAfterLogout">
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/Users/GetUserProfileAfterLogout/GetUserProfileAfterLogout.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.GetWithParam" />
+		</classes>
+	</test>
+	<test name="ViewCredentialAfterLogout">
+		<parameter name="pathParams"	value="walletId,credentialId" />
+		<parameter name="headers"	value="Accept-Language" />
+		<parameter name="ymlFile"
+			value="mimoto/LoginFlow/DownloadMosipIssuerCredential/ViewCredential/ViewCredentialAfterLogout.yml" />
+		<classes>
+			<class name="io.mosip.testrig.apirig.mimoto.testscripts.GetWithParamAndHeader" />
+		</classes>
+	</test>
+	
 	<test name="DeletePolicySunBirdR">
 		<parameter name="ymlFile"
 			value="mimoto/SunBirdR/DeletePolicySunBirdR/DeletePolicySunBirdR.yml" />
