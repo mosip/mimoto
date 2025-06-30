@@ -1,7 +1,7 @@
 package io.mosip.mimoto.security.oauth2;
 
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dto.OAuth2ProviderProperties;
+import io.mosip.mimoto.config.oauth2.OAuth2ProviderProperties;
 import io.mosip.mimoto.dto.ProviderDataConfig;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.ErrorConstants;
