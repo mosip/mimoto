@@ -341,34 +341,34 @@ public class MimotoUtil extends AdminTestUtil {
 	
 	private static String getGoogleIdToken() {
 		String idToken = null;
-		
+
 		Map<String, String> requestMap = new HashMap<>();
 		requestMap.put("clientId", MimotoConfigManager.getproperty("google.client.id"));
 		requestMap.put("clientSecret", MimotoConfigManager.getproperty("google.client.secret"));
 		requestMap.put("refreshToken", MimotoConfigManager.getproperty("google.refresh.token"));
 		requestMap.put("grant_type", "refresh_token");
-        String url = props.getProperty("googleIdToken");
+		String url = props.getProperty("googleIdToken");
 
-        Response response = RestClient.postRequestWithFormDataBody(url, requestMap);
-        
-        if (response.getStatusCode() != 200) {
-            String errorResponse = response.getBody().toString();
-            throw new RuntimeException("Failed to get ID token. HTTP status code: " 
-                + response.getStatusCode() + ", response body: " + errorResponse);
-        }
+		Response response = RestClient.postRequestWithFormDataBody(url, requestMap);
 
-        JSONObject jsonObject = new JSONObject(response.getBody().asString());
-        
-        if (jsonObject != null) {
-        	idToken = jsonObject.get("id_token").toString();
-        }
+		if (response.getStatusCode() != 200) {
+			String errorResponse = response.getBody().toString();
+			throw new RuntimeException("Failed to get ID token. HTTP status code: " + response.getStatusCode()
+					+ ", response body: " + errorResponse);
+		}
 
-        if (idToken == null || idToken.isEmpty()) {
-            throw new RuntimeException("id_token not found in response: " + response);
-        }
+		JSONObject jsonObject = new JSONObject(response.getBody().asString());
 
-        logger.info("Obtained id_token: " + idToken);  // Debug log
-        return idToken;
-		
+		if (jsonObject != null) {
+			idToken = jsonObject.get("id_token").toString();
+		}
+
+		if (idToken == null || idToken.isEmpty()) {
+			throw new RuntimeException("id_token not found in response: " + response);
+		}
+
+		logger.info("Obtained id_token: " + idToken); // Debug log
+		return idToken;
+
 	}
 }
