@@ -1,4 +1,4 @@
-package io.mosip.mimoto.dbentity;
+package io.mosip.mimoto.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;

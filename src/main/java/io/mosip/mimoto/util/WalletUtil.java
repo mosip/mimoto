@@ -1,9 +1,9 @@
 package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dbentity.ProofSigningKey;
-import io.mosip.mimoto.dbentity.Wallet;
-import io.mosip.mimoto.dbentity.WalletMetadata;
+import io.mosip.mimoto.model.ProofSigningKey;
+import io.mosip.mimoto.model.Wallet;
+import io.mosip.mimoto.model.WalletMetadata;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.constant.SigningAlgorithm;
 import io.mosip.mimoto.repository.WalletRepository;

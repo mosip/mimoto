@@ -1,4 +1,4 @@
-package io.mosip.mimoto.dbentity;
+package io.mosip.mimoto.model;
 
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.List;
 
 @Entity
+@Table(name = "wallet")
 @Getter
 @Setter
 @Builder

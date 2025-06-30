@@ -1,6 +1,6 @@
 package io.mosip.mimoto.service.impl;
 
-import io.mosip.mimoto.dbentity.ProofSigningKey;
+import io.mosip.mimoto.model.ProofSigningKey;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.constant.SigningAlgorithm;

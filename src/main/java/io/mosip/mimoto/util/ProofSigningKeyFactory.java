@@ -1,7 +1,7 @@
 package io.mosip.mimoto.util;
 
-import io.mosip.mimoto.dbentity.KeyMetadata;
-import io.mosip.mimoto.dbentity.ProofSigningKey;
+import io.mosip.mimoto.model.KeyMetadata;
+import io.mosip.mimoto.model.ProofSigningKey;
 import io.mosip.mimoto.exception.KeyGenerationException;
 import io.mosip.mimoto.constant.SigningAlgorithm;
 import lombok.extern.slf4j.Slf4j;

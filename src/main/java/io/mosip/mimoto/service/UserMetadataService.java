@@ -1,6 +1,6 @@
 package io.mosip.mimoto.service;
 
-import io.mosip.mimoto.dbentity.UserMetadata;
+import io.mosip.mimoto.model.UserMetadata;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.EncryptionException;
 import io.mosip.mimoto.repository.UserMetadataRepository;
@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;

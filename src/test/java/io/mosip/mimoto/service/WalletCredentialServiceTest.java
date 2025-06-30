@@ -1,8 +1,8 @@
 package io.mosip.mimoto.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mosip.mimoto.dbentity.CredentialMetadata;
-import io.mosip.mimoto.dbentity.VerifiableCredential;
+import io.mosip.mimoto.model.CredentialMetadata;
+import io.mosip.mimoto.model.VerifiableCredential;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
