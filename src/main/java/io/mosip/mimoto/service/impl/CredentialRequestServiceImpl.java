@@ -42,10 +42,10 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
         SigningAlgorithm algorithm = resolveAlgorithm(credentialsSupportedResponse);
 
         String jwt;
-        if (!isLoginFlow) {
-            jwt = joseUtil.generateJwt(wellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), accessToken);
-        } else {
+        if (isLoginFlow) {
             jwt = generateJwtFromDB(walletId, base64EncodedWalletKey, algorithm, wellKnownResponse, issuerDTO, accessToken);
+        } else {
+            jwt = joseUtil.generateJwt(wellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), accessToken);
         }
 
         List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
