@@ -8,6 +8,7 @@ import org.hibernate.type.SqlTypes;
 
 import java.security.PrivateKey;
 import java.time.Instant;
+
 @Entity
 @Getter
 @Setter
