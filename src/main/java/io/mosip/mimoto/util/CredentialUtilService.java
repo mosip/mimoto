@@ -60,11 +60,6 @@ import static io.mosip.mimoto.exception.ErrorConstants.CREDENTIAL_FETCH_EXCEPTIO
 @Slf4j
 @Service
 public class CredentialUtilService {
-    @Autowired
-    IdpService idpService;
-
-    @Autowired
-    RestTemplate restTemplate;
 
     @Autowired
     IssuersService issuersService;
@@ -109,23 +104,6 @@ public class CredentialUtilService {
     public void init() {
         credentialsVerifier = new CredentialsVerifier();
         pixelPass = new PixelPass();
-    }
-
-    public TokenResponseDTO getTokenResponse(VerifiableCredentialRequestDTO verifiableCredentialRequest) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
-        return getTokenResponse(convertVerifiableCredentialRequestToMap(verifiableCredentialRequest));
-    }
-
-    public TokenResponseDTO getTokenResponse(Map<String, String> params) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
-        String issuerId = params.get("issuer");
-        IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
-        CredentialIssuerConfiguration credentialIssuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
-        String tokenEndpoint = idpService.getTokenEndpoint(credentialIssuerConfiguration);
-        HttpEntity<MultiValueMap<String, String>> request = idpService.constructGetTokenRequest(params, issuerDTO, tokenEndpoint);
-        TokenResponseDTO response = restTemplate.postForObject(tokenEndpoint, request, TokenResponseDTO.class);
-        if (response == null) {
-            throw new IdpException("Exception occurred while performing the authorization");
-        }
-        return response;
     }
 
     public VCCredentialResponse downloadCredential(String credentialEndpoint, VCCredentialRequest vcCredentialRequest, String accessToken) throws InvalidCredentialResourceException {
@@ -408,16 +386,6 @@ public class CredentialUtilService {
         }
     }
 
-    private Map<String, String> convertVerifiableCredentialRequestToMap(VerifiableCredentialRequestDTO verifiableCredentialRequest) {
-        Map<String, String> params = new HashMap<>();
-        params.put("code", verifiableCredentialRequest.getCode());
-        params.put("redirect_uri", verifiableCredentialRequest.getRedirectUri());
-        params.put("grant_type", verifiableCredentialRequest.getGrantType());
-        params.put("code_verifier", verifiableCredentialRequest.getCodeVerifier());
-        params.put("issuer", verifiableCredentialRequest.getIssuer());
-
-        return params;
-    }
 }
 
 

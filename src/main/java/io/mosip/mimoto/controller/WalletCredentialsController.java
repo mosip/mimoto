@@ -9,7 +9,7 @@ import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.service.WalletCredentialService;
-import io.mosip.mimoto.util.CredentialUtilService;
+import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.mimoto.util.WalletUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,13 +54,13 @@ import static io.mosip.mimoto.util.WalletUtil.validateWalletId;
 public class WalletCredentialsController {
 
     private final WalletCredentialService walletCredentialService;
-    private final CredentialUtilService credentialUtilService;
+    private final IdpService idpService;
 
     @Autowired
     public WalletCredentialsController(WalletCredentialService walletCredentialService,
-                                       CredentialUtilService credentialUtilService) {
+                                       IdpService idpService) {
         this.walletCredentialService = walletCredentialService;
-        this.credentialUtilService = credentialUtilService;
+        this.idpService = idpService;
     }
 
     /**
@@ -115,7 +115,7 @@ public class WalletCredentialsController {
         log.info("Initiating token call for issuer: {}", issuerId);
         TokenResponseDTO tokenResponse;
         try {
-            tokenResponse = credentialUtilService.getTokenResponse(verifiableCredentialRequest);
+            tokenResponse = idpService.getTokenResponse(verifiableCredentialRequest);
         } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
                  InvalidWellknownResponseException e) {
             log.error("Error fetching token response for issuer: {}", issuerId, e);

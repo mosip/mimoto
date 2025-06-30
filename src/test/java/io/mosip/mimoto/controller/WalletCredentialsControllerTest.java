@@ -6,14 +6,13 @@ import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.WalletCredentialService;
-import io.mosip.mimoto.util.CredentialUtilService;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
 import jakarta.servlet.http.HttpSession;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,14 +44,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @EnableWebMvc
 public class WalletCredentialsControllerTest {
 
-    @InjectMocks
-    private WalletCredentialsController controller;
-
     @MockBean
     private WalletCredentialService walletCredentialService;
 
     @MockBean
-    private CredentialUtilService credentialUtilService;
+    private IdpService idpService;
 
     @Mock
     private HttpSession httpSession;
@@ -95,7 +91,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldDownloadCredentialSuccessfully() throws Exception {
         setIssuerAndCredentialConfigurationId(issuer, credentialConfigurationId);
-        when(credentialUtilService.getTokenResponse(eq(verifiableCredentialRequest))).thenReturn(new TokenResponseDTO());
+        when(idpService.getTokenResponse(eq(verifiableCredentialRequest))).thenReturn(new TokenResponseDTO());
         when(walletCredentialService.fetchAndStoreCredential(eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey)))
                 .thenReturn(verifiableCredentialResponseDTO);
 
@@ -117,7 +113,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldReturnErroResponseWhenRequestedCredentialIsAlreadyAvailableInWallet() throws Exception {
         setIssuerAndCredentialConfigurationId(issuer, credentialConfigurationId);
-        when(credentialUtilService.getTokenResponse(eq(verifiableCredentialRequest))).thenReturn(new TokenResponseDTO());
+        when(idpService.getTokenResponse(eq(verifiableCredentialRequest))).thenReturn(new TokenResponseDTO());
         when(walletCredentialService.fetchAndStoreCredential(eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey)))
                 .thenThrow(new InvalidRequestException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), "Duplicate credential for issuer and type"));
 
@@ -158,7 +154,7 @@ public class WalletCredentialsControllerTest {
                 .sessionAttr("wallet_id", walletId)
                 .sessionAttr("wallet_key", walletKey));
 
-        verify(credentialUtilService).getTokenResponse(eq(verifiableCredentialRequest));
+        verify(idpService).getTokenResponse(eq(verifiableCredentialRequest));
         verify(walletCredentialService
         ).fetchAndStoreCredential(eq(issuer), eq(credentialConfigurationId), any(), eq("fr"), eq(walletId), eq(walletKey));
     }
@@ -267,7 +263,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldThrowServiceUnavailableForTokenResponseFailure() throws Exception {
         setIssuerAndCredentialConfigurationId(issuer, credentialConfigurationId);
-        when(credentialUtilService.getTokenResponse(eq(verifiableCredentialRequest)))
+        when(idpService.getTokenResponse(eq(verifiableCredentialRequest)))
                 .thenThrow(new ApiNotAccessibleException("API not accessible"));
 
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
@@ -282,7 +278,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldThrowServiceUnavailableForExternalServiceFailure() throws Exception {
         setIssuerAndCredentialConfigurationId(issuer, credentialConfigurationId);
-        when(credentialUtilService.getTokenResponse(anyMap())).thenReturn(new TokenResponseDTO());
+        when(idpService.getTokenResponse(anyMap())).thenReturn(new TokenResponseDTO());
         when(walletCredentialService.fetchAndStoreCredential(anyString(), anyString(), any(), anyString(), anyString(), anyString()))
                 .thenThrow(new ExternalServiceUnavailableException("Service unavailable", "Service unavailable"));
 

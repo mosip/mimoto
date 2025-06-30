@@ -55,14 +55,7 @@ public class IdpControllerTest {
     public RestClientService<Object> restClientService;
 
     @MockBean
-    private IssuersServiceImpl issuersService;
-
-    @MockBean
     private IdpServiceImpl idpService;
-
-    @MockBean
-    private CredentialUtilService credentialUtilService;
-
 
     @Test
     public void otpRequestTest() throws Exception {
@@ -125,7 +118,7 @@ public class IdpControllerTest {
     @Test
     public void shouldReturnTokenResponseForValidIssuerAndParams() throws Exception {
         String issuer = "test-issuer";
-        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap())).thenReturn(getTokenResponseDTO());
+        Mockito.when(idpService.getTokenResponse(Mockito.anyMap())).thenReturn(getTokenResponseDTO());
 
         mockMvc.perform(post("/get-token/{issuer}", issuer)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -150,7 +143,7 @@ public class IdpControllerTest {
     @Test
     public void shouldReturnBadRequestWithErrorIfTokenResponseIsNull() throws Exception {
         String issuer = "test-issuer";
-        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap()))
+        Mockito.when(idpService.getTokenResponse(Mockito.anyMap()))
                 .thenThrow(new IdpException("Exception occurred while performing the authorization"));
 
         mockMvc.perform(post("/get-token/{issuer}", issuer)

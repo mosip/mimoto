@@ -3,12 +3,9 @@ package io.mosip.mimoto.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.dto.IssuerDTO;
-import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
-import io.mosip.mimoto.exception.IdpException;
 import io.mosip.mimoto.exception.VCVerificationException;
 import io.mosip.mimoto.model.QRCodeType;
-import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.*;
 import io.mosip.vercred.vcverifier.CredentialsVerifier;
@@ -23,11 +20,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
@@ -44,12 +37,10 @@ import static org.mockito.ArgumentMatchers.eq;
 public class CredentialUtilServiceTest {
     @InjectMocks
     CredentialUtilService credentialUtilService;
-    @Mock
-    RestTemplate restTemplate;
+
     @Mock
     IssuersServiceImpl issuersService;
-    @Mock
-    IdpServiceImpl idpService;
+
     @Mock
     RestApiClient restApiClient;
     @Mock
@@ -62,58 +53,19 @@ public class CredentialUtilServiceTest {
     @Mock
     Utilities utilities;
 
-    private Map<String, String> tokenRequestParams = Map.of(
-            "grant_type", "client_credentials",
-            "client_id", "test-client",
-            "issuer", "issuer1"
-    );
     IssuerDTO issuerDTO;
-    TokenResponseDTO expectedTokenResponse;
+
     CredentialIssuerConfiguration issuerConfig;
-    String tokenEndpoint, issuerId, expectedExceptionMsg;
-    HttpEntity<MultiValueMap<String, String>> mockRequest;
+
+    String expectedExceptionMsg, issuerId;
+
+
 
     @Before
     public void setUp() throws Exception {
         issuerId = "issuer1";
         issuerDTO = getIssuerConfigDTO(issuerId);
         issuerConfig = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
-
-        Mockito.when(issuersService.getIssuerDetails(issuerId)).thenReturn(issuerDTO);
-        Mockito.when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
-
-        tokenEndpoint = issuerConfig.getAuthorizationServerWellKnownResponse().getTokenEndpoint();
-        mockRequest = new HttpEntity<>(new LinkedMultiValueMap<>(Map.of(
-                "grant_type", List.of("client_credentials"),
-                "client_id", List.of("test-client")
-        )));
-        expectedTokenResponse = getTokenResponseDTO();
-
-        Mockito.when(idpService.constructGetTokenRequest(tokenRequestParams, issuerDTO, tokenEndpoint))
-                .thenReturn(mockRequest);
-        Mockito.when(idpService.getTokenEndpoint(issuerConfig))
-                .thenReturn(tokenEndpoint);
-        Mockito.when(restTemplate.postForObject(tokenEndpoint, mockRequest, TokenResponseDTO.class))
-                .thenReturn(expectedTokenResponse);
-    }
-
-    @Test
-    public void shouldReturnTokenResponseForValidTokenEndpoint() throws Exception {
-        TokenResponseDTO actualTokenResponse = credentialUtilService.getTokenResponse(tokenRequestParams);
-
-        assertEquals(expectedTokenResponse, actualTokenResponse);
-    }
-
-    @Test
-    public void shouldThrowExceptionIfResponseIsNullWhenFetchingTokenResponse() throws Exception {
-        Mockito.when(restTemplate.postForObject(tokenEndpoint, mockRequest, TokenResponseDTO.class))
-                .thenReturn(null);
-
-        IdpException actualException = assertThrows(IdpException.class, () -> {
-            credentialUtilService.getTokenResponse(tokenRequestParams);
-        });
-
-        assertEquals("RESIDENT-APP-034 --> Exception occurred while performing the authorization", actualException.getMessage());
     }
 
     @Test
