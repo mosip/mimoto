@@ -1,4 +1,4 @@
-package io.mosip.mimoto.util;
+package io.mosip.mimoto.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,25 +11,17 @@ import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
 import com.itextpdf.kernel.pdf.PdfWriter;
-import io.mosip.mimoto.dbentity.CredentialMetadata;
-import io.mosip.mimoto.dbentity.ProofSigningKey;
 import io.mosip.mimoto.dto.IssuerDTO;
-import io.mosip.mimoto.dto.VerifiableCredentialRequestDTO;
-import io.mosip.mimoto.dto.idp.TokenResponseDTO;
-import io.mosip.mimoto.dto.mimoto.*;
+import io.mosip.mimoto.dto.mimoto.CredentialDisplayResponseDto;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerDisplayResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
+import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
-import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
-import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.model.QRCodeType;
-import io.mosip.mimoto.model.SigningAlgorithm;
-import io.mosip.mimoto.repository.ProofSigningKeyRepository;
-import io.mosip.mimoto.service.IdpService;
-import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.impl.PresentationServiceImpl;
+import io.mosip.mimoto.util.LocaleUtils;
+import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
-import io.mosip.vercred.vcverifier.CredentialsVerifier;
-import io.mosip.vercred.vcverifier.constants.CredentialFormat;
-import io.mosip.vercred.vcverifier.data.VerificationResult;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.VelocityContext;
@@ -37,14 +29,8 @@ import org.apache.velocity.app.Velocity;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
-import javax.crypto.SecretKey;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -55,28 +41,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static io.mosip.mimoto.exception.ErrorConstants.CREDENTIAL_FETCH_EXCEPTION;
-
 @Slf4j
 @Service
-public class CredentialUtilService {
-
-    @Autowired
-    IssuersService issuersService;
-
-    @Autowired
-    RestApiClient restApiClient;
-
-    @Autowired
-    JoseUtil joseUtil;
-
-    @Autowired
-    private EncryptionDecryptionUtil encryptionDecryptionUtil;
-
-    @Autowired
-    private ProofSigningKeyRepository proofSigningKeyRepository;
-
-    CredentialsVerifier credentialsVerifier;
+public class CredentialPDFGeneratorService {
 
     @Autowired
     ObjectMapper objectMapper;
@@ -98,76 +65,22 @@ public class CredentialUtilService {
 
     @Autowired
     private Utilities utilities;
+
     PixelPass pixelPass;
 
     @PostConstruct
     public void init() {
-        credentialsVerifier = new CredentialsVerifier();
         pixelPass = new PixelPass();
     }
 
-    public VCCredentialResponse downloadCredential(String credentialEndpoint, VCCredentialRequest vcCredentialRequest, String accessToken) throws InvalidCredentialResourceException {
-        VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialEndpoint, MediaType.APPLICATION_JSON,
-                vcCredentialRequest, VCCredentialResponse.class, accessToken);
-        log.debug("VC Credential Response is -> " + vcCredentialResponse);
-        if (vcCredentialResponse == null)
-            throw new InvalidCredentialResourceException("VC Credential Issue API not accessible");
-        return vcCredentialResponse;
-    }
-
-    public VCCredentialRequest generateVCCredentialRequest(IssuerDTO issuerDTO, CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse, CredentialsSupportedResponse credentialsSupportedResponse, String accessToken, String walletId, String base64EncodedWalletKey, Boolean isLoginFlow) throws Exception {
-        String jwt;
-
-        Map<String, ProofTypesSupported> proofTypesSupported = credentialsSupportedResponse.getProofTypesSupported();
-        SigningAlgorithm algorithm;
-        if (proofTypesSupported.containsKey("jwt")) {
-            algorithm = SigningAlgorithm.fromString(proofTypesSupported.get("jwt").getProofSigningAlgValuesSupported().getFirst());
-        } else {
-            algorithm = SigningAlgorithm.RS256;
-        }
-
-        if (!isLoginFlow) {
-            jwt = joseUtil.generateJwt(credentialIssuerWellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), accessToken);
-        } else {
-            Optional<ProofSigningKey> proofSigningKey = proofSigningKeyRepository.findByWalletIdAndAlgorithm(walletId, algorithm.name());
-            byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
-            SecretKey walletKey = EncryptionDecryptionUtil.bytesToSecretKey(decodedWalletKey);
-            byte[] publicKeyBytes = Base64.getDecoder().decode(proofSigningKey.get().getPublicKey());
-            byte[] privateKeyInBytes = encryptionDecryptionUtil.decryptWithAES(walletKey, proofSigningKey.get().getEncryptedSecretKey());
-            jwt = JwtGeneratorUtil.generateJwtUsingDBKeys(algorithm, credentialIssuerWellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), accessToken, publicKeyBytes, privateKeyInBytes);
-        }
-        List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
-
-        if (credentialContext == null || credentialContext.isEmpty()) {
-            credentialContext = List.of("https://www.w3.org/2018/credentials/v1");
-        }
-
-        return VCCredentialRequest.builder()
-                .format(credentialsSupportedResponse.getFormat())
-                .proof(VCCredentialRequestProof.builder()
-                        .proofType(credentialsSupportedResponse.getProofTypesSupported().keySet().stream().findFirst().get())
-                        .jwt(jwt)
-                        .build())
-                .credentialDefinition(VCCredentialDefinition.builder()
-                        .type(credentialsSupportedResponse.getCredentialDefinition().getType())
-                        .context(credentialContext)
-                        .build())
-                .build();
-    }
-
-    public Boolean verifyCredential(VCCredentialResponse vcCredentialResponse) throws VCVerificationException, JsonProcessingException {
-        log.info("Initiated the VC Verification : Started");
-        String credentialString = objectMapper.writeValueAsString(vcCredentialResponse.getCredential());
-        VerificationResult verificationResult = credentialsVerifier.verify(credentialString, CredentialFormat.LDP_VC);
-        if (!verificationResult.getVerificationStatus()) {
-            throw new VCVerificationException(verificationResult.getVerificationErrorCode().toLowerCase(), verificationResult.getVerificationMessage());
-        }
-        log.info("Completed the VC Verification : Completed -> result : " + verificationResult);
-        return true;
+    public ByteArrayInputStream generatePdfForVerifiableCredentials(String credentialType, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
+        LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties = loadDisplayPropertiesFromWellknown(vcCredentialResponse, credentialsSupportedResponse, locale);
+        Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse, vcCredentialResponse, issuerDTO, dataShareUrl, credentialValidity);
+        return renderVCInCredentialTemplate(data, issuerDTO.getIssuer_id(), credentialType);
     }
 
     @NotNull
-    public static LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> loadDisplayPropertiesFromWellknown(VCCredentialResponse vcCredentialResponse, CredentialsSupportedResponse credentialsSupportedResponse, String userLocale) {
+    private static LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> loadDisplayPropertiesFromWellknown(VCCredentialResponse vcCredentialResponse, CredentialsSupportedResponse credentialsSupportedResponse, String userLocale) {
         LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties = new LinkedHashMap<>();
         Map<String, Object> credentialProperties = vcCredentialResponse.getCredential().getCredentialSubject();
         LinkedHashMap<String, CredentialIssuerDisplayResponse> vcPropertiesFromWellKnown = new LinkedHashMap<>();
@@ -198,7 +111,7 @@ public class CredentialUtilService {
         return displayProperties;
     }
 
-    public Map<String, Object> getPdfResourceFromVcProperties(LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties, CredentialsSupportedResponse credentialsSupportedResponse, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, String dataShareUrl, String credentialValidity) throws IOException, WriterException {
+    private Map<String, Object> getPdfResourceFromVcProperties(LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties, CredentialsSupportedResponse credentialsSupportedResponse, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, String dataShareUrl, String credentialValidity) throws IOException, WriterException {
         Map<String, Object> data = new HashMap<>();
         LinkedHashMap<String, Object> rowProperties = new LinkedHashMap<>();
         String backgroundColor = credentialsSupportedResponse.getDisplay().getFirst().getBackgroundColor();
@@ -250,12 +163,6 @@ public class CredentialUtilService {
         data.put("titleName", credentialSupportedType);
         data.put("face", face);
         return data;
-    }
-
-    public ByteArrayInputStream generatePdfForVerifiableCredentials(String credentialType, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
-        LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties = loadDisplayPropertiesFromWellknown(vcCredentialResponse, credentialsSupportedResponse, locale);
-        Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse, vcCredentialResponse, issuerDTO, dataShareUrl, credentialValidity);
-        return renderVCInCredentialTemplate(data, issuerDTO.getIssuer_id(), credentialType);
     }
 
     @NotNull
@@ -330,61 +237,7 @@ public class CredentialUtilService {
         return Utilities.encodeToString(qrImage, "png");
     }
 
-    public WalletCredentialResponseDTO generateCredentialResponse(String decryptedCredential, CredentialMetadata credentialMetadata, String locale) throws CredentialProcessingException {
-        log.info("Generating credential response for issuerId: {}, credentialType: {}", credentialMetadata.getIssuerId(), credentialMetadata.getCredentialType());
-        try {
-            // Parse decrypted credential
-            VCCredentialResponse vcCredentialResponse = objectMapper.readValue(decryptedCredential, VCCredentialResponse.class);
 
-            // Fetch issuer details
-            IssuerDTO issuerDTO = issuersService.getIssuerDetails(credentialMetadata.getIssuerId());
-
-            // Fetch issuer configuration
-            IssuerConfig issuerConfig = issuersService.getIssuerConfig(credentialMetadata.getIssuerId(), credentialMetadata.getCredentialType());
-
-            if (null == issuerConfig) {
-                log.error("Credentials supported response not found in wellknown for credentialType: {}", credentialMetadata.getCredentialType());
-                throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Invalid credential type configuration");
-            }
-
-            // Find credentials supported response for the credential type
-            CredentialsSupportedResponse credentialsSupportedResponse = issuerConfig.getCredentialsSupportedResponse();
-            if (credentialsSupportedResponse == null || !credentialsSupportedResponse.getCredentialDefinition().getType().containsAll(vcCredentialResponse.getCredential().getType())) {
-                log.error("Credentials supported response not found for credentialType: {}", credentialMetadata.getCredentialType());
-                throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Invalid credential type configuration");
-            }
-
-            // Generate PDF
-            // keep the datashare url and credential validity as defaults in downloading VC as PDF as logged-in user
-            // This is because generatePdfForVerifiableCredentials will be used by both logged-in and non-logged-in users
-            ByteArrayInputStream pdfStream = generatePdfForVerifiableCredentials(
-                    credentialMetadata.getCredentialType(),
-                    vcCredentialResponse,
-                    issuerDTO,
-                    credentialsSupportedResponse,
-                    "",
-                    "-1",
-                    locale
-            );
-
-            // Construct response
-            String fileName = String.format("%s_credential.pdf", credentialMetadata.getCredentialType());
-            return WalletCredentialResponseDTO.builder()
-                    .fileName(fileName)
-                    .fileContentStream(new InputStreamResource(pdfStream))
-                    .build();
-        } catch (JsonProcessingException e) {
-            log.error("Failed to parse decrypted credential for issuerId: {}, credentialType: {}", credentialMetadata.getIssuerId(), credentialMetadata.getCredentialType(), e);
-            throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to parse decrypted credential");
-        } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
-                 InvalidWellknownResponseException | InvalidIssuerIdException e) {
-            log.error("Failed to fetch issuer details or configuration for issuerId: {}", credentialMetadata.getIssuerId(), e);
-            throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to fetch issuer configuration");
-        } catch (Exception e) {
-            log.error("Failed to generate PDF for credentialType: {}", credentialMetadata.getCredentialType(), e);
-            throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to generate credential PDF");
-        }
-    }
 
 }
 

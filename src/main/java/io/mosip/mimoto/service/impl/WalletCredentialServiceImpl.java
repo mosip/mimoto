@@ -1,23 +1,31 @@
 package io.mosip.mimoto.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.dbentity.CredentialMetadata;
 import io.mosip.mimoto.dbentity.VerifiableCredential;
+import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
+import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
 import io.mosip.mimoto.dto.mimoto.IssuerConfig;
+import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.WalletCredentialService;
+import io.mosip.mimoto.service.CredentialPDFGeneratorService;
 import io.mosip.mimoto.util.CredentialProcessor;
-import io.mosip.mimoto.util.CredentialUtilService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.WalletCredentialResponseDTOFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
@@ -34,20 +42,22 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     private final WalletCredentialsRepository repository;
     private final IssuersService issuersService;
     private final CredentialProcessor credentialProcessor;
-    private final CredentialUtilService credentialUtilService;
+    private final ObjectMapper objectMapper;
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
+    private final CredentialPDFGeneratorService credentialPDFGeneratorService;
 
     @Autowired
     public WalletCredentialServiceImpl(WalletCredentialsRepository repository,
                                        IssuersService issuersService,
                                        CredentialProcessor credentialProcessor,
-                                       CredentialUtilService credentialUtilService,
-                                       EncryptionDecryptionUtil encryptionDecryptionUtil) {
+                                       ObjectMapper objectMapper,
+                                       EncryptionDecryptionUtil encryptionDecryptionUtil,CredentialPDFGeneratorService credentialPDFGeneratorService) {
         this.repository = repository;
         this.issuersService = issuersService;
         this.credentialProcessor = credentialProcessor;
-        this.credentialUtilService = credentialUtilService;
+        this.objectMapper = objectMapper;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
+        this.credentialPDFGeneratorService = credentialPDFGeneratorService;
     }
 
     @Override
@@ -104,8 +114,8 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
 
         try {
             String decryptedCredential = encryptionDecryptionUtil.decryptCredential(credential.getCredential(), base64Key);
-            WalletCredentialResponseDTO response = credentialUtilService.generateCredentialResponse(
-                    decryptedCredential, credential.getCredentialMetadata(), locale);
+
+            WalletCredentialResponseDTO response = generateCredentialResponse(decryptedCredential, credential.getCredentialMetadata(), locale);
             log.debug("Credential fetched successfully: {}", credentialId);
             return response;
         } catch (DecryptionException e) {
@@ -131,5 +141,61 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
             log.warn("Credential not found: {} for wallet: {}", credentialId, walletId);
             return new CredentialNotFoundException(RESOURCE_NOT_FOUND.getErrorCode(), RESOURCE_NOT_FOUND.getErrorMessage());
         };
+    }
+
+    private WalletCredentialResponseDTO generateCredentialResponse(String decryptedCredential, CredentialMetadata credentialMetadata, String locale) throws CredentialProcessingException {
+        log.info("Generating credential response for issuerId: {}, credentialType: {}", credentialMetadata.getIssuerId(), credentialMetadata.getCredentialType());
+        try {
+            // Parse decrypted credential
+            VCCredentialResponse vcCredentialResponse = objectMapper.readValue(decryptedCredential, VCCredentialResponse.class);
+
+            // Fetch issuer details
+            IssuerDTO issuerDTO = issuersService.getIssuerDetails(credentialMetadata.getIssuerId());
+
+            // Fetch issuer configuration
+            IssuerConfig issuerConfig = issuersService.getIssuerConfig(credentialMetadata.getIssuerId(), credentialMetadata.getCredentialType());
+
+            if (null == issuerConfig) {
+                log.error("Credentials supported response not found in wellknown for credentialType: {}", credentialMetadata.getCredentialType());
+                throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Invalid credential type configuration");
+            }
+
+            // Find credentials supported response for the credential type
+            CredentialsSupportedResponse credentialsSupportedResponse = issuerConfig.getCredentialsSupportedResponse();
+            if (credentialsSupportedResponse == null || !credentialsSupportedResponse.getCredentialDefinition().getType().containsAll(vcCredentialResponse.getCredential().getType())) {
+                log.error("Credentials supported response not found for credentialType: {}", credentialMetadata.getCredentialType());
+                throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Invalid credential type configuration");
+            }
+
+            // Generate PDF
+            // keep the datashare url and credential validity as defaults in downloading VC as PDF as logged-in user
+            // This is because generatePdfForVerifiableCredentials will be used by both logged-in and non-logged-in users
+            ByteArrayInputStream pdfStream = credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
+                    credentialMetadata.getCredentialType(),
+                    vcCredentialResponse,
+                    issuerDTO,
+                    credentialsSupportedResponse,
+                    "",
+                    "-1",
+                    locale
+            );
+
+            // Construct response
+            String fileName = String.format("%s_credential.pdf", credentialMetadata.getCredentialType());
+            return WalletCredentialResponseDTO.builder()
+                    .fileName(fileName)
+                    .fileContentStream(new InputStreamResource(pdfStream))
+                    .build();
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse decrypted credential for issuerId: {}, credentialType: {}", credentialMetadata.getIssuerId(), credentialMetadata.getCredentialType(), e);
+            throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to parse decrypted credential");
+        } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
+                 InvalidWellknownResponseException | InvalidIssuerIdException e) {
+            log.error("Failed to fetch issuer details or configuration for issuerId: {}", credentialMetadata.getIssuerId(), e);
+            throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to fetch issuer configuration");
+        } catch (Exception e) {
+            log.error("Failed to generate PDF for credentialType: {}", credentialMetadata.getCredentialType(), e);
+            throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to generate credential PDF");
+        }
     }
 }

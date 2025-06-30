@@ -12,8 +12,10 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
+import io.mosip.mimoto.service.CredentialRequestService;
+import io.mosip.mimoto.service.CredentialService;
+import io.mosip.mimoto.service.CredentialVerifierService;
 import io.mosip.mimoto.service.IssuersService;
-import io.mosip.mimoto.service.impl.DataShareServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,27 +31,31 @@ import static io.mosip.mimoto.exception.ErrorConstants.*;
 @Component
 public class CredentialProcessor {
 
-    private final CredentialUtilService credentialUtilService;
-    private final DataShareServiceImpl dataShareService;
     private final ObjectMapper objectMapper;
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
     private final WalletCredentialsRepository walletCredentialsRepository;
     private final IssuersService issuersService;
+    private final CredentialVerifierService credentialVerifierService;
+    private final CredentialRequestService credentialRequestService;
+    private final CredentialService credentialService;
 
     @Autowired
     public CredentialProcessor(
-            CredentialUtilService credentialUtilService,
-            DataShareServiceImpl dataShareService,
             ObjectMapper objectMapper,
             EncryptionDecryptionUtil encryptionDecryptionUtil,
             WalletCredentialsRepository walletCredentialsRepository,
-            IssuersService issuersService) {
-        this.credentialUtilService = credentialUtilService;
-        this.dataShareService = dataShareService;
+            IssuersService issuersService,
+            CredentialVerifierService credentialVerifierService,
+            CredentialRequestService credentialRequestService,
+            CredentialService credentialService) {
+
         this.objectMapper = objectMapper;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.walletCredentialsRepository = walletCredentialsRepository;
         this.issuersService = issuersService;
+        this.credentialVerifierService = credentialVerifierService;
+        this.credentialRequestService = credentialRequestService;
+        this.credentialService = credentialService;
     }
 
     /**
@@ -106,7 +112,7 @@ public class CredentialProcessor {
         // Generate credential request
         VCCredentialRequest vcCredentialRequest;
         try {
-            vcCredentialRequest = credentialUtilService.generateVCCredentialRequest(
+            vcCredentialRequest = credentialRequestService.buildRequest(
                     issuerConfig.getIssuerDTO(), issuerConfig.getWellKnownResponse(),
                     issuerConfig.getCredentialsSupportedResponse(), tokenResponse.getAccess_token(),
                     walletId, base64Key, true);
@@ -120,7 +126,7 @@ public class CredentialProcessor {
         // Download credential
         VCCredentialResponse vcCredentialResponse;
         try {
-            vcCredentialResponse = credentialUtilService.downloadCredential(
+            vcCredentialResponse = credentialService.downloadCredential(
                     issuerConfig.getWellKnownResponse().getCredentialEndPoint(),
                     vcCredentialRequest, tokenResponse.getAccess_token());
         } catch (Exception e) {
@@ -134,7 +140,7 @@ public class CredentialProcessor {
         boolean verificationStatus;
         try {
             verificationStatus = issuerId.toLowerCase().contains("mock") ||
-                    credentialUtilService.verifyCredential(vcCredentialResponse);
+                    credentialVerifierService.verify(vcCredentialResponse);
         } catch (VCVerificationException | JsonProcessingException e) {
             log.error("Credential verification failed for issuerId: {}, credentialConfigurationId: {}", issuerId, credentialConfigurationId, e);
             throw new VCVerificationException(
