@@ -1,0 +1,36 @@
+AuthorizationCodeForGoogleLogin:
+   Mimoto_ESignet_AuthorizationCode_GoogleLogin_uin_All_Valid_Smoke_sid:
+      endPoint: /v1/esignet/authorization/auth-code
+      description: Generate authorization code to download credential issuer
+      uniqueIdentifier: TC_Mimoto_AuthorizationCodeForGoogleLogin_01
+      role: resident
+      restMethod: post
+      checkErrorsOnlyInResponse: true
+      validityCheckRequired: true
+      inputTemplate: mimoto/LoginFlow/DownloadMosipIssuerCredential/AuthorizationCode/AuthorizationCode
+      outputTemplate: mimoto/LoginFlow/DownloadMosipIssuerCredential/AuthorizationCode/AuthorizationCodeResult
+      input: '{
+        "encodedHash": "$ID:ESignet_OAuthDetailsRequest_GoogleLogin_all_Valid_Smoke_sid_encodedResp$",
+      	"requestTime": "$TIMESTAMP$",
+      	"transactionId": "$ID:ESignet_OAuthDetailsRequest_GoogleLogin_all_Valid_Smoke_sid_transactionId$"
+}'
+      output: '{
+}'
+
+   Mimoto_ESignet_AuthorizationCode_GoogleLogin_uin_All_Valid_sid_ForNeg:
+      endPoint: /v1/esignet/authorization/auth-code
+      description: Generate authorization code to download credential issuer for Neg scenario
+      uniqueIdentifier: TC_Mimoto_AuthorizationCodeForGoogleLogin_02
+      role: resident
+      restMethod: post
+      checkErrorsOnlyInResponse: true
+      validityCheckRequired: true
+      inputTemplate: mimoto/LoginFlow/DownloadMosipIssuerCredential/AuthorizationCode/AuthorizationCode
+      outputTemplate: mimoto/LoginFlow/DownloadMosipIssuerCredential/AuthorizationCode/AuthorizationCodeResult
+      input: '{
+       "encodedHash": "$ID:ESignet_OAuthDetailsRequest_GoogleLogin_all_Valid_sid_ForNeg_encodedResp$",
+      	"requestTime": "$TIMESTAMP$",
+      	"transactionId": "$ID:ESignet_OAuthDetailsRequest_GoogleLogin_all_Valid_sid_ForNeg_transactionId$"
+}'
+      output: '{
+}'

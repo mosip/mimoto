@@ -1,0 +1,92 @@
+UnlockWallet:
+   Mimoto_UnlockWallet_all_Valid_Smoke:
+      endPoint: /v1/mimoto/wallets/{walletId}/unlock
+      description: Unlock the wallet that is created
+      uniqueIdentifier: TC_Mimoto_UnlockWallet_01
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/UnlockWallet/UnlockWallet
+      outputTemplate: mimoto/LoginFlow/Wallet/UnlockWallet/UnlockWalletResult
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+      	"walletPin": "123456"
+}'
+      output: '{
+      "walletName": "$ID:CreateWallet_all_Valid_Smoke_sid_walletName$",
+      "walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$"
+}'
+
+   Mimoto_UnlockWallet_Invalid_WalletId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/unlock
+      description: Unlock the wallet with invalid wallet id and expects it to fail
+      uniqueIdentifier: TC_Mimoto_UnlockWallet_02
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/UnlockWallet/UnlockWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletId": "invalid",
+      	"walletPin": "123456"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_UnlockWallet_Incorrect_WalletPin_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/unlock
+      description: Unlock the wallet with incorrect wallet Pin and expects it to fail
+      uniqueIdentifier: TC_Mimoto_UnlockWallet_03
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/UnlockWallet/UnlockWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+      	"walletPin": "876532"
+}'
+      output: '{
+      "errorCode": "invalid_pin"
+}'
+
+   Mimoto_UnlockWallet_WithoutLogin_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/unlock
+      description: Unlock the wallet without login session and expects it to fail
+      uniqueIdentifier: TC_Mimoto_UnlockWallet_04
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Wallet/UnlockWallet/UnlockWallet
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "withoutLogin",
+      	"cookieName": "SESSION",
+      	"walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+      	"walletPin": "123456"
+}'
+      output: '{
+      "responseCode": "401"
+}'
+
+   Mimoto_UnlockWallet_Invalid_WalletPin_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/unlock
+      description: Unlock the wallet with invalid wallet Pin and expects it to fail
+      uniqueIdentifier: TC_Mimoto_UnlockWallet_06
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/UnlockWallet/UnlockWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+      	"walletPin": "87653"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
