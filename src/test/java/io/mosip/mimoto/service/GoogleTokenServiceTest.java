@@ -18,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtException;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -95,12 +94,12 @@ class GoogleTokenServiceTest {
     @Test
     void processTokenValidTokenShouldCallDependenciesAndSetSessionAndSecurityContext() throws Exception {
         when(tokenDecoder.decode(idToken)).thenReturn(validJwt);
-        when(userMetadataService.updateOrInsertUserMetadata("google-subject-id", provider, "Test User", "http://example.com/picture.jpg", "test@example.com")).thenReturn("test-user-id");
+        when(userMetadataService.updateOrCreateUserMetadata("google-subject-id", provider, "Test User", "http://example.com/picture.jpg", "test@example.com")).thenReturn("test-user-id");
 
         googleTokenService.processToken(idToken, provider, request, response);
 
         verify(tokenDecoder).decode(idToken);
-        verify(userMetadataService).updateOrInsertUserMetadata("google-subject-id", provider, "Test User", "http://example.com/picture.jpg", "test@example.com");
+        verify(userMetadataService).updateOrCreateUserMetadata("google-subject-id", provider, "Test User", "http://example.com/picture.jpg", "test@example.com");
         verify(sessionManager).setupSession(eq(request), eq(provider), userMetadataDTOArgumentCaptor.capture(), eq("test-user-id"));
         verify(securityContextManager).setupSecurityContext(oauth2TokenCaptor.capture(), eq(request), eq(response));
 

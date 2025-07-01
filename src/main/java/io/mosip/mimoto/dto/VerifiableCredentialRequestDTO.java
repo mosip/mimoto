@@ -3,12 +3,8 @@ package io.mosip.mimoto.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 @Data
-@Getter
-@Setter
 public class VerifiableCredentialRequestDTO {
     @Schema(description = "The unique identifier of the issuer")
     @NotBlank(message = "issuerId cannot be blank")

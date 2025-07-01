@@ -18,7 +18,7 @@ This is the docker-compose setup to run mimoto which act as BFF for Inji mobile 
 3. Start esignet services and update esignet host references in mimoto-default.properties and mimoto-issuers-config.json
 
 4. Create certs folder in the same directory and create OIDC client. Add key in oidckeystore.p12 and copy this file under certs folder.
-Refer [here](https://docs.mosip.io/inji/inji-mobile-wallet/customization-overview/credential_providers) to create client
+Refer [here](https://docs.inji.io/inji-wallet/inji-mobile/technical-overview/customization-overview/credential_providers) to create client
 * Update client_id and client_alias as per onboarding in mimoto-issuers-config.json file.
 * Update oidc_p12_password in docker-compose.yml to match the password set for the oidckeystore.p12 file.
 5. Refer to the [How to create Google Client Credentials](#how-to-create-google-client-credentials) section to create 

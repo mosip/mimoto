@@ -10,9 +10,7 @@ import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.IdpException;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.service.IdpService;
-import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.RestClientService;
-import io.mosip.mimoto.util.CredentialUtilService;
 import io.mosip.mimoto.util.JoseUtil;
 import io.mosip.mimoto.util.RequestValidator;
 import io.mosip.mimoto.util.Utilities;
@@ -47,16 +45,10 @@ public class IdpController {
     private JoseUtil joseUtil;
 
     @Autowired
-    IssuersService issuersService;
-
-    @Autowired
     IdpService idpService;
 
     @Autowired
     RequestValidator requestValidator;
-
-    @Autowired
-    CredentialUtilService credentialUtilService;
 
     @Operation(summary = SwaggerLiteralConstants.IDP_BINDING_OTP_SUMMARY, description = SwaggerLiteralConstants.IDP_BINDING_OTP_DESCRIPTION)
     @PostMapping(value = "/binding-otp", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -88,7 +80,7 @@ public class IdpController {
             throws Exception {
 
         log.debug("Received wallet-binding request : " + JsonUtils.javaObjectToJsonString(requestDTO));
-        ResponseWrapper<WalletBindingResponseDto> responseWrapper = new ResponseWrapper<WalletBindingResponseDto>();
+        ResponseWrapper<WalletBindingResponseDto> responseWrapper = new ResponseWrapper<>();
         try {
             WalletBindingInnerRequestDto innerRequestDto = new WalletBindingInnerRequestDto();
             innerRequestDto.setChallengeList(requestDTO.getRequest().getChallengeList());
@@ -128,7 +120,7 @@ public class IdpController {
         ResponseWrapper<TokenResponseDTO> responseWrapper = new ResponseWrapper<>();
         try {
             params.put("issuer", issuer);
-            TokenResponseDTO response = credentialUtilService.getTokenResponse(params);
+            TokenResponseDTO response = idpService.getTokenResponse(params);
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception ex) {
             log.error("Exception Occurred while Invoking the Token Endpoint : ", ex);

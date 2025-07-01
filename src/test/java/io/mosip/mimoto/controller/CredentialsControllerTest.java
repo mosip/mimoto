@@ -2,8 +2,8 @@ package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.impl.CredentialServiceImpl;
-import io.mosip.mimoto.util.CredentialUtilService;
 import io.mosip.mimoto.util.TestUtilities;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.message.BasicNameValuePair;
@@ -41,7 +41,7 @@ public class CredentialsControllerTest {
     private CredentialServiceImpl credentialService;
 
     @MockBean
-    private CredentialUtilService credentialUtilService;
+    private IdpService idpService;
 
     private String locale = "test-local", issuer = "test-issuer", credential = "test-credential", requestContent;
     private TokenResponseDTO tokenResponseDTO;
@@ -49,7 +49,7 @@ public class CredentialsControllerTest {
     @Before
     public void setUp() throws Exception {
         tokenResponseDTO = TestUtilities.getTokenResponseDTO();
-        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap())).thenReturn(tokenResponseDTO);
+        Mockito.when(idpService.getTokenResponse(Mockito.anyMap())).thenReturn(tokenResponseDTO);
         requestContent = EntityUtils.toString(new UrlEncodedFormEntity(List.of(
                 new BasicNameValuePair("grant_type", "authorization_code"),
                 new BasicNameValuePair("code", "test-code"),
@@ -76,7 +76,7 @@ public class CredentialsControllerTest {
 
     @Test
     public void throwExceptionOnFetchingTokenResponseFailure() throws Exception {
-        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap()))
+        Mockito.when(idpService.getTokenResponse(Mockito.anyMap()))
                 .thenThrow(new IdpException("Exception occurred while performing the authorization"));
 
         mockMvc.perform(post("/credentials/download")
@@ -90,7 +90,7 @@ public class CredentialsControllerTest {
 
     @Test
     public void throwExceptionOnFetchingIssuerOrAuthServerWellknownFailureDuringTokenGeneration() throws Exception {
-        Mockito.when(credentialUtilService.getTokenResponse(Mockito.anyMap()))
+        Mockito.when(idpService.getTokenResponse(Mockito.anyMap()))
                 .thenThrow(new ApiNotAccessibleException());
 
         mockMvc.perform(post("/credentials/download")

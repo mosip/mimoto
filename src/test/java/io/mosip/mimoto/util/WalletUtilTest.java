@@ -1,7 +1,7 @@
 package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dbentity.Wallet;
+import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.repository.WalletRepository;
 import jakarta.servlet.http.HttpSession;

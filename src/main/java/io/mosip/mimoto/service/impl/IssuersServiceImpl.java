@@ -37,7 +37,7 @@ public class IssuersServiceImpl implements IssuersService {
 
     @Override
     @Cacheable(value = "issuersConfig", key = "#p0 ?: 'allIssuersConfig'")
-    public IssuersDTO getIssuers(String search) throws ApiNotAccessibleException, AuthorizationServerWellknownResponseException, IOException, InvalidWellknownResponseException {
+    public IssuersDTO getIssuers(String search) throws ApiNotAccessibleException, IOException {
         IssuersDTO issuersDTO = getAllIssuers();
         issuersDTO = getAllEnabledIssuers(issuersDTO);
         issuersDTO = getFilteredIssuers(issuersDTO, search);
@@ -100,7 +100,8 @@ public class IssuersServiceImpl implements IssuersService {
         );
     }
 
-    public IssuerConfig getIssuerConfig(String issuerId, @NotBlank String credentialType) throws ApiNotAccessibleException, IOException, InvalidIssuerIdException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+    @Override
+    public IssuerConfig getIssuerConfig(String issuerId, @NotBlank String credentialType) throws ApiNotAccessibleException, InvalidIssuerIdException {
         log.info("Fetching issuer config for issuerId: {}", issuerId);
         try {
             IssuerDTO issuerDTO = getIssuerDetails(issuerId);

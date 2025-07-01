@@ -48,8 +48,6 @@ public class IssuersServiceTest {
     @Spy
     ObjectMapper objectMapper;
 
-    List<String> issuerConfigRelatedFields = List.of("additional_headers", "authorization_endpoint", "authorization_audience", "credential_endpoint", "credential_audience");
-
     String issuerWellKnownUrl, issuerId, credentialIssuerHostUrl, authServerWellknownUrl, issuersConfigJsonValue;
     CredentialIssuerConfiguration expectedCredentialIssuerConfiguration;
     IssuersDTO issuers = new IssuersDTO();
@@ -78,7 +76,7 @@ public class IssuersServiceTest {
     }
 
     @Test
-    public void shouldReturnAllIssuersWhenSearchValueIsNull() throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+    public void shouldReturnAllIssuersWhenSearchValueIsNull() throws ApiNotAccessibleException, IOException {
         issuers.setIssuers(List.of(getIssuerConfigDTO("Issuer1"), getIssuerConfigDTO("Issuer2")));
         issuersConfigJsonValue = new Gson().toJson(issuers);
         Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(issuersConfigJsonValue);
@@ -93,7 +91,7 @@ public class IssuersServiceTest {
     }
 
     @Test
-    public void shouldReturnMatchingIssuersWhenSearchValuePatternMatchesWithIssuerName() throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+    public void shouldReturnMatchingIssuersWhenSearchValuePatternMatchesWithIssuerName() throws ApiNotAccessibleException, IOException {
         issuers.setIssuers(List.of(getIssuerConfigDTO("Issuer1"), getIssuerConfigDTO("Issuer2")));
         issuersConfigJsonValue = new Gson().toJson(issuers);
         Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(issuersConfigJsonValue);
@@ -108,7 +106,7 @@ public class IssuersServiceTest {
     }
 
     @Test(expected = ApiNotAccessibleException.class)
-    public void shouldThrowApiNotAccessibleExceptionWhenIssuersJsonStringIsNullForGettingAllIssuers() throws IOException, ApiNotAccessibleException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+    public void shouldThrowApiNotAccessibleExceptionWhenIssuersJsonStringIsNullForGettingAllIssuers() throws IOException, ApiNotAccessibleException {
         Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(null);
 
         issuersService.getIssuers(null);
@@ -147,7 +145,7 @@ public class IssuersServiceTest {
     }
 
     @Test
-    public void shouldReturnOnlyEnabledIssuers() throws IOException, ApiNotAccessibleException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+    public void shouldReturnOnlyEnabledIssuers() throws IOException, ApiNotAccessibleException {
         IssuersDTO issuers = new IssuersDTO();
         IssuerDTO enabledIssuer = getIssuerConfigDTO("Issuer1");
         IssuerDTO disabledIssuer = getIssuerConfigDTO("Issuer2");
@@ -162,8 +160,8 @@ public class IssuersServiceTest {
         IssuersDTO actualIssuersDTO = issuersService.getIssuers("");
 
         assertEquals(expectedIssuersDTO, actualIssuersDTO);
-        assertEquals(actualIssuersDTO.getIssuers().get(0).getEnabled(), "true");
-        assertEquals(actualIssuersDTO.getIssuers().size(), 1);
+        assertEquals("true", actualIssuersDTO.getIssuers().getFirst().getEnabled());
+        assertEquals(1, actualIssuersDTO.getIssuers().size());
     }
 
     @Test
@@ -177,9 +175,7 @@ public class IssuersServiceTest {
     public void issuersConfigShouldThrowExceptionIfAnyErrorOccurredWhileFetchingIssuersWellknown() {
         Mockito.when(utilities.getIssuersConfigJsonValue()).thenReturn(null);
 
-        ApiNotAccessibleException actualException = assertThrows(ApiNotAccessibleException.class, () -> {
-            issuersService.getIssuerConfiguration(issuerId);
-        });
+        ApiNotAccessibleException actualException = assertThrows(ApiNotAccessibleException.class, () -> issuersService.getIssuerConfiguration(issuerId));
 
         assertEquals("RESIDENT-APP-026 --> Api not accessible failure", actualException.getMessage());
         verify(utilities, times(1)).getIssuersConfigJsonValue();
@@ -187,12 +183,10 @@ public class IssuersServiceTest {
 
 
     @Test
-    public void issuersConfigShouldThrowExceptionIfAnyErrorOccurredWhileFetchingIssuersAuthorizationServerWellknown() throws IOException, AuthorizationServerWellknownResponseException {
+    public void issuersConfigShouldThrowExceptionIfAnyErrorOccurredWhileFetchingIssuersAuthorizationServerWellknown() throws AuthorizationServerWellknownResponseException {
         Mockito.when(issuersConfigUtil.getAuthServerWellknown(authServerWellknownUrl)).thenThrow(new AuthorizationServerWellknownResponseException("well-known api is not accessible"));
 
-        AuthorizationServerWellknownResponseException actualException = assertThrows(AuthorizationServerWellknownResponseException.class, () -> {
-            issuersService.getIssuerConfiguration("Issuer3id");
-        });
+        AuthorizationServerWellknownResponseException actualException = assertThrows(AuthorizationServerWellknownResponseException.class, () -> issuersService.getIssuerConfiguration("Issuer3id"));
 
         assertEquals("RESIDENT-APP-042 --> Invalid Authorization Server well-known from server:\n" +
                 "well-known api is not accessible", actualException.getMessage());
@@ -203,7 +197,7 @@ public class IssuersServiceTest {
 // Add these test cases to the existing IssuersServiceTest class
 
     @Test
-    public void shouldReturnIssuerConfigForValidIssuerIdAndCredentialType() throws ApiNotAccessibleException, IOException, InvalidIssuerIdException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
+    public void shouldReturnIssuerConfigForValidIssuerIdAndCredentialType() throws ApiNotAccessibleException, IOException, InvalidIssuerIdException, InvalidWellknownResponseException {
         // Arrange
         String issuerId = "Issuer3id";
         String credentialType = "CredentialType1";
@@ -262,7 +256,7 @@ public class IssuersServiceTest {
     }
 
     @Test
-    public void shouldThrowApiNotAccessibleExceptionWhenGetIssuerWellknownFails() throws IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException, ApiNotAccessibleException {
+    public void shouldThrowApiNotAccessibleExceptionWhenGetIssuerWellknownFails() throws IOException, InvalidWellknownResponseException, ApiNotAccessibleException {
         // Arrange
         String issuerId = "Issuer3id";
         String credentialType = "CredentialType1";
@@ -280,7 +274,7 @@ public class IssuersServiceTest {
     }
 
     @Test
-    public void shouldLogErrorWhenApiNotAccessibleExceptionOccurs() throws IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException, ApiNotAccessibleException {
+    public void shouldLogErrorWhenApiNotAccessibleExceptionOccurs() throws IOException, InvalidWellknownResponseException, ApiNotAccessibleException {
         // Arrange
         String issuerId = "Issuer3id";
         String credentialType = "CredentialType1";

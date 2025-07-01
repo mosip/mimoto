@@ -1,5 +1,6 @@
-package io.mosip.mimoto.dto;
+package io.mosip.mimoto.config.oauth2;
 
+import io.mosip.mimoto.dto.ProviderDataConfig;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
