@@ -2901,6 +2901,30 @@
                                             "errorMessage": "credentialConfigurationId cannot be blank"
                                         }
                                     },
+                                    "Invalid code": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "code cannot be blank"
+                                        }
+                                    },
+                                    "Invalid grantType": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "grantType cannot be blank"
+                                        }
+                                    },
+                                    "Invalid redirectUri": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "redirectUri cannot be blank"
+                                        }
+                                    },
+                                    "Invalid codeVerifier": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "codeVerifier cannot be blank"
+                                        }
+                                    },
                                     "Credential already exists for given Issuer and Credential Type in the wallet": {
                                         "value": {
                                             "errorCode": "credential_download_error",
@@ -4100,7 +4124,11 @@
               },
               "required": [
                 "issuer",
-                "credentialConfigurationId"
+                "credentialConfigurationId",
+                "code",
+                "grantType",
+                "redirectUri",
+                "codeVerifier"
               ]
             },
             "VerifiableCredentialResponseDTO": {
