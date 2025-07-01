@@ -3,12 +3,12 @@ package io.mosip.mimoto.controller;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.constant.SwaggerExampleConstants;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
-import io.mosip.mimoto.dbentity.UserMetadata;
+import io.mosip.mimoto.model.UserMetadata;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.ErrorConstants;
-import io.mosip.mimoto.exception.UnAuthorizationAccessException;
+import io.mosip.mimoto.exception.UnauthorizedAccessException;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import io.mosip.mimoto.service.EncryptionService;
 import io.mosip.mimoto.util.Utilities;
@@ -103,7 +103,7 @@ public class UsersController {
                         null
                 );
                 session.setAttribute(SessionKeys.USER_METADATA, userMetadataDTO);
-            } catch (UnAuthorizationAccessException exception) {
+            } catch (UnauthorizedAccessException exception) {
                 log.error("Error occurred while retrieving user profile: ", exception);
                 return Utilities.getErrorResponseEntityWithoutWrapper(
                         exception,
@@ -132,10 +132,10 @@ public class UsersController {
         return ResponseEntity.status(HttpStatus.OK).body(userMetadataDTO);
     }
 
-    private UserMetadata fetchUserMetadata(String providerSubjectId, String identityProvider) throws UnAuthorizationAccessException {
+    private UserMetadata fetchUserMetadata(String providerSubjectId, String identityProvider) throws UnauthorizedAccessException {
         return userMetadataRepository.findByProviderSubjectIdAndIdentityProvider(providerSubjectId, identityProvider).
                 orElseThrow(() ->
-                        new UnAuthorizationAccessException(ErrorConstants.UNAUTHORIZED_ACCESS.getErrorCode(), "User not found. Please check your credentials or login again")
+                        new UnauthorizedAccessException(ErrorConstants.UNAUTHORIZED_ACCESS.getErrorCode(), "User not found. Please check your credentials or login again")
                 );
     }
 }

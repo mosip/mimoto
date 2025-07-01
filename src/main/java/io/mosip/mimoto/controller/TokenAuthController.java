@@ -33,7 +33,7 @@ public class TokenAuthController {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String SESSION_CREATED = "Session created.";
     private static final String INVALID_TOKEN_MESSAGE = "Bearer ID token required.";
-    private static final String UNSUPPORTED_PROVIDER_MESSAGE = "Unsupported provider: %s";
+
 
     private final TokenServiceFactory tokenServiceFactory;
 
@@ -45,10 +45,10 @@ public class TokenAuthController {
     @Operation(
             summary = "Login and create session using OAuth2 ID token",
             description = """
-                    This API accepts an OAuth2 ID token in the Authorization header and establishes a session 
+                    This API accepts an OAuth2 ID token in the Authorization header and establishes a session
                     by populating the Spring Security context.
 
-                    Fetch the ID token from a supported OAuth2 provider (such as Google or Microsoft) and provide 
+                    Fetch the ID token from a supported OAuth2 provider (such as Google or Microsoft) and provide
                     it in the request as a Bearer token.
                     """,
             operationId = "loginWithOAuth2IdToken",
@@ -86,12 +86,7 @@ public class TokenAuthController {
                                     mediaType = MediaType.APPLICATION_JSON_VALUE,
                                     schema = @Schema(implementation = io.mosip.mimoto.dto.ErrorDTO.class),
                                     examples = {
-                                            @ExampleObject(name = "UnsupportedProvider", value = """
-                                                    {
-                                                      "errorCode": "INVALID_REQUEST",
-                                                      "errorMessage": "Unsupported provider: provider123"
-                                                    }
-                                                    """),
+
                                             @ExampleObject(name = "MissingToken", value = """
                                                     {
                                                       "errorCode": "INVALID_REQUEST",
@@ -118,9 +113,6 @@ public class TokenAuthController {
     )
     @PostMapping("/auth/{provider}/token-login")
     public ResponseEntity<?> createSessionFromIdToken(@RequestHeader(value = "Authorization", required = false) String authorization, @PathVariable("provider") String provider, HttpServletRequest request, HttpServletResponse response) {
-        if (!tokenServiceFactory.isSupportedProvider(provider)) {
-            return Utilities.buildErrorResponse(HttpStatus.BAD_REQUEST, ErrorConstants.INVALID_REQUEST.getErrorCode(), String.format(UNSUPPORTED_PROVIDER_MESSAGE, provider));
-        }
         if (authorization == null || !authorization.startsWith(BEARER_PREFIX)) {
             return Utilities.buildErrorResponse(HttpStatus.BAD_REQUEST, ErrorConstants.INVALID_REQUEST.getErrorCode(), INVALID_TOKEN_MESSAGE);
         }

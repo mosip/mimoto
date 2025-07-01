@@ -1,7 +1,7 @@
 package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.exception.KeyGenerationException;
-import io.mosip.mimoto.model.SigningAlgorithm;
+import io.mosip.mimoto.constant.SigningAlgorithm;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.KeyGenerator;

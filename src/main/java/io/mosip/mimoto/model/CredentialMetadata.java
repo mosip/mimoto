@@ -1,4 +1,4 @@
-package io.mosip.mimoto.dbentity;
+package io.mosip.mimoto.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;

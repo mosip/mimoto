@@ -1,4 +1,4 @@
-package io.mosip.mimoto.model;
+package io.mosip.mimoto.constant;
 
 import com.nimbusds.jose.JWSAlgorithm;
 

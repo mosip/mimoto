@@ -1,7 +1,7 @@
 package io.mosip.mimoto.service.impl;
 
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dbentity.Wallet;
+import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
@@ -62,14 +62,12 @@ public class WalletServiceImpl implements WalletService {
         validator.validateUserId(userId);
         validator.validateWalletPin(pin);
 
-        Wallet wallet = repository.findByUserIdAndId(userId, walletId)
-                .orElseThrow(getWalletNotFoundExceptionSupplier(userId, walletId));
-
-        String decryptedWalletKey = walletUtil.decryptWalletKey(wallet.getWalletKey(), pin);
-        httpSession.setAttribute(SessionKeys.WALLET_KEY, decryptedWalletKey);
-        httpSession.setAttribute(SessionKeys.WALLET_ID, walletId);
-
-        return new WalletResponseDto(walletId, wallet.getWalletMetadata().getName());
+        return repository.findByUserIdAndId(userId, walletId).map(wallet -> {
+            String decryptedWalletKey = walletUtil.decryptWalletKey(wallet.getWalletKey(), pin);
+            httpSession.setAttribute(SessionKeys.WALLET_KEY, decryptedWalletKey);
+            httpSession.setAttribute(SessionKeys.WALLET_ID, walletId);
+            return new WalletResponseDto(walletId, wallet.getWalletMetadata().getName());
+        }).orElseThrow(getWalletNotFoundExceptionSupplier(userId, walletId));
     }
 
     @Override
@@ -79,9 +77,7 @@ public class WalletServiceImpl implements WalletService {
 
         log.info("Retrieving wallets for user: {}", userId);
 
-        List<Wallet> wallets = repository.findWalletByUserId(userId);
-        return wallets.stream()
-                .map(wallet -> WalletResponseDto.builder()
+        return repository.findWalletByUserId(userId).stream().map(wallet -> WalletResponseDto.builder()
                         .walletId(wallet.getId())
                         .walletName(wallet.getWalletMetadata().getName())
                         .build())

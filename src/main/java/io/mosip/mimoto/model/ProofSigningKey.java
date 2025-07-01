@@ -1,4 +1,4 @@
-package io.mosip.mimoto.dbentity;
+package io.mosip.mimoto.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -8,7 +8,9 @@ import org.hibernate.type.SqlTypes;
 
 import java.security.PrivateKey;
 import java.time.Instant;
+
 @Entity
+@Table(name = "proof_signing_key")
 @Getter
 @Setter
 public class ProofSigningKey {

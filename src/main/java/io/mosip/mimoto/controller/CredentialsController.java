@@ -7,7 +7,7 @@ import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.exception.VCVerificationException;
 import io.mosip.mimoto.service.CredentialService;
-import io.mosip.mimoto.util.CredentialUtilService;
+import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.util.Utilities;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -43,7 +43,7 @@ public class CredentialsController {
     CredentialService credentialService;
 
     @Autowired
-    CredentialUtilService credentialUtilService;
+    IdpService idpService;
 
     @Operation(summary = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_SUMMARY, description = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_DESCRIPTION)
     @ApiResponses({
@@ -60,7 +60,7 @@ public class CredentialsController {
             String credentialValidity = params.get("vcStorageExpiryLimitInTimes");
             String locale = params.get("locale");
             log.info("Initiated Token Call");
-            TokenResponseDTO response = credentialUtilService.getTokenResponse(params);
+            TokenResponseDTO response = idpService.getTokenResponse(params);
 
             log.info("Initiated Download Credential Call");
             ByteArrayInputStream inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response, credentialValidity, locale);

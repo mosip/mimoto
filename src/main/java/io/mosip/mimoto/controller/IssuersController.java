@@ -7,9 +7,7 @@ import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuersDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
-import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
-import io.mosip.mimoto.exception.InvalidWellknownResponseException;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.Utilities;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,11 +31,9 @@ import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 @RequestMapping(value = "/issuers")
 @Tag(name = SwaggerLiteralConstants.ISSUERS_NAME, description = SwaggerLiteralConstants.ISSUERS_DESCRIPTION)
 public class IssuersController {
-    @Autowired
-    IssuersService issuersService;
 
     @Autowired
-    Utilities utilities;
+    IssuersService issuersService;
 
     @Operation(summary = SwaggerLiteralConstants.ISSUERS_GET_ISSUERS_SUMMARY, description = SwaggerLiteralConstants.ISSUERS_GET_ISSUERS_DESCRIPTION)
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -45,8 +41,7 @@ public class IssuersController {
         ResponseWrapper<IssuersDTO> responseWrapper = new ResponseWrapper<>();
         try {
             responseWrapper.setResponse(issuersService.getIssuers(search));
-        } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
-                 InvalidWellknownResponseException e) {
+        } catch (ApiNotAccessibleException | IOException e) {
             log.error("Exception occurred while fetching issuers ", e);
             responseWrapper.setErrors(List.of(new ErrorDTO(API_NOT_ACCESSIBLE_EXCEPTION.getCode(), API_NOT_ACCESSIBLE_EXCEPTION.getMessage())));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseWrapper);
@@ -87,7 +82,7 @@ public class IssuersController {
             responseWrapper.setResponse(issuerDTO);
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (InvalidIssuerIdException exception) {
-            log.error("invalid issuer id passed - ", issuerId);
+            log.error("invalid issuer id {} passed - ", issuerId);
             responseWrapper.setErrors(List.of(new ErrorDTO(INVALID_ISSUER_ID_EXCEPTION.getCode(), INVALID_ISSUER_ID_EXCEPTION.getMessage())));
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseWrapper);
         } catch (Exception exception) {

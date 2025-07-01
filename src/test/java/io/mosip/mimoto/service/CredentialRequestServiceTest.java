@@ -2,6 +2,7 @@ package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.*;
+import io.mosip.mimoto.service.impl.CredentialRequestServiceImpl;
 import io.mosip.mimoto.util.*;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,9 +18,9 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CredentialServiceVCCredentialRequestTest {
+public class CredentialRequestServiceTest {
     @InjectMocks
-    CredentialUtilService credentialUtilService;
+    CredentialRequestServiceImpl credentialRequestBuilder;
     
     @Mock
     JoseUtil joseUtil;
@@ -43,7 +44,7 @@ public class CredentialServiceVCCredentialRequestTest {
 
         Mockito.when(joseUtil.generateJwt(any(), any(), any())).thenReturn("jwt");
 
-        VCCredentialRequest result = credentialUtilService.generateVCCredentialRequest(
+        VCCredentialRequest result = credentialRequestBuilder.buildRequest(
                 issuerDTO,
                 issuerWellKnownResponse,
                 credentialsSupportedResponse,
@@ -54,7 +55,7 @@ public class CredentialServiceVCCredentialRequestTest {
         );
 
         assertNotNull(result.getCredentialDefinition().getContext());
-        assertEquals("https://www.w3.org/2018/credentials/v1", result.getCredentialDefinition().getContext().get(0));
+        assertEquals("https://www.w3.org/2018/credentials/v1", result.getCredentialDefinition().getContext().getFirst());
     }
     
     @Test
@@ -69,7 +70,7 @@ public class CredentialServiceVCCredentialRequestTest {
 
         Mockito.when(joseUtil.generateJwt(any(), any(), any())).thenReturn("jwt");
 
-        VCCredentialRequest result = credentialUtilService.generateVCCredentialRequest(
+        VCCredentialRequest result = credentialRequestBuilder.buildRequest(
                 issuerDTO,
                 issuerWellKnownResponse,
                 credentialsSupportedResponse,
@@ -80,7 +81,7 @@ public class CredentialServiceVCCredentialRequestTest {
         );
 
         assertNotNull(result.getCredentialDefinition().getContext());
-        assertEquals("https://www.w3.org/2018/credentials/v1", result.getCredentialDefinition().getContext().get(0));
+        assertEquals("https://www.w3.org/2018/credentials/v1", result.getCredentialDefinition().getContext().getFirst());
     }
     
 
@@ -96,7 +97,7 @@ public class CredentialServiceVCCredentialRequestTest {
 
         Mockito.when(joseUtil.generateJwt(any(), any(), any())).thenReturn("jwt");
 
-        VCCredentialRequest result = credentialUtilService.generateVCCredentialRequest(
+        VCCredentialRequest result = credentialRequestBuilder.buildRequest(
                 issuerDTO,
                 issuerWellKnownResponse,
                 credentialsSupportedResponse,
@@ -107,7 +108,7 @@ public class CredentialServiceVCCredentialRequestTest {
         );
 
         assertNotNull(result.getCredentialDefinition().getContext());
-        assertEquals("https://www.w3.org/ns/credentials/v2", result.getCredentialDefinition().getContext().get(0));
+        assertEquals("https://www.w3.org/ns/credentials/v2", result.getCredentialDefinition().getContext().getFirst());
     }
 
 }

@@ -29,4 +29,4 @@ cd mimoto
 
 ## For Onboarding new Issuer for VCI:
 
-- create a folder "certs" in the root and a file "oidckeystore.p12" inside certs and store the keys as different aliases for every issuers. for more details refer [here](https://docs.mosip.io/inji/inji-mobile-wallet/customization-overview/credential_providers)
+- create a folder "certs" in the root and a file "oidckeystore.p12" inside certs and store the keys as different aliases for every issuers. for more details refer [here](https://docs.inji.io/inji-wallet/inji-mobile/technical-overview/customization-overview/credential_providers)
