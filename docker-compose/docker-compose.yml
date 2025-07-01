@@ -67,7 +67,7 @@ services:
       - SPRING_CONFIG_NAME=mimoto
       - SPRING_CONFIG_LOCATION=/home/mosip/
       - oidc_p12_password=dummypassword
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/inji_mimoto # Add Postgres
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/inji_mimoto
       - SPRING_REDIS_HOST=redis
       - SPRING_REDIS_PORT=6379
       - GOOGLE_OAUTH_CLIENT_ID=clientId

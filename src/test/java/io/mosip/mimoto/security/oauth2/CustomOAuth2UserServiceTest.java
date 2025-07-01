@@ -1,7 +1,7 @@
 package io.mosip.mimoto.security.oauth2;
 
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dto.OAuth2ProviderProperties;
+import io.mosip.mimoto.config.oauth2.OAuth2ProviderProperties;
 import io.mosip.mimoto.dto.ProviderDataConfig;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.ErrorConstants;
@@ -108,7 +108,7 @@ class CustomOAuth2UserServiceTest {
 
         providersConfig.put("test-provider", providerConfig);
         when(providerProperties.getProvider()).thenReturn(providersConfig);
-        when(userMetadataService.updateOrInsertUserMetadata(anyString(), anyString(), anyString(), anyString(), anyString()))
+        when(userMetadataService.updateOrCreateUserMetadata(anyString(), anyString(), anyString(), anyString(), anyString()))
                 .thenReturn("test-user-id");
 
         customOAuth2UserService = new TestableOAuth2UserService(providerProperties, userMetadataService, defaultUser);
@@ -124,7 +124,7 @@ class CustomOAuth2UserServiceTest {
         assertEquals("https://example.com/avatar.jpg", actualUser.getAttributes().get("picture"));
         assertEquals("test-user-id", actualUser.getAttributes().get(SessionKeys.USER_ID));
 
-        verify(userMetadataService).updateOrInsertUserMetadata(
+        verify(userMetadataService).updateOrCreateUserMetadata(
                 "test-subject",
                 "test-provider",
                 "Test User",
@@ -163,7 +163,7 @@ class CustomOAuth2UserServiceTest {
 
         providersConfig.put("test-provider", providerConfig);
         when(providerProperties.getProvider()).thenReturn(providersConfig);
-        when(userMetadataService.updateOrInsertUserMetadata(anyString(), anyString(), anyString(), anyString(), anyString()))
+        when(userMetadataService.updateOrCreateUserMetadata(anyString(), anyString(), anyString(), anyString(), anyString()))
                 .thenReturn("nested-user-id");
 
         customOAuth2UserService = new TestableOAuth2UserService(providerProperties, userMetadataService, nestedPictureUser);
@@ -201,7 +201,7 @@ class CustomOAuth2UserServiceTest {
 
         providersConfig.put("test-provider", providerConfig);
         when(providerProperties.getProvider()).thenReturn(providersConfig);
-        when(userMetadataService.updateOrInsertUserMetadata(any(), any(), any(), any(), any()))
+        when(userMetadataService.updateOrCreateUserMetadata(any(), any(), any(), any(), any()))
                 .thenThrow(new DecryptionException(ErrorConstants.DECRYPTION_FAILED.getErrorCode(), "Decryption failed"));
 
         customOAuth2UserService = new TestableOAuth2UserService(providerProperties, userMetadataService, errorUser);
@@ -236,7 +236,7 @@ class CustomOAuth2UserServiceTest {
 
         providersConfig.put("test-provider", providerConfig);
         when(providerProperties.getProvider()).thenReturn(providersConfig);
-        when(userMetadataService.updateOrInsertUserMetadata(any(), any(), any(), any(), any()))
+        when(userMetadataService.updateOrCreateUserMetadata(any(), any(), any(), any(), any()))
                 .thenReturn("minimal-user-id");
 
         customOAuth2UserService = new TestableOAuth2UserService(providerProperties, userMetadataService, minimalUser);

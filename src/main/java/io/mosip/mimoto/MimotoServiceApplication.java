@@ -24,7 +24,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 @SpringBootApplication(scanBasePackages = {
         "io.mosip.mimoto.*",
-        "io.mosip.mimoto.dbentity",
         "io.mosip.kernel.websub.*",
         "io.mosip.kernel.cryptomanager.*",
         "io.mosip.kernel.keymanager.*",
@@ -37,7 +36,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 }, exclude = {
         SecurityAutoConfiguration.class
 })
-@EntityScan(basePackages = {"io.mosip.mimoto.dbentity", "io.mosip.kernel.keymanagerservice.entity"})
+@EntityScan(basePackages = {"io.mosip.mimoto.model", "io.mosip.kernel.keymanagerservice.entity"})
 @EnableJpaRepositories(basePackages = {"io.mosip.mimoto.repository", "io.mosip.kernel.keymanagerservice.repository"})
 @Slf4j
 @EnableScheduling
