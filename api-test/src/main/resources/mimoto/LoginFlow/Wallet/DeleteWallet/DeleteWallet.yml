@@ -1,0 +1,122 @@
+UnlockWallet:
+   Mimoto_DeleteWallet_all_Valid_Smoke:
+      endPoint: /v1/mimoto/wallets/{walletId}
+      description: Delete the wallet that is created
+      uniqueIdentifier: TC_Mimoto_DeleteWallet_01
+      role: userDefinedCookie
+      restMethod: delete
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Wallet/DeleteWallet/DeleteWallet
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$"
+}'
+      output: '{
+      "responseCode": "200"
+}'
+
+   Mimoto_DeleteWallet_AlreadyDeleted_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}
+      description: Delete the wallet that is already deleted and expects it to fail
+      uniqueIdentifier: TC_Mimoto_DeleteWallet_02
+      role: userDefinedCookie
+      restMethod: delete
+      inputTemplate: mimoto/LoginFlow/Wallet/DeleteWallet/DeleteWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_DeleteWallet_Invalid_WalletId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}
+      description: Delete the wallet with invalid wallet id and expects it to fail
+      uniqueIdentifier: TC_Mimoto_DeleteWallet_03
+      role: userDefinedCookie
+      restMethod: delete
+      inputTemplate: mimoto/LoginFlow/Wallet/DeleteWallet/DeleteWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletId": "invalid"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_DeleteWallet_Empty_WalletId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}
+      description: Delete the wallet with empty wallet id and expects it to fail
+      uniqueIdentifier: TC_Mimoto_DeleteWallet_04
+      role: userDefinedCookie
+      restMethod: delete
+      inputTemplate: mimoto/LoginFlow/Wallet/DeleteWallet/DeleteWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletId": ""
+}'
+      output: '{
+      "errorCode": "internal_server_error"
+}'
+
+   Mimoto_DeleteWallet_Space_WalletId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}
+      description: Delete the wallet with space wallet id and expects it to fail
+      uniqueIdentifier: TC_Mimoto_DeleteWallet_05
+      role: userDefinedCookie
+      restMethod: delete
+      inputTemplate: mimoto/LoginFlow/Wallet/DeleteWallet/DeleteWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletId": " "
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_DeleteWallet_WithoutLogin_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}
+      description: Delete the wallet without login session and expects it to fail
+      uniqueIdentifier: TC_Mimoto_DeleteWallet_06
+      role: userDefinedCookie
+      restMethod: delete
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Wallet/DeleteWallet/DeleteWallet
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "withoutLogin",
+      	"cookieName": "SESSION",
+      	"walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$"
+}'
+      output: '{
+      "responseCode": "401"
+}'
+
+   Mimoto_DeleteWallet_ExpiredSession_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}
+      description: Delete the wallet with expired login session and expects it to fail
+      uniqueIdentifier: TC_Mimoto_DeleteWallet_07
+      role: userDefinedCookie
+      restMethod: delete
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Wallet/DeleteWallet/DeleteWallet
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "OGYwNWI5YWQtZjg0MS00NmM2LWJiZTgtOGRmMWYwMGYzNzcy",
+      	"cookieName": "SESSION",
+      	"walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$"
+}'
+      output: '{
+      "responseCode": "401"
+}'

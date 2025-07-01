@@ -1,0 +1,56 @@
+OAuthDetailsRequestForGoogleLogin:
+   Mimoto_ESignet_OAuthDetailsRequest_GoogleLogin_all_Valid_Smoke_sid:
+      endPoint: /v1/esignet/authorization/v2/oauth-details
+      description: Creating Oauth's details with all valid parameters
+      uniqueIdentifier: TC_Mimoto_OAuthDetailsRequestForGoogleLogin_01
+      role: resident
+      restMethod: post
+      checkErrorsOnlyInResponse: true
+      inputTemplate: mimoto/LoginFlow/DownloadMosipIssuerCredential/OAuthDetailsRequest/OAuthDetailsRequest
+      outputTemplate: mimoto/LoginFlow/DownloadMosipIssuerCredential/OAuthDetailsRequest/OAuthDetailsRequestResult
+      input: '{
+      	"requestTime": "$TIMESTAMP$",
+      	"clientId": "$GETCLIENTIDFORMOSIPIDFROMMIMOTOACTUATOR$",
+      	"scope": "mosip_identity_vc_ldp",
+      	"responseType": "code",
+      	"redirectUri": "$INJIREDIRECTURI$",
+      	"display": "popup",
+	    "prompt": "login",
+	    "acrValues": "mosip:idp:acr:generated-code mosip:idp:acr:linked-wallet mosip:idp:acr:biometrics",
+	    "nonce": "$UNIQUENONCEVALUEFORESIGNET$",
+	    "state": "eree2311",
+	    "claimsLocales": "en",
+	    "codeChallenge": "$CODECHALLENGE$",
+        "codeChallengeMethod": "S256"
+}'
+      output: '{
+       
+}'
+
+   Mimoto_ESignet_OAuthDetailsRequest_GoogleLogin_all_Valid_sid_ForNeg:
+      endPoint: /v1/esignet/authorization/v2/oauth-details
+      description: Creating Oauth's details with all valid parameters for Neg scenario
+      uniqueIdentifier: TC_Mimoto_OAuthDetailsRequestForGoogleLogin_02
+      role: resident
+      restMethod: post
+      checkErrorsOnlyInResponse: true
+      inputTemplate: mimoto/LoginFlow/DownloadMosipIssuerCredential/OAuthDetailsRequest/OAuthDetailsRequest
+      outputTemplate: mimoto/LoginFlow/DownloadMosipIssuerCredential/OAuthDetailsRequest/OAuthDetailsRequestResult
+      input: '{
+      	"requestTime": "$TIMESTAMP$",
+      	"clientId": "$GETCLIENTIDFORMOSIPIDFROMMIMOTOACTUATOR$",
+      	"scope": "mosip_identity_vc_ldp",
+      	"responseType": "code",
+      	"redirectUri": "$INJIREDIRECTURI$",
+      	"display": "popup",
+	    "prompt": "login",
+	    "acrValues": "mosip:idp:acr:generated-code mosip:idp:acr:linked-wallet mosip:idp:acr:biometrics",
+	    "nonce": "$UNIQUENONCEVALUEFORESIGNET$",
+	    "state": "eree2311",
+	    "claimsLocales": "en",
+	    "codeChallenge": "$CODECHALLENGE$",
+        "codeChallengeMethod": "S256"
+}'
+      output: '{
+       
+}'
