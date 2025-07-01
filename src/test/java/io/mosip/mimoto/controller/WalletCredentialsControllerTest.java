@@ -95,7 +95,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldDownloadCredentialSuccessfully() throws Exception {
         buildVerifiableCredentialRequest(issuer, credentialConfigurationId, code, grantType, redirectUri, codeVerifier);
-        when(idpService.getTokenResponse(eq(verifiableCredentialRequest))).thenReturn(new TokenResponseDTO());
+        when(idpService.getTokenResponse(verifiableCredentialRequest)).thenReturn(new TokenResponseDTO());
         when(walletCredentialService.downloadVCAndStoreInDB(eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey)))
                 .thenReturn(verifiableCredentialResponseDTO);
 
@@ -117,7 +117,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldReturnErroResponseWhenRequestedCredentialIsAlreadyAvailableInWallet() throws Exception {
         buildVerifiableCredentialRequest(issuer, credentialConfigurationId, code, grantType, redirectUri, codeVerifier);
-        when(idpService.getTokenResponse(eq(verifiableCredentialRequest))).thenReturn(new TokenResponseDTO());
+        when(idpService.getTokenResponse(verifiableCredentialRequest)).thenReturn(new TokenResponseDTO());
         when(walletCredentialService.downloadVCAndStoreInDB(eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey)))
                 .thenThrow(new InvalidRequestException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), "Duplicate credential for issuer and type"));
 
@@ -158,7 +158,7 @@ public class WalletCredentialsControllerTest {
                 .sessionAttr("wallet_id", walletId)
                 .sessionAttr("wallet_key", walletKey));
 
-        verify(idpService).getTokenResponse(eq(verifiableCredentialRequest));
+        verify(idpService).getTokenResponse(verifiableCredentialRequest);
         verify(walletCredentialService
         ).downloadVCAndStoreInDB(eq(issuer), eq(credentialConfigurationId), any(), eq("fr"), eq(walletId), eq(walletKey));
     }
@@ -346,7 +346,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldThrowServiceUnavailableForTokenResponseFailure() throws Exception {
         buildVerifiableCredentialRequest(issuer, credentialConfigurationId, code, grantType, redirectUri, codeVerifier);
-        when(idpService.getTokenResponse(eq(verifiableCredentialRequest)))
+        when(idpService.getTokenResponse(verifiableCredentialRequest))
                 .thenThrow(new ApiNotAccessibleException("API not accessible"));
 
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
