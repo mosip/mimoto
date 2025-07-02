@@ -5,7 +5,6 @@ import io.mosip.mimoto.dto.mimoto.CredentialDefinitionResponseDto;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
 import io.mosip.mimoto.dto.mimoto.CredentialSupportedDisplayResponse;
 import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
-import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -16,13 +15,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static io.mosip.mimoto.util.TestUtilities.getCredentialIssuerWellKnownResponseDto;
 import static io.mosip.mimoto.util.TestUtilities.getCredentialSupportedResponse;
-import static org.junit.Assert.*;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CredentialIssuerWellknownResponseValidatorTest {
 
@@ -40,7 +36,7 @@ public class CredentialIssuerWellknownResponseValidatorTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenCredentialIssuerIsMissingInCredentialIssuerWellknownResponse() throws ApiNotAccessibleException {
+    public void shouldThrowExceptionWhenCredentialIssuerIsMissingInCredentialIssuerWellknownResponse() {
         response.setCredentialIssuer("");
         response.setCredentialEndPoint("http://example.com/credential");
 
@@ -156,7 +152,7 @@ public class CredentialIssuerWellknownResponseValidatorTest {
         InvalidWellknownResponseException invalidWellknownResponseException = assertThrows(InvalidWellknownResponseException.class, () ->
                 credentialIssuerWellknownResponseValidator.validate(response, validator));
         assertEquals("RESIDENT-APP-041", invalidWellknownResponseException.getErrorCode());
-        assertTrue(Arrays.stream(invalidWellknownResponseException.getMessage().split("\n")).collect(Collectors.toList()).containsAll(List.of("RESIDENT-APP-041 --> Invalid Wellknown from Issuer",
+        assertTrue(Arrays.stream(invalidWellknownResponseException.getMessage().split("\n")).toList().containsAll(List.of("RESIDENT-APP-041 --> Invalid Wellknown from Issuer",
                 "Validation failed:",
                 "credentialIssuer: must not be blank",
                 "credentialConfigurationsSupported: must not be empty",
@@ -192,10 +188,11 @@ public class CredentialIssuerWellknownResponseValidatorTest {
 
         InvalidWellknownResponseException invalidWellknownResponseException = assertThrows(InvalidWellknownResponseException.class, () ->
                 credentialIssuerWellknownResponseValidator.validate(response, validator));
-        assertEquals("""
-                RESIDENT-APP-041 --> Invalid Wellknown from Issuer
-                Validation failed:
-                credentialConfigurationsSupported[CredentialType1].proofTypesSupported[jwt].proofSigningAlgValuesSupported: must not be null""", invalidWellknownResponseException.getMessage());
+        String message = invalidWellknownResponseException.getMessage();
+        assertTrue(message.contains("RESIDENT-APP-041 --> Invalid Wellknown from Issuer"));
+        assertTrue(message.contains("credentialConfigurationsSupported[CredentialType1].proofTypesSupported[jwt].proofSigningAlgValuesSupported: must not be null"));
+        assertTrue(message.contains("credentialConfigurationsSupported[CredentialType1].proofTypesSupported[jwt].proofSigningAlgValuesSupported: must not be empty"));
+
     }
 
     @Test
@@ -216,7 +213,7 @@ public class CredentialIssuerWellknownResponseValidatorTest {
         InvalidWellknownResponseException invalidWellknownResponseException = assertThrows(InvalidWellknownResponseException.class, () ->
                 credentialIssuerWellknownResponseValidator.validate(response, validator)
         );
-        assertTrue(Arrays.stream(invalidWellknownResponseException.getMessage().split("\n")).collect(Collectors.toList()).containsAll(Arrays.stream("""
+        assertTrue(Arrays.stream(invalidWellknownResponseException.getMessage().split("\n")).toList().containsAll(Arrays.stream("""
                 RESIDENT-APP-041 --> Invalid Wellknown from Issuer
                 Validation failed:
                 credentialConfigurationsSupported[CredentialType1].display[0].backgroundColor: must not be blank
