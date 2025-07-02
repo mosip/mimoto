@@ -1,5 +1,6 @@
 package io.mosip.mimoto.dbentity;
 
+import io.mosip.mimoto.model.WalletStatus;
 import lombok.Data;
 
 @Data
@@ -10,5 +11,6 @@ public class WalletMetadata {
     private String name;
     private long lockUntil;
     private PasscodeMetadata passcodeMetadata;
+    private WalletStatus status;
 
 }

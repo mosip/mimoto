@@ -3,6 +3,7 @@ package io.mosip.mimoto.service;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dbentity.WalletMetadata;
+import io.mosip.mimoto.dto.GetWalletResponseDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.UnAuthorizationAccessException;
@@ -176,7 +177,7 @@ public class WalletServiceTest {
         );
         when(walletRepository.findWalletByUserId(userId)).thenReturn(List.of(wallet1, wallet2));
 
-        List<WalletResponseDto> result = walletService.getWallets(userId);
+        List<GetWalletResponseDto> result = walletService.getWallets(userId);
 
         assertEquals(walletIds.size(), result.size());
         for (int i = 0; i < walletIds.size(); i++) {
@@ -190,7 +191,7 @@ public class WalletServiceTest {
     public void shouldReturnEmptyListIfNoWalletsFoundForGivenUserId() {
         when(walletRepository.findWalletByUserId(userId)).thenReturn(List.of());
 
-        List<WalletResponseDto> result = walletService.getWallets(userId);
+        List<GetWalletResponseDto> result = walletService.getWallets(userId);
 
         assertTrue(result.isEmpty());
         verify(walletRepository).findWalletByUserId(userId);

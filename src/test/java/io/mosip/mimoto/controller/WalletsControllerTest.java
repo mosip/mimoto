@@ -3,11 +3,13 @@ package io.mosip.mimoto.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.CreateWalletRequestDto;
+import io.mosip.mimoto.dto.GetWalletResponseDto;
 import io.mosip.mimoto.dto.UnlockWalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.UnAuthorizationAccessException;
+import io.mosip.mimoto.model.WalletStatus;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
 import org.junit.Before;
@@ -142,8 +144,8 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldReturnListOfWalletIDsForValidUserId() throws Exception {
-        List<WalletResponseDto> wallets = List.of(new WalletResponseDto("wallet1", "Wallet1"),
-                new WalletResponseDto("wallet2", "Wallet2"));
+        List<GetWalletResponseDto> wallets = List.of(new GetWalletResponseDto("wallet1", "Wallet1", WalletStatus.READY_FOR_UNLOCK),
+                new GetWalletResponseDto("wallet2", "Wallet2", WalletStatus.ACTIVE));
         when(walletService.getWallets(userId)).thenReturn(wallets);
 
         mockMvc.perform(get("/wallets")
@@ -152,7 +154,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
-                .andExpect(content().string("[{\"walletId\":\"wallet1\",\"walletName\":\"Wallet1\"},{\"walletId\":\"wallet2\",\"walletName\":\"Wallet2\"}]"));
+                .andExpect(content().string("[{\"walletId\":\"wallet1\",\"walletName\":\"Wallet1\",\"walletStatus\":\"ready_for_unlock\"},{\"walletId\":\"wallet2\",\"walletName\":\"Wallet2\",\"walletStatus\":\"active\"}]"));
     }
 
     @Test

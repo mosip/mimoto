@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service;
 
+import io.mosip.mimoto.dto.GetWalletResponseDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import jakarta.servlet.http.HttpSession;
@@ -23,8 +24,6 @@ public interface WalletService {
      */
     WalletResponseDto createWallet(String userId, String name, String pin, String confirmPin) throws InvalidRequestException;
 
-    void getWalletUnlockEligibility(String walletId, HttpSession httpSession) throws InvalidRequestException;
-
     /**
      * Unlocks a wallet for a user.
      *
@@ -43,7 +42,7 @@ public interface WalletService {
      * @return List of wallet responses.
      * @throws InvalidRequestException If the request fails.
      */
-    List<WalletResponseDto> getWallets(String userId);
+    List<GetWalletResponseDto> getWallets(String userId);
 
     void deleteWallet(String userId, String walletId) throws InvalidRequestException;
 }

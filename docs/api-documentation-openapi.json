@@ -3588,7 +3588,7 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/components/schemas/WalletResponseDto"
+                                        "$ref": "#/components/schemas/GetWalletResponseDto"
                                     }
                                 },
                                 "examples": {
@@ -3596,11 +3596,13 @@
                                         "value": [
                                             {
                                                 "walletId": "123e4567-e89b-12d3-a456-426614174000",
-                                                "walletName": "My Personal Wallet"
+                                                "walletName": "My Personal Wallet",
+                                                "walletStatus": "active"
                                             },
                                             {
                                                 "walletId": "223e4567-e89b-12d3-a456-426614174001",
-                                                "walletName": "Wallet Main"
+                                                "walletName": "Wallet Main",
+                                                "walletStatus": "active"
                                             }
                                         ]
                                     }
@@ -4188,6 +4190,24 @@
                     "walletName" : {
                         "type": "string",
                         "description": "Name of the Wallet"
+                    }
+                }
+            },
+            "GetWalletResponseDto": {
+                "type": "object",
+                "properties": {
+                    "walletId": {
+                        "type": "string",
+                        "description": "Unique identifier of the Wallet"
+                    },
+                    "walletName" : {
+                        "type": "string",
+                        "description": "Name of the Wallet"
+                    },
+                    "walletStatus": {
+                        "type": "string",
+                        "description": "Wallet status indicating if it is locked or unlocked",
+                        "enum": ["active", "wallet_temporarily_locked", "wallet_permanently_locked", "ready_for_unlock"]
                     }
                 }
             },

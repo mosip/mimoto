@@ -2,15 +2,10 @@ package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
-import io.mosip.mimoto.dto.CreateWalletRequestDto;
-import io.mosip.mimoto.dto.ErrorDTO;
-import io.mosip.mimoto.dto.UnlockWalletRequestDto;
-import io.mosip.mimoto.dto.WalletResponseDto;
+import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.UnAuthorizationAccessException;
-import io.mosip.mimoto.exception.WalletUnlockEligibilityException;
 import io.mosip.mimoto.service.WalletService;
-import io.mosip.mimoto.util.Utilities;
 import io.mosip.mimoto.util.WalletUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,7 +23,6 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -109,34 +103,17 @@ public class WalletsController {
             operationId = "getWallets",
             security = @SecurityRequirement(name = "SessionAuth")
     )
-    @ApiResponse(responseCode = "200", description = "List of wallets retrieved successfully", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = WalletResponseDto.class)), examples = @ExampleObject(name = "Success response", value = "[{\"walletId\": \"123e4567-e89b-12d3-a456-426614174000\"}, {\"walletId\": \"223e4567-e89b-12d3-a456-426614174001\"}]")))
+    @ApiResponse(responseCode = "200", description = "List of wallets retrieved successfully", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = GetWalletResponseDto.class)), examples = @ExampleObject(name = "Success response", value = "[{\"walletName\": \"My Personal Wallet1\",\"walletId\": \"123e4567-e89b-12d3-a456-426614174000\", \"walletStatus\": \"active\"}, {\"walletName\": \"My Personal Wallet2\",\"walletId\": \"223e4567-e89b-12d3-a456-426614174001\", \"walletStatus\": \"active\"}]")))
     @ApiResponse(responseCode = "400", description = "Invalid Wallets fetching request", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Invalid User ID", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"User ID cannot be null or empty\"}")))
     @ApiResponse(responseCode = "401", description = "Unauthorized access", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User ID not found in session", value = "{\"errorCode\": \"unauthorized\", \"errorMessage\": \"User ID not found in session\"}")))
     @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
     @ApiResponse(responseCode = "503", description = "Service unavailable", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Database connection failure", value = "{\"errorCode\": \"database_unavailable\", \"errorMessage\": \"Failed to connect to the database\"}")))
     @GetMapping
-    public ResponseEntity<List<WalletResponseDto>> getWallets(HttpSession httpSession) throws InvalidRequestException {
+    public ResponseEntity<List<GetWalletResponseDto>> getWallets(HttpSession httpSession) throws InvalidRequestException {
         String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
         log.info("Retrieving wallets for user: {}", userId);
-        List<WalletResponseDto> response = walletService.getWallets(userId);
+        List<GetWalletResponseDto> response = walletService.getWallets(userId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-//    TODO: add swagger, stoplight and java doc documentation
-    @GetMapping("/{walletId}/unlock-eligibility")
-    public ResponseEntity<Void> getWalletUnlockEligibility(@PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId, HttpSession httpSession) {
-        try {
-            String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
-            log.info("Checking if the Wallet: {} for user: {} is in the state to be unlocked", walletId, userId);
-            walletService.getWalletUnlockEligibility(walletId, httpSession);
-
-            log.info("Wallet: {} is in the state to be unlocked, user can unlock it", walletId);
-            return ResponseEntity.ok().build();
-        } catch (WalletUnlockEligibilityException exception) {
-            log.error("Wallet: {} is either temporarily or permanently locked and user cannot unlock it", walletId);
-            return Utilities.getErrorResponseEntityWithoutWrapper(
-                    exception, exception.getErrorCode(), HttpStatus.LOCKED, MediaType.APPLICATION_JSON);
-        }
     }
 
     /**

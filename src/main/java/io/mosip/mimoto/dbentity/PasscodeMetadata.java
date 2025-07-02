@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class PasscodeMetadata {
-    private int retryRemainingAttempts = 5;
-    private int remainingLockCycles = 3;
+    private int failedRetryAttempts = 0;
+    private int currentLockCycles = 0;
 }
 

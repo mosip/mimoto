@@ -7,6 +7,7 @@ import io.mosip.mimoto.dbentity.Wallet;
 import io.mosip.mimoto.dbentity.WalletMetadata;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.model.SigningAlgorithm;
+import io.mosip.mimoto.model.WalletStatus;
 import io.mosip.mimoto.repository.WalletRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +70,7 @@ public class WalletUtil {
         walletMetadata.setEncryptionType(encryptionType);
         walletMetadata.setName(walletName);
         walletMetadata.setLockUntil(0);
+        walletMetadata.setStatus(WalletStatus.READY_FOR_UNLOCK);
         walletMetadata.setPasscodeMetadata(passcodeMetadata);
         return walletMetadata;
     }

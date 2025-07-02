@@ -30,9 +30,9 @@ public class GlobalExceptionHandler {
         return new ErrorDTO(ErrorConstants.INTERNAL_SERVER_ERROR.getErrorCode(), ErrorConstants.INTERNAL_SERVER_ERROR.getErrorMessage());
     }
 
-    @ExceptionHandler(WalletUnlockEligibilityException.class)
+    @ExceptionHandler(WalletStatusException.class)
     @ResponseStatus(HttpStatus.LOCKED)
-    public ErrorDTO handleWalletUnlockEligibilityException(WalletUnlockEligibilityException ex) {
+    public ErrorDTO handleWalletUnlockEligibilityException(WalletStatusException ex) {
         log.error("Wallet is not eligible to be unlocked due to the error: {}", ex.getMessage(), ex);
         return new ErrorDTO(ex.getErrorCode(), ex.getErrorText());
     }
