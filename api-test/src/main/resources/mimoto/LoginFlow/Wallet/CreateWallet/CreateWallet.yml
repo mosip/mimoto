@@ -1,0 +1,421 @@
+CreateWallet:
+   Mimoto_CreateWallet_all_Valid_Smoke_sid:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with successful login
+      uniqueIdentifier: TC_Mimoto_CreateWallet_01
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWalletResult
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWallet",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "walletName": "AutomationWallet"
+}'
+
+   Mimoto_CreateWallet_WithoutUnlock_all_Valid_Smoke_sid:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet for the same user with successful login
+      uniqueIdentifier: TC_Mimoto_CreateWallet_02
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWalletResult
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWalletWithoutUnlock",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "walletName": "AutomationWalletWithoutUnlock"
+}'
+
+   Mimoto_CreateWallet_SameName_Valid:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet for the same user with same name with successful login
+      uniqueIdentifier: TC_Mimoto_CreateWallet_03
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWalletResult
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWallet",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "walletName": "AutomationWallet"
+}'
+
+   Mimoto_CreateWallet_WithoutLogin_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet without login and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_04
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "withoutLogin",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWalletNeg1",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "responseCode": "401"
+}'
+
+   Mimoto_CreateWallet_SessionExpired_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with expired session and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_05
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "OGYwNWI5YWQtZjg0MS00NmM2LWJiZTgtOGRmMWYwMGYzNzcy",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWalletNeg2",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "responseCode": "401"
+}'
+
+   Mimoto_CreateWallet_InvalidWalletName_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with invalid wallet name and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_06
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "********",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_CreateWallet_EmptyWalletName_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with empty wallet name and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_07
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_CreateWallet_SpaceInWalletName_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with space in wallet name and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_08
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": " ",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_CreateWallet_MissingWalletName_Valid:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with missing wallet name
+      uniqueIdentifier: TC_Mimoto_CreateWallet_09
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "$REMOVE$",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "responseCode": "200"
+}'
+
+   Mimoto_CreateWallet_MoreThan50Characters_WalletName_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with more than 50 characters in wallet name and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_10
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_CreateWallet_WalletNameWithSpaces_valid:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with wallet name contains spaces
+      uniqueIdentifier: TC_Mimoto_CreateWallet_11
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWalletResult
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "Automation Wallet",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "walletName": "Automation Wallet"
+}'
+
+   Mimoto_CreateWallet_WalletNameInSpecialCharacters_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with special characters as wallet name and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_12
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "%$!*&^",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_CreateWallet_WalletNameInNumbers_Valid:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with numbers as wallet name
+      uniqueIdentifier: TC_Mimoto_CreateWallet_13
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWalletResult
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "5675441",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "walletName": "5675441"
+}'
+
+   Mimoto_CreateWallet_MoreThan6Digits_WalletPin_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with wallet pin with more than 6 digits and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_14
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWalletNeg3",
+      	"walletPin": "12345678",
+      	"confirmWalletPin": "12345678"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_CreateWallet_Empty_WalletPin_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with empty wallet pin and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_15
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWalletNeg4",
+      	"walletPin": "",
+      	"confirmWalletPin": ""
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_CreateWallet_Space_WalletPin_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with space in wallet pin and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_16
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWalletNeg4",
+      	"walletPin": " ",
+      	"confirmWalletPin": " "
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_CreateWallet_Missing_WalletPin_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with missing wallet pin and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_17
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWalletNeg4",
+      	"walletPin": "$REMOVE$",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_CreateWallet_invalid_WalletPin_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with invalid wallet pin and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_18
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWalletNeg4",
+      	"walletPin": "12345",
+      	"confirmWalletPin": "12345"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_CreateWallet_StringValue_WalletPin_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with string value in wallet pin and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_19
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWalletNeg4",
+      	"walletPin": "abcdef",
+      	"confirmWalletPin": "abcdef"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_CreateWallet_SpecialCharacters_WalletPin_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with special characters in wallet pin and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_20
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWalletNeg4",
+      	"walletPin": "^%$@*!",
+      	"confirmWalletPin": "^%$@*!"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_CreateWallet_WalletPin_ConfirmWalletPin_Mismatch_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with wallet pin and confirm wallet pin mismatch and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_21
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWalletNeg4",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "654321"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'
+
+   Mimoto_CreateWallet_Without_WalletPin_And_WalletName_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet without wallet pin and wallet name and expects to fail
+      uniqueIdentifier: TC_Mimoto_CreateWallet_22
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "$REMOVE$",
+      	"walletPin": "$REMOVE$",
+      	"confirmWalletPin": "$REMOVE$"
+}'
+      output: '{
+      "errorCode": "invalid_request"
+}'

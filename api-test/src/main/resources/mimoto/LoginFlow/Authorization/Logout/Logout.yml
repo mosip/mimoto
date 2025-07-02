@@ -1,0 +1,51 @@
+Logout:
+   Mimoto_Logout_all_Valid_Smoke:
+      endPoint: /v1/mimoto/logout
+      description: Logout the session that is created
+      uniqueIdentifier: TC_Mimoto_Logout_01
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Authorization/Logout/Logout
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION"
+}'
+      output: '{
+      "responseCode": "200"
+}'
+
+   Mimoto_Logout_WithoutLogin_Neg:
+      endPoint: /v1/mimoto/logout
+      description: Logout the session without creating the login session and providing random cookie value and expects it to fail
+      uniqueIdentifier: TC_Mimoto_Logout_02
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Authorization/Logout/Logout
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "abcdef",
+      	"cookieName": "SESSION"
+}'
+      output: '{
+      "responseCode": "404"
+}'
+
+   Mimoto_Logout_WithExpiredSession_Neg:
+      endPoint: /v1/mimoto/logout
+      description: Logout the session with expired login session and expects it to fail
+      uniqueIdentifier: TC_Mimoto_Logout_03
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Authorization/Logout/Logout
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "OGYwNWI5YWQtZjg0MS00NmM2LWJiZTgtOGRmMWYwMGYzNzcy",
+      	"cookieName": "SESSION"
+}'
+      output: '{
+      "responseCode": "404"
+}'
