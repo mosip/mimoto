@@ -14,7 +14,6 @@ SendOTP:
     "individualIdType": "UIN"
 }'
       output: '{
-        "maskedMobile": "$IGNORE$"
     }'
    Resident_SendOTP_Valid_UIN_Phone_Smoke:
       endPoint: /resident/v1/req/otp
@@ -33,7 +32,6 @@ SendOTP:
     "individualIdType": "UIN"
 }'
       output: '{
-        "maskedMobile": "$IGNORE$"
     }'
    Resident_SendOTP_Valid_UIN_Email_Smoke:
       endPoint: /resident/v1/req/otp
@@ -51,7 +49,6 @@ SendOTP:
     "individualIdType": "UIN"
 }'
       output: '{
-        "maskedMobile": "$IGNORE$"
     }'
    Resident_SendOTP_RevokedVID_Invalid:
       endPoint: /resident/v1/req/otp
