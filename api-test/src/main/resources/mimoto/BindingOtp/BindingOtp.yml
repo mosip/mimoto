@@ -246,13 +246,12 @@ BindingOtp:
       outputTemplate: mimoto/error
       input: '{
       "requestTime": "$TIMESTAMP$",
-      "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$",
-      "otpChannels": "$IGNORE$"
+      "individualId": "$ID:AddIdentity_Binding_smoke_Pos_UIN$"
 }'
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_otp_channel"
+      "errorCode": "RESIDENT-APP-011"
     }
   ]
 }'
@@ -620,13 +619,12 @@ BindingOtp:
       outputTemplate: mimoto/error
       input: '{
       "requestTime": "$TIMESTAMP$",
-      "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$",
-      "otpChannels": "$IGNORE$"
+      "individualId": "$ID:Generate_Perpetual_VID_Binding_Valid_Smoke_sid_vid$"
 }'
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_otp_channel"
+      "errorCode": "RESIDENT-APP-011"
     }
   ]
 }'
