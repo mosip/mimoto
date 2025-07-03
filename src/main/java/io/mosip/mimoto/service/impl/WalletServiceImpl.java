@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static io.mosip.mimoto.exception.ErrorConstants.LAST_ATTEMPT_BEFORE_PERMANENT_LOCK;
+import static io.mosip.mimoto.exception.ErrorConstants.ONE_ATTEMPT_LEFT_BEFORE_PERMANENT_LOCK;
 
 /**
  * Implementation of {@link WalletService} for managing wallets.
@@ -126,7 +126,7 @@ public class WalletServiceImpl implements WalletService {
             boolean isLastSecondAttemptBeforePermanentLock = currentFailedAttempts == maxFailedAttemptsAllowedPerCycle - 1 && passcodeMetadata.getCurrentLockCycle() == maxLockCyclesAllowed;
 
             if (isLastSecondAttemptBeforePermanentLock) {
-                throw new WalletStatusException(LAST_ATTEMPT_BEFORE_PERMANENT_LOCK.getErrorCode(), LAST_ATTEMPT_BEFORE_PERMANENT_LOCK.getErrorMessage());
+                throw new WalletStatusException(ONE_ATTEMPT_LEFT_BEFORE_PERMANENT_LOCK.getErrorCode(), ONE_ATTEMPT_LEFT_BEFORE_PERMANENT_LOCK.getErrorMessage());
             }
 
             validateWalletStatus(wallet);

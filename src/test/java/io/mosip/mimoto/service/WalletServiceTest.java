@@ -239,7 +239,7 @@ public class WalletServiceTest {
 
         when(walletRepository.findByUserIdAndId(userId, wallet.getId())).thenReturn(Optional.of(wallet));
         when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenThrow(new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided"));
-        String expectedErrorMessage = ErrorConstants.LAST_ATTEMPT_BEFORE_PERMANENT_LOCK.getErrorCode() + " --> " + ErrorConstants.LAST_ATTEMPT_BEFORE_PERMANENT_LOCK.getErrorMessage();
+        String expectedErrorMessage = ErrorConstants.ONE_ATTEMPT_LEFT_BEFORE_PERMANENT_LOCK.getErrorCode() + " --> " + ErrorConstants.ONE_ATTEMPT_LEFT_BEFORE_PERMANENT_LOCK.getErrorMessage();
 
         WalletStatusException exception = assertThrows(WalletStatusException.class, () ->
                 walletService.unlockWallet(walletId, walletPin, mockSession));
@@ -247,7 +247,7 @@ public class WalletServiceTest {
         verify(walletRepository).findByUserIdAndId(userId, walletId);
         verify(walletHelper, times(1)).decryptWalletKey(encryptedWalletKey, walletPin);
         verify(walletRepository, times(1)).save(wallet);
-        assertEquals(ErrorConstants.LAST_ATTEMPT_BEFORE_PERMANENT_LOCK.getErrorCode(), exception.getErrorCode());
+        assertEquals(ErrorConstants.ONE_ATTEMPT_LEFT_BEFORE_PERMANENT_LOCK.getErrorCode(), exception.getErrorCode());
         assertEquals(expectedErrorMessage, exception.getMessage());
     }
 
