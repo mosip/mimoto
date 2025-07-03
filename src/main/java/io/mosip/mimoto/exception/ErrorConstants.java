@@ -1,5 +1,6 @@
 package io.mosip.mimoto.exception;
 
+import io.mosip.mimoto.model.WalletStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -41,8 +42,8 @@ public enum ErrorConstants {
     WALLET_LOCKED("wallet_locked", "Wallet is locked"),
     INVALID_PIN("invalid_pin", "Invalid PIN or wallet key provided"),
     LAST_ATTEMPT_BEFORE_PERMANENT_LOCK("last_attempt_before_permanent_lock", "Incorrect passcode. Last attempt remaining before your Wallet is permanently locked"),
-    WALLET_TEMPORARILY_LOCKED("wallet_temporarily_locked", "You’ve reached the maximum number of attempts. Your wallet is now temporarily locked"),
-    WALLET_PERMANENTLY_LOCKED("wallet_permanently_locked", "Your wallet has been permanently locked due to multiple failed attempts. Please click on forgot password to reset your wallet to continue");
+    WALLET_TEMPORARILY_LOCKED(WalletStatus.TEMPORARILY_LOCKED.getValue(), "You’ve reached the maximum number of attempts. Your wallet is now temporarily locked"),
+    WALLET_PERMANENTLY_LOCKED(WalletStatus.PERMANENTLY_LOCKED.getValue(), "Your wallet has been permanently locked due to multiple failed attempts. Please click on forgot password to reset your wallet to continue");
 
     private final String errorCode;
     private final String errorMessage;
