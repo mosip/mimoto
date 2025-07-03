@@ -8,8 +8,7 @@ import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
-import io.mosip.mimoto.dbentity.CredentialMetadata;
-import io.mosip.mimoto.dbentity.VerifiableCredential;
+import io.mosip.mimoto.dbentity.*;
 import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.openid.VerifierDTO;
@@ -17,6 +16,7 @@ import io.mosip.mimoto.dto.openid.VerifiersDTO;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseDTO;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseWrapperDTO;
 import io.mosip.mimoto.dto.openid.presentation.*;
+import io.mosip.mimoto.model.WalletStatus;
 import org.springframework.util.ResourceUtils;
 
 import java.io.InputStream;
@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.Instant;
 import java.util.*;
 import java.util.Collections;
 import java.util.HashMap;
@@ -442,5 +443,35 @@ public class TestUtilities {
 
     public static String createRequestBody(Object request) throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(request);
+    }
+
+    public static Wallet createWallet(String userId, String walletKey, WalletMetadata walletMetadata) {
+        Wallet wallet = new Wallet();
+        wallet.setId(UUID.randomUUID().toString());
+        wallet.setUserId(userId);
+        wallet.setWalletKey(walletKey);
+        wallet.setWalletMetadata(walletMetadata);
+        wallet.setCreatedAt(Instant.now());
+        wallet.setUpdatedAt(Instant.now());
+        return wallet;
+    }
+
+    public static WalletMetadata createWalletMetadata(String name, long lockUntil, PasscodeMetadata passcodeMetadata, WalletStatus walletStatus) {
+        WalletMetadata walletMetadata = new WalletMetadata();
+        walletMetadata.setName(name);
+        walletMetadata.setEncryptionAlgo("AES");
+        walletMetadata.setEncryptionType("symmetric");
+        walletMetadata.setPasscodeMetadata(passcodeMetadata);
+        walletMetadata.setStatus(walletStatus);
+        walletMetadata.setLockUntil(lockUntil);
+        return walletMetadata;
+    }
+
+    public static PasscodeMetadata createPasscodeMetadata(int failedRetryAttempts, int currentLockCycles) {
+        PasscodeMetadata passcodeMetadata = new PasscodeMetadata();
+        passcodeMetadata.setFailedAttempts(failedRetryAttempts);
+        passcodeMetadata.setCurrentLockCycle(currentLockCycles);
+        return passcodeMetadata;
+
     }
 }

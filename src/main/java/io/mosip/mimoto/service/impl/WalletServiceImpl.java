@@ -122,6 +122,13 @@ public class WalletServiceImpl implements WalletService {
             }
 
             updateWalletMetadata(wallet, walletMetadata.getLockUntil(), passcodeMetadata.getCurrentLockCycle(), currentFailedAttempts, walletMetadata.getStatus());
+
+            boolean isLastSecondAttemptBeforePermanentLock = currentFailedAttempts == maxFailedAttemptsAllowedPerCycle - 1 && passcodeMetadata.getCurrentLockCycle() == maxLockCyclesAllowed;
+
+            if (isLastSecondAttemptBeforePermanentLock) {
+                throw new WalletStatusException(LAST_ATTEMPT_BEFORE_PERMANENT_LOCK.getErrorCode(), LAST_ATTEMPT_BEFORE_PERMANENT_LOCK.getErrorMessage());
+            }
+
             validateWalletStatus(wallet);
             throw ex;
         }
@@ -138,12 +145,6 @@ public class WalletServiceImpl implements WalletService {
 
         if (isTemporaryLockExpired) {
             updateWalletMetadata(wallet, 0L, passcodeMetadata.getCurrentLockCycle(), 0, WalletStatus.READY_FOR_UNLOCK);
-        }
-
-        boolean isLastSecondAttemptBeforePermanentLock = passcodeMetadata.getFailedAttempts() == maxFailedAttemptsAllowedPerCycle - 1 && passcodeMetadata.getCurrentLockCycle() == maxLockCyclesAllowed + 1;
-
-        if (isLastSecondAttemptBeforePermanentLock) {
-            throw new WalletStatusException(LAST_ATTEMPT_BEFORE_PERMANENT_LOCK.getErrorCode(), LAST_ATTEMPT_BEFORE_PERMANENT_LOCK.getErrorMessage());
         }
 
         if (passcodeMetadata.getFailedAttempts() == maxFailedAttemptsAllowedPerCycle) {
