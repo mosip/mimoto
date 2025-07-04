@@ -22,6 +22,7 @@ import org.testng.SkipException;
 import com.github.javafaker.Faker;
 
 import io.mosip.testrig.apirig.dataprovider.BiometricDataProvider;
+import io.mosip.testrig.apirig.dbaccess.DBManager;
 import io.mosip.testrig.apirig.dto.TestCaseDTO;
 import io.mosip.testrig.apirig.mimoto.testrunner.MosipTestRunner;
 import io.mosip.testrig.apirig.testrunner.OTPListener;
@@ -89,8 +90,6 @@ public class MimotoUtil extends AdminTestUtil {
 		if (isCaptchaEnabled() == true) {
 			GlobalMethods.reportCaptchaStatus(GlobalConstants.CAPTCHA_ENABLED, true);
 			throw new SkipException(GlobalConstants.CAPTCHA_ENABLED_MESSAGE);
-		}else {
-			GlobalMethods.reportCaptchaStatus(GlobalConstants.CAPTCHA_ENABLED, false);
 		}
 		
 		if (MosipTestRunner.skipAll == true) {
@@ -118,6 +117,18 @@ public class MimotoUtil extends AdminTestUtil {
 			throw new SkipException(GlobalConstants.KNOWN_ISSUES);
 		}
 		return testCaseDTO;
+	}
+	
+	public static void dbCleanUp() {
+		DBManager.executeDBQueries(MimotoConfigManager.getKMDbUrl(), MimotoConfigManager.getKMDbUser(),
+				MimotoConfigManager.getKMDbPass(), MimotoConfigManager.getKMDbSchema(),
+				getGlobalResourcePath() + "/" + "config/keyManagerCertDataDeleteQueries.txt");
+		DBManager.executeDBQueries(MimotoConfigManager.getIdaDbUrl(), MimotoConfigManager.getIdaDbUser(),
+				MimotoConfigManager.getPMSDbPass(), MimotoConfigManager.getIdaDbSchema(),
+				getGlobalResourcePath() + "/" + "config/idaCertDataDeleteQueries.txt");
+		DBManager.executeDBQueries(MimotoConfigManager.getMASTERDbUrl(), MimotoConfigManager.getMasterDbUser(),
+				MimotoConfigManager.getMasterDbPass(), MimotoConfigManager.getMasterDbSchema(),
+				getGlobalResourcePath() + "/" + "config/masterDataCertDataDeleteQueries.txt");
 	}
 	
 	public static String getOTPFromSMTP(String inputJson, TestCaseDTO testCaseDTO) {
