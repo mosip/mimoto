@@ -46,6 +46,9 @@ public class WalletServiceTest {
     @MockBean
     private WalletValidator walletValidator;
 
+    @MockBean
+    private WalletUnlockHandler walletUnlockHandler;
+
     @Autowired
     private WalletServiceImpl walletService;
 
@@ -68,20 +71,15 @@ public class WalletServiceTest {
         mockSession.setAttribute("clientRegistrationId", "google");
         mockSession.setAttribute(SessionKeys.USER_ID, userId);
 
-        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(0, 0);
-        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", 0, passcodeMetadata, WalletStatus.READY_FOR_UNLOCK);
+        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(1, 1, null);
+        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeMetadata, null);
         wallet = TestUtilities.createWallet(userId, encryptedWalletKey, walletMetadata);
         walletId = wallet.getId();
 
     }
 
     @Value("${wallet.lockDuration}")
-    private long lockUntil;
-
-    @Test
-    public void testWalletLockDuration() {
-        assertEquals(3600000L, walletService.lockUntil);
-    }
+    private long lockDuration;
 
     @Test
     public void shouldCreateWalletSuccessfully() {
@@ -131,15 +129,13 @@ public class WalletServiceTest {
     public void shouldUnlockWalletSuccessfully() {
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
         when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenReturn(decryptedWalletKey);
+        doNothing().when(walletUnlockHandler).handleUnlock(wallet, walletPin, mockSession);
 
         WalletResponseDto result = walletService.unlockWallet(walletId, walletPin, mockSession);
 
         verify(walletRepository).findByUserIdAndId(userId, walletId);
-        verify(walletHelper).decryptWalletKey(encryptedWalletKey, walletPin);
         assertEquals(walletId, result.getWalletId());
         assertEquals("Test Wallet", result.getWalletName());
-        assertEquals(decryptedWalletKey, mockSession.getAttribute(SessionKeys.WALLET_KEY));
-        assertEquals(walletId, mockSession.getAttribute(SessionKeys.WALLET_ID));
     }
 
     @Test
@@ -159,102 +155,104 @@ public class WalletServiceTest {
     public void shouldThrowInvalidPinErrorCodeExceptionWhenDecryptingWalletKeyWithInvalidPin() {
         String invalidPin = "12345678";
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
-        when(walletHelper.decryptWalletKey(encryptedWalletKey, invalidPin)).thenThrow(new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided"));
+        doThrow(new InvalidRequestException(ErrorConstants.INVALID_PIN.getErrorCode(), "Invalid PIN or wallet key provided"))
+                .when(walletUnlockHandler).handleUnlock(wallet, invalidPin, mockSession);
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
                 walletService.unlockWallet(walletId, invalidPin, mockSession));
 
         verify(walletRepository).findByUserIdAndId(userId, walletId);
-        verify(walletHelper, times(1)).decryptWalletKey(encryptedWalletKey, invalidPin);
-        verify(walletRepository, times(1)).save(wallet);
         assertEquals("invalid_pin", exception.getErrorCode());
         assertEquals("invalid_pin --> Invalid PIN or wallet key provided", exception.getMessage());
     }
 
     @Test
     public void shouldThrowTemporarilyLockedExceptionWhenUnlockingWalletWhichIsAlreadyLockedTemporarily() {
-        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(5, 1);
-        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", 0, passcodeMetadata, WalletStatus.READY_FOR_UNLOCK);
+        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(6, 2, lockDuration);
+        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeMetadata, WalletStatus.TEMPORARILY_LOCKED);
         wallet = TestUtilities.createWallet(userId, "mock-encrypted-key", walletMetadata);
         walletId = wallet.getId();
         when(walletRepository.findByUserIdAndId(userId, wallet.getId())).thenReturn(Optional.of(wallet));
-        String expectedErrorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for " + (lockUntil / (60 * 60 * 1000)) + " hour(s)";
+        String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for " + (lockDuration / (60 * 60 * 1000)) + " hour(s)";
+        String expectedErrorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode() + " --> " + errorMessage;
+        doThrow(new WalletStatusException(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorMessage))
+                .when(walletUnlockHandler).handleUnlock(wallet, walletPin, mockSession);
 
         WalletStatusException exception = assertThrows(WalletStatusException.class, () ->
                 walletService.unlockWallet(walletId, walletPin, mockSession));
 
         verify(walletRepository).findByUserIdAndId(userId, wallet.getId());
-        verify(walletHelper, times(0)).decryptWalletKey(encryptedWalletKey, walletPin);
         assertEquals(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), exception.getErrorCode());
         assertEquals(expectedErrorMessage, exception.getMessage());
     }
 
     @Test
     public void shouldThrowTemporarilyLockedExceptionWhenUnlockingWalletWithInvalidPinInLastAttemptBeforeTemporaryLock() {
-        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(4, 0);
-        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", 0, passcodeMetadata, WalletStatus.READY_FOR_UNLOCK);
+        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(5, 1, null);
+        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeMetadata, null);
         wallet = TestUtilities.createWallet(userId, encryptedWalletKey, walletMetadata);
         walletPin = "12345678";
         walletId = wallet.getId();
 
         when(walletRepository.findByUserIdAndId(userId, wallet.getId())).thenReturn(Optional.of(wallet));
         when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenThrow(new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided"));
-        String expectedErrorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for " + (lockUntil / (60 * 60 * 1000)) + " hour(s)";
+        String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for " + (lockDuration / (60 * 60 * 1000)) + " hour(s)";
+        String expectedErrorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode() + " --> " + errorMessage;
+        doThrow(new WalletStatusException(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorMessage))
+                .when(walletUnlockHandler).handleUnlock(wallet, walletPin, mockSession);
 
         WalletStatusException exception = assertThrows(WalletStatusException.class, () ->
                 walletService.unlockWallet(walletId, walletPin, mockSession));
 
         verify(walletRepository).findByUserIdAndId(userId, walletId);
-        verify(walletHelper, times(1)).decryptWalletKey(encryptedWalletKey, walletPin);
-        verify(walletRepository, times(1)).save(wallet);
         assertEquals(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), exception.getErrorCode());
         assertEquals(expectedErrorMessage, exception.getMessage());
     }
 
     @Test
     public void shouldThrowPermanentlyLockedExceptionWhenUnlockingWalletWhichIsAlreadyLockedPermanently() {
-        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(5, 4);
-        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", 0, passcodeMetadata, WalletStatus.READY_FOR_UNLOCK);
+        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(6, 4, null);
+        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeMetadata, WalletStatus.PERMANENTLY_LOCKED);
         wallet = TestUtilities.createWallet(userId, "mock-encrypted-key", walletMetadata);
         walletId = wallet.getId();
         when(walletRepository.findByUserIdAndId(userId, wallet.getId())).thenReturn(Optional.of(wallet));
         String expectedErrorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
-        WalletStatusException exception = assertThrows(WalletStatusException.class, () -> {
-            walletService.unlockWallet(walletId, walletPin, mockSession);
-        });
+        doThrow(new WalletStatusException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage()))
+                .when(walletUnlockHandler).handleUnlock(wallet, walletPin, mockSession);
+
+        WalletStatusException exception = assertThrows(WalletStatusException.class, () -> walletService.unlockWallet(walletId, walletPin, mockSession));
 
         verify(walletRepository).findByUserIdAndId(userId, wallet.getId());
-        verify(walletHelper, times(0)).decryptWalletKey(encryptedWalletKey, walletPin);
         assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), exception.getErrorCode());
         assertEquals(expectedErrorMessage, exception.getMessage());
     }
 
     @Test
     public void shouldThrowExceptionWhenUnlockingWalletWithInvalidPinInLastSecondAttemptBeforePermanentLock() {
-        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(3, 3);
-        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", 0, passcodeMetadata, WalletStatus.TEMPORARILY_LOCKED);
+        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(4, 3, null);
+        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeMetadata, null);
         wallet = TestUtilities.createWallet(userId, encryptedWalletKey, walletMetadata);
         walletPin = "12345678";
         walletId = wallet.getId();
 
         when(walletRepository.findByUserIdAndId(userId, wallet.getId())).thenReturn(Optional.of(wallet));
         when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenThrow(new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided"));
-        String expectedErrorMessage = ErrorConstants.ONE_ATTEMPT_LEFT_BEFORE_PERMANENT_LOCK.getErrorCode() + " --> " + ErrorConstants.ONE_ATTEMPT_LEFT_BEFORE_PERMANENT_LOCK.getErrorMessage();
+        String expectedErrorMessage = ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode() + " --> " + ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage();
+        doThrow(new WalletStatusException(ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage()))
+                .when(walletUnlockHandler).handleUnlock(wallet, walletPin, mockSession);
 
         WalletStatusException exception = assertThrows(WalletStatusException.class, () ->
                 walletService.unlockWallet(walletId, walletPin, mockSession));
 
         verify(walletRepository).findByUserIdAndId(userId, walletId);
-        verify(walletHelper, times(1)).decryptWalletKey(encryptedWalletKey, walletPin);
-        verify(walletRepository, times(1)).save(wallet);
-        assertEquals(ErrorConstants.ONE_ATTEMPT_LEFT_BEFORE_PERMANENT_LOCK.getErrorCode(), exception.getErrorCode());
+        assertEquals(ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), exception.getErrorCode());
         assertEquals(expectedErrorMessage, exception.getMessage());
     }
 
     @Test
     public void shouldThrowPermanentlyLockedExceptionWhenUnlockingWalletWithInvalidPinInLastAttemptBeforePermanentLock() {
-        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(4, 3);
-        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", 0, passcodeMetadata, WalletStatus.READY_FOR_UNLOCK);
+        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(5, 3, null);
+        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeMetadata, WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
         wallet = TestUtilities.createWallet(userId, encryptedWalletKey, walletMetadata);
         walletPin = "12345678";
         walletId = wallet.getId();
@@ -262,13 +260,13 @@ public class WalletServiceTest {
         when(walletRepository.findByUserIdAndId(userId, wallet.getId())).thenReturn(Optional.of(wallet));
         when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenThrow(new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided"));
         String expectedErrorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
+        doThrow(new WalletStatusException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage()))
+                .when(walletUnlockHandler).handleUnlock(wallet, walletPin, mockSession);
 
         WalletStatusException exception = assertThrows(WalletStatusException.class, () ->
                 walletService.unlockWallet(walletId, walletPin, mockSession));
 
         verify(walletRepository).findByUserIdAndId(userId, walletId);
-        verify(walletHelper, times(1)).decryptWalletKey(encryptedWalletKey, walletPin);
-        verify(walletRepository, times(1)).save(wallet);
         assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), exception.getErrorCode());
         assertEquals(expectedErrorMessage, exception.getMessage());
     }
@@ -276,12 +274,12 @@ public class WalletServiceTest {
 
     @Test
     public void shouldReturnListOfWalletResponseDTOsForGivenUserId() {
-        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(5, 3);
+        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(5, 3, null);
 
-        WalletMetadata walletMetadata1 = TestUtilities.createWalletMetadata("Test Wallet1", 0, passcodeMetadata, WalletStatus.READY_FOR_UNLOCK);
+        WalletMetadata walletMetadata1 = TestUtilities.createWalletMetadata("Test Wallet1", passcodeMetadata, null);
         Wallet wallet1 = TestUtilities.createWallet("mock-user-id-1", "mock-encrypted-key", walletMetadata1);
 
-        WalletMetadata walletMetadata2 = TestUtilities.createWalletMetadata("Test Wallet2", 0, passcodeMetadata, WalletStatus.ACTIVE);
+        WalletMetadata walletMetadata2 = TestUtilities.createWalletMetadata("Test Wallet2", passcodeMetadata, null);
         Wallet wallet2 = TestUtilities.createWallet("mock-user-id-2", "mock-encrypted-key", walletMetadata2);
 
         List<Wallet> mockWallets = List.of(wallet1, wallet2);

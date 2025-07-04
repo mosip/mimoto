@@ -456,21 +456,21 @@ public class TestUtilities {
         return wallet;
     }
 
-    public static WalletMetadata createWalletMetadata(String name, long lockUntil, PasscodeMetadata passcodeMetadata, WalletStatus walletStatus) {
+    public static WalletMetadata createWalletMetadata(String name, PasscodeMetadata passcodeMetadata, WalletStatus walletStatus) {
         WalletMetadata walletMetadata = new WalletMetadata();
         walletMetadata.setName(name);
         walletMetadata.setEncryptionAlgo("AES");
         walletMetadata.setEncryptionType("symmetric");
         walletMetadata.setPasscodeMetadata(passcodeMetadata);
         walletMetadata.setStatus(walletStatus);
-        walletMetadata.setLockUntil(lockUntil);
         return walletMetadata;
     }
 
-    public static PasscodeMetadata createPasscodeMetadata(int failedRetryAttempts, int currentLockCycles) {
+    public static PasscodeMetadata createPasscodeMetadata(Integer currentAttemptCount, Integer currentCycleCount, Long retryBlockedUntil) {
         PasscodeMetadata passcodeMetadata = new PasscodeMetadata();
-        passcodeMetadata.setFailedAttempts(failedRetryAttempts);
-        passcodeMetadata.setCurrentLockCycle(currentLockCycles);
+        passcodeMetadata.setCurrentAttemptCount(currentAttemptCount);
+        passcodeMetadata.setCurrentCycleCount(currentCycleCount);
+        passcodeMetadata.setRetryBlockedUntil(retryBlockedUntil);
         return passcodeMetadata;
 
     }

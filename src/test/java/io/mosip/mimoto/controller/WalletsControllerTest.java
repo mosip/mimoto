@@ -144,8 +144,8 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldReturnListOfWalletIDsForValidUserId() throws Exception {
-        List<GetWalletResponseDto> wallets = List.of(new GetWalletResponseDto("wallet1", "Wallet1", WalletStatus.READY_FOR_UNLOCK),
-                new GetWalletResponseDto("wallet2", "Wallet2", WalletStatus.ACTIVE));
+        List<GetWalletResponseDto> wallets = List.of(new GetWalletResponseDto("walletId1", "Wallet1", null),
+                new GetWalletResponseDto("walletId2", "Wallet2", null));
         when(walletService.getWallets(userId)).thenReturn(wallets);
 
         mockMvc.perform(get("/wallets")
@@ -154,7 +154,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
-                .andExpect(content().string("[{\"walletId\":\"wallet1\",\"walletName\":\"Wallet1\",\"walletStatus\":\"ready_for_unlock\"},{\"walletId\":\"wallet2\",\"walletName\":\"Wallet2\",\"walletStatus\":\"active\"}]"));
+                .andExpect(content().string("[{\"walletId\":\"walletId1\",\"walletName\":\"Wallet1\",\"walletStatus\":null},{\"walletId\":\"walletId2\",\"walletName\":\"Wallet2\",\"walletStatus\":null}]"));
     }
 
     @Test

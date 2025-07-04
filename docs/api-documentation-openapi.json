@@ -3597,12 +3597,12 @@
                                             {
                                                 "walletId": "123e4567-e89b-12d3-a456-426614174000",
                                                 "walletName": "My Personal Wallet",
-                                                "walletStatus": "active"
+                                                "walletStatus": null
                                             },
                                             {
                                                 "walletId": "223e4567-e89b-12d3-a456-426614174001",
                                                 "walletName": "Wallet Main",
-                                                "walletStatus": "active"
+                                                "walletStatus": null
                                             }
                                         ]
                                     }
@@ -4207,7 +4207,8 @@
                     "walletStatus": {
                         "type": "string",
                         "description": "Wallet status indicating if it is locked or unlocked",
-                        "enum": ["active", "wallet_temporarily_locked", "wallet_permanently_locked", "ready_for_unlock"]
+                        "enum": ["active", "temporarily_locked", "permanently_locked", "ready_for_unlock"],
+                        "nullable": true
                     }
                 }
             },
