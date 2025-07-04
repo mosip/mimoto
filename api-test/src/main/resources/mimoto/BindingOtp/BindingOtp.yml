@@ -74,7 +74,7 @@ BindingOtp:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_identifier"
+      "errorCode": "RESIDENT-APP-011"
     }
   ]
 }'
@@ -248,7 +248,7 @@ BindingOtp:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_otp_channel"
+      "errorCode": "RESIDENT-APP-011"
     }
   ]
 }'
@@ -445,7 +445,7 @@ BindingOtp:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_identifier"
+      "errorCode": "RESIDENT-APP-011"
     }
   ]
 }'
@@ -619,7 +619,7 @@ BindingOtp:
       output: '{
   "errors": [
     {
-      "errorCode": "invalid_otp_channel"
+      "errorCode": "RESIDENT-APP-011"
     }
   ]
 }'
