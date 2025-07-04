@@ -78,9 +78,9 @@ fileignoreconfig:
 - filename: src/test/java/io/mosip/mimoto/service/WalletServiceTest.java
   checksum: be47ee3e78f774d44f78c76dda232285cfaf14523a790a858cc28ee0b4cc2425
 - filename: src/main/java/io/mosip/mimoto/controller/WalletsController.java
-  checksum: f54bbacbba3af5e0beff7761245c6aa40cdc676e55b557e1aa0dd157a4eda03a
+  checksum: f5965a94fb5246f6475a7a1eade259b9f54c3097757f484289ceededf97e2a57
 - filename: src/test/java/io/mosip/mimoto/controller/WalletsControllerTest.java
-  checksum: 63a4620f43c88a39771ec5e492dc860e9c6cd62ab895243bb284dd04c5be6937
+  checksum: 9f02edb9c6a34b2b732b51b46038484bbf3044b5cfad0dd83289227fc27315fa
 - filename: src/test/java/io/mosip/mimoto/util/WalletValidatorTest.java
   checksum: 90dce7daa19f0eb9050194a3c77a88d449a83c337d9041bfdeb7bfded3bbd12c
 - filename: src/main/java/io/mosip/mimoto/service/impl/WalletServiceImpl.java
@@ -88,9 +88,15 @@ fileignoreconfig:
 - filename: src/test/resources/application-test.properties
   checksum: eebfe757f92dced2cd445d1049454dfea2d3796292cf2f9fb8aed661a3eb507d
 - filename: src/main/java/io/mosip/mimoto/exception/ErrorConstants.java
-  checksum: 8ba2d7771ba55008845cc9832c60a5f0f081741924b942f4e7fb4e7179a06946
+  checksum: 4d41463d5e844749dd8d753b73a7f28f23a2ffdcdb1cc28731e2da6900539e27
 - filename: src/test/java/io/mosip/mimoto/util/TestUtilities.java
   checksum: 4e7b1909e95ccb271cd6b0e3c21290aa44d8893225a729fac737ea66e6d7e9d1
 - filename: src/main/java/io/mosip/mimoto/service/WalletUnlockHandler.java
   checksum: 0f08b74237ce1eaca4b5cc7cb5a91067337c07b78fb441dfebdfd2716ad1c271
+- filename: src/test/java/io/mosip/mimoto/service/WalletUnlockHandlerTest.java
+  checksum: a2686f4ed7eaca65bb5808c416d260b719ed6ae8501376c63d352d9b66e95fc6
+- filename: docs/api-documentation-openapi.json
+  checksum: 7543cd5470f50b431c45893951e0d6183421e01ce230c56c69b205507155f1f2
+- filename: src/main/java/io/mosip/mimoto/util/WalletUtil.java
+  checksum: 79912c1af1f2bb886e8d93bcd17d1568a7fecd7d41dfa88c1875a5a8cdf1f98d
 version: ""
