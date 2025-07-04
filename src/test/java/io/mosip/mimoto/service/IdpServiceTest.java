@@ -1,7 +1,10 @@
 package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dto.IssuerDTO;
+import io.mosip.mimoto.dto.idp.TokenResponseDTO;
+import io.mosip.mimoto.dto.mimoto.AuthorizationServerWellKnownResponse;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
+import io.mosip.mimoto.exception.IdpException;
 import io.mosip.mimoto.exception.IssuerOnboardingException;
 import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.util.JoseUtil;
@@ -15,15 +18,16 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.mosip.mimoto.util.TestUtilities.getCredentialIssuerConfigurationResponseDto;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static io.mosip.mimoto.util.TestUtilities.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class IdpServiceTest {
@@ -33,9 +37,26 @@ public class IdpServiceTest {
     @Mock
     JoseUtil joseUtil;
 
+    @Mock
+    private RestTemplate restTemplate;
+
+    @Mock
+    private IssuersService issuersService;
+
+    @Mock
+    private CredentialIssuerConfiguration credentialIssuerConfiguration;
+
+    @Mock
+    private AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse;
+
+    @Mock
+    private TokenResponseDTO tokenResponseDTO;
+
     private IssuerDTO issuerDTO;
     private Map<String, String> params;
     private final String authorizationAudience = "https://example.com/auth";
+
+
 
     @Before
     public void setUp() throws IOException {
@@ -93,5 +114,60 @@ public class IdpServiceTest {
         String actualTokenEndpoint = idpService.getTokenEndpoint(credentialIssuerConfiguration);
 
         assertEquals(expectedTokenEndpoint, actualTokenEndpoint);
+    }
+
+    @Test
+    public void shouldThrowExceptionIfResponseIsNullWhenFetchingTokenResponse() throws Exception {
+        params.put("issuer", "issuer123");
+
+        IssuerDTO mockIssuer = new IssuerDTO();
+        mockIssuer.setClient_id("client123");
+        mockIssuer.setClient_alias("clientAlias");
+
+        when(issuersService.getIssuerDetails("issuer123")).thenReturn(mockIssuer);
+        when(issuersService.getIssuerConfiguration("issuer123")).thenReturn(credentialIssuerConfiguration);
+
+        when(credentialIssuerConfiguration.getAuthorizationServerWellKnownResponse())
+                .thenReturn(authorizationServerWellKnownResponse);
+        when(authorizationServerWellKnownResponse.getTokenEndpoint())
+                .thenReturn("https://example.com/token");
+
+        when(joseUtil.getJWT(eq("client123"), any(), any(), eq("clientAlias"), any(), eq("https://example.com/token")))
+                .thenReturn("jwt-token");
+
+        when(restTemplate.postForObject(eq("https://example.com/token"), any(HttpEntity.class), eq(TokenResponseDTO.class)))
+                .thenReturn(null);
+
+        IdpException ex = assertThrows(IdpException.class, () ->
+                idpService.getTokenResponse(params));
+
+        assertEquals("RESIDENT-APP-034 --> Exception occurred while performing the authorization", ex.getMessage());
+    }
+
+    @Test
+    public void shouldReturnTokenResponseForValidTokenEndpoint() throws Exception {
+        params.put("issuer", "issuer123");
+
+        IssuerDTO mockIssuer = new IssuerDTO();
+        mockIssuer.setClient_id("client123");
+        mockIssuer.setClient_alias("clientAlias");
+
+        when(issuersService.getIssuerDetails("issuer123")).thenReturn(mockIssuer);
+        when(issuersService.getIssuerConfiguration("issuer123")).thenReturn(credentialIssuerConfiguration);
+        when(credentialIssuerConfiguration.getAuthorizationServerWellKnownResponse())
+                .thenReturn(authorizationServerWellKnownResponse);
+        when(authorizationServerWellKnownResponse.getTokenEndpoint())
+                .thenReturn("https://example.com/token");
+
+        when(joseUtil.getJWT(eq("client123"), any(), any(), eq("clientAlias"), any(), eq("https://example.com/token")))
+                .thenReturn("jwt-token");
+
+        when(restTemplate.postForObject(eq("https://example.com/token"), any(HttpEntity.class), eq(TokenResponseDTO.class)))
+                .thenReturn(tokenResponseDTO);
+
+        TokenResponseDTO response = idpService.getTokenResponse(params);
+
+        assertNotNull(response);
+        assertEquals(tokenResponseDTO, response);
     }
 }

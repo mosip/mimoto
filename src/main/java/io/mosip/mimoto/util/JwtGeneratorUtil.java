@@ -8,7 +8,7 @@ import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.*;
 import com.nimbusds.jose.util.Base64URL;
-import io.mosip.mimoto.model.SigningAlgorithm;
+import io.mosip.mimoto.constant.SigningAlgorithm;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 

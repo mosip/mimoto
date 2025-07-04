@@ -3,12 +3,8 @@ package io.mosip.mimoto.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 @Data
-@Getter
-@Setter
 public class VerifiableCredentialRequestDTO {
     @Schema(description = "The unique identifier of the issuer")
     @NotBlank(message = "issuerId cannot be blank")
@@ -19,14 +15,18 @@ public class VerifiableCredentialRequestDTO {
     String credentialConfigurationId;
 
     @Schema(description = "The authorization code received from the authorization server")
+    @NotBlank(message = "code cannot be blank")
     String code;
 
     @Schema(description = "The grant type for the authorization request")
+    @NotBlank(message = "grantType cannot be blank")
     String grantType;
 
     @Schema(description = "The redirect URI for the authorization request")
+    @NotBlank(message = "redirectUri cannot be blank")
     String redirectUri;
 
     @Schema(description = "The code verifier used for PKCE (Proof Key for Code Exchange)")
+    @NotBlank(message = "codeVerifier cannot be blank")
     String codeVerifier;
 }

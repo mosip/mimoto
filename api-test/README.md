@@ -166,6 +166,14 @@ To run the tests for both **Smoke** and **Regression**:
 1. Ensure the correct environment and test level parameters are set.
 2. Execute the tests as shown in the command above to validate mimoto API functionalities.
 
+### Configuration maps
+
+Update the below **config maps** while running the automation in rancher or in mimoto.propertes file for local run:
+
+1. google.client.id
+2. google.client.secret
+3. google.refresh.token
+
 ---
 
 ## License

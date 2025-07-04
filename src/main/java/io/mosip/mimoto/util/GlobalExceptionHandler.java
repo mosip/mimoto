@@ -53,9 +53,9 @@ public class GlobalExceptionHandler {
         return new ErrorDTO(ex.getErrorCode(), ex.getMessage());
     }
 
-    @ExceptionHandler(UnAuthorizationAccessException.class)
+    @ExceptionHandler(UnauthorizedAccessException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ErrorDTO handleUnAuthorizedAccess(UnAuthorizationAccessException ex) {
+    public ErrorDTO handleUnAuthorizedAccess(UnauthorizedAccessException ex) {
         log.error("UnAuthorized access detected: ", ex);
         return new ErrorDTO(ex.getErrorCode(), ex.getErrorText());
     }

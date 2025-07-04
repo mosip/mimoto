@@ -10,6 +10,7 @@ import java.util.Map;
 
 @Component
 public class TokenServiceFactory {
+    private static final String UNSUPPORTED_PROVIDER_MESSAGE = "Unsupported provider: %s";
     private final Map<String, TokenService> tokenServices;
 
     @Autowired
@@ -20,12 +21,8 @@ public class TokenServiceFactory {
     public TokenService getTokenService(String provider) throws OAuth2AuthenticationException {
         TokenService service = tokenServices.get(provider.toLowerCase());
         if (service == null) {
-            throw new OAuth2AuthenticationException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Unsupported provider: " + provider, HttpStatus.BAD_REQUEST);
+            throw new OAuth2AuthenticationException(ErrorConstants.INVALID_REQUEST.getErrorCode(), String.format(UNSUPPORTED_PROVIDER_MESSAGE, provider), HttpStatus.BAD_REQUEST);
         }
         return service;
-    }
-
-    public boolean isSupportedProvider(String provider) {
-        return tokenServices.containsKey(provider.toLowerCase());
     }
 }

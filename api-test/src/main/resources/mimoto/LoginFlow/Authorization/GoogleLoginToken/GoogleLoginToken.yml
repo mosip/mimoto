@@ -1,0 +1,76 @@
+GoogleLoginToken:
+   Mimoto_GoogleLoginToken_all_Valid_Smoke:
+      endPoint: /v1/mimoto/auth/google/token-login
+      description: Creating the sesion token for google login
+      uniqueIdentifier: TC_Mimoto_GoogleLoginToken_01
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Authorization/GoogleLoginToken/GoogleLoginToken
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "$GOOGLE_IDT_TOKEN$"
+}'
+      output: '{
+       "responseCode": "200"
+}'
+
+   Mimoto_GoogleLoginToken_Invalid_Provider_Neg:
+      endPoint: /v1/mimoto/auth/invalid/token-login
+      description: Creating the sesion token for google login with invalid provider
+      uniqueIdentifier: TC_Mimoto_GoogleLoginToken_02
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Authorization/GoogleLoginToken/GoogleLoginToken
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$GOOGLE_IDT_TOKEN$"
+}'
+      output: '{
+       "errorCode": "invalid_request"
+}'
+
+   Mimoto_GoogleLoginToken_InvalidToken_Neg:
+      endPoint: /v1/mimoto/auth/google/token-login
+      description: Creating the sesion token for google login with invalid IDT token and expects it to fail
+      uniqueIdentifier: TC_Mimoto_GoogleLoginToken_03
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Authorization/GoogleLoginToken/GoogleLoginToken
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "invalid"
+}'
+      output: '{
+       "errorCode": "invalid_token"
+}'
+
+   Mimoto_GoogleLoginToken_ExpiredToken_Neg:
+      endPoint: /v1/mimoto/auth/google/token-login
+      description: Creating the sesion token for google login with expired token and expects it to fail
+      uniqueIdentifier: TC_Mimoto_GoogleLoginToken_04
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Authorization/GoogleLoginToken/GoogleLoginToken
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFiYjc3NGJkODcyOWVhMzhlOWMyZmUwYzY0ZDJjYTk0OGJmNjZmMGYiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIxODg4MjgxNzM0OTktMHA0Zjk1Y2RxanM5aHR0bTEzMTBka2FlNmwzazNzam4uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIxODg4MjgxNzM0OTktMHA0Zjk1Y2RxanM5aHR0bTEzMTBka2FlNmwzazNzam4uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMTAwODI5NzU4ODc2MDU2NjIyOTAiLCJlbWFpbCI6Im1vc2lwdGVzdGN5YmVycHduQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhdF9oYXNoIjoiZExSUmM1WVFZaW1TTXVjaFZWRXhpQSIsIm5hbWUiOiJNb3NpcCB0ZXN0IEN5YmVycHduIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0pZLWpRUE5UR3FLVHdiX3lOWHZ1c0FzSjVuSTBlcHhOczZWaWF2clVfd3hNMDdrZz1zOTYtYyIsImdpdmVuX25hbWUiOiJNb3NpcCB0ZXN0IiwiZmFtaWx5X25hbWUiOiJDeWJlcnB3biIsImlhdCI6MTc1MDc0NzExOSwiZXhwIjoxNzUwNzUwNzE5fQ.YGH3pgVvZoXyXS_eUPLmul5AXMdAdVaAoJRBJty_ZYBy7oKT7FGKwhJ9bLhXLiRG031noCaM-3EYv2N2oezvApuOGYM6xK5Mb6WdGzv-y0oR-00wniTTbuUEtgZGxPunZ2lfrI6WwkIq8JHhFh1_l4SnRGYfRqNA-vhLNMfcZsm0yG9NAt6TWgHEqy_JtMXSQTsvLfLijCLOqZCfQuTDqzk5EhtGaEMtppPN_au-Xc8fTDhY0nZtWTQ2262nqLXGSomika66dKH1SU50DtQEEdtz8Cbo_li5S4hSV1nDa7MzbIgiVqqN6fFalxRy4kvvvvaWNj7U46DsKjunINoNMQ"
+}'
+      output: '{
+       "errorCode": "invalid_token"
+}'
+
+   Mimoto_GoogleLoginToken_EmptyToken_Neg:
+      endPoint: /v1/mimoto/auth/google/token-login
+      description: Creating the sesion token for google login with expired token and expects it to fail
+      uniqueIdentifier: TC_Mimoto_GoogleLoginToken_05
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Authorization/GoogleLoginToken/GoogleLoginToken
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": ""
+}'
+      output: '{
+       "errorCode": "invalid_request"
+}'

@@ -1,6 +1,6 @@
 package io.mosip.mimoto.repository;
 
-import io.mosip.mimoto.dbentity.Wallet;
+import io.mosip.mimoto.model.Wallet;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;

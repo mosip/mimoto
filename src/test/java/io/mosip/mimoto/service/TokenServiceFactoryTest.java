@@ -24,11 +24,9 @@ public class TokenServiceFactoryTest {
     @Mock
     private TokenService googleTokenService;
 
-    private Map<String, TokenService> tokenServices;
-
     @Before
     public void setUp() {
-        tokenServices = new HashMap<>();
+        Map<String, TokenService> tokenServices = new HashMap<>();
         tokenServices.put("google", googleTokenService);
         tokenServiceFactory = new TokenServiceFactory(tokenServices);
     }
@@ -67,30 +65,4 @@ public class TokenServiceFactoryTest {
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatus());
     }
 
-    @Test
-    public void testIsSupportedProvider_ValidProvider_ReturnsTrue() {
-        // Act
-        boolean result = tokenServiceFactory.isSupportedProvider("google");
-
-        // Assert
-        assertTrue(result);
-    }
-
-    @Test
-    public void testIsSupportedProvider_CaseInsensitiveProvider_ReturnsTrue() {
-        // Act
-        boolean result = tokenServiceFactory.isSupportedProvider("GOOGLE");
-
-        // Assert
-        assertTrue(result);
-    }
-
-    @Test
-    public void testIsSupportedProvider_UnsupportedProvider_ReturnsFalse() {
-        // Act
-        boolean result = tokenServiceFactory.isSupportedProvider("facebook");
-
-        // Assert
-        assertFalse(result);
-    }
 }
