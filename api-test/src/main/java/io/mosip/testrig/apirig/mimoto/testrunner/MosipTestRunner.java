@@ -82,6 +82,7 @@ public class MosipTestRunner {
 			suiteSetup(getRunType());
 			SkipTestCaseHandler.loadTestcaseToBeSkippedList("testCaseSkippedList.txt");
 			GlobalMethods.setModuleNameAndReCompilePattern(MimotoConfigManager.getproperty("moduleNamePattern"));
+			GlobalMethods.reportCaptchaStatus(GlobalConstants.CAPTCHA_ENABLED, false);
 			setLogLevels();
 			MimotoConfigManager.getEsignetBaseUrl();
 
@@ -109,6 +110,7 @@ public class MosipTestRunner {
 			LOGGER.error("Exception " + e.getMessage());
 		}
 		
+		MimotoUtil.dbCleanUp();
 		KeycloakUserManager.removeUser();
 		KeycloakUserManager.closeKeycloakInstance();
 
@@ -133,15 +135,7 @@ public class MosipTestRunner {
 		}
 		BaseTestCase.currentModule = GlobalConstants.MIMOTO;
 		BaseTestCase.certsForModule = GlobalConstants.MIMOTO;
-		DBManager.executeDBQueries(MimotoConfigManager.getKMDbUrl(), MimotoConfigManager.getKMDbUser(),
-				MimotoConfigManager.getKMDbPass(), MimotoConfigManager.getKMDbSchema(),
-				getGlobalResourcePath() + "/" + "config/keyManagerCertDataDeleteQueries.txt");
-		DBManager.executeDBQueries(MimotoConfigManager.getIdaDbUrl(), MimotoConfigManager.getIdaDbUser(),
-				MimotoConfigManager.getPMSDbPass(), MimotoConfigManager.getIdaDbSchema(),
-				getGlobalResourcePath() + "/" + "config/idaCertDataDeleteQueries.txt");
-		DBManager.executeDBQueries(MimotoConfigManager.getMASTERDbUrl(), MimotoConfigManager.getMasterDbUser(),
-				MimotoConfigManager.getMasterDbPass(), MimotoConfigManager.getMasterDbSchema(),
-				getGlobalResourcePath() + "/" + "config/masterDataCertDataDeleteQueries.txt");
+		MimotoUtil.dbCleanUp();
 		AdminTestUtil.initiateMimotoTest();
 		BaseTestCase.otpListener = new OTPListener();
 		BaseTestCase.otpListener.run();
