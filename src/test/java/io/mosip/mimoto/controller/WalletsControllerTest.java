@@ -9,6 +9,7 @@ import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.UnAuthorizationAccessException;
+import io.mosip.mimoto.exception.WalletStatusException;
 import io.mosip.mimoto.model.WalletStatus;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
@@ -145,7 +146,7 @@ public class WalletsControllerTest {
     @Test
     public void shouldReturnListOfWalletIDsForValidUserId() throws Exception {
         List<GetWalletResponseDto> wallets = List.of(new GetWalletResponseDto("walletId1", "Wallet1", null),
-                new GetWalletResponseDto("walletId2", "Wallet2", null));
+                new GetWalletResponseDto("walletId2", "Wallet2", WalletStatus.TEMPORARILY_LOCKED));
         when(walletService.getWallets(userId)).thenReturn(wallets);
 
         mockMvc.perform(get("/wallets")
@@ -154,7 +155,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
-                .andExpect(content().string("[{\"walletId\":\"walletId1\",\"walletName\":\"Wallet1\",\"walletStatus\":null},{\"walletId\":\"walletId2\",\"walletName\":\"Wallet2\",\"walletStatus\":null}]"));
+                .andExpect(content().string("[{\"walletId\":\"walletId1\",\"walletName\":\"Wallet1\",\"walletStatus\":null},{\"walletId\":\"walletId2\",\"walletName\":\"Wallet2\",\"walletStatus\":\"temporarily_locked\"}]"));
     }
 
     @Test
@@ -314,6 +315,111 @@ public class WalletsControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("invalid_pin"))
                 .andExpect(jsonPath("$.errorMessage").value("Invalid PIN or wallet key provided"));
+    }
+
+    @Test
+    public void shouldThrowTemporarilyLockedExceptionWhenUnlockingWalletWhichIsAlreadyLockedTemporarily() throws Exception {
+        UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
+        unlockRequest.setWalletPin(walletPin);
+
+        String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for 1 hour(s)";
+        when(walletService.unlockWallet(walletId, walletPin, mockSession))
+                .thenThrow(new WalletStatusException(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorMessage));
+
+        mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(unlockRequest))
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isLocked())
+                .andExpect(jsonPath("$.errorCode").value(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode()))
+                .andExpect(jsonPath("$.errorMessage").value(errorMessage));
+    }
+
+    @Test
+    public void shouldThrowTemporarilyLockedExceptionWhenUnlockingWalletWithInvalidPinInLastAttemptBeforeTemporaryLock() throws Exception {
+        UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
+        unlockRequest.setWalletPin("invalidPin");
+
+        String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for 1 hour(s)";
+        when(walletService.unlockWallet(walletId, "invalidPin", mockSession))
+                .thenThrow(new WalletStatusException(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorMessage));
+
+        mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(unlockRequest))
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isLocked())
+                .andExpect(jsonPath("$.errorCode").value(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode()))
+                .andExpect(jsonPath("$.errorMessage").value(errorMessage));
+    }
+
+    @Test
+    public void shouldThrowPermanentlyLockedExceptionWhenUnlockingWalletWhichIsAlreadyLockedPermanently() throws Exception {
+        UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
+        unlockRequest.setWalletPin(walletPin);
+
+        String errorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
+        when(walletService.unlockWallet(walletId, walletPin, mockSession))
+                .thenThrow(new WalletStatusException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), errorMessage));
+
+        mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(unlockRequest))
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isLocked())
+                .andExpect(jsonPath("$.errorCode").value(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode()))
+                .andExpect(jsonPath("$.errorMessage").value(errorMessage));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenUnlockingWalletWithInvalidPinInLastSecondAttemptBeforePermanentLock() throws Exception {
+        UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
+        unlockRequest.setWalletPin("invalidPin");
+
+        String errorMessage = ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage();
+        when(walletService.unlockWallet(walletId, "invalidPin", mockSession))
+                .thenThrow(new InvalidRequestException(ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), errorMessage));
+
+        mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(unlockRequest))
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value(ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode()))
+                .andExpect(jsonPath("$.errorMessage").value(errorMessage));
+    }
+
+    @Test
+    public void shouldThrowPermanentlyLockedExceptionWhenUnlockingWalletWithInvalidPinInLastAttemptBeforePermanentLock() throws Exception {
+        UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
+        unlockRequest.setWalletPin("invalidPin");
+
+        String errorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
+        when(walletService.unlockWallet(walletId, "invalidPin", mockSession))
+                .thenThrow(new WalletStatusException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), errorMessage));
+
+        mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(createRequestBody(unlockRequest))
+                        .session(mockSession)
+                        .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isLocked())
+                .andExpect(jsonPath("$.errorCode").value(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode()))
+                .andExpect(jsonPath("$.errorMessage").value(errorMessage));
     }
 
     @Test
