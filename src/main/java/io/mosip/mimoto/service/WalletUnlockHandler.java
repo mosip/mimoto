@@ -85,7 +85,7 @@ public class WalletUnlockHandler {
         if (isLastSecondAttemptBeforePermanentLock) {
             walletMetadata.setStatus(WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
             repository.save(wallet);
-            throw new WalletStatusException(LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage());
+            throw new InvalidRequestException(LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage());
         }
 
         handleLockCycle(wallet);
