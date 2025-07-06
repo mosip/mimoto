@@ -1,0 +1,50 @@
+GetWallets:
+   Mimoto_GetWallets_all_Valid_Smoke:
+      endPoint: /v1/mimoto/wallets
+      description: Get list of all the wallets that is present in DB
+      uniqueIdentifier: TC_Mimoto_GetWallets_01
+      role: userDefinedCookie
+      restMethod: get
+      checkErrorsOnlyInResponse: true
+      inputTemplate: mimoto/LoginFlow/Wallet/GetWallets/GetWallets
+      outputTemplate: mimoto/LoginFlow/Wallet/GetWallets/GetWalletsResult
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION"
+}'
+      output: '{
+}'
+
+   Mimoto_GetWallets_WithoutLogin_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Get list of all the wallets that is present in DB without login and expects to fail
+      uniqueIdentifier: TC_Mimoto_GetWallets_02
+      role: userDefinedCookie
+      restMethod: get
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Wallet/GetWallets/GetWallets
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "withoutLogin",
+      	"cookieName": "SESSION"
+}'
+      output: '{
+      "responseCode": "401"
+}'
+
+   Mimoto_GetWallets_WithExpiredSession_Neg:
+      endPoint: /v1/mimoto/wallets
+      description: Get list of all the wallets that is present in DB with expired login and expects to fail
+      uniqueIdentifier: TC_Mimoto_GetWallets_03
+      role: userDefinedCookie
+      restMethod: get
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Wallet/GetWallets/GetWallets
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "OGYwNWI5YWQtZjg0MS00NmM2LWJiZTgtOGRmMWYwMGYzNzcy",
+      	"cookieName": "SESSION"
+}'
+      output: '{
+      "responseCode": "401"
+}'

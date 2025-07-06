@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
 
@@ -15,6 +16,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.SkipException;
 
@@ -27,6 +29,7 @@ import io.mosip.testrig.apirig.testrunner.OTPListener;
 import io.mosip.testrig.apirig.utils.AdminTestUtil;
 import io.mosip.testrig.apirig.utils.ConfigManager;
 import io.mosip.testrig.apirig.utils.GlobalConstants;
+import io.mosip.testrig.apirig.utils.GlobalMethods;
 import io.mosip.testrig.apirig.utils.RestClient;
 import io.mosip.testrig.apirig.utils.SkipTestCaseHandler;
 import io.restassured.response.Response;
@@ -82,6 +85,14 @@ public class MimotoUtil extends AdminTestUtil {
 		
 		String endpoint = testCaseDTO.getEndPoint();
 		String inputJson = testCaseDTO.getInput();
+		
+		//When the captcha is enabled we cannot execute the test case as we can not generate the captcha token
+		if (isCaptchaEnabled() == true) {
+			GlobalMethods.reportCaptchaStatus(GlobalConstants.CAPTCHA_ENABLED, true);
+			throw new SkipException(GlobalConstants.CAPTCHA_ENABLED_MESSAGE);
+		}else {
+			GlobalMethods.reportCaptchaStatus(GlobalConstants.CAPTCHA_ENABLED, false);
+		}
 		
 		if (MosipTestRunner.skipAll == true) {
 			throw new SkipException(GlobalConstants.PRE_REQUISITE_FAILED_MESSAGE);
@@ -176,6 +187,10 @@ public class MimotoUtil extends AdminTestUtil {
 
 			jsonString = replaceKeywordValue(jsonString, "$SUNBIRDINSURANCEAUTHFACTORTYPE$", valueToReplace);
 
+		}
+		
+		if (jsonString.contains("$GOOGLE_IDT_TOKEN$")) {
+			jsonString = replaceKeywordValue(jsonString, "$GOOGLE_IDT_TOKEN$", getGoogleIdToken());
 		}
 		
 		if (jsonString.contains("$POLICYNUMBERFORSUNBIRDRC$")) {
@@ -321,6 +336,39 @@ public class MimotoUtil extends AdminTestUtil {
 					+ key);
 			return "";
 		}
+
+	}
+	
+	private static String getGoogleIdToken() {
+		String idToken = null;
+
+		Map<String, String> requestMap = new HashMap<>();
+		requestMap.put("clientId", MimotoConfigManager.getproperty("google.client.id"));
+		requestMap.put("clientSecret", MimotoConfigManager.getproperty("google.client.secret"));
+		requestMap.put("refreshToken", MimotoConfigManager.getproperty("google.refresh.token"));
+		requestMap.put("grant_type", "refresh_token");
+		String url = props.getProperty("googleIdToken");
+
+		Response response = RestClient.postRequestWithFormDataBody(url, requestMap);
+
+		if (response.getStatusCode() != 200) {
+			String errorResponse = response.getBody().toString();
+			throw new RuntimeException("Failed to get ID token. HTTP status code: " + response.getStatusCode()
+					+ ", response body: " + errorResponse);
+		}
+
+		JSONObject jsonObject = new JSONObject(response.getBody().asString());
+
+		if (jsonObject != null) {
+			idToken = jsonObject.get("id_token").toString();
+		}
+
+		if (idToken == null || idToken.isEmpty()) {
+			throw new RuntimeException("id_token not found in response: " + response);
+		}
+
+		logger.info("Obtained id_token: " + idToken); // Debug log
+		return idToken;
 
 	}
 }

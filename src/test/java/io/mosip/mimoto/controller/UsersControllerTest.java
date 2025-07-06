@@ -1,7 +1,7 @@
 package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dbentity.UserMetadata;
+import io.mosip.mimoto.model.UserMetadata;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.ErrorConstants;

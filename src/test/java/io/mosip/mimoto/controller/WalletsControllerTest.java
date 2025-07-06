@@ -8,7 +8,7 @@ import io.mosip.mimoto.dto.UnlockWalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.exception.UnAuthorizationAccessException;
+import io.mosip.mimoto.exception.UnauthorizedAccessException;
 import io.mosip.mimoto.exception.WalletStatusException;
 import io.mosip.mimoto.model.WalletStatus;
 import io.mosip.mimoto.service.WalletService;
@@ -127,7 +127,7 @@ public class WalletsControllerTest {
     public void shouldReturnUnauthorizedWhenUserIdIsMissingForCreateWallet() throws Exception {
         mockSession.clearAttributes();
         MockHttpSession sessionWithoutUserId = mockSession;
-        doThrow(new UnAuthorizationAccessException(ErrorConstants.UNAUTHORIZED_ACCESS.getErrorCode(), "User ID not found in session")).when(walletService).createWallet(null, walletName, walletPin, confirmWalletPin);
+        doThrow(new UnauthorizedAccessException(ErrorConstants.UNAUTHORIZED_ACCESS.getErrorCode(), "User ID not found in session")).when(walletService).createWallet(null, walletName, walletPin, confirmWalletPin);
 
         mockMvc.perform(post("/wallets")
                         .contentType(MediaType.APPLICATION_JSON)

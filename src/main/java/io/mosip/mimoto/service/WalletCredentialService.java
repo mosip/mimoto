@@ -24,9 +24,9 @@ public interface WalletCredentialService {
      * @return The stored credential response.
      * @throws CredentialProcessingException If processing fails.
      */
-    VerifiableCredentialResponseDTO fetchAndStoreCredential(String issuerId, String credentialConfigurationId,
-                                                            TokenResponseDTO tokenResponse,
-                                                            String locale, String walletId, String base64Key)
+    VerifiableCredentialResponseDTO downloadVCAndStoreInDB(String issuerId, String credentialConfigurationId,
+                                                           TokenResponseDTO tokenResponse,
+                                                           String locale, String walletId, String base64Key)
             throws CredentialProcessingException, ExternalServiceUnavailableException;
 
     /**

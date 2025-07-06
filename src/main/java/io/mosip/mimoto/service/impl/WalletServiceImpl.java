@@ -1,7 +1,7 @@
 package io.mosip.mimoto.service.impl;
 
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dbentity.Wallet;
+import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.dto.GetWalletResponseDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
@@ -67,11 +67,10 @@ public class WalletServiceImpl implements WalletService {
         validator.validateUserId(userId);
         validator.validateWalletPin(pin);
 
-        Wallet wallet = repository.findByUserIdAndId(userId, walletId)
-                .orElseThrow(getWalletNotFoundExceptionSupplier(userId, walletId));
-
-        walletUnlockHandler.handleUnlock(wallet, pin, httpSession);
-        return new WalletResponseDto(walletId, wallet.getWalletMetadata().getName());
+        return repository.findByUserIdAndId(userId, walletId).map(wallet -> {
+            walletUnlockHandler.handleUnlock(wallet, pin, httpSession);
+            return new WalletResponseDto(walletId, wallet.getWalletMetadata().getName());
+        }).orElseThrow(getWalletNotFoundExceptionSupplier(userId, walletId));
     }
 
     @Override
@@ -81,9 +80,7 @@ public class WalletServiceImpl implements WalletService {
 
         log.info("Retrieving wallets for user: {}", userId);
 
-        List<Wallet> wallets = repository.findWalletByUserId(userId);
-        return wallets.stream()
-                .map(wallet -> GetWalletResponseDto.builder()
+        return repository.findWalletByUserId(userId).stream().map(wallet -> GetWalletResponseDto.builder()
                         .walletId(wallet.getId())
                         .walletName(wallet.getWalletMetadata().getName())
                         .walletStatus(walletUnlockHandler.getWalletStatus(wallet))

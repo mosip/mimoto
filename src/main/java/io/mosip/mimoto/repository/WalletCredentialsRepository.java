@@ -1,7 +1,6 @@
 package io.mosip.mimoto.repository;
 
-import io.mosip.mimoto.dbentity.VerifiableCredential;
-import org.springframework.data.domain.Sort;
+import io.mosip.mimoto.model.VerifiableCredential;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

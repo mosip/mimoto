@@ -44,12 +44,14 @@ public class MimotoConfigManager extends ConfigManager{
 		} else if (getproperty("runPlugin").equals("mockid")) {
 			esignetBaseUrl = "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", getproperty("mock-identity-esignet-host"));
 		}
-
+		if(esignetBaseUrl != null) {
+			propertiesMap.put("eSignetbaseurl", esignetBaseUrl);
+		}
 		return esignetBaseUrl;
 	}
 	
 	public static String getEsignetSunBirdBaseURL() {
-		return "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", getproperty("mosip-esignet-insurance-host"));
+		return "https://" + MimotoUtil.getValueFromMimotoActuator("overrides", getproperty("sunbirdrc-insurance-esignet-host"));
 	}
 
 }

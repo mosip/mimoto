@@ -25,7 +25,7 @@ COMMENT ON TABLE user_metadata IS 'User Metadata: Contains details about the use
 COMMENT ON COLUMN user_metadata.id IS 'Primary Key: Unique identifier for the user metadata';
 COMMENT ON COLUMN user_metadata.provider_subject_id IS 'Provider Subject ID: Unique identifier for the subject assigned by the identity provider';
 COMMENT ON COLUMN user_metadata.identity_provider IS 'Identity Provider: The identity provider associated with the user';
-COMMENT ON COLUMN user_metadata.display_name IS 'Display Name: The name shown to other users';
+COMMENT ON COLUMN user_metadata.display_name IS 'Display Name: Name of the user';
 COMMENT ON COLUMN user_metadata.profile_picture_url IS 'Profile Picture URL: The URL link to the user''s profile picture';
 COMMENT ON COLUMN user_metadata.phone_number IS 'Phone Number: User''s phone number, if available';
 COMMENT ON COLUMN user_metadata.email IS 'Email: User''s email address';

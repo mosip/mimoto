@@ -1,14 +1,14 @@
 package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dbentity.PasscodeMetadata;
-import io.mosip.mimoto.dbentity.Wallet;
-import io.mosip.mimoto.dbentity.WalletMetadata;
+import io.mosip.mimoto.model.Wallet;
+import io.mosip.mimoto.model.WalletMetadata;
+import io.mosip.mimoto.model.PasscodeMetadata;
 import io.mosip.mimoto.dto.GetWalletResponseDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.exception.UnAuthorizationAccessException;
+import io.mosip.mimoto.exception.UnauthorizedAccessException;
 import io.mosip.mimoto.exception.WalletStatusException;
 import io.mosip.mimoto.model.WalletStatus;
 import io.mosip.mimoto.repository.WalletRepository;
@@ -100,9 +100,9 @@ public class WalletServiceTest {
     @Test
     public void shouldThrowUnAuthorizedAccessExceptionOnCreatingWalletIfUserIdNotFoundInSession() {
         // In case of userId (or any key) not available in session, the default value will be null.
-        doThrow(new UnAuthorizationAccessException("unauthorized", "User ID not found in session")).when(walletValidator).validateUserId(null);
+        doThrow(new UnauthorizedAccessException("unauthorized", "User ID not found in session")).when(walletValidator).validateUserId(null);
 
-        UnAuthorizationAccessException exception = assertThrows(UnAuthorizationAccessException.class, () ->
+        UnauthorizedAccessException exception = assertThrows(UnauthorizedAccessException.class, () ->
                 walletService.createWallet(null, name, walletPin, walletConfirmPin));
 
         assertEquals("unauthorized", exception.getErrorCode());

@@ -1,17 +1,13 @@
 package io.mosip.mimoto.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
-import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.exception.VCVerificationException;
 import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.service.impl.CredentialServiceImpl;
-import io.mosip.mimoto.service.impl.DataShareServiceImpl;
-import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
-import io.mosip.mimoto.util.*;
-import io.mosip.vercred.vcverifier.CredentialsVerifier;
+import io.mosip.mimoto.util.RestApiClient;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.junit.Before;
@@ -23,9 +19,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
@@ -35,7 +31,8 @@ import java.util.Map;
 
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -43,40 +40,25 @@ import static org.mockito.Mockito.when;
 public class CredentialServiceTest {
 
     @Mock
-    CredentialsVerifier credentialsVerifier;
+    CredentialRequestService credentialRequestService;
 
     @Mock
-    ObjectMapper objectMapper;
+    CredentialVerifierService credentialVerifierService;
+
+    @Mock
+    RestApiClient restApiClient;
 
     @InjectMocks
     CredentialServiceImpl credentialService;
 
     @Mock
-    CredentialUtilService credentialUtilService;
+    CredentialPDFGeneratorService credentialUtilService;
 
     @Mock
     IssuersServiceImpl issuersService;
 
-    @Mock
-    RestTemplate restTemplate;
-
-    @Mock
-    IdpServiceImpl idpService;
-
-    @Mock
-    RestApiClient restApiClient;
-
-    @Mock
-    JoseUtil joseUtil;
-
-    @Mock
-    Utilities utilities;
-
-    @Mock
-    DataShareServiceImpl dataShareService;
-
     TokenResponseDTO expectedTokenResponse;
-    String tokenEndpoint, issuerId, expectedExceptionMsg;
+    String tokenEndpoint, issuerId;
     IssuerDTO issuerDTO;
     HttpEntity<MultiValueMap<String, String>> mockRequest;
     CredentialIssuerConfiguration issuerConfig;
@@ -115,15 +97,19 @@ public class CredentialServiceTest {
     public void shouldThrowExceptionIfDownloadedVCSignatureVerificationFailed() throws Exception {
         Mockito.when(issuersService.getIssuerDetails(issuerId)).thenReturn(issuerDTO);
         Mockito.when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
-        when(credentialUtilService.generateVCCredentialRequest(any(IssuerDTO.class),
+        when(credentialRequestService.buildRequest(any(IssuerDTO.class),
                 any(CredentialIssuerWellKnownResponse.class),
                 any(CredentialsSupportedResponse.class),
                 any(String.class), any(), any(), eq(false))).thenReturn(getVCCredentialRequestDTO());
         VCCredentialResponse vcCredentialResponse = getVCCredentialResponseDTO("CredentialType1");
-        when(credentialUtilService.downloadCredential(any(String.class),
+        when(restApiClient.postApi(
+                any(String.class),
+                any(MediaType.class),
                 any(VCCredentialRequest.class),
-                any(String.class))).thenReturn(vcCredentialResponse);
-        when(credentialUtilService.verifyCredential(vcCredentialResponse)).thenReturn(false);
+                eq(VCCredentialResponse.class),
+                any(String.class)
+        )).thenReturn(vcCredentialResponse);
+        when(credentialVerifierService.verify(vcCredentialResponse)).thenReturn(false);
         VCVerificationException actualException = assertThrows(VCVerificationException.class, () ->
                 credentialService.downloadCredentialAsPDF(issuerId, "CredentialType1", expectedTokenResponse, "once", "en"));
 
@@ -134,15 +120,19 @@ public class CredentialServiceTest {
     public void shouldReturnDownloadedVCAsPDFIfSignatureVerificationIsSuccessful() throws Exception {
         Mockito.when(issuersService.getIssuerDetails(issuerId)).thenReturn(issuerDTO);
         Mockito.when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
-        when(credentialUtilService.generateVCCredentialRequest(any(IssuerDTO.class),
+        when(credentialRequestService.buildRequest(any(IssuerDTO.class),
                 any(CredentialIssuerWellKnownResponse.class),
                 any(CredentialsSupportedResponse.class),
                 any(String.class), any(), any(), eq(false))).thenReturn(getVCCredentialRequestDTO());
         VCCredentialResponse vcCredentialResponse = getVCCredentialResponseDTO("CredentialType1");
-        when(credentialUtilService.downloadCredential(any(String.class),
+        when(restApiClient.postApi(
+                any(String.class),
+                any(MediaType.class),
                 any(VCCredentialRequest.class),
-                any(String.class))).thenReturn(vcCredentialResponse);
-        when(credentialUtilService.verifyCredential(vcCredentialResponse)).thenReturn(true);
+                eq(VCCredentialResponse.class),
+                any(String.class)
+        )).thenReturn(vcCredentialResponse);
+        when(credentialVerifierService.verify(vcCredentialResponse)).thenReturn(true);
         issuerDTO.setQr_code_type(QRCodeType.None);
 
         ByteArrayInputStream expectedPDFByteArray = generatePdfFromHTML();

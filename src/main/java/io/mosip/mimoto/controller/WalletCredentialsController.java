@@ -9,7 +9,7 @@ import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.service.WalletCredentialService;
-import io.mosip.mimoto.util.CredentialUtilService;
+import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.mimoto.util.WalletUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,13 +54,13 @@ import static io.mosip.mimoto.util.WalletUtil.validateWalletId;
 public class WalletCredentialsController {
 
     private final WalletCredentialService walletCredentialService;
-    private final CredentialUtilService credentialUtilService;
+    private final IdpService idpService;
 
     @Autowired
     public WalletCredentialsController(WalletCredentialService walletCredentialService,
-                                       CredentialUtilService credentialUtilService) {
+                                       IdpService idpService) {
         this.walletCredentialService = walletCredentialService;
-        this.credentialUtilService = credentialUtilService;
+        this.idpService = idpService;
     }
 
     /**
@@ -96,7 +96,12 @@ public class WalletCredentialsController {
             @ExampleObject(name = "Invalid Wallet ID", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Invalid Wallet ID. Session and request Wallet ID do not match\"}"),
             @ExampleObject(name = "Wallet key not found in session", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet key not found in session\"}"),
             @ExampleObject(name = "Invalid issuer", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"issuerId cannot be blank\"}"),
-            @ExampleObject(name = "Invalid credentialConfigurationId", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"credentialConfigurationId cannot be blank\"}")}))
+            @ExampleObject(name = "Invalid credentialConfigurationId", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"credentialConfigurationId cannot be blank\"}"),
+            @ExampleObject(name = "Invalid code", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"code cannot be blank\"}"),
+            @ExampleObject(name = "Invalid grantType", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"grantType cannot be blank\"}"),
+            @ExampleObject(name = "Invalid redirectUri", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"redirectUri cannot be blank\"}"),
+            @ExampleObject(name = "Invalid codeVerifier", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"codeVerifier cannot be blank\"}")})
+    )
     @ApiResponse(responseCode = "500", description = "Internal server error - error occurred while serializing the VC response, encrypting the credential, or storing it", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "Credential already exists", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Duplicate credential for issuer and type\"}"), @ExampleObject(name = "Issuer config error", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Unable to fetch issuer configuration\"}"), @ExampleObject(name = "Failed to generate VC request", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Unable to generate credential request\"}"), @ExampleObject(name = "Signature verification failed", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}"), @ExampleObject(name = "Unexpected server error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")}))
     @ApiResponse(responseCode = "503", description = "Service unavailable - error while fetching issuer or auth server well-known, downloading credential, or DB connection failure", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "API is not accessible", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Failed to download and store the credential\"}"), @ExampleObject(name = "Failed to download credential", value = "{\"errorCode\": \"server_unavailable\", \"errorMessage\": \"Unable to download credential from issuer\"}"), @ExampleObject(name = "Database connection failure", value = "{\"errorCode\": \"database_unavailable\", \"errorMessage\": \"Failed to connect to the database\"}")}))
     @PostMapping
@@ -115,7 +120,7 @@ public class WalletCredentialsController {
         log.info("Initiating token call for issuer: {}", issuerId);
         TokenResponseDTO tokenResponse;
         try {
-            tokenResponse = credentialUtilService.getTokenResponse(verifiableCredentialRequest);
+            tokenResponse = idpService.getTokenResponse(verifiableCredentialRequest);
         } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
                  InvalidWellknownResponseException e) {
             log.error("Error fetching token response for issuer: {}", issuerId, e);
@@ -126,7 +131,7 @@ public class WalletCredentialsController {
         log.info("Fetching and storing Verifiable Credential for walletId: {}", walletId);
 
         try {
-            VerifiableCredentialResponseDTO credentialResponseDTO = walletCredentialService.fetchAndStoreCredential(
+            VerifiableCredentialResponseDTO credentialResponseDTO = walletCredentialService.downloadVCAndStoreInDB(
                     issuerId, credentialConfigurationId, tokenResponse, locale, walletId, base64EncodedWalletKey);
             return ResponseEntity.status(HttpStatus.OK).body(credentialResponseDTO);
         } catch (ExternalServiceUnavailableException e) {

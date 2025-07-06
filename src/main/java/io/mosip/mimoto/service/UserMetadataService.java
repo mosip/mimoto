@@ -1,14 +1,13 @@
 package io.mosip.mimoto.service;
 
-import io.mosip.mimoto.dbentity.UserMetadata;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.EncryptionException;
+import io.mosip.mimoto.model.UserMetadata;
 import io.mosip.mimoto.repository.UserMetadataRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
-import java.util.Optional;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -30,7 +29,7 @@ public class UserMetadataService {
                 .map(user -> {
                     try {
                         UserMetadata decryptedUser = new UserMetadata();
-                        decryptedUser.setId(user.getId()); // Copy all needed fields
+                        decryptedUser.setId(user.getId());
                         decryptedUser.setProviderSubjectId(user.getProviderSubjectId());
                         decryptedUser.setIdentityProvider(user.getIdentityProvider());
 
@@ -46,10 +45,10 @@ public class UserMetadataService {
                 .orElse(null);
     }
 
-    public String updateOrInsertUserMetadata(String providerSubjectId, String identityProvider,
+    public String updateOrCreateUserMetadata(String providerSubjectId, String identityProvider,
                                              String displayName, String profilePictureUrl, String email)
             throws EncryptionException, DecryptionException {
-        Timestamp now = new Timestamp(System.currentTimeMillis());
+        Instant now = Instant.now();
         UserMetadata existingUser = getUserMetadata(providerSubjectId, identityProvider);
         if (null != existingUser) {
             return updateUser(existingUser, displayName, profilePictureUrl, email, now);
@@ -58,7 +57,7 @@ public class UserMetadataService {
         }
     }
 
-    private String updateUser(UserMetadata user, String displayName, String profilePictureUrl, String email, Timestamp now)
+    private String updateUser(UserMetadata user, String displayName, String profilePictureUrl, String email, Instant now)
             throws EncryptionException {
         boolean updated = updateIfChanged(user::getDisplayName, user::setDisplayName, displayName);
         updated = updateIfChanged(user::getProfilePictureUrl, user::setProfilePictureUrl, profilePictureUrl) || updated;
@@ -79,7 +78,7 @@ public class UserMetadataService {
     }
 
     private String createUser(String providerSubjectId, String identityProvider, String displayName,
-                              String profilePictureUrl, String email, Timestamp now)
+                              String profilePictureUrl, String email, Instant now)
             throws EncryptionException {
         UserMetadata user = new UserMetadata();
         user.setId(UUID.randomUUID().toString());

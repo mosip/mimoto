@@ -1,7 +1,7 @@
 package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.exception.UnAuthorizationAccessException;
+import io.mosip.mimoto.exception.UnauthorizedAccessException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +58,7 @@ public class WalletValidatorTest {
 
     @Test
     void testValidateUserId_nullUserId() {
-        UnAuthorizationAccessException exception = assertThrows(UnAuthorizationAccessException.class, () -> {
+        UnauthorizedAccessException exception = assertThrows(UnauthorizedAccessException.class, () -> {
             walletValidator.validateUserId(null);
         });
 

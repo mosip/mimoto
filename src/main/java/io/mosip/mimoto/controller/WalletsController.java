@@ -4,7 +4,7 @@ import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.exception.UnAuthorizationAccessException;
+import io.mosip.mimoto.exception.UnauthorizedAccessException;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.WalletUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -83,7 +83,7 @@ public class WalletsController {
     @PostMapping
     public ResponseEntity<WalletResponseDto> createWallet(
             @RequestBody @Valid CreateWalletRequestDto wallet,
-            HttpSession httpSession) throws InvalidRequestException, UnAuthorizationAccessException {
+            HttpSession httpSession) throws InvalidRequestException, UnauthorizedAccessException {
         String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
         log.info("Creating wallet for user: {}, name: {}", userId, wallet.getWalletName());
         WalletResponseDto walletResponseDto = walletService.createWallet(userId, wallet.getWalletName(), wallet.getWalletPin(), wallet.getConfirmWalletPin());

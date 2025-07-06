@@ -1,7 +1,7 @@
 package io.mosip.mimoto.security.oauth2;
 
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dto.OAuth2ProviderProperties;
+import io.mosip.mimoto.config.oauth2.OAuth2ProviderProperties;
 import io.mosip.mimoto.dto.ProviderDataConfig;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.service.UserMetadataService;
@@ -91,7 +91,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private String updateUserMetadata(Map<String, Object> attributes, ProviderDataConfig provider, String registrationId) {
         String providerSubjectId = safeGet(attributes, StringUtils.defaultIfBlank(provider.getUserNameAttribute(), "sub"));
         try {
-            return userMetadataService.updateOrInsertUserMetadata(
+            return userMetadataService.updateOrCreateUserMetadata(
                     providerSubjectId,
                     registrationId,
                     safeGet(attributes, "name"),
