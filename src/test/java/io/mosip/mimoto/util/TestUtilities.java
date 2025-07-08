@@ -9,7 +9,7 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import io.mosip.mimoto.model.CredentialMetadata;
-import io.mosip.mimoto.model.PasscodeMetadata;
+import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.model.VerifiableCredential;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
@@ -460,22 +460,21 @@ public class TestUtilities {
         return wallet;
     }
 
-    public static WalletMetadata createWalletMetadata(String name, PasscodeMetadata passcodeMetadata, WalletStatus walletStatus) {
+    public static WalletMetadata createWalletMetadata(String name, PasscodeControl passcodeControl, WalletStatus walletStatus) {
         WalletMetadata walletMetadata = new WalletMetadata();
         walletMetadata.setName(name);
         walletMetadata.setEncryptionAlgo("AES");
         walletMetadata.setEncryptionType("symmetric");
-        walletMetadata.setPasscodeMetadata(passcodeMetadata);
+        walletMetadata.setPasscodeControl(passcodeControl);
         walletMetadata.setStatus(walletStatus);
         return walletMetadata;
     }
 
-    public static PasscodeMetadata createPasscodeMetadata(Integer currentAttemptCount, Integer currentCycleCount, Long retryBlockedUntil) {
-        PasscodeMetadata passcodeMetadata = new PasscodeMetadata();
-        passcodeMetadata.setCurrentAttemptCount(currentAttemptCount);
-        passcodeMetadata.setCurrentCycleCount(currentCycleCount);
-        passcodeMetadata.setRetryBlockedUntil(retryBlockedUntil);
-        return passcodeMetadata;
-
+    public static PasscodeControl createPasscodeControl(Integer currentAttemptCount, Integer currentCycleCount, Long retryBlockedUntil) {
+        PasscodeControl passcodeControl = new PasscodeControl();
+        passcodeControl.setCurrentAttemptCount(currentAttemptCount);
+        passcodeControl.setCurrentCycleCount(currentCycleCount);
+        passcodeControl.setRetryBlockedUntil(retryBlockedUntil);
+        return passcodeControl;
     }
 }

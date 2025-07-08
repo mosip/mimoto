@@ -3,7 +3,7 @@ package io.mosip.mimoto.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.CreateWalletRequestDto;
-import io.mosip.mimoto.dto.GetWalletResponseDto;
+import io.mosip.mimoto.dto.WalletDetailsResponseDto;
 import io.mosip.mimoto.dto.UnlockWalletRequestDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
@@ -145,8 +145,8 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldReturnListOfWalletIDsForValidUserId() throws Exception {
-        List<GetWalletResponseDto> wallets = List.of(new GetWalletResponseDto("walletId1", "Wallet1", null),
-                new GetWalletResponseDto("walletId2", "Wallet2", WalletStatus.TEMPORARILY_LOCKED));
+        List<WalletDetailsResponseDto> wallets = List.of(new WalletDetailsResponseDto("walletId1", "Wallet1", null),
+                new WalletDetailsResponseDto("walletId2", "Wallet2", WalletStatus.TEMPORARILY_LOCKED));
         when(walletService.getWallets(userId)).thenReturn(wallets);
 
         mockMvc.perform(get("/wallets")
@@ -385,9 +385,9 @@ public class WalletsControllerTest {
         UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
         unlockRequest.setWalletPin("invalidPin");
 
-        String errorMessage = ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage();
+        String errorMessage = ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage();
         when(walletService.unlockWallet(walletId, "invalidPin", mockSession))
-                .thenThrow(new InvalidRequestException(ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), errorMessage));
+                .thenThrow(new InvalidRequestException(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), errorMessage));
 
         mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -397,7 +397,7 @@ public class WalletsControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.user(userId).roles("USER"))
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value(ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode()))
+                .andExpect(jsonPath("$.errorCode").value(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode()))
                 .andExpect(jsonPath("$.errorMessage").value(errorMessage));
     }
 

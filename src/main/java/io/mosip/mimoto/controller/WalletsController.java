@@ -103,16 +103,16 @@ public class WalletsController {
             operationId = "getWallets",
             security = @SecurityRequirement(name = "SessionAuth")
     )
-    @ApiResponse(responseCode = "200", description = "List of wallets retrieved successfully", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = GetWalletResponseDto.class)), examples = @ExampleObject(name = "Success response", value = "[{\"walletName\": \"My Personal Wallet1\",\"walletId\": \"123e4567-e89b-12d3-a456-426614174000\", \"walletStatus\": null}, {\"walletName\": \"My Personal Wallet2\",\"walletId\": \"223e4567-e89b-12d3-a456-426614174001\", \"walletStatus\": null}]")))
+    @ApiResponse(responseCode = "200", description = "List of wallets retrieved successfully", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = WalletDetailsResponseDto.class)), examples = @ExampleObject(name = "Success response", value = "[{\"walletName\": \"My Personal Wallet1\",\"walletId\": \"123e4567-e89b-12d3-a456-426614174000\", \"walletStatus\": null}, {\"walletName\": \"My Personal Wallet2\",\"walletId\": \"223e4567-e89b-12d3-a456-426614174001\", \"walletStatus\": null}]")))
     @ApiResponse(responseCode = "400", description = "Invalid Wallets fetching request", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Invalid User ID", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"User ID cannot be null or empty\"}")))
     @ApiResponse(responseCode = "401", description = "Unauthorized access", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User ID not found in session", value = "{\"errorCode\": \"unauthorized\", \"errorMessage\": \"User ID not found in session\"}")))
     @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
     @ApiResponse(responseCode = "503", description = "Service unavailable", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Database connection failure", value = "{\"errorCode\": \"database_unavailable\", \"errorMessage\": \"Failed to connect to the database\"}")))
     @GetMapping
-    public ResponseEntity<List<GetWalletResponseDto>> getWallets(HttpSession httpSession) throws InvalidRequestException {
+    public ResponseEntity<List<WalletDetailsResponseDto>> getWallets(HttpSession httpSession) throws InvalidRequestException {
         String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
         log.info("Retrieving wallets for user: {}", userId);
-        List<GetWalletResponseDto> response = walletService.getWallets(userId);
+        List<WalletDetailsResponseDto> response = walletService.getWallets(userId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

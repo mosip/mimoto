@@ -1,6 +1,6 @@
 package io.mosip.mimoto.service;
 
-import io.mosip.mimoto.dto.GetWalletResponseDto;
+import io.mosip.mimoto.dto.WalletDetailsResponseDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import jakarta.servlet.http.HttpSession;
@@ -42,7 +42,7 @@ public interface WalletService {
      * @return List of wallet responses.
      * @throws InvalidRequestException If the request fails.
      */
-    List<GetWalletResponseDto> getWallets(String userId);
+    List<WalletDetailsResponseDto> getWallets(String userId);
 
     void deleteWallet(String userId, String walletId) throws InvalidRequestException;
 }

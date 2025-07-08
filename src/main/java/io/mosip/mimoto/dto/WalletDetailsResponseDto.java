@@ -10,7 +10,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 @Builder
-public class GetWalletResponseDto {
+public class WalletDetailsResponseDto {
     @Schema(description = "Unique identifier of the Wallet")
     String walletId;
     @Schema(description = "Wallet name provided by user")

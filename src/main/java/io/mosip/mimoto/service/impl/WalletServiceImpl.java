@@ -2,7 +2,7 @@ package io.mosip.mimoto.service.impl;
 
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.model.Wallet;
-import io.mosip.mimoto.dto.GetWalletResponseDto;
+import io.mosip.mimoto.dto.WalletDetailsResponseDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
@@ -74,13 +74,13 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public List<GetWalletResponseDto> getWallets(String userId) {
+    public List<WalletDetailsResponseDto> getWallets(String userId) {
         log.debug("validating user ID provided");
         validator.validateUserId(userId);
 
         log.info("Retrieving wallets for user: {}", userId);
 
-        return repository.findWalletByUserId(userId).stream().map(wallet -> GetWalletResponseDto.builder()
+        return repository.findWalletByUserId(userId).stream().map(wallet -> WalletDetailsResponseDto.builder()
                         .walletId(wallet.getId())
                         .walletName(wallet.getWalletMetadata().getName())
                         .walletStatus(walletUnlockHandler.getWalletStatus(wallet))

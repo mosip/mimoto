@@ -3612,7 +3612,7 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/components/schemas/GetWalletResponseDto"
+                                        "$ref": "#/components/schemas/WalletDetailsResponseDto"
                                     }
                                 },
                                 "examples": {
@@ -4221,7 +4221,7 @@
                     }
                 }
             },
-            "GetWalletResponseDto": {
+            "WalletDetailsResponseDto": {
                 "type": "object",
                 "properties": {
                     "walletId": {

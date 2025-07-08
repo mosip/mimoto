@@ -1,7 +1,7 @@
 package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.model.PasscodeMetadata;
+import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
 import io.mosip.mimoto.exception.ErrorConstants;
@@ -60,8 +60,8 @@ class WalletUnlockHandlerTest {
         mockSession.setAttribute("clientRegistrationId", "google");
         mockSession.setAttribute(SessionKeys.USER_ID, userId);
 
-        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(1, 1, null);
-        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeMetadata, null);
+        PasscodeControl passcodeControl = TestUtilities.createPasscodeControl(1, 1, null);
+        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeControl, null);
         wallet = TestUtilities.createWallet(userId, encryptedWalletKey, walletMetadata);
         walletId = wallet.getId();
     }
@@ -77,9 +77,9 @@ class WalletUnlockHandlerTest {
         assertEquals(walletId, mockSession.getAttribute(SessionKeys.WALLET_ID));
 
         // Verify wallet state reset after successful unlock
-        assertEquals(Integer.valueOf(1), wallet.getWalletMetadata().getPasscodeMetadata().getCurrentAttemptCount());
-        assertEquals(Integer.valueOf(1), wallet.getWalletMetadata().getPasscodeMetadata().getCurrentCycleCount());
-        assertNull(wallet.getWalletMetadata().getPasscodeMetadata().getRetryBlockedUntil());
+        assertEquals(Integer.valueOf(1), wallet.getWalletMetadata().getPasscodeControl().getCurrentAttemptCount());
+        assertEquals(Integer.valueOf(1), wallet.getWalletMetadata().getPasscodeControl().getCurrentCycleCount());
+        assertNull(wallet.getWalletMetadata().getPasscodeControl().getRetryBlockedUntil());
         assertNull(wallet.getWalletMetadata().getStatus());
 
         verify(walletUtil, times(1)).decryptWalletKey(encryptedWalletKey, walletPin);
@@ -98,9 +98,9 @@ class WalletUnlockHandlerTest {
         assertEquals("invalid_pin --> Invalid PIN", exception.getMessage());
 
         // Verify wallet state updates after first failed attempt in current cycle
-        assertEquals(Integer.valueOf(2), wallet.getWalletMetadata().getPasscodeMetadata().getCurrentAttemptCount());
-        assertEquals(Integer.valueOf(1), wallet.getWalletMetadata().getPasscodeMetadata().getCurrentCycleCount());
-        assertNull(wallet.getWalletMetadata().getPasscodeMetadata().getRetryBlockedUntil());
+        assertEquals(Integer.valueOf(2), wallet.getWalletMetadata().getPasscodeControl().getCurrentAttemptCount());
+        assertEquals(Integer.valueOf(1), wallet.getWalletMetadata().getPasscodeControl().getCurrentCycleCount());
+        assertNull(wallet.getWalletMetadata().getPasscodeControl().getRetryBlockedUntil());
         assertNull(wallet.getWalletMetadata().getStatus());
 
         verify(repository).save(wallet);
@@ -109,8 +109,8 @@ class WalletUnlockHandlerTest {
 
     @Test
     void shouldThrowTemporarilyLockedExceptionWhenUnlockingWalletWhichIsAlreadyLockedTemporarily() {
-        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(6, 2, System.currentTimeMillis() + 3600000);
-        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeMetadata, WalletStatus.TEMPORARILY_LOCKED);
+        PasscodeControl passcodeControl = TestUtilities.createPasscodeControl(6, 2, System.currentTimeMillis() + 3600000);
+        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeControl, WalletStatus.TEMPORARILY_LOCKED);
         wallet = TestUtilities.createWallet(userId, "mock-encrypted-key", walletMetadata);
         String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for " + (lockDuration / (60 * 60 * 1000)) + " hour(s)";
         String expectedErrorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode() + " --> " + errorMessage;
@@ -128,8 +128,8 @@ class WalletUnlockHandlerTest {
 
     @Test
     void shouldThrowTemporarilyLockedExceptionWhenUnlockingWalletWithInvalidPinInLastAttemptBeforeTemporaryLock() {
-        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(5, 1, null);
-        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeMetadata, null);
+        PasscodeControl passcodeControl = TestUtilities.createPasscodeControl(5, 1, null);
+        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeControl, null);
         wallet = TestUtilities.createWallet(userId, encryptedWalletKey, walletMetadata);
         walletPin = "12345678";
         String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for " + (lockDuration / (60 * 60 * 1000)) + " hour(s)";
@@ -145,9 +145,9 @@ class WalletUnlockHandlerTest {
         assertEquals(expectedErrorMessage, exception.getMessage());
 
         // Verify wallet state updates after last attempt failed in current cycle
-        assertEquals(Integer.valueOf(6), wallet.getWalletMetadata().getPasscodeMetadata().getCurrentAttemptCount());
-        assertEquals(Integer.valueOf(2), wallet.getWalletMetadata().getPasscodeMetadata().getCurrentCycleCount());
-        assertNotNull(wallet.getWalletMetadata().getPasscodeMetadata().getRetryBlockedUntil()); // Should be blocked
+        assertEquals(Integer.valueOf(6), wallet.getWalletMetadata().getPasscodeControl().getCurrentAttemptCount());
+        assertEquals(Integer.valueOf(2), wallet.getWalletMetadata().getPasscodeControl().getCurrentCycleCount());
+        assertNotNull(wallet.getWalletMetadata().getPasscodeControl().getRetryBlockedUntil()); // Should be blocked
         assertEquals(WalletStatus.TEMPORARILY_LOCKED, wallet.getWalletMetadata().getStatus());
 
         verify(repository).save(wallet);
@@ -156,8 +156,8 @@ class WalletUnlockHandlerTest {
 
     @Test
     void shouldThrowPermanentlyLockedExceptionWhenUnlockingWalletWhichIsAlreadyLockedPermanently() {
-        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(6, 4, null);
-        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeMetadata, WalletStatus.PERMANENTLY_LOCKED);
+        PasscodeControl passcodeControl = TestUtilities.createPasscodeControl(6, 4, null);
+        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeControl, WalletStatus.PERMANENTLY_LOCKED);
         wallet = TestUtilities.createWallet(userId, "mock-encrypted-key", walletMetadata);
         String expectedErrorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
 
@@ -173,24 +173,24 @@ class WalletUnlockHandlerTest {
 
     @Test
     void shouldThrowExceptionWhenUnlockingWalletWithInvalidPinInLastSecondAttemptBeforePermanentLock() {
-        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(4, 3, null);
-        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeMetadata, null);
+        PasscodeControl passcodeControl = TestUtilities.createPasscodeControl(4, 3, null);
+        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeControl, null);
         wallet = TestUtilities.createWallet(userId, encryptedWalletKey, walletMetadata);
         walletPin = "12345678";
         when(walletUtil.decryptWalletKey(encryptedWalletKey, walletPin))
                 .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_PIN.getErrorCode(), "Invalid PIN or wallet key provided"));
-        String expectedErrorMessage = ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode() + " --> " + ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage();
+        String expectedErrorMessage = ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode() + " --> " + ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage();
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
                 walletUnlockHandler.handleUnlock(wallet, walletPin, mockSession));
 
-        assertEquals(ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), exception.getErrorCode());
+        assertEquals(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), exception.getErrorCode());
         assertEquals(expectedErrorMessage, exception.getMessage());
 
         // Verify wallet state updates after last second attempt failed in current cycle
-        assertEquals(Integer.valueOf(5), wallet.getWalletMetadata().getPasscodeMetadata().getCurrentAttemptCount()); // Attempt count does not reset yet
-        assertEquals(Integer.valueOf(3), wallet.getWalletMetadata().getPasscodeMetadata().getCurrentCycleCount());
-        assertNull(wallet.getWalletMetadata().getPasscodeMetadata().getRetryBlockedUntil());
+        assertEquals(Integer.valueOf(5), wallet.getWalletMetadata().getPasscodeControl().getCurrentAttemptCount()); // Attempt count does not reset yet
+        assertEquals(Integer.valueOf(3), wallet.getWalletMetadata().getPasscodeControl().getCurrentCycleCount());
+        assertNull(wallet.getWalletMetadata().getPasscodeControl().getRetryBlockedUntil());
         assertEquals(WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT, wallet.getWalletMetadata().getStatus());
 
         verify(walletUtil, times(1)).decryptWalletKey(encryptedWalletKey, walletPin);
@@ -199,8 +199,8 @@ class WalletUnlockHandlerTest {
 
     @Test
     void shouldThrowPermanentlyLockedExceptionWhenUnlockingWalletWithInvalidPinInLastAttemptBeforePermanentLock() {
-        PasscodeMetadata passcodeMetadata = TestUtilities.createPasscodeMetadata(5, 3, null);
-        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeMetadata, WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
+        PasscodeControl passcodeControl = TestUtilities.createPasscodeControl(5, 3, null);
+        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeControl, WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
         wallet = TestUtilities.createWallet(userId, encryptedWalletKey, walletMetadata);
         walletPin = "12345678";
         when(walletUtil.decryptWalletKey(encryptedWalletKey, walletPin))
@@ -214,9 +214,9 @@ class WalletUnlockHandlerTest {
         assertEquals(expectedErrorMessage, exception.getMessage());
 
         // Verify wallet state updates after last second attempt failed in current cycle
-        assertEquals(Integer.valueOf(6), wallet.getWalletMetadata().getPasscodeMetadata().getCurrentAttemptCount()); // Attempt count does not reset yet
-        assertEquals(Integer.valueOf(4), wallet.getWalletMetadata().getPasscodeMetadata().getCurrentCycleCount());
-        assertNull(wallet.getWalletMetadata().getPasscodeMetadata().getRetryBlockedUntil());
+        assertEquals(Integer.valueOf(6), wallet.getWalletMetadata().getPasscodeControl().getCurrentAttemptCount()); // Attempt count does not reset yet
+        assertEquals(Integer.valueOf(4), wallet.getWalletMetadata().getPasscodeControl().getCurrentCycleCount());
+        assertNull(wallet.getWalletMetadata().getPasscodeControl().getRetryBlockedUntil());
         assertEquals(WalletStatus.PERMANENTLY_LOCKED, wallet.getWalletMetadata().getStatus());
 
         verify(walletUtil, times(1)).decryptWalletKey(encryptedWalletKey, walletPin);

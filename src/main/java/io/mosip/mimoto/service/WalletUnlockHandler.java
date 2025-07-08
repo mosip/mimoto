@@ -1,7 +1,7 @@
-package io.mosip.mimoto.service; // Or appropriate package
+package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.model.PasscodeMetadata;
+import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
 import io.mosip.mimoto.exception.ErrorConstants;
@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import static io.mosip.mimoto.exception.ErrorConstants.LAST_ATTEMPT_BEFORE_LOCKOUT;
+import static io.mosip.mimoto.exception.ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT;
 
 @Slf4j
 @Service
@@ -63,29 +63,30 @@ public class WalletUnlockHandler {
     }
 
     private void handleSuccessfulUnlock(Wallet wallet, String decryptedWalletKey, HttpSession httpSession) throws InvalidRequestException {
-        WalletMetadata walletMetadata = wallet.getWalletMetadata();
-        PasscodeMetadata passcodeMetadata = walletMetadata.getPasscodeMetadata();
         httpSession.setAttribute(SessionKeys.WALLET_KEY, decryptedWalletKey);
         httpSession.setAttribute(SessionKeys.WALLET_ID, wallet.getId());
 
-        passcodeMetadata.setRetryBlockedUntil(null);
-        passcodeMetadata.setCurrentCycleCount(1);
-        passcodeMetadata.setCurrentAttemptCount(1);
+        WalletMetadata walletMetadata = wallet.getWalletMetadata();
+        PasscodeControl passcodeControl = walletMetadata.getPasscodeControl();
+
+        passcodeControl.setRetryBlockedUntil(null);
+        passcodeControl.setCurrentCycleCount(1);
+        passcodeControl.setCurrentAttemptCount(1);
         walletMetadata.setStatus(null);
         repository.save(wallet);
     }
 
     private void handleFailedUnlock(Wallet wallet, InvalidRequestException ex) throws InvalidRequestException {
         WalletMetadata walletMetadata = wallet.getWalletMetadata();
-        PasscodeMetadata passcodeMetadata = walletMetadata.getPasscodeMetadata();
-        int currentAttemptCount = passcodeMetadata.getCurrentAttemptCount() + 1;
-        passcodeMetadata.setCurrentAttemptCount(currentAttemptCount);
+        PasscodeControl passcodeControl = walletMetadata.getPasscodeControl();
+        int currentAttemptCount = passcodeControl.getCurrentAttemptCount() + 1;
+        passcodeControl.setCurrentAttemptCount(currentAttemptCount);
 
-        boolean isLastSecondAttemptBeforePermanentLock = currentAttemptCount == maxFailedAttemptsAllowedPerCycle && passcodeMetadata.getCurrentCycleCount() == maxLockCyclesAllowed;
+        boolean isLastSecondAttemptBeforePermanentLock = currentAttemptCount == maxFailedAttemptsAllowedPerCycle && passcodeControl.getCurrentCycleCount() == maxLockCyclesAllowed;
         if (isLastSecondAttemptBeforePermanentLock) {
             walletMetadata.setStatus(WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
             repository.save(wallet);
-            throw new InvalidRequestException(LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage());
+            throw new InvalidRequestException(WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage());
         }
 
         handleLockCycle(wallet);
@@ -95,16 +96,16 @@ public class WalletUnlockHandler {
 
     private void handleLockCycle(Wallet wallet) {
         WalletMetadata walletMetadata = wallet.getWalletMetadata();
-        PasscodeMetadata passcodeMetadata = walletMetadata.getPasscodeMetadata();
+        PasscodeControl passcodeControl = walletMetadata.getPasscodeControl();
 
-        if (passcodeMetadata.getCurrentAttemptCount() > maxFailedAttemptsAllowedPerCycle) {
-            passcodeMetadata.setCurrentCycleCount(passcodeMetadata.getCurrentCycleCount() + 1);
+        if (passcodeControl.getCurrentAttemptCount() > maxFailedAttemptsAllowedPerCycle) {
+            passcodeControl.setCurrentCycleCount(passcodeControl.getCurrentCycleCount() + 1);
 
-            if(passcodeMetadata.getCurrentCycleCount() > maxLockCyclesAllowed){
-                passcodeMetadata.setRetryBlockedUntil(null);
+            if(passcodeControl.getCurrentCycleCount() > maxLockCyclesAllowed){
+                passcodeControl.setRetryBlockedUntil(null);
                 walletMetadata.setStatus(WalletStatus.PERMANENTLY_LOCKED);
             } else {
-                passcodeMetadata.setRetryBlockedUntil(System.currentTimeMillis() + lockDuration);
+                passcodeControl.setRetryBlockedUntil(System.currentTimeMillis() + lockDuration);
                 walletMetadata.setStatus(WalletStatus.TEMPORARILY_LOCKED);
             }
         }
@@ -130,12 +131,12 @@ public class WalletUnlockHandler {
     public void handleTemporaryLockExpiration(Wallet wallet) {
         long currentTimeInMilliseconds = System.currentTimeMillis();
         WalletMetadata walletMetadata = wallet.getWalletMetadata();
-        PasscodeMetadata passcodeMetadata = walletMetadata.getPasscodeMetadata();
+        PasscodeControl passcodeControl = walletMetadata.getPasscodeControl();
 
-        boolean isTemporaryLockExpired = walletMetadata.getStatus() == WalletStatus.TEMPORARILY_LOCKED && passcodeMetadata.getRetryBlockedUntil() != null && currentTimeInMilliseconds > passcodeMetadata.getRetryBlockedUntil();
+        boolean isTemporaryLockExpired = walletMetadata.getStatus() == WalletStatus.TEMPORARILY_LOCKED && passcodeControl.getRetryBlockedUntil() != null && currentTimeInMilliseconds > passcodeControl.getRetryBlockedUntil();
         if (isTemporaryLockExpired) {
-            passcodeMetadata.setRetryBlockedUntil(null);
-            passcodeMetadata.setCurrentAttemptCount(1);
+            passcodeControl.setRetryBlockedUntil(null);
+            passcodeControl.setCurrentAttemptCount(1);
             walletMetadata.setStatus(WalletStatus.LOCK_EXPIRED);
             repository.save(wallet);
         }
