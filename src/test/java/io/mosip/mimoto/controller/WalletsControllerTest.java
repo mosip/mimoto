@@ -262,7 +262,7 @@ public class WalletsControllerTest {
     public void shouldThrowExceptionWhenUserIdIsMissingForUnlockWallet() throws Exception {
         UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
         unlockRequest.setWalletPin(walletPin);
-        when(walletService.unlockWallet(walletId, walletPin, userId))
+        when(walletService.unlockWallet(walletId, walletPin, null))
                 .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "User ID cannot be null or empty"));
         mockSession.clearAttributes();
         MockHttpSession sessionWithoutUserId = mockSession;

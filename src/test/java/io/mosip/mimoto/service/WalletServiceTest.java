@@ -134,8 +134,7 @@ public class WalletServiceTest {
     @Test
     public void shouldUnlockWalletSuccessfully() {
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
-        when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenReturn(decryptedWalletKey);
-        doNothing().when(walletUnlockService).handleUnlock(wallet, walletPin);
+        when(walletUnlockService.handleUnlock(wallet, walletPin)).thenReturn(decryptedWalletKey);
 
         WalletResponseDto responseDto = walletService.unlockWallet(walletId, walletPin, userId);
 
@@ -283,7 +282,7 @@ public class WalletServiceTest {
     public void shouldReturnListOfWalletResponseDTOsForGivenUserId() {
         PasscodeControl passcodeControl = TestUtilities.createPasscodeControl(5, 3, null);
 
-        WalletMetadata walletMetadata1 = TestUtilities.createWalletMetadata("Test Wallet1", passcodeControl, null);
+        WalletMetadata walletMetadata1 = TestUtilities.createWalletMetadata("Test Wallet1", passcodeControl, WalletStatus.TEMPORARILY_LOCKED);
         Wallet wallet1 = TestUtilities.createWallet("mock-user-id-1", "mock-encrypted-key", walletMetadata1);
 
         WalletMetadata walletMetadata2 = TestUtilities.createWalletMetadata("Test Wallet2", passcodeControl, null);
@@ -291,7 +290,11 @@ public class WalletServiceTest {
 
         List<Wallet> mockWallets = List.of(wallet1, wallet2);
 
-        when(walletRepository.findWalletByUserId(userId)).thenReturn(List.of(wallet1, wallet2));
+        when(walletLockManager.resetTemporaryLockIfExpired(wallet1)).thenReturn(wallet1);
+        when(walletLockManager.resetTemporaryLockIfExpired(wallet2)).thenReturn(wallet2);
+        when(walletStatusService.getWalletStatus(wallet1)).thenReturn(WalletStatus.TEMPORARILY_LOCKED);
+        when(walletStatusService.getWalletStatus(wallet2)).thenReturn(null);
+        when(walletRepository.findWalletByUserId(userId)).thenReturn(mockWallets);
 
         List<WalletDetailsResponseDto> result = walletService.getWallets(userId);
 
