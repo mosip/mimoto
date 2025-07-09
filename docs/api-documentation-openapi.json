@@ -3626,7 +3626,7 @@
                                             {
                                                 "walletId": "223e4567-e89b-12d3-a456-426614174001",
                                                 "walletName": "Wallet Main",
-                                                "walletStatus": null
+                                                "walletStatus": "temporarily_locked"
                                             }
                                         ]
                                     }
@@ -3904,6 +3904,12 @@
                                             "errorCode": "invalid_pin",
                                             "errorMessage": "Invalid PIN or wallet key provided"
                                         }
+                                    },
+                                    "Only one attempt left to unlock Wallet before Permanent Lockout": {
+                                        "value": {
+                                            "errorCode": "last_attempt_before_lockout",
+                                            "errorMessage": "Incorrect passcode. Last attempt remaining before your Wallet is permanently locked"
+                                        }
                                     }
                                 }
                             }
@@ -3921,6 +3927,30 @@
                                         "value": {
                                             "errorCode": "unauthorized",
                                             "errorMessage": "User ID not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "423": {
+                        "description": "Wallet is locked temporarily or permanently",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Wallet is locked Temporarily": {
+                                        "value": {
+                                            "errorCode": "temporarily_locked",
+                                            "errorMessage": "You’ve reached the maximum number of attempts. Your wallet is now temporarily locked"
+                                        }
+                                    },
+                                    "Wallet is locked Permanently": {
+                                        "value": {
+                                            "errorCode": "permanently_locked",
+                                            "errorMessage": "Your wallet has been permanently locked due to multiple failed attempts. Please click on forgot password to reset your wallet to continue"
                                         }
                                     }
                                 }
