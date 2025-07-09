@@ -66,7 +66,9 @@ class WalletUnlockServiceTest {
     }
 
     @Test
-    void shouldUnlockWalletSuccessfullyAndReturnDecryptedWalletKeyWhenValidPinProvided() throws InvalidRequestException {
+    void shouldUnlockWalletSuccessfullyAndReturnDecryptedWalletKeyWhenValidPinIsProvided() throws InvalidRequestException {
+        when(walletLockManager.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet);
+        doNothing().when(walletStatusService).validateWalletStatus(wallet);
         when(walletUtil.decryptWalletKey(encryptedWalletKey, walletPin)).thenReturn(decryptedWalletKey);
 
         String result = walletUnlockService.handleUnlock(wallet, walletPin);
@@ -74,13 +76,18 @@ class WalletUnlockServiceTest {
         assertEquals(decryptedWalletKey, result);
         verify(walletStatusService, times(1)).validateWalletStatus(wallet);
         verify(walletUtil).decryptWalletKey(encryptedWalletKey, walletPin);
+        verify(walletLockManager).resetTemporaryLockIfExpired(wallet);
         verify(walletLockManager).resetLockState(wallet);
         verifyNoMoreInteractions(walletLockManager);
     }
 
     @Test
-    void shouldThrowExceptionAndHandleUnlockFailureWhenInvalidPinProvided() throws InvalidRequestException {
+    void shouldThrowExceptionAndHandleUnlockFailureWhenInvalidPinIsProvided() throws InvalidRequestException {
         String invalidPin = "12345678";
+        when(walletLockManager.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet).thenReturn(wallet);
+        when(walletLockManager.enforceLockCyclePolicy(wallet)).thenReturn(wallet);
+        doNothing().when(walletStatusService).validateWalletStatus(wallet);
+        doNothing().when(walletStatusService).validateLastAttemptBeforeLockout(wallet);
         when(walletUtil.decryptWalletKey(encryptedWalletKey, invalidPin))
                 .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_PIN.getErrorCode(), "Invalid PIN"));
 
@@ -92,12 +99,69 @@ class WalletUnlockServiceTest {
 
         verify(walletUtil).decryptWalletKey(encryptedWalletKey, invalidPin);
         verify(walletLockManager).enforceLockCyclePolicy(wallet);
+        verify(walletStatusService).validateLastAttemptBeforeLockout(wallet);
+        verify(walletLockManager,times(2)).resetTemporaryLockIfExpired(wallet);
         verify(walletStatusService, times(2)).validateWalletStatus(wallet);
         verify(walletLockManager, never()).resetLockState(wallet);
+        verify(walletRepository, times(2)).save(wallet);
     }
 
     @Test
-    void shouldThrowExceptionImmediatelyWhenUnlockingWalletIsLockedTemporarilyOrPermanently() throws InvalidRequestException {
+    void shouldThrowExceptionWhenWalletIsLockedPermanentlyAfterValidatingInvalidPin() throws InvalidRequestException {
+        String invalidPin = "12345678";
+        when(walletLockManager.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet).thenReturn(wallet);
+        when(walletUtil.decryptWalletKey(encryptedWalletKey, invalidPin))
+                .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_PIN.getErrorCode(), "Invalid PIN"));
+        when(walletLockManager.enforceLockCyclePolicy(wallet)).thenReturn(wallet);
+        doNothing().when(walletStatusService).validateLastAttemptBeforeLockout(wallet);
+        doNothing().doThrow(new WalletStatusException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage())).when(walletStatusService).validateWalletStatus(wallet);
+        String expectedErrorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
+
+        WalletStatusException exception = assertThrows(WalletStatusException.class, () ->
+                walletUnlockService.handleUnlock(wallet, invalidPin));
+
+        assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), exception.getErrorCode());
+        assertEquals(expectedErrorMessage, exception.getMessage());
+
+        verify(walletUtil).decryptWalletKey(encryptedWalletKey, invalidPin);
+        verify(walletLockManager).enforceLockCyclePolicy(wallet);
+        verify(walletStatusService).validateLastAttemptBeforeLockout(wallet);
+        verify(walletLockManager,times(2)).resetTemporaryLockIfExpired(wallet);
+        verify(walletStatusService, times(2)).validateWalletStatus(wallet);
+        verify(walletLockManager, never()).resetLockState(wallet);
+        verify(walletRepository, times(2)).save(wallet);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenOnlyOneAttemptIsLeftBeforePermanentLockoutAfterValidatingInvalidPin() throws InvalidRequestException {
+        String invalidPin = "12345678";
+        when(walletLockManager.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet).thenReturn(wallet);
+        when(walletUtil.decryptWalletKey(encryptedWalletKey, invalidPin))
+                .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_PIN.getErrorCode(), "Invalid PIN"));
+        doNothing().when(walletStatusService).validateWalletStatus(wallet);
+        when(walletLockManager.enforceLockCyclePolicy(wallet)).thenReturn(wallet);
+        doNothing().when(walletStatusService).validateLastAttemptBeforeLockout(wallet);
+        doThrow(new InvalidRequestException(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage())).when(walletStatusService).validateLastAttemptBeforeLockout(wallet);
+        String expectedErrorMessage = ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode() + " --> " + ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage();
+
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+                walletUnlockService.handleUnlock(wallet, invalidPin));
+
+        assertEquals(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), exception.getErrorCode());
+        assertEquals(expectedErrorMessage, exception.getMessage());
+
+        verify(walletUtil).decryptWalletKey(encryptedWalletKey, invalidPin);
+        verify(walletLockManager).enforceLockCyclePolicy(wallet);
+        verify(walletStatusService).validateLastAttemptBeforeLockout(wallet);
+        verify(walletLockManager,times(1)).resetTemporaryLockIfExpired(wallet);
+        verify(walletStatusService, times(1)).validateWalletStatus(wallet);
+        verify(walletLockManager, never()).resetLockState(wallet);
+        verify(walletRepository, times(2)).save(wallet);
+    }
+
+    @Test
+    void shouldThrowExceptionImmediatelyWhenUnlockingWalletIsAlreadyLockedPermanently() throws InvalidRequestException {
+        when(walletLockManager.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet);
         WalletStatusException walletStatusException = new WalletStatusException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage());
         doThrow(walletStatusException).when(walletStatusService).validateWalletStatus(wallet);
 
@@ -109,8 +173,10 @@ class WalletUnlockServiceTest {
         assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), exception.getErrorCode());
         assertEquals(expectedErrorMessage, exception.getMessage());
 
+        verify(walletLockManager,times(1)).resetTemporaryLockIfExpired(wallet);
         verify(walletStatusService, times(1)).validateWalletStatus(wallet);
+        verify(walletRepository, times(1)).save(wallet);
+        verifyNoMoreInteractions(walletLockManager);
         verifyNoMoreInteractions(walletStatusService);
-        verify(walletLockManager, never()).resetLockState(wallet);
     }
 }
