@@ -7,6 +7,7 @@ import io.mosip.mimoto.model.WalletMetadata;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.WalletStatusException;
+import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.util.TestUtilities;
 import io.mosip.mimoto.util.WalletUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +38,9 @@ class WalletUnlockServiceTest {
 
     @MockBean
     private WalletStatusService walletStatusService;
+
+    @MockBean
+    private WalletRepository walletRepository;
 
     @Autowired
     private WalletUnlockService walletUnlockService;

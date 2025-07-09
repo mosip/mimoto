@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service;
 
+import io.mosip.mimoto.exception.WalletStatusException;
 import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.exception.InvalidRequestException;
@@ -43,7 +44,7 @@ public class WalletUnlockService {
         }
     }
 
-   private void initPasscodeControlCounters(Wallet wallet, PasscodeControl passcodeControl) {
+    private void initPasscodeControlCounters(Wallet wallet, PasscodeControl passcodeControl) {
         // Set the current attempt count to 1 if this is the first unlock attempt in the current cycle
         if (passcodeControl.getCurrentAttemptCount() == 0) {
             passcodeControl.setCurrentAttemptCount(1);
@@ -58,11 +59,15 @@ public class WalletUnlockService {
     }
 
     private void handleFailedUnlock(Wallet wallet) {
-        wallet = walletLockManager.enforceLockCyclePolicy(wallet);
-        walletRepository.save(wallet);
-        walletStatusService.validateLastAttemptBeforeLockout(wallet);
-        wallet = walletLockManager.resetTemporaryLockIfExpired(wallet);
-        walletRepository.save(wallet);
-        walletStatusService.validateWalletStatus(wallet);
+        try {
+            wallet = walletLockManager.enforceLockCyclePolicy(wallet);
+            walletStatusService.validateLastAttemptBeforeLockout(wallet);
+            wallet = walletLockManager.resetTemporaryLockIfExpired(wallet);
+            walletStatusService.validateWalletStatus(wallet);
+            walletRepository.save(wallet);
+        } catch (WalletStatusException | InvalidRequestException ex) {
+            walletRepository.save(wallet);
+            throw ex;
+        }
     }
 }

@@ -62,11 +62,11 @@ public class WalletServiceImpl implements WalletService {
 
         String walletId = walletUtil.createWallet(userId, name, pin);
         log.debug("Wallet created successfully: {}", walletId);
-        return new WalletResponseDto(walletId, name);
+        return WalletResponseDto.builder().walletId(walletId).walletName(name).build();
     }
 
     @Override
-    public WalletUnlockResult unlockWallet(String walletId, String pin, String userId) throws InvalidRequestException {
+    public WalletResponseDto unlockWallet(String walletId, String pin, String userId) throws InvalidRequestException {
         log.info("Unlocking Wallet: {} for User: {}", walletId, userId);
 
         validator.validateUserId(userId);
@@ -74,9 +74,7 @@ public class WalletServiceImpl implements WalletService {
 
         return repository.findByUserIdAndId(userId, walletId).map(wallet -> {
             String decryptedWalletKey = walletUnlockService.handleUnlock(wallet, pin);
-            WalletResponseDto walletResponseDto = new WalletResponseDto(walletId, wallet.getWalletMetadata().getName());
-
-            return new WalletUnlockResult(walletResponseDto, decryptedWalletKey);
+            return new WalletResponseDto(walletId, wallet.getWalletMetadata().getName(), decryptedWalletKey);
         }).orElseThrow(getWalletNotFoundExceptionSupplier(userId, walletId));
     }
 

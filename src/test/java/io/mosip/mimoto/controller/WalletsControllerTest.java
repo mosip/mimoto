@@ -74,7 +74,8 @@ public class WalletsControllerTest {
 
     @Test
     public void shouldReturnWalletIdForSuccessfulWalletCreation() throws Exception {
-        when(walletService.createWallet(userId, walletName, walletPin, confirmWalletPin)).thenReturn(new WalletResponseDto(walletId, walletName));
+        when(walletService.createWallet(userId, walletName, walletPin, confirmWalletPin)).thenReturn(
+                WalletResponseDto.builder().walletId(walletId).walletName(walletName).build());
 
         mockMvc.perform(post("/wallets")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -239,7 +240,7 @@ public class WalletsControllerTest {
         UnlockWalletRequestDto unlockRequest = new UnlockWalletRequestDto();
         unlockRequest.setWalletPin(walletPin);
 
-        when(walletService.unlockWallet(walletId, walletPin, userId)).thenReturn(new WalletUnlockResult(new WalletResponseDto(walletId, walletName), decryptedWalletKey));
+        when(walletService.unlockWallet(walletId, walletPin, userId)).thenReturn(new WalletResponseDto(walletId, walletName, decryptedWalletKey));
 
         MvcResult result = mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
                         .contentType(MediaType.APPLICATION_JSON)

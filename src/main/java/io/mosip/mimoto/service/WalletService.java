@@ -33,7 +33,7 @@ public interface WalletService {
      * @return WalletResponseDto containing wallet details.
      * @throws InvalidRequestException If the wallet is not found or PIN is invalid.
      */
-    WalletUnlockResult unlockWallet(String walletId, String pin, String userId) throws InvalidRequestException;
+    WalletResponseDto unlockWallet(String walletId, String pin, String userId) throws InvalidRequestException;
 
     /**
      * Retrieves all wallets for a user.

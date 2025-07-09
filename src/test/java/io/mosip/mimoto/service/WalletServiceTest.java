@@ -1,7 +1,6 @@
 package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dto.WalletUnlockResult;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
 import io.mosip.mimoto.model.PasscodeControl;
@@ -50,6 +49,12 @@ public class WalletServiceTest {
     @MockBean
     private WalletUnlockService walletUnlockService;
 
+    @MockBean
+    private WalletStatusService walletStatusService;
+
+    @MockBean
+    private WalletLockManager walletLockManager;
+
     @Autowired
     private WalletServiceImpl walletService;
 
@@ -79,8 +84,8 @@ public class WalletServiceTest {
 
     }
 
-    @Value("${wallet.lockDuration}")
-    private long lockDuration;
+    @Value("${wallet.passcode.retryBlockedUntil}")
+    private long retryBlockedUntil;
 
     @Test
     public void shouldCreateWalletSuccessfully() {
@@ -132,12 +137,12 @@ public class WalletServiceTest {
         when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenReturn(decryptedWalletKey);
         doNothing().when(walletUnlockService).handleUnlock(wallet, walletPin);
 
-        WalletUnlockResult result = walletService.unlockWallet(walletId, walletPin, userId);
+        WalletResponseDto responseDto = walletService.unlockWallet(walletId, walletPin, userId);
 
         verify(walletRepository).findByUserIdAndId(userId, walletId);
-        assertEquals(walletId, result.responseDto().getWalletId());
-        assertEquals("Test Wallet", result.responseDto().getWalletName());
-        assertEquals(decryptedWalletKey, result.decryptedWalletKey());
+        assertEquals(walletId, responseDto.getWalletId());
+        assertEquals("Test Wallet", responseDto.getWalletName());
+        assertEquals(decryptedWalletKey, responseDto.getDecryptedWalletKey());
     }
 
     @Test
@@ -170,12 +175,12 @@ public class WalletServiceTest {
 
     @Test
     public void shouldThrowTemporarilyLockedExceptionWhenUnlockingWalletWhichIsAlreadyLockedTemporarily() {
-        PasscodeControl passcodeControl = TestUtilities.createPasscodeControl(6, 2, lockDuration);
+        PasscodeControl passcodeControl = TestUtilities.createPasscodeControl(6, 2, retryBlockedUntil);
         WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeControl, WalletStatus.TEMPORARILY_LOCKED);
         wallet = TestUtilities.createWallet(userId, "mock-encrypted-key", walletMetadata);
         walletId = wallet.getId();
         when(walletRepository.findByUserIdAndId(userId, wallet.getId())).thenReturn(Optional.of(wallet));
-        String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for " + (lockDuration / (60 * 60 * 1000)) + " hour(s)";
+        String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for " + (retryBlockedUntil / (60 * 60 * 1000)) + " hour(s)";
         String expectedErrorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode() + " --> " + errorMessage;
         doThrow(new WalletStatusException(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorMessage))
                 .when(walletUnlockService).handleUnlock(wallet, walletPin);
@@ -198,7 +203,7 @@ public class WalletServiceTest {
 
         when(walletRepository.findByUserIdAndId(userId, wallet.getId())).thenReturn(Optional.of(wallet));
         when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenThrow(new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided"));
-        String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for " + (lockDuration / (60 * 60 * 1000)) + " hour(s)";
+        String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for " + (retryBlockedUntil / (60 * 60 * 1000)) + " hour(s)";
         String expectedErrorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode() + " --> " + errorMessage;
         doThrow(new WalletStatusException(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorMessage))
                 .when(walletUnlockService).handleUnlock(wallet, walletPin);

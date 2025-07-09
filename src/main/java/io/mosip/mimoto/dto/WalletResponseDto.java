@@ -1,5 +1,6 @@
 package io.mosip.mimoto.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,4 +14,7 @@ public class WalletResponseDto {
     String walletId;
     @Schema(description = "Wallet name provided by user")
     String walletName;
+    @JsonIgnore
+    @Schema(hidden = true)
+    String decryptedWalletKey;
 }
