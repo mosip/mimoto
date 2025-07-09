@@ -48,7 +48,7 @@ public class WalletServiceTest {
     private WalletValidator walletValidator;
 
     @MockBean
-    private WalletUnlockHandler walletUnlockHandler;
+    private WalletUnlockService walletUnlockService;
 
     @Autowired
     private WalletServiceImpl walletService;
@@ -130,7 +130,7 @@ public class WalletServiceTest {
     public void shouldUnlockWalletSuccessfully() {
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
         when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenReturn(decryptedWalletKey);
-        doNothing().when(walletUnlockHandler).handleUnlock(wallet, walletPin);
+        doNothing().when(walletUnlockService).handleUnlock(wallet, walletPin);
 
         WalletUnlockResult result = walletService.unlockWallet(walletId, walletPin, userId);
 
@@ -158,7 +158,7 @@ public class WalletServiceTest {
         String invalidPin = "12345678";
         when(walletRepository.findByUserIdAndId(userId, walletId)).thenReturn(Optional.of(wallet));
         doThrow(new InvalidRequestException(ErrorConstants.INVALID_PIN.getErrorCode(), "Invalid PIN or wallet key provided"))
-                .when(walletUnlockHandler).handleUnlock(wallet, invalidPin);
+                .when(walletUnlockService).handleUnlock(wallet, invalidPin);
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
                 walletService.unlockWallet(walletId, invalidPin, userId));
@@ -178,7 +178,7 @@ public class WalletServiceTest {
         String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for " + (lockDuration / (60 * 60 * 1000)) + " hour(s)";
         String expectedErrorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode() + " --> " + errorMessage;
         doThrow(new WalletStatusException(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorMessage))
-                .when(walletUnlockHandler).handleUnlock(wallet, walletPin);
+                .when(walletUnlockService).handleUnlock(wallet, walletPin);
 
         WalletStatusException exception = assertThrows(WalletStatusException.class, () ->
                 walletService.unlockWallet(walletId, walletPin, userId));
@@ -201,7 +201,7 @@ public class WalletServiceTest {
         String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for " + (lockDuration / (60 * 60 * 1000)) + " hour(s)";
         String expectedErrorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode() + " --> " + errorMessage;
         doThrow(new WalletStatusException(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorMessage))
-                .when(walletUnlockHandler).handleUnlock(wallet, walletPin);
+                .when(walletUnlockService).handleUnlock(wallet, walletPin);
 
         WalletStatusException exception = assertThrows(WalletStatusException.class, () ->
                 walletService.unlockWallet(walletId, walletPin, userId));
@@ -220,7 +220,7 @@ public class WalletServiceTest {
         when(walletRepository.findByUserIdAndId(userId, wallet.getId())).thenReturn(Optional.of(wallet));
         String expectedErrorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
         doThrow(new WalletStatusException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage()))
-                .when(walletUnlockHandler).handleUnlock(wallet, walletPin);
+                .when(walletUnlockService).handleUnlock(wallet, walletPin);
 
         WalletStatusException exception = assertThrows(WalletStatusException.class, () -> walletService.unlockWallet(walletId, walletPin, userId));
 
@@ -241,7 +241,7 @@ public class WalletServiceTest {
         when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenThrow(new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided"));
         String expectedErrorMessage = ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode() + " --> " + ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage();
         doThrow(new WalletStatusException(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage()))
-                .when(walletUnlockHandler).handleUnlock(wallet, walletPin);
+                .when(walletUnlockService).handleUnlock(wallet, walletPin);
 
         WalletStatusException exception = assertThrows(WalletStatusException.class, () ->
                 walletService.unlockWallet(walletId, walletPin, userId));
@@ -263,7 +263,7 @@ public class WalletServiceTest {
         when(walletHelper.decryptWalletKey(encryptedWalletKey, walletPin)).thenThrow(new InvalidRequestException("invalid_pin", "Invalid PIN or wallet key provided"));
         String expectedErrorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
         doThrow(new WalletStatusException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage()))
-                .when(walletUnlockHandler).handleUnlock(wallet, walletPin);
+                .when(walletUnlockService).handleUnlock(wallet, walletPin);
 
         WalletStatusException exception = assertThrows(WalletStatusException.class, () ->
                 walletService.unlockWallet(walletId, walletPin, userId));

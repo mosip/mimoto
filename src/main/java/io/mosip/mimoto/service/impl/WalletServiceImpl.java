@@ -7,9 +7,10 @@ import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.repository.WalletRepository;
+import io.mosip.mimoto.service.WalletLockManager;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.service.WalletStatusService;
-import io.mosip.mimoto.service.WalletUnlockHandler;
+import io.mosip.mimoto.service.WalletUnlockService;
 import io.mosip.mimoto.util.WalletUtil;
 import io.mosip.mimoto.util.WalletValidator;
 import lombok.extern.slf4j.Slf4j;
@@ -31,16 +32,19 @@ public class WalletServiceImpl implements WalletService {
     private final WalletRepository repository;
     private final WalletUtil walletUtil;
     private final WalletValidator validator;
-    private final WalletUnlockHandler walletUnlockHandler;
+    private final WalletUnlockService walletUnlockService;
     private final WalletStatusService walletStatusService;
 
+    private final WalletLockManager walletLockManager;
+
     @Autowired
-    public WalletServiceImpl(WalletRepository repository, WalletUtil walletUtil, WalletValidator validator, WalletUnlockHandler walletUnlockHandler, WalletStatusService walletStatusService) {
+    public WalletServiceImpl(WalletRepository repository, WalletUtil walletUtil, WalletValidator validator, WalletUnlockService walletUnlockService, WalletStatusService walletStatusService, WalletLockManager walletLockManager) {
         this.repository = repository;
         this.walletUtil = walletUtil;
         this.validator = validator;
-        this.walletUnlockHandler = walletUnlockHandler;
+        this.walletUnlockService = walletUnlockService;
         this.walletStatusService = walletStatusService;
+        this.walletLockManager = walletLockManager;
     }
 
     @Override
@@ -69,7 +73,7 @@ public class WalletServiceImpl implements WalletService {
         validator.validateWalletPin(pin);
 
         return repository.findByUserIdAndId(userId, walletId).map(wallet -> {
-            String decryptedWalletKey = walletUnlockHandler.handleUnlock(wallet, pin);
+            String decryptedWalletKey = walletUnlockService.handleUnlock(wallet, pin);
             WalletResponseDto walletResponseDto = new WalletResponseDto(walletId, wallet.getWalletMetadata().getName());
 
             return new WalletUnlockResult(walletResponseDto, decryptedWalletKey);
@@ -83,12 +87,15 @@ public class WalletServiceImpl implements WalletService {
 
         log.info("Retrieving wallets for user: {}", userId);
 
-        return repository.findWalletByUserId(userId).stream().map(wallet -> WalletDetailsResponseDto.builder()
-                        .walletId(wallet.getId())
-                        .walletName(wallet.getWalletMetadata().getName())
-                        .walletStatus(walletStatusService.getWalletStatus(wallet))
-                        .build())
-                .toList();
+        return repository.findWalletByUserId(userId).stream().map(wallet -> {
+            wallet = walletLockManager.resetTemporaryLockIfExpired(wallet);
+            repository.save(wallet);
+            return WalletDetailsResponseDto.builder()
+                    .walletId(wallet.getId())
+                    .walletName(wallet.getWalletMetadata().getName())
+                    .walletStatus(walletStatusService.getWalletStatus(wallet))
+                    .build();
+        }).toList();
     }
 
     @Override

@@ -25,9 +25,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {WalletUnlockHandler.class})
+@SpringBootTest(classes = {WalletUnlockService.class})
 @TestPropertySource(locations = "classpath:application-test.properties")
-class WalletUnlockHandlerTest {
+class WalletUnlockServiceTest {
 
     @MockBean
     private WalletUtil walletUtil;
@@ -39,15 +39,15 @@ class WalletUnlockHandlerTest {
     private WalletStatusService walletStatusService;
 
     @Autowired
-    private WalletUnlockHandler walletUnlockHandler;
+    private WalletUnlockService walletUnlockService;
 
     MockHttpSession mockSession;
-    private String userId, walletPin, encryptedWalletKey, decryptedWalletKey;
+    private String walletPin, encryptedWalletKey, decryptedWalletKey;
     private Wallet wallet;
 
     @BeforeEach
     void setUp() {
-        userId = UUID.randomUUID().toString();
+        String userId = UUID.randomUUID().toString();
         walletPin = "1234";
         encryptedWalletKey = "encryptedKey";
         decryptedWalletKey = "decryptedKey";
@@ -65,7 +65,7 @@ class WalletUnlockHandlerTest {
     void shouldUnlockWalletSuccessfullyAndReturnDecryptedWalletKeyWhenValidPinProvided() throws InvalidRequestException {
         when(walletUtil.decryptWalletKey(encryptedWalletKey, walletPin)).thenReturn(decryptedWalletKey);
 
-        String result = walletUnlockHandler.handleUnlock(wallet, walletPin);
+        String result = walletUnlockService.handleUnlock(wallet, walletPin);
 
         assertEquals(decryptedWalletKey, result);
         verify(walletStatusService, times(1)).validateWalletStatus(wallet);
@@ -81,15 +81,13 @@ class WalletUnlockHandlerTest {
                 .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_PIN.getErrorCode(), "Invalid PIN"));
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-                walletUnlockHandler.handleUnlock(wallet, invalidPin));
+                walletUnlockService.handleUnlock(wallet, invalidPin));
 
         assertEquals(ErrorConstants.INVALID_PIN.getErrorCode(), exception.getErrorCode());
         assertEquals("invalid_pin --> Invalid PIN", exception.getMessage());
 
         verify(walletUtil).decryptWalletKey(encryptedWalletKey, invalidPin);
-        verify(walletLockManager).incrementAttemptCount(wallet);
-        verify(walletLockManager).checkAndUpdateLastAttemptBeforePermanentLockout(wallet);
-        verify(walletLockManager).handleLockCycle(wallet);
+        verify(walletLockManager).enforceLockCyclePolicy(wallet);
         verify(walletStatusService, times(2)).validateWalletStatus(wallet);
         verify(walletLockManager, never()).resetLockState(wallet);
     }
@@ -102,7 +100,7 @@ class WalletUnlockHandlerTest {
         String expectedErrorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
 
         WalletStatusException exception = assertThrows(WalletStatusException.class, () ->
-                walletUnlockHandler.handleUnlock(wallet, walletPin));
+                walletUnlockService.handleUnlock(wallet, walletPin));
 
         assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), exception.getErrorCode());
         assertEquals(expectedErrorMessage, exception.getMessage());

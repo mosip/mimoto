@@ -77,8 +77,6 @@ fileignoreconfig:
   checksum: 857f5dcebdef810161b9ef09ad078c091c7d9969035bc45132975b296675dac9
 - filename: docker-compose/config/mimoto-default.properties
   checksum: 746b60fa10a8c2c10c00bd35313407186db7aef0762f99e919bbc42fdc597824
-- filename: src/test/java/io/mosip/mimoto/service/WalletServiceTest.java
-  checksum: 17877c1ccacdb243bc0a9ce972d62c7eddf11febaee1e595fa8e5c3717ab26ef
 - filename: src/main/java/io/mosip/mimoto/controller/WalletsController.java
   checksum: 0802e3c0d9525bb6618c70019ab6ed4a19e85af2b38ef11a6cf5e92b2213d866
 - filename: src/test/java/io/mosip/mimoto/controller/WalletsControllerTest.java
@@ -86,7 +84,9 @@ fileignoreconfig:
 - filename: src/test/java/io/mosip/mimoto/util/WalletValidatorTest.java
   checksum: 90dce7daa19f0eb9050194a3c77a88d449a83c337d9041bfdeb7bfded3bbd12c
 - filename: src/main/java/io/mosip/mimoto/service/impl/WalletServiceImpl.java
-  checksum: f46470167552125799f8f04478a9fd2a1631feb4b873453c08c5a4a0469076cf
+  checksum: 7895f835422c3b3117c390187e0cbc9f32461c52a5d7f77a5b16270f0b0d9652
+- filename: src/test/java/io/mosip/mimoto/service/WalletServiceTest.java
+  checksum: 963a9ef4fe6730e5a945efa4e5a94d71e026bbf2e693ea17145fd48230138265
 - filename: src/main/java/io/mosip/mimoto/exception/ErrorConstants.java
   checksum: 1e3114215c59f6c30c0886278392295a964aa6be4f013c517e6082c14eae9d77
 - filename: src/test/java/io/mosip/mimoto/util/TestUtilities.java
@@ -96,7 +96,9 @@ fileignoreconfig:
 - filename: src/test/java/io/mosip/mimoto/service/WalletUnlockHandlerTest.java
   checksum: 3e6c516fda244dd85be2b423402b3b9435242c0991423d2637bcbd5d14d42e3c
 - filename: src/main/java/io/mosip/mimoto/service/WalletLockManager.java
-  checksum: fd04b18ed85d6a77c397b53d1565a275f68c82e63ca499c43a411a859b5249ba
+  checksum: 4dc47d51166b0f766c01c37f7b0c20227d8d113406cc6b15f7eab5ea56d97a89
+- filename: src/main/java/io/mosip/mimoto/service/WalletStatusService.java
+  checksum: 3858fd0ef51e9c4fe372e88471a84eff8a68523297e0e20c52f498b127d03459
 - filename: docs/api-documentation-openapi.json
   checksum: 4774ddd39278f09d8886bf404b116b6954448ba78d9ec0d287716bac7d054169
 - filename: src/main/java/io/mosip/mimoto/util/WalletUtil.java
