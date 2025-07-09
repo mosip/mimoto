@@ -1,6 +1,5 @@
 package io.mosip.mimoto.service.impl;
 
-import io.mosip.mimoto.dto.WalletUnlockResult;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.dto.WalletDetailsResponseDto;
 import io.mosip.mimoto.dto.WalletResponseDto;

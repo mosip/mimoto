@@ -2,7 +2,6 @@ package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dto.WalletDetailsResponseDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
-import io.mosip.mimoto.dto.WalletUnlockResult;
 import io.mosip.mimoto.exception.InvalidRequestException;
 
 import java.util.List;
