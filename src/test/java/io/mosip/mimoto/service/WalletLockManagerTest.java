@@ -6,6 +6,7 @@ import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
 import io.mosip.mimoto.model.WalletStatus;
+import io.mosip.mimoto.util.TestUtilities;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,16 +34,10 @@ public class WalletLockManagerTest {
 
     @Before
     public void setUp() {
-        PasscodeControl passcodeControl = new PasscodeControl();
-        passcodeControl.setCurrentAttemptCount(0);
-        passcodeControl.setCurrentCycleCount(0);
-
-        WalletMetadata walletMetadata = new WalletMetadata();
-        walletMetadata.setPasscodeControl(passcodeControl);
-        walletMetadata.setStatus(null);
-
-        wallet = new Wallet();
-        wallet.setWalletMetadata(walletMetadata);
+        String userId = UUID.randomUUID().toString();
+        PasscodeControl passcodeControl = TestUtilities.createPasscodeControl(0, 0, null);
+        WalletMetadata walletMetadata = TestUtilities.createWalletMetadata("Test Wallet", passcodeControl, null);
+        wallet = TestUtilities.createWallet(userId, "encryptedWalletKey", walletMetadata);
     }
 
     @Test
