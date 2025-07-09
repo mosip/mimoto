@@ -1,10 +1,8 @@
 package io.mosip.mimoto.service;
 
-import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.util.WalletUtil;
-import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -21,24 +19,23 @@ public class WalletUnlockHandler {
         this.walletStatusService = walletStatusService;
     }
 
-    public void handleUnlock(Wallet wallet, String pin, HttpSession httpSession) throws InvalidRequestException {
+    public String handleUnlock(Wallet wallet, String pin) throws InvalidRequestException {
         walletStatusService.validateWalletStatus(wallet);
         try {
             String decryptedWalletKey = walletUtil.decryptWalletKey(wallet.getWalletKey(), pin);
-            httpSession.setAttribute(SessionKeys.WALLET_KEY, decryptedWalletKey);
-            httpSession.setAttribute(SessionKeys.WALLET_ID, wallet.getId());
             walletLockManager.resetLockState(wallet);
+            return decryptedWalletKey;
         } catch (InvalidRequestException ex) {
             log.error("Failed to unlock Wallet {} due to: {}", wallet.getId(), ex.getMessage(), ex);
-            handleFailedUnlock(wallet, ex);
+            handleFailedUnlock(wallet);
+            throw ex;
         }
     }
 
-    private void handleFailedUnlock(Wallet wallet, InvalidRequestException ex) throws InvalidRequestException {
+    private void handleFailedUnlock(Wallet wallet) {
         walletLockManager.incrementAttemptCount(wallet);
         walletLockManager.checkAndUpdateLastAttemptBeforePermanentLockout(wallet);
         walletLockManager.handleLockCycle(wallet);
         walletStatusService.validateWalletStatus(wallet);
-        throw ex;
     }
 }

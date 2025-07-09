@@ -150,8 +150,11 @@ public class WalletsController {
             HttpSession httpSession) throws InvalidRequestException {
         String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
         log.info("Unlocking wallet: {} for user: {}", walletId, userId);
-        WalletResponseDto response = walletService.unlockWallet(walletId, wallet.getWalletPin(), httpSession);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        WalletUnlockResult walletUnlockResult = walletService.unlockWallet(walletId, wallet.getWalletPin(), userId);
+
+        httpSession.setAttribute(SessionKeys.WALLET_KEY, walletUnlockResult.decryptedWalletKey());
+        httpSession.setAttribute(SessionKeys.WALLET_ID, walletId);
+        return ResponseEntity.status(HttpStatus.OK).body(walletUnlockResult.responseDto());
     }
 
     /**

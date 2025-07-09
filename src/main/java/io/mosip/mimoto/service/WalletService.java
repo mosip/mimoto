@@ -2,8 +2,8 @@ package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dto.WalletDetailsResponseDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
+import io.mosip.mimoto.dto.WalletUnlockResult;
 import io.mosip.mimoto.exception.InvalidRequestException;
-import jakarta.servlet.http.HttpSession;
 
 import java.util.List;
 
@@ -27,13 +27,13 @@ public interface WalletService {
     /**
      * Unlocks a wallet for a user.
      *
-     * @param walletId
-     * @param pin
-     * @param httpSession
+     * @param walletId The wallet ID.
+     * @param pin The wallet PIN.
+     * @param userId The user ID.
      * @return WalletResponseDto containing wallet details.
      * @throws InvalidRequestException If the wallet is not found or PIN is invalid.
      */
-    WalletResponseDto unlockWallet(String walletId, String pin, HttpSession httpSession) throws InvalidRequestException;
+    WalletUnlockResult unlockWallet(String walletId, String pin, String userId) throws InvalidRequestException;
 
     /**
      * Retrieves all wallets for a user.
