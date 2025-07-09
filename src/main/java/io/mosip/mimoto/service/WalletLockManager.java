@@ -34,7 +34,7 @@ public class WalletLockManager {
                 walletMetadata.setStatus(WalletStatus.TEMPORARILY_LOCKED);
             }
         } else if (isLastSecondAttemptBeforePermanentLock) {
-            wallet.getWalletMetadata().setStatus(WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
+            walletMetadata.setStatus(WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
         }
 
         return wallet;
