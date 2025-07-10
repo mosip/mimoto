@@ -1,7 +1,6 @@
 package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.exception.WalletStatusException;
-import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.repository.WalletRepository;

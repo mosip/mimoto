@@ -468,7 +468,7 @@ public class TestUtilities {
         return walletMetadata;
     }
 
-    public static PasscodeControl createPasscodeControl(Integer failedAttemptCount, Integer currentCycleCount, Long retryBlockedUntil) {
+    public static PasscodeControl createPasscodeControl(int failedAttemptCount, int currentCycleCount, Long retryBlockedUntil) {
         PasscodeControl passcodeControl = new PasscodeControl();
         passcodeControl.setFailedAttemptCount(failedAttemptCount);
         passcodeControl.setCurrentCycleCount(currentCycleCount);
