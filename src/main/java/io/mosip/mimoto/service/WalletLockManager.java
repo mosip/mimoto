@@ -26,8 +26,6 @@ public class WalletLockManager {
             passcodeControl.setCurrentCycleCount(1);
         }
 
-        boolean isLastSecondAttemptBeforePermanentLock = isLastSecondAttemptBeforePermanentLock(passcodeControl);
-
         if (passcodeControl.getFailedAttemptCount() == walletPasscodeConfig.getMaxFailedAttemptsAllowedPerCycle()) {
             passcodeControl.setCurrentCycleCount(passcodeControl.getCurrentCycleCount() + 1);
 
@@ -38,7 +36,7 @@ public class WalletLockManager {
                 passcodeControl.setRetryBlockedUntil(System.currentTimeMillis() + walletPasscodeConfig.getRetryBlockedUntil());
                 walletMetadata.setStatus(WalletStatus.TEMPORARILY_LOCKED);
             }
-        } else if (isLastSecondAttemptBeforePermanentLock) {
+        } else if (isLastSecondAttemptBeforePermanentLock(passcodeControl)) {
             walletMetadata.setStatus(WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
         }
 
@@ -53,9 +51,7 @@ public class WalletLockManager {
         WalletMetadata walletMetadata = wallet.getWalletMetadata();
         PasscodeControl passcodeControl = walletMetadata.getPasscodeControl();
 
-        boolean isTemporaryLockExpired = isTemporaryLockExpired(walletMetadata, passcodeControl);
-
-        if (isTemporaryLockExpired) {
+        if (isTemporaryLockExpired(walletMetadata, passcodeControl)) {
             passcodeControl.setRetryBlockedUntil(null);
             passcodeControl.setFailedAttemptCount(0);
             walletMetadata.setStatus(WalletStatus.LOCK_EXPIRED);

@@ -34,8 +34,8 @@ public class WalletStatusService {
     }
 
     public void validateLastAttemptBeforeLockout(Wallet wallet) throws InvalidRequestException {
-        WalletMetadata metadata = wallet.getWalletMetadata();
-        if (metadata.getStatus() == WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT) {
+        WalletMetadata walletMetadata = wallet.getWalletMetadata();
+        if (walletMetadata.getStatus() == WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT) {
             throw new InvalidRequestException(
                     ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(),
                     ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage()
