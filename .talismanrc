@@ -76,7 +76,7 @@ fileignoreconfig:
 - filename: docker-compose/docker-compose.yml
   checksum: 857f5dcebdef810161b9ef09ad078c091c7d9969035bc45132975b296675dac9
 - filename: docker-compose/config/mimoto-default.properties
-  checksum: 746b60fa10a8c2c10c00bd35313407186db7aef0762f99e919bbc42fdc597824
+  checksum: 2a0639fc1d352f65f38cf1d82ae902ef86843c53c6f8b9df167bb58149792e28
 - filename: src/test/java/io/mosip/mimoto/util/WalletValidatorTest.java
   checksum: 90dce7daa19f0eb9050194a3c77a88d449a83c337d9041bfdeb7bfded3bbd12c
 - filename: src/main/java/io/mosip/mimoto/exception/ErrorConstants.java
@@ -96,15 +96,17 @@ fileignoreconfig:
 - filename: src/test/java/io/mosip/mimoto/controller/WalletsControllerTest.java
   checksum: 42c13ccd91ec5f2b109a1b5319e7ce5468249f8076a2c82d0a14873b0314a28a
 - filename: src/main/java/io/mosip/mimoto/service/WalletLockManager.java
-  checksum: 6db1dcab30005c0f484a410f26c6b0ae1a479edf262c4470bdf840dd767e3c16
+  checksum: f3f62ec81887e3e8bc518443c2e879b300be5504f1fbd97ea3f9679c9ecaa6ea
 - filename: src/test/java/io/mosip/mimoto/service/WalletLockManagerTest.java
   checksum: 45b510f18e0abf1ccaee3e0464443622bc7222c36265e13734370a2200eed1e8
 - filename: src/test/java/io/mosip/mimoto/service/WalletStatusServiceTest.java
   checksum: 988e35ff59e0df0154d6b41f81d7fc4fb150b414a4939ae69c4173d2e975b68e
 - filename: src/main/java/io/mosip/mimoto/service/WalletStatusService.java
   checksum: 3858fd0ef51e9c4fe372e88471a84eff8a68523297e0e20c52f498b127d03459
-- filename: docs/api-documentation-openapi.json
-  checksum: b5f643bfa3fcfec0548747a321f7ecc4b7b2b79fbbf3c0152c3369aeddf0f566
 - filename: src/main/java/io/mosip/mimoto/util/WalletUtil.java
   checksum: fb379b5eebe8ffd83efbea05c3f0355d7cc7769fc6d52eed3f88f654da92abc5
+- filename: docs/WalletUnlockProcess.md
+  checksum: 3cac23ebc1aff179f7253a083cf48f8a598c0404d0f5d3893717579f48c50641
+- filename: docs/api-documentation-openapi.json
+  checksum: b5f643bfa3fcfec0548747a321f7ecc4b7b2b79fbbf3c0152c3369aeddf0f566
 version: ""
