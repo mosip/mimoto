@@ -26,7 +26,7 @@ public class WalletLockManager {
             passcodeControl.setCurrentCycleCount(1);
         }
 
-        boolean isLastSecondAttemptBeforePermanentLock = passcodeControl.getFailedAttemptCount() == walletPasscodeConfig.getMaxFailedAttemptsAllowedPerCycle() - 1 && passcodeControl.getCurrentCycleCount() == walletPasscodeConfig.getMaxLockCyclesAllowed();
+        boolean isLastSecondAttemptBeforePermanentLock = isLastSecondAttemptBeforePermanentLock(passcodeControl);
 
         if (passcodeControl.getFailedAttemptCount() == walletPasscodeConfig.getMaxFailedAttemptsAllowedPerCycle()) {
             passcodeControl.setCurrentCycleCount(passcodeControl.getCurrentCycleCount() + 1);
@@ -45,11 +45,15 @@ public class WalletLockManager {
         return wallet;
     }
 
+    private boolean isLastSecondAttemptBeforePermanentLock(PasscodeControl passcodeControl) {
+        return passcodeControl.getFailedAttemptCount() == walletPasscodeConfig.getMaxFailedAttemptsAllowedPerCycle() - 1 && passcodeControl.getCurrentCycleCount() == walletPasscodeConfig.getMaxLockCyclesAllowed();
+    }
+
     public Wallet resetTemporaryLockIfExpired(Wallet wallet) {
         WalletMetadata walletMetadata = wallet.getWalletMetadata();
         PasscodeControl passcodeControl = walletMetadata.getPasscodeControl();
 
-        boolean isTemporaryLockExpired = walletMetadata.getStatus() == WalletStatus.TEMPORARILY_LOCKED && passcodeControl.getRetryBlockedUntil() != null && System.currentTimeMillis() > passcodeControl.getRetryBlockedUntil();
+        boolean isTemporaryLockExpired = isTemporaryLockExpired(walletMetadata, passcodeControl);
 
         if (isTemporaryLockExpired) {
             passcodeControl.setRetryBlockedUntil(null);
@@ -57,6 +61,10 @@ public class WalletLockManager {
             walletMetadata.setStatus(WalletStatus.LOCK_EXPIRED);
         }
         return wallet;
+    }
+
+    private static boolean isTemporaryLockExpired(WalletMetadata walletMetadata, PasscodeControl passcodeControl) {
+        return walletMetadata.getStatus() == WalletStatus.TEMPORARILY_LOCKED && passcodeControl.getRetryBlockedUntil() != null && System.currentTimeMillis() > passcodeControl.getRetryBlockedUntil();
     }
 
     public Wallet resetLockState(Wallet wallet) {
