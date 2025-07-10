@@ -103,7 +103,7 @@ class WalletUnlockServiceTest {
         verify(walletLockManager,times(2)).resetTemporaryLockIfExpired(wallet);
         verify(walletStatusService, times(2)).validateWalletStatus(wallet);
         verify(walletLockManager, never()).resetLockState(wallet);
-        verify(walletRepository, times(2)).save(wallet);
+        verify(walletRepository, times(1)).save(wallet);
     }
 
     @Test
@@ -129,7 +129,7 @@ class WalletUnlockServiceTest {
         verify(walletLockManager,times(2)).resetTemporaryLockIfExpired(wallet);
         verify(walletStatusService, times(2)).validateWalletStatus(wallet);
         verify(walletLockManager, never()).resetLockState(wallet);
-        verify(walletRepository, times(2)).save(wallet);
+        verify(walletRepository, times(1)).save(wallet);
     }
 
     @Test
@@ -156,7 +156,7 @@ class WalletUnlockServiceTest {
         verify(walletLockManager,times(1)).resetTemporaryLockIfExpired(wallet);
         verify(walletStatusService, times(1)).validateWalletStatus(wallet);
         verify(walletLockManager, never()).resetLockState(wallet);
-        verify(walletRepository, times(2)).save(wallet);
+        verify(walletRepository, times(1)).save(wallet);
     }
 
     @Test
@@ -175,7 +175,7 @@ class WalletUnlockServiceTest {
 
         verify(walletLockManager,times(1)).resetTemporaryLockIfExpired(wallet);
         verify(walletStatusService, times(1)).validateWalletStatus(wallet);
-        verify(walletRepository, times(1)).save(wallet);
+        verifyNoInteractions(walletRepository);
         verifyNoMoreInteractions(walletLockManager);
         verifyNoMoreInteractions(walletStatusService);
     }

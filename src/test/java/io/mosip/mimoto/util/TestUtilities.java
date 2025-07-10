@@ -138,19 +138,17 @@ public class TestUtilities {
     }
 
     public static CredentialIssuerWellKnownResponse getCredentialIssuerWellKnownResponseDto(String issuerName, Map<String, CredentialsSupportedResponse> credentialsSupportedResponses) {
-        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse(
+        return new CredentialIssuerWellKnownResponse(
                 "https://dev/" + issuerName,
                 List.of("https://auth-server.env.net"),
                 "https://dev/issuance/credential",
                 credentialsSupportedResponses);
-        return credentialIssuerWellKnownResponse;
     }
 
     public static CredentialIssuerConfiguration getCredentialIssuerConfigurationResponseDto(String issuerName, String credentialType, List<String> nullFields) {
         AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = getAuthServerWellknownResponseDto(nullFields);
         Map<String, CredentialsSupportedResponse> credentialsSupportedResponses = Map.of(credentialType, getCredentialSupportedResponse(credentialType));
-        CredentialIssuerConfiguration credentialIssuerConfiguration = new CredentialIssuerConfiguration("https://dev/" + issuerName, List.of("https://auth-server.env.net"), "https://dev/issuance/credential", credentialsSupportedResponses, authorizationServerWellKnownResponse);
-        return credentialIssuerConfiguration;
+        return new CredentialIssuerConfiguration("https://dev/" + issuerName, List.of("https://auth-server.env.net"), "https://dev/issuance/credential", credentialsSupportedResponses, authorizationServerWellKnownResponse);
     }
 
     public static AuthorizationServerWellKnownResponse getAuthServerWellknownResponseDto(List<String> nullFields) {
@@ -349,7 +347,7 @@ public class TestUtilities {
     public static DataShareResponseDto getDataShareResponseDTO(String errorCode) {
         return DataShareResponseDto.builder()
                 .dataShare(new DataShare())
-                .errors(List.of(new ErrorDTO(errorCode == "" ? "Expired!" : errorCode, "Download is failed as credential is expired")))
+                .errors(List.of(new ErrorDTO(errorCode.equals("") ? "Expired!" : errorCode, "Download is failed as credential is expired")))
                 .build();
     }
 
@@ -470,9 +468,9 @@ public class TestUtilities {
         return walletMetadata;
     }
 
-    public static PasscodeControl createPasscodeControl(Integer currentAttemptCount, Integer currentCycleCount, Long retryBlockedUntil) {
+    public static PasscodeControl createPasscodeControl(Integer failedAttemptCount, Integer currentCycleCount, Long retryBlockedUntil) {
         PasscodeControl passcodeControl = new PasscodeControl();
-        passcodeControl.setCurrentAttemptCount(currentAttemptCount);
+        passcodeControl.setFailedAttemptCount(failedAttemptCount);
         passcodeControl.setCurrentCycleCount(currentCycleCount);
         passcodeControl.setRetryBlockedUntil(retryBlockedUntil);
         return passcodeControl;

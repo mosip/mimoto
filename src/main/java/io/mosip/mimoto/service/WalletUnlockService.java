@@ -26,10 +26,6 @@ public class WalletUnlockService {
     }
 
     public String handleUnlock(Wallet wallet, String pin) throws InvalidRequestException {
-        PasscodeControl passcodeControl = wallet.getWalletMetadata().getPasscodeControl();
-
-        initPasscodeControlCounters(wallet, passcodeControl);
-
         wallet = walletLockManager.resetTemporaryLockIfExpired(wallet);
         walletStatusService.validateWalletStatus(wallet);
         try {
@@ -42,20 +38,6 @@ public class WalletUnlockService {
             handleFailedUnlock(wallet);
             throw ex;
         }
-    }
-
-    private void initPasscodeControlCounters(Wallet wallet, PasscodeControl passcodeControl) {
-        // Set the current attempt count to 1 if this is the first unlock attempt in the current cycle
-        if (passcodeControl.getCurrentAttemptCount() == 0) {
-            passcodeControl.setCurrentAttemptCount(1);
-        }
-
-        // Set the current cycle count to 1 if this is the first unlock attempt in the entire lock cycle
-        if (passcodeControl.getCurrentCycleCount() == 0) {
-            passcodeControl.setCurrentCycleCount(1);
-        }
-
-        walletRepository.save(wallet);
     }
 
     private void handleFailedUnlock(Wallet wallet) {

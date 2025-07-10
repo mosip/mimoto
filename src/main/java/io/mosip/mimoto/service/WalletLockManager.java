@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class WalletLockManager {
     private final WalletPasscodeConfig walletPasscodeConfig;
+
     public WalletLockManager(WalletPasscodeConfig walletPasscodeConfig) {
         this.walletPasscodeConfig = walletPasscodeConfig;
     }
@@ -19,14 +20,18 @@ public class WalletLockManager {
         PasscodeControl passcodeControl = walletMetadata.getPasscodeControl();
 
         // Increment the current attempt count
-        passcodeControl.setCurrentAttemptCount(passcodeControl.getCurrentAttemptCount() + 1);
+        passcodeControl.setFailedAttemptCount(passcodeControl.getFailedAttemptCount() + 1);
 
-        boolean isLastSecondAttemptBeforePermanentLock = passcodeControl.getCurrentAttemptCount() == walletPasscodeConfig.getMaxFailedAttemptsAllowedPerCycle() && passcodeControl.getCurrentCycleCount() == walletPasscodeConfig.getMaxLockCyclesAllowed();
+        if (passcodeControl.getCurrentCycleCount() == 0) {
+            passcodeControl.setCurrentCycleCount(1);
+        }
 
-        if (passcodeControl.getCurrentAttemptCount() > walletPasscodeConfig.getMaxFailedAttemptsAllowedPerCycle()) {
+        boolean isLastSecondAttemptBeforePermanentLock = passcodeControl.getFailedAttemptCount() == walletPasscodeConfig.getMaxFailedAttemptsAllowedPerCycle() - 1 && passcodeControl.getCurrentCycleCount() == walletPasscodeConfig.getMaxLockCyclesAllowed();
+
+        if (passcodeControl.getFailedAttemptCount() == walletPasscodeConfig.getMaxFailedAttemptsAllowedPerCycle()) {
             passcodeControl.setCurrentCycleCount(passcodeControl.getCurrentCycleCount() + 1);
 
-            if(passcodeControl.getCurrentCycleCount() > walletPasscodeConfig.getMaxLockCyclesAllowed()){
+            if (passcodeControl.getCurrentCycleCount() > walletPasscodeConfig.getMaxLockCyclesAllowed()) {
                 passcodeControl.setRetryBlockedUntil(null);
                 walletMetadata.setStatus(WalletStatus.PERMANENTLY_LOCKED);
             } else {
@@ -48,7 +53,7 @@ public class WalletLockManager {
 
         if (isTemporaryLockExpired) {
             passcodeControl.setRetryBlockedUntil(null);
-            passcodeControl.setCurrentAttemptCount(0);
+            passcodeControl.setFailedAttemptCount(0);
             walletMetadata.setStatus(WalletStatus.LOCK_EXPIRED);
         }
         return wallet;
@@ -58,7 +63,7 @@ public class WalletLockManager {
         WalletMetadata metadata = wallet.getWalletMetadata();
         PasscodeControl control = metadata.getPasscodeControl();
 
-        control.setCurrentAttemptCount(0);
+        control.setFailedAttemptCount(0);
         control.setCurrentCycleCount(0);
         control.setRetryBlockedUntil(null);
         metadata.setStatus(null);
