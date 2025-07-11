@@ -50,7 +50,7 @@ public class WalletServiceTest {
     private WalletUnlockService walletUnlockService;
 
     @MockBean
-    private WalletStatusService walletStatusService;
+    private WalletLockStatusService walletStatusService;
 
     @MockBean
     private WalletLockManager walletLockManager;
@@ -292,8 +292,8 @@ public class WalletServiceTest {
 
         when(walletLockManager.resetTemporaryLockIfExpired(wallet1)).thenReturn(wallet1);
         when(walletLockManager.resetTemporaryLockIfExpired(wallet2)).thenReturn(wallet2);
-        when(walletStatusService.getWalletStatus(wallet1)).thenReturn(WalletLockStatus.TEMPORARILY_LOCKED);
-        when(walletStatusService.getWalletStatus(wallet2)).thenReturn(null);
+        when(walletStatusService.getWalletLockStatus(wallet1)).thenReturn(WalletLockStatus.TEMPORARILY_LOCKED);
+        when(walletStatusService.getWalletLockStatus(wallet2)).thenReturn(null);
         when(walletRepository.findWalletByUserId(userId)).thenReturn(mockWallets);
 
         List<WalletDetailsResponseDto> result = walletService.getWallets(userId);

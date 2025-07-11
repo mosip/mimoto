@@ -8,7 +8,7 @@ import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.service.WalletLockManager;
 import io.mosip.mimoto.service.WalletService;
-import io.mosip.mimoto.service.WalletStatusService;
+import io.mosip.mimoto.service.WalletLockStatusService;
 import io.mosip.mimoto.service.WalletUnlockService;
 import io.mosip.mimoto.util.WalletUtil;
 import io.mosip.mimoto.util.WalletValidator;
@@ -32,12 +32,12 @@ public class WalletServiceImpl implements WalletService {
     private final WalletUtil walletUtil;
     private final WalletValidator validator;
     private final WalletUnlockService walletUnlockService;
-    private final WalletStatusService walletStatusService;
+    private final WalletLockStatusService walletStatusService;
 
     private final WalletLockManager walletLockManager;
 
     @Autowired
-    public WalletServiceImpl(WalletRepository repository, WalletUtil walletUtil, WalletValidator validator, WalletUnlockService walletUnlockService, WalletStatusService walletStatusService, WalletLockManager walletLockManager) {
+    public WalletServiceImpl(WalletRepository repository, WalletUtil walletUtil, WalletValidator validator, WalletUnlockService walletUnlockService, WalletLockStatusService walletStatusService, WalletLockManager walletLockManager) {
         this.repository = repository;
         this.walletUtil = walletUtil;
         this.validator = validator;
@@ -90,7 +90,7 @@ public class WalletServiceImpl implements WalletService {
             return WalletDetailsResponseDto.builder()
                     .walletId(wallet.getId())
                     .walletName(wallet.getWalletMetadata().getName())
-                    .walletStatus(walletStatusService.getWalletStatus(wallet))
+                    .walletStatus(walletStatusService.getWalletLockStatus(wallet))
                     .build();
         }).toList();
     }
