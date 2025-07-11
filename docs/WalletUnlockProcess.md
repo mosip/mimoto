@@ -24,7 +24,7 @@ participant WalletsController
 participant WalletService
 participant WalletUnlockService
 participant WalletLockManager
-participant WalletStatusService
+participant WalletLockStatusService
 participant WalletUtil
 participant WalletRepository
 
@@ -37,7 +37,7 @@ participant WalletRepository
     WalletService->>WalletService: validateUserId & validateWalletPin
     WalletService->>WalletRepository: findByUserIdAndId(userId, walletId)
     activate WalletRepository
-    WalletRepository-->>WalletService: Wallet object
+    WalletRepository-->>WalletService: Returns Wallet object
     deactivate WalletRepository
     
     WalletService->>WalletUnlockService: handleUnlock(wallet, pin)
@@ -45,86 +45,87 @@ participant WalletRepository
     
     WalletUnlockService->>WalletLockManager: resetTemporaryLockIfExpired(wallet)
     activate WalletLockManager
-    Note over WalletLockManager: Checks if Wallet is temporarily locked before and that lock has expired, then it resets<br/> the failedAttemptCount and retryBlockedUntil to their defaults, and set the wallet status to lock_expired
+    Note over WalletLockManager: Checks if Wallet is temporarily locked before and that lock has expired, then it resets<br/> the failedAttemptCount and retryBlockedUntil to their defaults and sets the walletLockStatus = lock_expired
     WalletLockManager-->>WalletUnlockService: Returns updated Wallet
     deactivate WalletLockManager
     
-    WalletUnlockService->>WalletStatusService: validateWalletStatus(wallet)
-    activate WalletStatusService
-    Note over WalletStatusService: Checks if wallet is<br/>permanently_locked or<br/>temporarily_locked
-    alt if yes 
-        WalletStatusService-->>WalletUnlockService: Throws exception for permanently_locked or temporarily_locked
-        WalletUnlockService-->>WalletService: Throws the received exception
-        deactivate WalletStatusService
-    else otherwise
+    WalletUnlockService->>WalletUnlockService: throwExceptionIfWalletIsLocked(wallet)
+    
+    WalletUnlockService->>WalletLockStatusService: getErrorBasedOnWalletLockStatus(wallet)
+    activate WalletLockStatusService
+    WalletLockStatusService-->>WalletUnlockService: Returns ErrorDTO
+    deactivate WalletLockStatusService
+    
+    alt Wallet is locked Temporarily or Permanently
+        WalletUnlockService-->>WalletService: Throws WalletLockedException
+    else Wallet is not locked
         WalletUnlockService->>WalletUtil: decryptWalletKey(walletKey, pin)
+        activate WalletUtil
         alt Successful PIN Decryption
-            WalletUtil-->>WalletUnlockService: Returns the decryptedWalletKey
-            activate WalletUtil
-            deactivate WalletUtil
-            
+            WalletUtil-->>WalletUnlockService: Returns decryptedWalletKey
+
             WalletUnlockService->>WalletLockManager: resetLockState(wallet)
             activate WalletLockManager
-            Note over WalletLockManager: Reset all lock counters,<br/>retryBlockedUntil and status to default values
+            Note over WalletLockManager: Resets all lock counters,<br/>retryBlockedUntil and status to default values
             WalletLockManager-->>WalletUnlockService: Returns updated Wallet
             deactivate WalletLockManager
             
             WalletUnlockService->>WalletRepository: save(wallet)
             activate WalletRepository
             deactivate WalletRepository
-            WalletUnlockService-->>WalletService: Returns the decryptedWalletKey
+            WalletUnlockService-->>WalletService: Returns decryptedWalletKey
         else Invalid PIN
+            WalletUtil-->>WalletUnlockService: Throws InvalidRequestException
+            deactivate WalletUtil
+            WalletUnlockService->>WalletUnlockService: handleFailedUnlock(wallet)
+            
             WalletUnlockService->>WalletLockManager: enforceLockCyclePolicy(wallet)
             activate WalletLockManager
-            
-            Note over WalletLockManager:1. Increments failedAttemptCount<br/>2. If failedAttemptCount = maxFailedAttemptsAllowedPerCycle then increments currentCycleCount and sets Wallet status to <br/> - permanently_locked if currentCycleCount > maxLockCyclesAllowed<br/> - temporarily_locked if currentCycleCount <= maxLockCyclesAllowed<br/>3.If failedAttemptCount = maxFailedAttemptsAllowedPerCycle -1 & currentCycleCount = maxLockCyclesAllowed then sets wallet status to<br/> - last_attempt_before_lockout as only one attempt is left before permanent lockout
-            
+            Note over WalletLockManager:1. Increments failedAttemptCount & <br/>if currentCyclceCount = 0 (means this is the first failed attempt made in all cycles)<br/>then it sets currentCycleCount = 1<br/>2. If failedAttemptCount = maxFailedAttemptsAllowedPerCycle then increments currentCycleCount and sets walletLockStatus to <br/> - permanently_locked if currentCycleCount > maxLockCyclesAllowed<br/> - temporarily_locked if currentCycleCount <= maxLockCyclesAllowed<br/>3.If failedAttemptCount = maxFailedAttemptsAllowedPerCycle -1 & currentCycleCount = maxLockCyclesAllowed then sets walletLockStatus to<br/> - last_attempt_before_lockout as only one attempt is left before permanent lockout
             WalletLockManager-->>WalletUnlockService: Returns updated Wallet
             deactivate WalletLockManager
-          
-            WalletUnlockService->>WalletStatusService: validateLastAttemptBeforeLockout(wallet)
-            activate WalletStatusService
-            Note over WalletStatusService: Check if Wallet status is set to last_attempt_before_lockout
-            alt if yes
-                WalletStatusService-->>WalletUnlockService: Throws exception as only one attempt left before permanent lockout to unlock the Wallet
-                deactivate WalletStatusService
-                WalletUnlockService-->>WalletRepository: save(wallet)
-                activate WalletRepository
-                deactivate WalletRepository
-                WalletUnlockService-->>WalletService: Throws exception for last_attempt_before_lockout
+            
+            WalletUnlockService->>WalletUnlockService: throwExceptionIfLastAttemptLeftForUnlock(wallet)
+            
+            WalletUnlockService->>WalletLockStatusService: getErrorBasedOnWalletLockStatus(wallet)
+            activate WalletLockStatusService
+            WalletLockStatusService-->>WalletUnlockService: Returns ErrorDTO
+            deactivate WalletLockStatusService
+            
+            alt if errorCode is last_attempt_before_lockout
+                WalletUnlockService-->>WalletService: Throws InvalidRequestException
             else otherwise
                 WalletUnlockService->>WalletLockManager: resetTemporaryLockIfExpired(wallet)
                 activate WalletLockManager
-                Note over WalletLockManager: Checks if Wallet is temporarily locked before and that lock has expired, then it resets<br/> the failedAttemptCount and retryBlockedUntil to their defaults, and set the wallet status to lock_expired
+                Note over WalletLockManager: Checks if Wallet is temporarily locked before and that lock has expired, then it resets<br/> the failedAttemptCount and retryBlockedUntil to their defaults and sets the walletLockStatus = lock_expired
                 WalletLockManager-->>WalletUnlockService: Returns updated Wallet
                 deactivate WalletLockManager
                 
-                WalletUnlockService->>WalletStatusService: validateWalletStatus(wallet)
-                activate WalletStatusService
-                Note over WalletStatusService: Checks if wallet is<br/>permanently_locked or<br/>temporarily_locked
-                alt if yes 
-                    WalletStatusService-->>WalletUnlockService: Throws exception for permanently_locked or temporarily_locked
-                    deactivate WalletStatusService
+                WalletUnlockService->>WalletUnlockService: throwExceptionIfWalletIsLocked(wallet)
+                WalletUnlockService->>WalletLockStatusService: getErrorBasedOnWalletLockStatus(wallet)
+                activate WalletLockStatusService
+                WalletLockStatusService-->>WalletUnlockService: Returns ErrorDTO
+                deactivate WalletLockStatusService
+                alt Wallet is locked Temporarily or Permanently
                     WalletUnlockService-->>WalletRepository: save(wallet)
                     activate WalletRepository
                     deactivate WalletRepository
-                    WalletUnlockService-->>WalletService: Throws exception for permanently_locked or temporarily_locked
-                else otherwise
+                    WalletUnlockService-->>WalletService: Throws WalletLockedException
+                else Wallet is not locked
                     WalletUnlockService-->>WalletRepository: save(wallet)
                     activate WalletRepository
                     deactivate WalletRepository
-                    WalletUnlockService-->>WalletService: Throws exception for invalid pin
                     deactivate WalletUnlockService
                 end
-            end 
+            end
         end
     end
     
-    WalletService-->>WalletsController: Returns WalletResponseDto on successful Wallet unlock or throws Exception
+    WalletService-->>WalletsController: Returns WalletResponseDto or throws Exception
     deactivate WalletService
-    
+
     alt Success Response
-        WalletsController->>WalletsController: Stores the wallet_key & wallet_id into Http session
+        WalletsController->>WalletsController: Stores wallet_id & received decryptedWalletKey as wallet_key into Http session
         WalletsController-->>Client: Returns 200 OK status with WalletResponseDto
     else Error Response
         WalletsController-->>Client: Returns Error status with ErrorDTO
