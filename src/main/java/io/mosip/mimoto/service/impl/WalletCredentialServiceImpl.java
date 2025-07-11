@@ -2,8 +2,6 @@ package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mosip.mimoto.model.CredentialMetadata;
-import io.mosip.mimoto.model.VerifiableCredential;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
@@ -12,11 +10,13 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.model.CredentialMetadata;
+import io.mosip.mimoto.model.VerifiableCredential;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.service.CredentialPDFGeneratorService;
+import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.WalletCredentialService;
-import io.mosip.mimoto.util.CredentialProcessor;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
 
     private final WalletCredentialsRepository repository;
     private final IssuersService issuersService;
-    private final CredentialProcessor credentialProcessor;
+    private final CredentialService credentialService;
     private final ObjectMapper objectMapper;
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
     private final CredentialPDFGeneratorService credentialPDFGeneratorService;
@@ -55,12 +55,12 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     @Autowired
     public WalletCredentialServiceImpl(WalletCredentialsRepository repository,
                                        IssuersService issuersService,
-                                       CredentialProcessor credentialProcessor,
+                                       CredentialService credentialService,
                                        ObjectMapper objectMapper,
                                        EncryptionDecryptionUtil encryptionDecryptionUtil,CredentialPDFGeneratorService credentialPDFGeneratorService) {
         this.repository = repository;
         this.issuersService = issuersService;
-        this.credentialProcessor = credentialProcessor;
+        this.credentialService = credentialService;
         this.objectMapper = objectMapper;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.credentialPDFGeneratorService = credentialPDFGeneratorService;
@@ -84,7 +84,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
 
         VerifiableCredentialResponseDTO credential;
 
-            credential = credentialProcessor.downloadCredentialAndStoreInDB(
+            credential = credentialService.downloadCredentialAndStoreInDB(
                     tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale);
 
         log.debug("Credential stored successfully: {}", credential.getCredentialId());

@@ -10,7 +10,11 @@ import io.mosip.mimoto.model.CredentialMetadata;
 import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.model.VerifiableCredential;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
-import io.mosip.mimoto.service.*;
+import io.mosip.mimoto.service.CredentialPDFGeneratorService;
+import io.mosip.mimoto.service.CredentialRequestService;
+import io.mosip.mimoto.service.CredentialService;
+import io.mosip.mimoto.service.CredentialVerifierService;
+import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.RestApiClient;
 import lombok.extern.slf4j.Slf4j;
@@ -91,7 +95,7 @@ public class CredentialServiceImpl implements CredentialService {
     public VCCredentialResponse downloadCredential(String credentialEndpoint, VCCredentialRequest vcCredentialRequest, String accessToken) throws InvalidCredentialResourceException {
         VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialEndpoint, MediaType.APPLICATION_JSON,
                 vcCredentialRequest, VCCredentialResponse.class, accessToken);
-        log.debug("VC Credential Response is -> " + vcCredentialResponse);
+        log.debug("VC Credential Response is {} ", vcCredentialResponse);
         if (vcCredentialResponse == null)
             throw new InvalidCredentialResourceException("VC Credential Issue API not accessible");
         return vcCredentialResponse;
