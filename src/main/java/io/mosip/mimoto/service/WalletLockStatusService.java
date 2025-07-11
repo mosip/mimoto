@@ -16,7 +16,7 @@ public class WalletLockStatusService {
         return wallet.getWalletMetadata().getLockStatus();
     }
 
-    public ErrorDTO getErrorBasedOnWalletLockStatus(Wallet wallet) throws WalletLockedException {
+    public ErrorDTO getErrorBasedOnWalletLockStatus(Wallet wallet) {
         WalletMetadata metadata = wallet.getWalletMetadata();
         WalletLockStatus currentStatus = metadata.getLockStatus();
         ErrorDTO errorDTO = null;
