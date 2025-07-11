@@ -6,8 +6,8 @@ import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.UnauthorizedAccessException;
-import io.mosip.mimoto.exception.WalletStatusException;
-import io.mosip.mimoto.model.WalletStatus;
+import io.mosip.mimoto.exception.WalletLockedException;
+import io.mosip.mimoto.model.WalletLockStatus;
 import io.mosip.mimoto.service.WalletService;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
 import jakarta.servlet.http.HttpSession;
@@ -146,7 +146,7 @@ public class WalletsControllerTest {
     @Test
     public void shouldReturnListOfWalletIDsForValidUserId() throws Exception {
         List<WalletDetailsResponseDto> wallets = List.of(new WalletDetailsResponseDto("walletId1", "Wallet1", null),
-                new WalletDetailsResponseDto("walletId2", "Wallet2", WalletStatus.TEMPORARILY_LOCKED));
+                new WalletDetailsResponseDto("walletId2", "Wallet2", WalletLockStatus.TEMPORARILY_LOCKED));
         when(walletService.getWallets(userId)).thenReturn(wallets);
 
         mockMvc.perform(get("/wallets")
@@ -329,7 +329,7 @@ public class WalletsControllerTest {
 
         String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for 1 hour(s)";
         when(walletService.unlockWallet(walletId, walletPin, userId))
-                .thenThrow(new WalletStatusException(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorMessage));
+                .thenThrow(new WalletLockedException(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorMessage));
 
         mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -350,7 +350,7 @@ public class WalletsControllerTest {
 
         String errorMessage = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage() + " for 1 hour(s)";
         when(walletService.unlockWallet(walletId, "invalidPin", userId))
-                .thenThrow(new WalletStatusException(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorMessage));
+                .thenThrow(new WalletLockedException(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorMessage));
 
         mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -371,7 +371,7 @@ public class WalletsControllerTest {
 
         String errorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
         when(walletService.unlockWallet(walletId, walletPin, userId))
-                .thenThrow(new WalletStatusException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), errorMessage));
+                .thenThrow(new WalletLockedException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), errorMessage));
 
         mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -413,7 +413,7 @@ public class WalletsControllerTest {
 
         String errorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
         when(walletService.unlockWallet(walletId, "invalidPin", userId))
-                .thenThrow(new WalletStatusException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), errorMessage));
+                .thenThrow(new WalletLockedException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), errorMessage));
 
         mockMvc.perform(post("/wallets/{walletId}/unlock", walletId)
                         .contentType(MediaType.APPLICATION_JSON)

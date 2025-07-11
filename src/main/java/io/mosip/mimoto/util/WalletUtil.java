@@ -68,7 +68,7 @@ public class WalletUtil {
         walletMetadata.setEncryptionAlgo(encryptionAlgorithm);
         walletMetadata.setEncryptionType(encryptionType);
         walletMetadata.setName(walletName);
-        walletMetadata.setStatus(null);
+        walletMetadata.setLockStatus(null);
         walletMetadata.setPasscodeControl(passcodeControl);
         return walletMetadata;
     }

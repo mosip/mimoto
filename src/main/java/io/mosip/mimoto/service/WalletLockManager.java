@@ -4,7 +4,7 @@ import io.mosip.mimoto.config.WalletPasscodeConfig;
 import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
-import io.mosip.mimoto.model.WalletStatus;
+import io.mosip.mimoto.model.WalletLockStatus;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,13 +31,13 @@ public class WalletLockManager {
 
             if (passcodeControl.getCurrentCycleCount() > walletPasscodeConfig.getMaxLockCyclesAllowed()) {
                 passcodeControl.setRetryBlockedUntil(null);
-                walletMetadata.setStatus(WalletStatus.PERMANENTLY_LOCKED);
+                walletMetadata.setLockStatus(WalletLockStatus.PERMANENTLY_LOCKED);
             } else {
                 passcodeControl.setRetryBlockedUntil(System.currentTimeMillis() + walletPasscodeConfig.getRetryBlockedUntil());
-                walletMetadata.setStatus(WalletStatus.TEMPORARILY_LOCKED);
+                walletMetadata.setLockStatus(WalletLockStatus.TEMPORARILY_LOCKED);
             }
         } else if (isLastSecondAttemptBeforePermanentLock(passcodeControl)) {
-            walletMetadata.setStatus(WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
+            walletMetadata.setLockStatus(WalletLockStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
         }
 
         return wallet;
@@ -54,13 +54,13 @@ public class WalletLockManager {
         if (isTemporaryLockExpired(walletMetadata, passcodeControl)) {
             passcodeControl.setRetryBlockedUntil(null);
             passcodeControl.setFailedAttemptCount(0);
-            walletMetadata.setStatus(WalletStatus.LOCK_EXPIRED);
+            walletMetadata.setLockStatus(WalletLockStatus.LOCK_EXPIRED);
         }
         return wallet;
     }
 
     private static boolean isTemporaryLockExpired(WalletMetadata walletMetadata, PasscodeControl passcodeControl) {
-        return walletMetadata.getStatus() == WalletStatus.TEMPORARILY_LOCKED && passcodeControl.getRetryBlockedUntil() != null && System.currentTimeMillis() > passcodeControl.getRetryBlockedUntil();
+        return walletMetadata.getLockStatus() == WalletLockStatus.TEMPORARILY_LOCKED && passcodeControl.getRetryBlockedUntil() != null && System.currentTimeMillis() > passcodeControl.getRetryBlockedUntil();
     }
 
     public Wallet resetLockState(Wallet wallet) {
@@ -70,7 +70,7 @@ public class WalletLockManager {
         control.setFailedAttemptCount(0);
         control.setCurrentCycleCount(0);
         control.setRetryBlockedUntil(null);
-        metadata.setStatus(null);
+        metadata.setLockStatus(null);
 
         return wallet;
     }

@@ -2,11 +2,11 @@ package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.exception.WalletStatusException;
+import io.mosip.mimoto.exception.WalletLockedException;
 import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
-import io.mosip.mimoto.model.WalletStatus;
+import io.mosip.mimoto.model.WalletLockStatus;
 import io.mosip.mimoto.util.TestUtilities;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,19 +34,19 @@ public class WalletStatusServiceTest {
 
     @Test
     public void testGetWalletStatusShouldReturnWalletStatus() {
-        wallet.getWalletMetadata().setStatus(WalletStatus.TEMPORARILY_LOCKED);
+        wallet.getWalletMetadata().setLockStatus(WalletLockStatus.TEMPORARILY_LOCKED);
 
-        WalletStatus status = walletStatusService.getWalletStatus(wallet);
+        WalletLockStatus status = walletStatusService.getWalletStatus(wallet);
 
-        assertEquals(WalletStatus.TEMPORARILY_LOCKED, status);
+        assertEquals(WalletLockStatus.TEMPORARILY_LOCKED, status);
     }
 
     @Test
     public void testValidateWalletStatusShouldThrowExceptionForPermanentlyLockedWallet() {
-        wallet.getWalletMetadata().setStatus(WalletStatus.PERMANENTLY_LOCKED);
+        wallet.getWalletMetadata().setLockStatus(WalletLockStatus.PERMANENTLY_LOCKED);
         String expectedErrorMsg = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
 
-        WalletStatusException exception = assertThrows(WalletStatusException.class, () -> walletStatusService.validateWalletStatus(wallet));
+        WalletLockedException exception = assertThrows(WalletLockedException.class, () -> walletStatusService.validateWalletStatus(wallet));
 
         assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), exception.getErrorCode());
         assertEquals(expectedErrorMsg, exception.getMessage());
@@ -54,10 +54,10 @@ public class WalletStatusServiceTest {
 
     @Test
     public void testValidateWalletStatusShouldThrowExceptionForTemporarilyLockedWallet() {
-        wallet.getWalletMetadata().setStatus(WalletStatus.TEMPORARILY_LOCKED);
+        wallet.getWalletMetadata().setLockStatus(WalletLockStatus.TEMPORARILY_LOCKED);
         String expectedErrorMsg = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage();
 
-        WalletStatusException exception = assertThrows(WalletStatusException.class, () -> walletStatusService.validateWalletStatus(wallet));
+        WalletLockedException exception = assertThrows(WalletLockedException.class, () -> walletStatusService.validateWalletStatus(wallet));
 
         assertEquals(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), exception.getErrorCode());
         assertEquals(expectedErrorMsg, exception.getMessage());
@@ -65,7 +65,7 @@ public class WalletStatusServiceTest {
 
     @Test
     public void testValidateLastAttemptBeforeLockoutShouldThrowExceptionWhenOnlyOneAttemptLeftBeforePermanentLockout() {
-        wallet.getWalletMetadata().setStatus(WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
+        wallet.getWalletMetadata().setLockStatus(WalletLockStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
         String expectedErrorMsg = ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode() + " --> " + ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage();
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> walletStatusService.validateLastAttemptBeforeLockout(wallet));

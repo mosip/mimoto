@@ -5,7 +5,7 @@ import io.mosip.mimoto.config.WalletPasscodeConfigTest;
 import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
-import io.mosip.mimoto.model.WalletStatus;
+import io.mosip.mimoto.model.WalletLockStatus;
 import io.mosip.mimoto.util.TestUtilities;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,7 +55,7 @@ public class WalletLockManagerTest {
 
         Wallet updatedWallet = walletLockManager.enforceLockCyclePolicy(wallet);
 
-        assertEquals(WalletStatus.TEMPORARILY_LOCKED, updatedWallet.getWalletMetadata().getStatus());
+        assertEquals(WalletLockStatus.TEMPORARILY_LOCKED, updatedWallet.getWalletMetadata().getLockStatus());
         assertNotNull(updatedWallet.getWalletMetadata().getPasscodeControl().getRetryBlockedUntil());
         assertTrue(updatedWallet.getWalletMetadata().getPasscodeControl().getRetryBlockedUntil() > System.currentTimeMillis());
     }
@@ -67,7 +67,7 @@ public class WalletLockManagerTest {
 
         Wallet updatedWallet = walletLockManager.enforceLockCyclePolicy(wallet);
 
-        assertEquals(WalletStatus.PERMANENTLY_LOCKED, updatedWallet.getWalletMetadata().getStatus());
+        assertEquals(WalletLockStatus.PERMANENTLY_LOCKED, updatedWallet.getWalletMetadata().getLockStatus());
         assertNull(updatedWallet.getWalletMetadata().getPasscodeControl().getRetryBlockedUntil());
     }
 
@@ -78,30 +78,30 @@ public class WalletLockManagerTest {
 
         Wallet updatedWallet = walletLockManager.enforceLockCyclePolicy(wallet);
 
-        assertEquals(WalletStatus.LAST_ATTEMPT_BEFORE_LOCKOUT, updatedWallet.getWalletMetadata().getStatus());
+        assertEquals(WalletLockStatus.LAST_ATTEMPT_BEFORE_LOCKOUT, updatedWallet.getWalletMetadata().getLockStatus());
         assertNull(updatedWallet.getWalletMetadata().getPasscodeControl().getRetryBlockedUntil());
     }
 
     @Test
     public void testResetTemporaryLockIfLockIsExpired() {
-        wallet.getWalletMetadata().setStatus(WalletStatus.TEMPORARILY_LOCKED);
+        wallet.getWalletMetadata().setLockStatus(WalletLockStatus.TEMPORARILY_LOCKED);
         wallet.getWalletMetadata().getPasscodeControl().setRetryBlockedUntil(System.currentTimeMillis() - 1000);
 
         Wallet updatedWallet = walletLockManager.resetTemporaryLockIfExpired(wallet);
 
-        assertEquals(WalletStatus.LOCK_EXPIRED, updatedWallet.getWalletMetadata().getStatus());
+        assertEquals(WalletLockStatus.LOCK_EXPIRED, updatedWallet.getWalletMetadata().getLockStatus());
         assertEquals(0, updatedWallet.getWalletMetadata().getPasscodeControl().getFailedAttemptCount());
         assertNull(updatedWallet.getWalletMetadata().getPasscodeControl().getRetryBlockedUntil());
     }
 
     @Test
     public void testResetTemporaryLockIfLockIsNotExpired() {
-        wallet.getWalletMetadata().setStatus(WalletStatus.TEMPORARILY_LOCKED);
+        wallet.getWalletMetadata().setLockStatus(WalletLockStatus.TEMPORARILY_LOCKED);
         wallet.getWalletMetadata().getPasscodeControl().setRetryBlockedUntil(System.currentTimeMillis() + 1000);
 
         Wallet updatedWallet = walletLockManager.resetTemporaryLockIfExpired(wallet);
 
-        assertEquals(WalletStatus.TEMPORARILY_LOCKED, updatedWallet.getWalletMetadata().getStatus());
+        assertEquals(WalletLockStatus.TEMPORARILY_LOCKED, updatedWallet.getWalletMetadata().getLockStatus());
         assertNotNull(updatedWallet.getWalletMetadata().getPasscodeControl().getRetryBlockedUntil());
         assertEquals(wallet.getWalletMetadata().getPasscodeControl().getFailedAttemptCount(),
                 updatedWallet.getWalletMetadata().getPasscodeControl().getFailedAttemptCount());
@@ -111,13 +111,13 @@ public class WalletLockManagerTest {
     public void testResetLockState() {
         wallet.getWalletMetadata().getPasscodeControl().setFailedAttemptCount(6);
         wallet.getWalletMetadata().getPasscodeControl().setCurrentCycleCount(2);
-        wallet.getWalletMetadata().setStatus(WalletStatus.TEMPORARILY_LOCKED);
+        wallet.getWalletMetadata().setLockStatus(WalletLockStatus.TEMPORARILY_LOCKED);
 
         Wallet updatedWallet = walletLockManager.resetLockState(wallet);
 
         assertEquals(0, updatedWallet.getWalletMetadata().getPasscodeControl().getFailedAttemptCount());
         assertEquals(0, updatedWallet.getWalletMetadata().getPasscodeControl().getCurrentCycleCount());
         assertNull(updatedWallet.getWalletMetadata().getPasscodeControl().getRetryBlockedUntil());
-        assertNull(updatedWallet.getWalletMetadata().getStatus());
+        assertNull(updatedWallet.getWalletMetadata().getLockStatus());
     }
 }

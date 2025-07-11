@@ -6,7 +6,7 @@ import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.exception.WalletStatusException;
+import io.mosip.mimoto.exception.WalletLockedException;
 import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.util.TestUtilities;
 import io.mosip.mimoto.util.WalletUtil;
@@ -114,10 +114,10 @@ class WalletUnlockServiceTest {
                 .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_PIN.getErrorCode(), "Invalid PIN"));
         when(walletLockManager.enforceLockCyclePolicy(wallet)).thenReturn(wallet);
         doNothing().when(walletStatusService).validateLastAttemptBeforeLockout(wallet);
-        doNothing().doThrow(new WalletStatusException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage())).when(walletStatusService).validateWalletStatus(wallet);
+        doNothing().doThrow(new WalletLockedException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage())).when(walletStatusService).validateWalletStatus(wallet);
         String expectedErrorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
 
-        WalletStatusException exception = assertThrows(WalletStatusException.class, () ->
+        WalletLockedException exception = assertThrows(WalletLockedException.class, () ->
                 walletUnlockService.handleUnlock(wallet, invalidPin));
 
         assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), exception.getErrorCode());
@@ -162,12 +162,12 @@ class WalletUnlockServiceTest {
     @Test
     void shouldThrowExceptionImmediatelyWhenUnlockingWalletIsAlreadyLockedPermanently() throws InvalidRequestException {
         when(walletLockManager.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet);
-        WalletStatusException walletStatusException = new WalletStatusException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage());
-        doThrow(walletStatusException).when(walletStatusService).validateWalletStatus(wallet);
+        WalletLockedException walletLockedException = new WalletLockedException(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage());
+        doThrow(walletLockedException).when(walletStatusService).validateWalletStatus(wallet);
 
         String expectedErrorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
 
-        WalletStatusException exception = assertThrows(WalletStatusException.class, () ->
+        WalletLockedException exception = assertThrows(WalletLockedException.class, () ->
                 walletUnlockService.handleUnlock(wallet, walletPin));
 
         assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), exception.getErrorCode());

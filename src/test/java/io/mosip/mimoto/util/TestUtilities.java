@@ -20,7 +20,7 @@ import io.mosip.mimoto.dto.openid.VerifiersDTO;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseDTO;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseWrapperDTO;
 import io.mosip.mimoto.dto.openid.presentation.*;
-import io.mosip.mimoto.model.WalletStatus;
+import io.mosip.mimoto.model.WalletLockStatus;
 import org.springframework.util.ResourceUtils;
 
 import java.io.InputStream;
@@ -458,13 +458,13 @@ public class TestUtilities {
         return wallet;
     }
 
-    public static WalletMetadata createWalletMetadata(String name, PasscodeControl passcodeControl, WalletStatus walletStatus) {
+    public static WalletMetadata createWalletMetadata(String name, PasscodeControl passcodeControl, WalletLockStatus walletStatus) {
         WalletMetadata walletMetadata = new WalletMetadata();
         walletMetadata.setName(name);
         walletMetadata.setEncryptionAlgo("AES");
         walletMetadata.setEncryptionType("symmetric");
         walletMetadata.setPasscodeControl(passcodeControl);
-        walletMetadata.setStatus(walletStatus);
+        walletMetadata.setLockStatus(walletStatus);
         return walletMetadata;
     }
 

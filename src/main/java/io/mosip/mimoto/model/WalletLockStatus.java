@@ -2,7 +2,7 @@ package io.mosip.mimoto.model;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum WalletStatus {
+public enum WalletLockStatus {
     // Indicates that the wallet is temporarily locked due to exceeding the maximum allowed failed attempts within a cycle. Unlocking will be possible after the lock duration expires.
     TEMPORARILY_LOCKED("temporarily_locked"),
     // Indicates that the wallet is permanently locked after exceeding the maximum allowed lock cycles. Unlocking the Wallet is no longer possible.
@@ -14,7 +14,7 @@ public enum WalletStatus {
 
     private final String value;
 
-    WalletStatus(String value) {
+    WalletLockStatus(String value) {
         this.value = value;
     }
 

@@ -1,6 +1,6 @@
 package io.mosip.mimoto.service;
 
-import io.mosip.mimoto.exception.WalletStatusException;
+import io.mosip.mimoto.exception.WalletLockedException;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.repository.WalletRepository;
@@ -46,7 +46,7 @@ public class WalletUnlockService {
             wallet = walletLockManager.resetTemporaryLockIfExpired(wallet);
             walletStatusService.validateWalletStatus(wallet);
             walletRepository.save(wallet);
-        } catch (WalletStatusException | InvalidRequestException ex) {
+        } catch (WalletLockedException | InvalidRequestException ex) {
             walletRepository.save(wallet);
             throw ex;
         }

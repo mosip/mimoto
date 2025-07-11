@@ -8,5 +8,5 @@ public class WalletMetadata {
     private String encryptionType;
     private String name;
     private PasscodeControl passcodeControl;
-    private WalletStatus status = null;
+    private WalletLockStatus lockStatus = null;
 }
