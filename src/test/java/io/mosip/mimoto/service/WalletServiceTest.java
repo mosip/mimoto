@@ -1,16 +1,15 @@
 package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.constant.SessionKeys;
+import io.mosip.mimoto.dto.*;
+import io.mosip.mimoto.exception.WalletLockedException;
 import io.mosip.mimoto.model.Wallet;
+import io.mosip.mimoto.model.WalletLockStatus;
 import io.mosip.mimoto.model.WalletMetadata;
 import io.mosip.mimoto.model.PasscodeControl;
-import io.mosip.mimoto.dto.WalletDetailsResponseDto;
-import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.UnauthorizedAccessException;
-import io.mosip.mimoto.exception.WalletLockedException;
-import io.mosip.mimoto.model.WalletLockStatus;
 import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.service.impl.WalletServiceImpl;
 import io.mosip.mimoto.util.TestUtilities;

@@ -16,14 +16,14 @@ import org.springframework.stereotype.Service;
 public class WalletUnlockService {
     private final WalletUtil walletUtil;
     private final WalletLockManager walletLockManager;
-    private final WalletLockStatusService walletStatusService;
+    private final WalletLockStatusService walletLockStatusService;
 
     private final WalletRepository walletRepository;
 
-    public WalletUnlockService(WalletUtil walletUtil, WalletLockManager walletLockManager, WalletLockStatusService walletStatusService, WalletRepository walletRepository) {
+    public WalletUnlockService(WalletUtil walletUtil, WalletLockManager walletLockManager, WalletLockStatusService walletLockStatusService, WalletRepository walletRepository) {
         this.walletUtil = walletUtil;
         this.walletLockManager = walletLockManager;
-        this.walletStatusService = walletStatusService;
+        this.walletLockStatusService = walletLockStatusService;
         this.walletRepository = walletRepository;
     }
 
@@ -56,7 +56,7 @@ public class WalletUnlockService {
     }
 
     private void throwExceptionIfWalletIsLocked(Wallet wallet) throws WalletLockedException {
-        ErrorDTO errorDTO = walletStatusService.getErrorBasedOnWalletLockStatus(wallet);
+        ErrorDTO errorDTO = walletLockStatusService.getErrorBasedOnWalletLockStatus(wallet);
 
         if (errorDTO != null) {
             String errorCode = errorDTO.getErrorCode();
@@ -67,7 +67,7 @@ public class WalletUnlockService {
     }
 
     private void throwExceptionIfLastAttemptLeftForUnlock(Wallet wallet) throws InvalidRequestException {
-        ErrorDTO errorDTO = walletStatusService.getErrorBasedOnWalletLockStatus(wallet);
+        ErrorDTO errorDTO = walletLockStatusService.getErrorBasedOnWalletLockStatus(wallet);
 
         if (errorDTO != null) {
             String errorCode = errorDTO.getErrorCode();
