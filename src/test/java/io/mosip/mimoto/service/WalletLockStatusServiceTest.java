@@ -1,8 +1,7 @@
 package io.mosip.mimoto.service;
 
+import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.exception.ErrorConstants;
-import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.exception.WalletLockedException;
 import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
@@ -16,7 +15,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @RunWith(SpringRunner.class)
 public class WalletLockStatusServiceTest {
@@ -42,35 +40,32 @@ public class WalletLockStatusServiceTest {
     }
 
     @Test
-    public void testValidateWalletStatusShouldThrowExceptionForPermanentlyLockedWallet() {
+    public void testGetErrorBasedOnWalletLockStatusShouldReturnErrorObjForPermanentlyLockedWallet() {
         wallet.getWalletMetadata().setLockStatus(WalletLockStatus.PERMANENTLY_LOCKED);
-        String expectedErrorMsg = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
 
-        WalletLockedException exception = assertThrows(WalletLockedException.class, () -> walletStatusService.getErrorBasedOnWalletLockStatus(wallet));
+        ErrorDTO errorDTO = walletStatusService.getErrorBasedOnWalletLockStatus(wallet);
 
-        assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), exception.getErrorCode());
-        assertEquals(expectedErrorMsg, exception.getMessage());
+        assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), errorDTO.getErrorCode());
+        assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage(), errorDTO.getErrorMessage());
     }
 
     @Test
-    public void testValidateWalletStatusShouldThrowExceptionForTemporarilyLockedWallet() {
+    public void testGetErrorBasedOnWalletLockStatusShouldReturnErrorObjForTemporarilyLockedWallet() {
         wallet.getWalletMetadata().setLockStatus(WalletLockStatus.TEMPORARILY_LOCKED);
-        String expectedErrorMsg = ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage();
 
-        WalletLockedException exception = assertThrows(WalletLockedException.class, () -> walletStatusService.getErrorBasedOnWalletLockStatus(wallet));
+        ErrorDTO errorDTO = walletStatusService.getErrorBasedOnWalletLockStatus(wallet);
 
-        assertEquals(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), exception.getErrorCode());
-        assertEquals(expectedErrorMsg, exception.getMessage());
+        assertEquals(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorDTO.getErrorCode());
+        assertEquals(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage(), errorDTO.getErrorMessage());
     }
 
-//    @Test
-//    public void testValidateLastAttemptBeforeLockoutShouldThrowExceptionWhenOnlyOneAttemptLeftBeforePermanentLockout() {
-//        wallet.getWalletMetadata().setLockStatus(WalletLockStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
-//        String expectedErrorMsg = ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode() + " --> " + ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage();
-//
-//        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> walletStatusService.validateLastAttemptBeforeLockout(wallet));
-//
-//        assertEquals(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), exception.getErrorCode());
-//        assertEquals(expectedErrorMsg, exception.getMessage());
-//    }
+    @Test
+    public void testGetErrorBasedOnWalletLockStatusShouldReturnErrorObjWhenOnlyOneAttemptLeftBeforePermanentLockout() {
+        wallet.getWalletMetadata().setLockStatus(WalletLockStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
+
+        ErrorDTO errorDTO = walletStatusService.getErrorBasedOnWalletLockStatus(wallet);
+
+        assertEquals(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), errorDTO.getErrorCode());
+        assertEquals(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage(), errorDTO.getErrorMessage());
+    }
 }
