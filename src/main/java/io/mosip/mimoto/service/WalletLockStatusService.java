@@ -2,7 +2,6 @@ package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.exception.ErrorConstants;
-import io.mosip.mimoto.exception.WalletLockedException;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
 import io.mosip.mimoto.model.WalletLockStatus;
