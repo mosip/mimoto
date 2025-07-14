@@ -45,7 +45,7 @@ participant WalletRepository
     
     WalletUnlockService->>WalletLockManager: resetTemporaryLockIfExpired(wallet)
     activate WalletLockManager
-    Note over WalletLockManager: Checks if Wallet is temporarily locked before and that lock has expired, then it resets<br/> the failedAttemptCount and retryBlockedUntil to their defaults and sets the walletLockStatus = lock_expired
+    Note over WalletLockManager: Checks if Wallet is temporarily locked before and that lock has expired (if retryBlockedUntil from Database > Current System time (in milliseconds)),<br/> then it resets the failedAttemptCount and retryBlockedUntil to their defaults and sets the walletLockStatus = lock_expired
     WalletLockManager-->>WalletUnlockService: Returns updated Wallet
     deactivate WalletLockManager
     
@@ -81,7 +81,7 @@ participant WalletRepository
             
             WalletUnlockService->>WalletLockManager: enforceLockCyclePolicy(wallet)
             activate WalletLockManager
-            Note over WalletLockManager:1. Increments failedAttemptCount & <br/>if currentCyclceCount = 0 (means this is the first failed attempt made in all cycles)<br/>then it sets currentCycleCount = 1<br/>2. If failedAttemptCount = maxFailedAttemptsAllowedPerCycle then increments currentCycleCount and sets walletLockStatus to <br/> - permanently_locked if currentCycleCount > maxLockCyclesAllowed<br/> - temporarily_locked if currentCycleCount <= maxLockCyclesAllowed<br/>3.If failedAttemptCount = maxFailedAttemptsAllowedPerCycle -1 & currentCycleCount = maxLockCyclesAllowed then sets walletLockStatus to<br/> - last_attempt_before_lockout as only one attempt is left before permanent lockout
+            Note over WalletLockManager:1. Increments failedAttemptCount & <br/>2. if currentCycleCount = 0 (means this is the first failed attempt made in all cycles), it sets currentCycleCount = 1<br/>3. If failedAttemptCount = maxFailedAttemptsAllowedPerCycle then increments currentCycleCount<br/>4. If currentCycleCount > maxLockCyclesAllowed then sets walletLockStatus = permanently_locked & retryBlockedUntil = null <br/> else sets walletLockStatus = temporarily_locked & and retryBlockedUntil = Current System time (in milliseconds) + retryBlockedUntil (in milliseconds) value from config properties file<br/>5. If failedAttemptCount = maxFailedAttemptsAllowedPerCycle - 1 & currentCycleCount = maxLockCyclesAllowed then sets <br/> walletLockStatus = last_attempt_before_lockout
             WalletLockManager-->>WalletUnlockService: Returns updated Wallet
             deactivate WalletLockManager
             
@@ -97,7 +97,7 @@ participant WalletRepository
             else otherwise
                 WalletUnlockService->>WalletLockManager: resetTemporaryLockIfExpired(wallet)
                 activate WalletLockManager
-                Note over WalletLockManager: Checks if Wallet is temporarily locked before and that lock has expired, then it resets<br/> the failedAttemptCount and retryBlockedUntil to their defaults and sets the walletLockStatus = lock_expired
+                Note over WalletLockManager: Checks if Wallet is temporarily locked before and that lock has expired (if retryBlockedUntil from Database > Current System time (in milliseconds)),<br/> then it resets the failedAttemptCount and retryBlockedUntil to their defaults and sets the walletLockStatus = lock_expired
                 WalletLockManager-->>WalletUnlockService: Returns updated Wallet
                 deactivate WalletLockManager
                 
