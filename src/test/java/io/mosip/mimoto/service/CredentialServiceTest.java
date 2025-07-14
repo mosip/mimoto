@@ -98,8 +98,8 @@ public class CredentialServiceTest {
         Mockito.when(issuersService.getIssuerDetails(issuerId)).thenReturn(issuerDTO);
         Mockito.when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
         when(credentialRequestService.buildRequest(any(IssuerDTO.class),
+                any(String.class),
                 any(CredentialIssuerWellKnownResponse.class),
-                any(CredentialsSupportedResponse.class),
                 any(String.class), any(), any(), eq(false))).thenReturn(getVCCredentialRequestDTO());
         VCCredentialResponse vcCredentialResponse = getVCCredentialResponseDTO("CredentialType1");
         when(restApiClient.postApi(
@@ -121,8 +121,8 @@ public class CredentialServiceTest {
         Mockito.when(issuersService.getIssuerDetails(issuerId)).thenReturn(issuerDTO);
         Mockito.when(issuersService.getIssuerConfiguration(issuerId)).thenReturn(issuerConfig);
         when(credentialRequestService.buildRequest(any(IssuerDTO.class),
+                any(String.class),
                 any(CredentialIssuerWellKnownResponse.class),
-                any(CredentialsSupportedResponse.class),
                 any(String.class), any(), any(), eq(false))).thenReturn(getVCCredentialRequestDTO());
         VCCredentialResponse vcCredentialResponse = getVCCredentialResponseDTO("CredentialType1");
         when(restApiClient.postApi(

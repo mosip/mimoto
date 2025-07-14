@@ -10,17 +10,17 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.mockito.ArgumentCaptor;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.*;
 
@@ -38,6 +38,12 @@ public class CredentialRequestServiceTest {
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
     private final MockedStatic<KeyGenerationUtil> keyGenerationUtilMockedStatic = Mockito.mockStatic(KeyGenerationUtil.class, Mockito.withSettings().defaultAnswer(Mockito.CALLS_REAL_METHODS));
+
+    @InjectMocks
+    CredentialRequestServiceImpl credentialRequestBuilder;
+
+    @Mock
+    JoseUtil joseUtil;
 
     IssuerDTO issuerDTO;
     String issuerId;
@@ -62,11 +68,15 @@ public class CredentialRequestServiceTest {
 
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         issuerWellKnownResponse.setCredentialIssuer("https://example-issuer.com");
+        issuerWellKnownResponse.setCredentialConfigurationsSupported(
+                Map.of("CredentialType1", credentialsSupportedResponse)
+        );
+        Mockito.when(joseUtil.generateJwt(any(), any(), any())).thenReturn("jwt");
 
-        VCCredentialRequest result = credentialRequestServiceImpl.buildRequest(
+        VCCredentialRequest result = credentialRequestBuilder.buildRequest(
                 issuerDTO,
+                "CredentialType1",
                 issuerWellKnownResponse,
-                credentialsSupportedResponse,
                 "test-cnonce",
                 "walletId",
                 "walletKey",
@@ -86,10 +96,16 @@ public class CredentialRequestServiceTest {
 
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         issuerWellKnownResponse.setCredentialIssuer("https://example-issuer.com");
-        VCCredentialRequest result = credentialRequestServiceImpl.buildRequest(
+        issuerWellKnownResponse.setCredentialConfigurationsSupported(
+                Map.of("CredentialType1", credentialsSupportedResponse)
+        );
+
+        Mockito.when(joseUtil.generateJwt(any(), any(), any())).thenReturn("jwt");
+
+        VCCredentialRequest result = credentialRequestBuilder.buildRequest(
                 issuerDTO,
+                "CredentialType1",
                 issuerWellKnownResponse,
-                credentialsSupportedResponse,
                 "test-cnonce",
                 "walletId",
                 "walletKey",
@@ -110,11 +126,14 @@ public class CredentialRequestServiceTest {
 
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         issuerWellKnownResponse.setCredentialIssuer("https://example-issuer.com");
+        issuerWellKnownResponse.setCredentialConfigurationsSupported(
+                Map.of("CredentialType1", credentialsSupportedResponse)
+        );
 
         VCCredentialRequest result = credentialRequestServiceImpl.buildRequest(
                 issuerDTO,
+                "CredentialType1",
                 issuerWellKnownResponse,
-                credentialsSupportedResponse,
                 "test-cnonce",
                 "walletId",
                 "walletKey",

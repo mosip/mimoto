@@ -42,12 +42,13 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
 
     @Override
     public VCCredentialRequest buildRequest(IssuerDTO issuerDTO,
+                                            String credentialType,
                                             CredentialIssuerWellKnownResponse wellKnownResponse,
-                                            CredentialsSupportedResponse credentialsSupportedResponse,
                                             String cNonce,
                                             String walletId,
                                             String base64EncodedWalletKey,
                                             boolean isLoginFlow) throws Exception {
+        CredentialsSupportedResponse credentialsSupportedResponse = wellKnownResponse.getCredentialConfigurationsSupported().get(credentialType);
 
         SigningAlgorithm signingAlgorithm = resolveAlgorithm(credentialsSupportedResponse);
 
@@ -60,22 +61,39 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
             jwt = JwtGeneratorUtil.generateJwt(signingAlgorithm, wellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), cNonce, keyPair);
         }
 
-        List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
-        if (credentialContext == null || credentialContext.isEmpty()) {
-            credentialContext = List.of("https://www.w3.org/2018/credentials/v1");
+        String format = credentialsSupportedResponse.getFormat();
+        String proofType = credentialsSupportedResponse.getProofTypesSupported()
+                .keySet()
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No proof type available"));
+
+        VCCredentialRequest.VCCredentialRequestBuilder builder = VCCredentialRequest.builder()
+                .format(format)
+                .proof(VCCredentialRequestProof.builder()
+                        .proofType(proofType)
+                        .jwt(jwt)
+                        .build());
+
+        if ("ldp_vc".equalsIgnoreCase(format)) {
+            List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
+            if (credentialContext == null || credentialContext.isEmpty()) {
+                credentialContext = List.of("https://www.w3.org/2018/credentials/v1");
+            }
+
+            builder.credentialDefinition(
+                    VCCredentialDefinition.builder()
+                            .type(credentialsSupportedResponse.getCredentialDefinition().getType())
+                            .context(credentialContext)
+                            .build()
+            );
+        } else if ("vc+sd-jwt".equalsIgnoreCase(format)) {
+            builder.vct(credentialType);
         }
 
-        return VCCredentialRequest.builder()
-                .format(credentialsSupportedResponse.getFormat())
-                .proof(VCCredentialRequestProof.builder()
-                        .proofType(credentialsSupportedResponse.getProofTypesSupported().keySet().stream().findFirst().get())
-                        .jwt(jwt)
-                        .build())
-                .credentialDefinition(VCCredentialDefinition.builder()
-                        .type(credentialsSupportedResponse.getCredentialDefinition().getType())
-                        .context(credentialContext)
-                        .build())
-                .build();
+        VCCredentialRequest request = builder.build();
+
+        return request;
     }
 
     private SigningAlgorithm resolveAlgorithm(CredentialsSupportedResponse credentialsSupportedResponse) {
