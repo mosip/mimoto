@@ -17,6 +17,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -155,6 +159,53 @@ class CredentialPDFGeneratorServiceTest {
                     "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
                     "", "", "en");
 
+            verify(pixelPass).generateQRData(anyString(), anyString());
+            verify(presentationService, never()).constructPresentationDefinition(any());
+            assertNotNull(result);
+        }
+    }
+
+    @Test
+    void testGeneratePdfShouldGeneratePresentationDefinitionForOnlineSharingQrTypeWithNonEmptyDataShareUrl() throws Exception {
+        issuerDTO.setQr_code_type(QRCodeType.OnlineSharing);
+        when(objectMapper.writeValueAsString(any())).thenReturn("{\"credential\":\"data\"}");
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Test</body></html>");
+
+
+        try (MockedStatic<Utilities> mocked = mockStatic(Utilities.class)) {
+            mocked.when(() -> Utilities.encodeToString(any(), anyString()))
+                    .thenReturn("base64-encoded-qr");
+
+            ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
+                    "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                    "http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/test", "", "en");
+
+            verify(presentationService).constructPresentationDefinition(any());
+            verify(pixelPass, never()).generateQRData(anyString(), anyString());
+            assertNotNull(result);
+        }
+    }
+
+    @Test
+    void testGeneratePdfShouldGenerateEmbeddedVCForOnlineSharingQrTypeWithEmptyDataShareUrl() throws Exception {
+        issuerDTO.setQr_code_type(QRCodeType.OnlineSharing);
+        when(objectMapper.writeValueAsString(any())).thenReturn("{\"credential\":\"data\"}");
+        when(pixelPass.generateQRData(anyString(), anyString())).thenReturn("generated-qr-data");
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Test</body></html>");
+
+
+        try (MockedStatic<Utilities> mocked = mockStatic(Utilities.class)) {
+            mocked.when(() -> Utilities.encodeToString(any(), anyString()))
+                    .thenReturn("base64-encoded-qr");
+
+            ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
+                    "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                    "", "", "en");
+
+            verify(pixelPass).generateQRData(anyString(), anyString());
+            verify(presentationService, never()).constructPresentationDefinition(any());
             assertNotNull(result);
         }
     }
