@@ -147,8 +147,21 @@ public class CredentialPDFGeneratorService {
                             });
 
                 });
-        String qrCodeImage = QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type()) ? constructQRCodeWithAuthorizeRequest(vcCredentialResponse, dataShareUrl) :
-                QRCodeType.EmbeddedVC.equals(issuerDTO.getQr_code_type()) ? constructQRCodeWithVCData(vcCredentialResponse) : "";
+
+        String qrCodeImage;
+        if (QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type())) {
+            // Login flow
+            if (dataShareUrl.isEmpty()) {
+                qrCodeImage = constructQRCodeWithVCData(vcCredentialResponse);
+            } else {
+                qrCodeImage = constructQRCodeWithAuthorizeRequest(vcCredentialResponse, dataShareUrl);
+            }
+        } else if (QRCodeType.EmbeddedVC.equals(issuerDTO.getQr_code_type())) {
+            qrCodeImage = constructQRCodeWithVCData(vcCredentialResponse);
+        } else {
+            qrCodeImage = "";
+        }
+
         data.put("qrCodeImage", qrCodeImage);
         data.put("credentialValidity", credentialValidity);
         data.put("logoUrl", issuerDTO.getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));
