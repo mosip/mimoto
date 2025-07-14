@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class WalletLockManager {
     private final WalletPasscodeConfig walletPasscodeConfig;
+    private static final int MINUTES_TO_MILLIS = 60 * 1000;
 
     public WalletLockManager(WalletPasscodeConfig walletPasscodeConfig) {
         this.walletPasscodeConfig = walletPasscodeConfig;
@@ -33,7 +34,7 @@ public class WalletLockManager {
                 passcodeControl.setRetryBlockedUntil(null);
                 walletMetadata.setLockStatus(WalletLockStatus.PERMANENTLY_LOCKED);
             } else {
-                passcodeControl.setRetryBlockedUntil(System.currentTimeMillis() + walletPasscodeConfig.getRetryBlockedUntil());
+                passcodeControl.setRetryBlockedUntil(System.currentTimeMillis() + (walletPasscodeConfig.getRetryBlockedUntil() * MINUTES_TO_MILLIS));
                 walletMetadata.setLockStatus(WalletLockStatus.TEMPORARILY_LOCKED);
             }
         } else if (isLastSecondAttemptBeforePermanentLock(passcodeControl)) {

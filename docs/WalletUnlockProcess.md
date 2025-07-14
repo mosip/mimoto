@@ -45,7 +45,7 @@ participant WalletRepository
     
     WalletUnlockService->>WalletLockManager: resetTemporaryLockIfExpired(wallet)
     activate WalletLockManager
-    Note over WalletLockManager: Checks if Wallet is temporarily locked before and that lock has expired (if retryBlockedUntil from Database > Current System time (in milliseconds)),<br/> then it resets the failedAttemptCount and retryBlockedUntil to their defaults and sets the walletLockStatus = lock_expired
+    Note over WalletLockManager: Checks if Wallet is temporarily locked before and that lock has expired (if retryBlockedUntil in milliseconds from Database > Current System time in milliseconds),<br/> then it resets the failedAttemptCount and retryBlockedUntil to their defaults and sets the walletLockStatus = lock_expired
     WalletLockManager-->>WalletUnlockService: Returns updated Wallet
     deactivate WalletLockManager
     
@@ -97,7 +97,7 @@ participant WalletRepository
             else otherwise
                 WalletUnlockService->>WalletLockManager: resetTemporaryLockIfExpired(wallet)
                 activate WalletLockManager
-                Note over WalletLockManager: Checks if Wallet is temporarily locked before and that lock has expired (if retryBlockedUntil from Database > Current System time (in milliseconds)),<br/> then it resets the failedAttemptCount and retryBlockedUntil to their defaults and sets the walletLockStatus = lock_expired
+                Note over WalletLockManager: Checks if Wallet is temporarily locked before and that lock has expired (if retryBlockedUntil in milliseconds from Database  > Current System time in milliseconds),<br/> then it resets the failedAttemptCount and retryBlockedUntil to their defaults and sets the walletLockStatus = lock_expired
                 WalletLockManager-->>WalletUnlockService: Returns updated Wallet
                 deactivate WalletLockManager
                 

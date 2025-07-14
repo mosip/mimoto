@@ -43,7 +43,7 @@ public class WalletLockManagerTest {
     @Test
     public void testWalletPasscodeConfigInitialization() {
         assertNotNull(walletPasscodeConfig, "WalletPasscodeConfig should be initialized");
-        assertEquals(3600000L, walletPasscodeConfig.getRetryBlockedUntil(), "RetryBlockedUntil should be 3600000 ms");
+        assertEquals(60, walletPasscodeConfig.getRetryBlockedUntil(), "RetryBlockedUntil should be 60 minutes");
         assertEquals(5, walletPasscodeConfig.getMaxFailedAttemptsAllowedPerCycle(), "MaxFailedAttemptsAllowedPerCycle should be 5");
         assertEquals(3, walletPasscodeConfig.getMaxLockCyclesAllowed(), "MaxLockCyclesAllowed should be 3");
     }
