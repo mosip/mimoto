@@ -24,4 +24,7 @@ public class TokenResponseDTO {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String scope;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String c_nonce;
 }
