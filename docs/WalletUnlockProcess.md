@@ -143,8 +143,9 @@ Configurable properties that govern the entire Passcode flow within the Wallet u
 - `wallet.passcode.maxLockCyclesAllowed`: Maximum lock cycles allowed before permanent lockout
 
 ```properties
-# Duration (in milliseconds) for which the wallet remains locked after exceeding failed attempts in a cycle
-wallet.passcode.retryBlockedUntil=3600000
+# Duration (in minutes) for which the wallet remains locked after exceeding failed attempts in a cycle.
+# Must be a whole number; decimal/fractional values (e.g., 0.5) will throw an error during Mimoto launch
+wallet.passcode.retryBlockedUntil=60
 # Maximum number of failed passcode attempts allowed in a single cycle (defaults to 1 if <=0)
 wallet.passcode.maxFailedAttemptsAllowedPerCycle=5
 # Maximum number of lock cycles allowed before the wallet is permanently locked (defaults to 1 if <=0)
