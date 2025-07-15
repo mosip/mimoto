@@ -1,15 +1,17 @@
 package io.mosip.mimoto.service.impl;
 
-import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.model.Wallet;
+import io.mosip.mimoto.dto.WalletDetailsResponseDto;
 import io.mosip.mimoto.dto.WalletResponseDto;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.repository.WalletRepository;
+import io.mosip.mimoto.service.WalletLockManager;
 import io.mosip.mimoto.service.WalletService;
+import io.mosip.mimoto.service.WalletLockStatusService;
+import io.mosip.mimoto.service.WalletUnlockService;
 import io.mosip.mimoto.util.WalletUtil;
 import io.mosip.mimoto.util.WalletValidator;
-import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.function.Supplier;
+
 
 /**
  * Implementation of {@link WalletService} for managing wallets.
@@ -28,12 +31,19 @@ public class WalletServiceImpl implements WalletService {
     private final WalletRepository repository;
     private final WalletUtil walletUtil;
     private final WalletValidator validator;
+    private final WalletUnlockService walletUnlockService;
+    private final WalletLockStatusService walletStatusService;
+
+    private final WalletLockManager walletLockManager;
 
     @Autowired
-    public WalletServiceImpl(WalletRepository repository, WalletUtil walletUtil, WalletValidator validator) {
+    public WalletServiceImpl(WalletRepository repository, WalletUtil walletUtil, WalletValidator validator, WalletUnlockService walletUnlockService, WalletLockStatusService walletStatusService, WalletLockManager walletLockManager) {
         this.repository = repository;
         this.walletUtil = walletUtil;
         this.validator = validator;
+        this.walletUnlockService = walletUnlockService;
+        this.walletStatusService = walletStatusService;
+        this.walletLockManager = walletLockManager;
     }
 
     @Override
@@ -51,37 +61,38 @@ public class WalletServiceImpl implements WalletService {
 
         String walletId = walletUtil.createWallet(userId, name, pin);
         log.debug("Wallet created successfully: {}", walletId);
-        return new WalletResponseDto(walletId, name);
+        return WalletResponseDto.builder().walletId(walletId).walletName(name).build();
     }
 
     @Override
-    public WalletResponseDto unlockWallet(String walletId, String pin, HttpSession httpSession) throws InvalidRequestException {
-        String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
-        log.info("Unlocking wallet for user: {}, wallet: {}", userId, walletId);
+    public WalletResponseDto unlockWallet(String walletId, String pin, String userId) throws InvalidRequestException {
+        log.info("Unlocking Wallet: {} for User: {}", walletId, userId);
 
         validator.validateUserId(userId);
         validator.validateWalletPin(pin);
 
         return repository.findByUserIdAndId(userId, walletId).map(wallet -> {
-            String decryptedWalletKey = walletUtil.decryptWalletKey(wallet.getWalletKey(), pin);
-            httpSession.setAttribute(SessionKeys.WALLET_KEY, decryptedWalletKey);
-            httpSession.setAttribute(SessionKeys.WALLET_ID, walletId);
-            return new WalletResponseDto(walletId, wallet.getWalletMetadata().getName());
+            String decryptedWalletKey = walletUnlockService.handleUnlock(wallet, pin);
+            return new WalletResponseDto(walletId, wallet.getWalletMetadata().getName(), decryptedWalletKey);
         }).orElseThrow(getWalletNotFoundExceptionSupplier(userId, walletId));
     }
 
     @Override
-    public List<WalletResponseDto> getWallets(String userId) {
+    public List<WalletDetailsResponseDto> getWallets(String userId) {
         log.debug("validating user ID provided");
         validator.validateUserId(userId);
 
         log.info("Retrieving wallets for user: {}", userId);
 
-        return repository.findWalletByUserId(userId).stream().map(wallet -> WalletResponseDto.builder()
-                        .walletId(wallet.getId())
-                        .walletName(wallet.getWalletMetadata().getName())
-                        .build())
-                .toList();
+        return repository.findWalletByUserId(userId).stream().map(wallet -> {
+            wallet = walletLockManager.resetTemporaryLockIfExpired(wallet);
+            repository.save(wallet);
+            return WalletDetailsResponseDto.builder()
+                    .walletId(wallet.getId())
+                    .walletName(wallet.getWalletMetadata().getName())
+                    .walletStatus(walletStatusService.getWalletLockStatus(wallet))
+                    .build();
+        }).toList();
     }
 
     @Override

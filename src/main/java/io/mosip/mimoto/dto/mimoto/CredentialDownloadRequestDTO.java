@@ -2,7 +2,7 @@ package io.mosip.mimoto.dto.mimoto;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Data
 public class CredentialDownloadRequestDTO {

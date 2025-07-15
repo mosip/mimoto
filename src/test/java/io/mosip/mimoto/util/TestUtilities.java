@@ -9,7 +9,10 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import io.mosip.mimoto.model.CredentialMetadata;
+import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.model.VerifiableCredential;
+import io.mosip.mimoto.model.Wallet;
+import io.mosip.mimoto.model.WalletMetadata;
 import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.openid.VerifierDTO;
@@ -17,6 +20,7 @@ import io.mosip.mimoto.dto.openid.VerifiersDTO;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseDTO;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseWrapperDTO;
 import io.mosip.mimoto.dto.openid.presentation.*;
+import io.mosip.mimoto.model.WalletLockStatus;
 import org.springframework.util.ResourceUtils;
 
 import java.io.InputStream;
@@ -24,6 +28,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.Instant;
 import java.util.*;
 import java.util.Collections;
 import java.util.HashMap;
@@ -133,19 +138,17 @@ public class TestUtilities {
     }
 
     public static CredentialIssuerWellKnownResponse getCredentialIssuerWellKnownResponseDto(String issuerName, Map<String, CredentialsSupportedResponse> credentialsSupportedResponses) {
-        CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse(
+        return new CredentialIssuerWellKnownResponse(
                 "https://dev/" + issuerName,
                 List.of("https://auth-server.env.net"),
                 "https://dev/issuance/credential",
                 credentialsSupportedResponses);
-        return credentialIssuerWellKnownResponse;
     }
 
     public static CredentialIssuerConfiguration getCredentialIssuerConfigurationResponseDto(String issuerName, String credentialType, List<String> nullFields) {
         AuthorizationServerWellKnownResponse authorizationServerWellKnownResponse = getAuthServerWellknownResponseDto(nullFields);
         Map<String, CredentialsSupportedResponse> credentialsSupportedResponses = Map.of(credentialType, getCredentialSupportedResponse(credentialType));
-        CredentialIssuerConfiguration credentialIssuerConfiguration = new CredentialIssuerConfiguration("https://dev/" + issuerName, List.of("https://auth-server.env.net"), "https://dev/issuance/credential", credentialsSupportedResponses, authorizationServerWellKnownResponse);
-        return credentialIssuerConfiguration;
+        return new CredentialIssuerConfiguration("https://dev/" + issuerName, List.of("https://auth-server.env.net"), "https://dev/issuance/credential", credentialsSupportedResponses, authorizationServerWellKnownResponse);
     }
 
     public static AuthorizationServerWellKnownResponse getAuthServerWellknownResponseDto(List<String> nullFields) {
@@ -344,7 +347,7 @@ public class TestUtilities {
     public static DataShareResponseDto getDataShareResponseDTO(String errorCode) {
         return DataShareResponseDto.builder()
                 .dataShare(new DataShare())
-                .errors(List.of(new ErrorDTO(errorCode == "" ? "Expired!" : errorCode, "Download is failed as credential is expired")))
+                .errors(List.of(new ErrorDTO(errorCode.equals("") ? "Expired!" : errorCode, "Download is failed as credential is expired")))
                 .build();
     }
 
@@ -356,6 +359,7 @@ public class TestUtilities {
                 .expires_in(12345)
                 .scope("test-scope")
                 .token_type("test-token-type")
+                .c_nonce("test-cnonce")
                 .build();
     }
 
@@ -442,5 +446,34 @@ public class TestUtilities {
 
     public static String createRequestBody(Object request) throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(request);
+    }
+
+    public static Wallet createWallet(String userId, String walletKey, WalletMetadata walletMetadata) {
+        Wallet wallet = new Wallet();
+        wallet.setId(UUID.randomUUID().toString());
+        wallet.setUserId(userId);
+        wallet.setWalletKey(walletKey);
+        wallet.setWalletMetadata(walletMetadata);
+        wallet.setCreatedAt(Instant.now());
+        wallet.setUpdatedAt(Instant.now());
+        return wallet;
+    }
+
+    public static WalletMetadata createWalletMetadata(String name, PasscodeControl passcodeControl, WalletLockStatus walletStatus) {
+        WalletMetadata walletMetadata = new WalletMetadata();
+        walletMetadata.setName(name);
+        walletMetadata.setEncryptionAlgo("AES");
+        walletMetadata.setEncryptionType("symmetric");
+        walletMetadata.setPasscodeControl(passcodeControl);
+        walletMetadata.setLockStatus(walletStatus);
+        return walletMetadata;
+    }
+
+    public static PasscodeControl createPasscodeControl(int failedAttemptCount, int currentCycleCount, Long retryBlockedUntil) {
+        PasscodeControl passcodeControl = new PasscodeControl();
+        passcodeControl.setFailedAttemptCount(failedAttemptCount);
+        passcodeControl.setCurrentCycleCount(currentCycleCount);
+        passcodeControl.setRetryBlockedUntil(retryBlockedUntil);
+        return passcodeControl;
     }
 }

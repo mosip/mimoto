@@ -10,7 +10,7 @@ public interface CredentialRequestService {
             IssuerDTO issuerDTO,
             CredentialIssuerWellKnownResponse wellKnownResponse,
             CredentialsSupportedResponse credentialsSupportedResponse,
-            String accessToken,
+            String cNonce,
             String walletId,
             String base64EncodedWalletKey,
             Boolean isLoginFlow

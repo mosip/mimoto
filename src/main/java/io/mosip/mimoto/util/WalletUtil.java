@@ -4,6 +4,7 @@ import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.model.ProofSigningKey;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
+import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.constant.SigningAlgorithm;
 import io.mosip.mimoto.repository.WalletRepository;
@@ -45,7 +46,8 @@ public class WalletUtil {
     public String saveWallet(String userId, String walletName, String walletPin, SecretKey encryptionKey, String encryptionAlgorithm, String encryptionType) {
 
         String walletId = UUID.randomUUID().toString();
-        WalletMetadata walletMetadata = createWalletMetadata(walletName, encryptionAlgorithm, encryptionType);
+        PasscodeControl passcodeControl = new PasscodeControl();
+        WalletMetadata walletMetadata = createWalletMetadata(walletName, encryptionAlgorithm, encryptionType, passcodeControl);
         String walletKey = encryptionDecryptionUtil.encryptKeyWithPin(encryptionKey, walletPin);
         Wallet newWallet = Wallet.builder()
                 .id(walletId)
@@ -61,11 +63,13 @@ public class WalletUtil {
         return walletId;
     }
 
-    private WalletMetadata createWalletMetadata(String walletName, String encryptionAlgorithm, String encryptionType) {
+    private WalletMetadata createWalletMetadata(String walletName, String encryptionAlgorithm, String encryptionType, PasscodeControl passcodeControl) {
         WalletMetadata walletMetadata = new WalletMetadata();
         walletMetadata.setEncryptionAlgo(encryptionAlgorithm);
         walletMetadata.setEncryptionType(encryptionType);
         walletMetadata.setName(walletName);
+        walletMetadata.setLockStatus(null);
+        walletMetadata.setPasscodeControl(passcodeControl);
         return walletMetadata;
     }
 
