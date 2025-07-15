@@ -335,4 +335,95 @@ public class WalletCredentialServiceTest {
         verify(walletCredentialsRepository).findByIdAndWalletId(credentialId, walletId);
         verify(walletCredentialsRepository, never()).deleteById(anyString());
     }
+
+    @Test
+    public void shouldThrowCredentialProcessingExceptionOnJsonProcessingError() throws Exception {
+        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
+        when(encryptionDecryptionUtil.decryptCredential("encryptedCredential", base64Key)).thenReturn("bad-json");
+        when(objectMapper.readValue("bad-json", VCCredentialResponse.class)).thenThrow(new com.fasterxml.jackson.core.JsonProcessingException("error") {});
+
+        CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
+                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale));
+
+        assertEquals(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), exception.getErrorCode());
+        verify(walletCredentialsRepository).findByIdAndWalletId(credentialId, walletId);
+        verify(encryptionDecryptionUtil).decryptCredential("encryptedCredential", base64Key);
+        verify(objectMapper).readValue("bad-json", VCCredentialResponse.class);
+    }
+
+    @Test
+    public void shouldThrowCredentialProcessingExceptionOnNullIssuerConfig() throws Exception {
+        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
+        when(encryptionDecryptionUtil.decryptCredential("encryptedCredential", base64Key)).thenReturn("{}");
+        VCCredentialResponse vcResponse = VCCredentialResponse.builder().credential(VCCredentialProperties.builder().type(List.of(credentialType)).build()).build();
+        when(objectMapper.readValue(anyString(), eq(VCCredentialResponse.class))).thenReturn(vcResponse);
+        when(issuersService.getIssuerDetails(issuerId)).thenReturn(new IssuerDTO());
+        when(issuersService.getIssuerConfig(issuerId, credentialType)).thenReturn(null);
+
+        CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
+                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale));
+
+        assertEquals(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), exception.getErrorCode());
+    }
+
+    @Test
+    public void shouldThrowCredentialProcessingExceptionOnCredentialTypeMismatch() throws Exception {
+        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
+        when(encryptionDecryptionUtil.decryptCredential("encryptedCredential", base64Key)).thenReturn("{}");
+        VCCredentialResponse vcResponse = VCCredentialResponse.builder().credential(VCCredentialProperties.builder().type(List.of("OtherType")).build()).build();
+        when(objectMapper.readValue(anyString(), eq(VCCredentialResponse.class))).thenReturn(vcResponse);
+        when(issuersService.getIssuerDetails(issuerId)).thenReturn(new IssuerDTO());
+
+        CredentialDefinitionResponseDto credentialDefinition = new CredentialDefinitionResponseDto();
+        credentialDefinition.setType(List.of(credentialType));
+        CredentialsSupportedResponse supportedResponse = new CredentialsSupportedResponse();
+        supportedResponse.setCredentialDefinition(credentialDefinition);
+
+        IssuerConfig issuerConfig = new IssuerConfig(new IssuerDTO(), new CredentialIssuerWellKnownResponse(), supportedResponse);
+        when(issuersService.getIssuerConfig(issuerId, credentialType)).thenReturn(issuerConfig);
+
+        CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
+                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale));
+
+        assertEquals(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), exception.getErrorCode());
+    }
+
+    @Test
+    public void shouldThrowCredentialProcessingExceptionOnIssuerServiceException() throws Exception {
+        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
+        when(encryptionDecryptionUtil.decryptCredential("encryptedCredential", base64Key)).thenReturn("{}");
+        VCCredentialResponse vcResponse = VCCredentialResponse.builder().credential(VCCredentialProperties.builder().type(List.of(credentialType)).build()).build();
+        when(objectMapper.readValue(anyString(), eq(VCCredentialResponse.class))).thenReturn(vcResponse);
+        when(issuersService.getIssuerDetails(issuerId)).thenThrow(new ApiNotAccessibleException("API error"));
+
+        CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
+                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale));
+
+        assertEquals(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), exception.getErrorCode());
+    }
+
+    @Test
+    public void shouldThrowCredentialProcessingExceptionOnPdfGenerationException() throws Exception {
+        when(walletCredentialsRepository.findByIdAndWalletId(credentialId, walletId)).thenReturn(Optional.of(verifiableCredential));
+        when(encryptionDecryptionUtil.decryptCredential("encryptedCredential", base64Key)).thenReturn("{}");
+        VCCredentialResponse vcResponse = VCCredentialResponse.builder().credential(VCCredentialProperties.builder().type(List.of(credentialType)).build()).build();
+        when(objectMapper.readValue(anyString(), eq(VCCredentialResponse.class))).thenReturn(vcResponse);
+        when(issuersService.getIssuerDetails(issuerId)).thenReturn(new IssuerDTO());
+
+        CredentialDefinitionResponseDto credentialDefinition = new CredentialDefinitionResponseDto();
+        credentialDefinition.setType(List.of(credentialType));
+        CredentialsSupportedResponse supportedResponse = new CredentialsSupportedResponse();
+        supportedResponse.setCredentialDefinition(credentialDefinition);
+
+        IssuerConfig issuerConfig = new IssuerConfig(new IssuerDTO(), new CredentialIssuerWellKnownResponse(), supportedResponse);
+        when(issuersService.getIssuerConfig(issuerId, credentialType)).thenReturn(issuerConfig);
+
+        when(credentialPDFGeneratorService.generatePdfForVerifiableCredentials(any(), any(), any(), any(), any(), any(), any()))
+                .thenThrow(new RuntimeException("PDF error"));
+
+        CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
+                walletCredentialService.fetchVerifiableCredential(walletId, credentialId, base64Key, locale));
+
+        assertEquals(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), exception.getErrorCode());
+    }
 }

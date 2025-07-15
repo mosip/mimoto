@@ -3,9 +3,9 @@ package io.mosip.mimoto.dto.mimoto;
 import java.util.List;
 import lombok.Data;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 @Data
 public class AppOTPRequestDTO {
