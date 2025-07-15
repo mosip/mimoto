@@ -115,7 +115,7 @@ public class CredentialProcessor {
         try {
             vcCredentialRequest = credentialRequestService.buildRequest(
                     issuerConfig.getIssuerDTO(), issuerConfig.getWellKnownResponse(),
-                    issuerConfig.getCredentialsSupportedResponse(), tokenResponse.getAccess_token(),
+                    issuerConfig.getCredentialsSupportedResponse(), tokenResponse.getC_nonce(),
                     walletId, base64Key, true);
         } catch (Exception e) {
             log.error("Failed to generate VC credential request for issuerId: {}, credentialConfigurationId: {}", issuerId, credentialConfigurationId, e);

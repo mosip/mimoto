@@ -160,7 +160,7 @@ public class JoseUtil {
                 .sign(Algorithm.RSA256(null, privateKey));
     }
 
-    public String generateJwt(String audience, String clientId, String accessToken) throws Exception {
+    public String generateJwt(String audience, String clientId, String cNonce) throws Exception {
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
         kpg.initialize(2048);
@@ -178,9 +178,6 @@ public class JoseUtil {
         Date issuedAt = Date.from(Instant.now());
         Date expiresAt = Date.from(Instant.now().plusMillis(120000000));
         RSAPrivateKey privateKey = (RSAPrivateKey) kp.getPrivate();
-        SignedJWT jwt = (SignedJWT) JWTParser.parse(accessToken);
-        Map<String, Object> jsonObject = jwt.getPayload().toJSONObject();
-        String cNonce = (String) jsonObject.get("c_nonce");
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("sub", clientId);
