@@ -29,12 +29,12 @@ public class JwtGeneratorUtil {
         }
     }
 
-    public static String generateJwtUsingDBKeys(SigningAlgorithm algorithm, String audience, String clientId, String accessToken, byte[] publicKeyBytes, byte[] privateKeyBytes) throws Exception {
+    public static String generateJwtUsingDBKeys(SigningAlgorithm algorithm, String audience, String clientId, String cNonce, byte[] publicKeyBytes, byte[] privateKeyBytes) throws Exception {
         KeyPair keyPair = KeyGenerationUtil.getKeyPairFromDBStoredKeys(algorithm, publicKeyBytes, privateKeyBytes);
         JWK jwk = generateJwk(algorithm, keyPair);
         JWSSigner signer = createSigner(algorithm, jwk);
 
-        JWTClaimsSet claimsSet = createClaims(clientId, audience, accessToken);
+        JWTClaimsSet claimsSet = createClaims(clientId, audience, cNonce);
         JWSHeader header = new JWSHeader.Builder(algorithm.getJWSAlgorithm())
                 .type(new JOSEObjectType("openid4vci-proof+jwt"))
                 .jwk(jwk.toPublicJWK())
@@ -45,11 +45,10 @@ public class JwtGeneratorUtil {
         return signedJWT.serialize();
     }
 
-    private static JWTClaimsSet createClaims(String clientId, String audience, String accessToken) throws java.text.ParseException {
+    private static JWTClaimsSet createClaims(String clientId, String audience, String cNonce) throws java.text.ParseException {
         long nowSeconds = System.currentTimeMillis() / 1000;
         Date issuedAt = new Date(nowSeconds * 1000);
         Date expiresAt = new Date((nowSeconds + 18000) * 1000);
-        String nonce = SignedJWT.parse(accessToken).getJWTClaimsSet().getStringClaim("c_nonce");
 
         return new JWTClaimsSet.Builder()
                 .subject(clientId)
@@ -57,7 +56,7 @@ public class JwtGeneratorUtil {
                 .issuer(clientId)
                 .issueTime(issuedAt)
                 .expirationTime(expiresAt)
-                .claim("nonce", nonce)
+                .claim("nonce", cNonce)
                 .build();
     }
 

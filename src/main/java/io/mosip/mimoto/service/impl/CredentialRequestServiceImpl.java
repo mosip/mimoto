@@ -79,7 +79,7 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
                                      SigningAlgorithm algorithm,
                                      CredentialIssuerWellKnownResponse wellKnownResponse,
                                      IssuerDTO issuerDTO,
-                                     String accessToken) throws Exception {
+                                     String cNonce) throws Exception {
 
         Optional<ProofSigningKey> proofSigningKey = proofSigningKeyRepository.findByWalletIdAndAlgorithm(walletId, algorithm.name());
         byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
@@ -90,7 +90,7 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
         return JwtGeneratorUtil.generateJwtUsingDBKeys(algorithm,
                 wellKnownResponse.getCredentialIssuer(),
                 issuerDTO.getClient_id(),
-                accessToken,
+                cNonce,
                 publicKeyBytes,
                 privateKeyInBytes);
     }
