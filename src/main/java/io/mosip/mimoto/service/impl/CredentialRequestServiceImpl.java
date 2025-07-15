@@ -34,7 +34,7 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
     public VCCredentialRequest buildRequest(IssuerDTO issuerDTO,
                                             CredentialIssuerWellKnownResponse wellKnownResponse,
                                             CredentialsSupportedResponse credentialsSupportedResponse,
-                                            String accessToken,
+                                            String cNonce,
                                             String walletId,
                                             String base64EncodedWalletKey,
                                             Boolean isLoginFlow) throws Exception {
@@ -43,9 +43,9 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
 
         String jwt;
         if (isLoginFlow) {
-            jwt = generateJwtFromDB(walletId, base64EncodedWalletKey, algorithm, wellKnownResponse, issuerDTO, accessToken);
+            jwt = generateJwtFromDB(walletId, base64EncodedWalletKey, algorithm, wellKnownResponse, issuerDTO, cNonce);
         } else {
-            jwt = joseUtil.generateJwt(wellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), accessToken);
+            jwt = joseUtil.generateJwt(wellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), cNonce);
         }
 
         List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
@@ -79,7 +79,7 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
                                      SigningAlgorithm algorithm,
                                      CredentialIssuerWellKnownResponse wellKnownResponse,
                                      IssuerDTO issuerDTO,
-                                     String accessToken) throws Exception {
+                                     String cNonce) throws Exception {
 
         Optional<ProofSigningKey> proofSigningKey = proofSigningKeyRepository.findByWalletIdAndAlgorithm(walletId, algorithm.name());
         byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
@@ -90,7 +90,7 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
         return JwtGeneratorUtil.generateJwtUsingDBKeys(algorithm,
                 wellKnownResponse.getCredentialIssuer(),
                 issuerDTO.getClient_id(),
-                accessToken,
+                cNonce,
                 publicKeyBytes,
                 privateKeyInBytes);
     }

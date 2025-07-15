@@ -359,6 +359,7 @@ public class TestUtilities {
                 .expires_in(12345)
                 .scope("test-scope")
                 .token_type("test-token-type")
+                .c_nonce("test-cnonce")
                 .build();
     }
 
