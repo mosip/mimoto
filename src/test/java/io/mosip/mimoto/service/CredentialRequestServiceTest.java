@@ -48,7 +48,7 @@ public class CredentialRequestServiceTest {
                 issuerDTO,
                 issuerWellKnownResponse,
                 credentialsSupportedResponse,
-                "test-access-token",
+                "test-cnonce",
                 "walletId",
                 "walletKey",
                 false
@@ -74,7 +74,7 @@ public class CredentialRequestServiceTest {
                 issuerDTO,
                 issuerWellKnownResponse,
                 credentialsSupportedResponse,
-                "test-access-token",
+                "test-cnonce",
                 "walletId",
                 "walletKey",
                 false
@@ -101,7 +101,7 @@ public class CredentialRequestServiceTest {
                 issuerDTO,
                 issuerWellKnownResponse,
                 credentialsSupportedResponse,
-                "test-access-token",
+                "test-cnonce",
                 "walletId",
                 "walletKey",
                 false
