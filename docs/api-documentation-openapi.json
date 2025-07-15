@@ -3612,7 +3612,7 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/components/schemas/WalletResponseDto"
+                                        "$ref": "#/components/schemas/WalletDetailsResponseDto"
                                     }
                                 },
                                 "examples": {
@@ -3620,11 +3620,13 @@
                                         "value": [
                                             {
                                                 "walletId": "123e4567-e89b-12d3-a456-426614174000",
-                                                "walletName": "My Personal Wallet"
+                                                "walletName": "My Personal Wallet",
+                                                "walletStatus": null
                                             },
                                             {
                                                 "walletId": "223e4567-e89b-12d3-a456-426614174001",
-                                                "walletName": "Wallet Main"
+                                                "walletName": "Wallet Main",
+                                                "walletStatus": "temporarily_locked"
                                             }
                                         ]
                                     }
@@ -3902,6 +3904,12 @@
                                             "errorCode": "invalid_pin",
                                             "errorMessage": "Invalid PIN or wallet key provided"
                                         }
+                                    },
+                                    "Only one attempt left to unlock Wallet before Permanent Lockout": {
+                                        "value": {
+                                            "errorCode": "last_attempt_before_lockout",
+                                            "errorMessage": "Incorrect passcode. Last attempt remaining before your Wallet is permanently locked"
+                                        }
                                     }
                                 }
                             }
@@ -3919,6 +3927,30 @@
                                         "value": {
                                             "errorCode": "unauthorized",
                                             "errorMessage": "User ID not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "423": {
+                        "description": "Wallet is locked temporarily or permanently",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Wallet is locked Temporarily": {
+                                        "value": {
+                                            "errorCode": "temporarily_locked",
+                                            "errorMessage": "You’ve reached the maximum number of attempts. Your wallet is now temporarily locked"
+                                        }
+                                    },
+                                    "Wallet is locked Permanently": {
+                                        "value": {
+                                            "errorCode": "permanently_locked",
+                                            "errorMessage": "Your wallet has been permanently locked due to multiple failed attempts. Please click on forgot password to reset your wallet to continue"
                                         }
                                     }
                                 }
@@ -4216,6 +4248,25 @@
                     "walletName" : {
                         "type": "string",
                         "description": "Name of the Wallet"
+                    }
+                }
+            },
+            "WalletDetailsResponseDto": {
+                "type": "object",
+                "properties": {
+                    "walletId": {
+                        "type": "string",
+                        "description": "Unique identifier of the Wallet"
+                    },
+                    "walletName" : {
+                        "type": "string",
+                        "description": "Name of the Wallet"
+                    },
+                    "walletStatus": {
+                        "type": "string",
+                        "description": "Wallet status indicating if it is locked or unlocked",
+                        "enum": ["active", "temporarily_locked", "permanently_locked", "ready_for_unlock"],
+                        "nullable": true
                     }
                 }
             },

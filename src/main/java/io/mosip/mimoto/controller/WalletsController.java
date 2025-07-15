@@ -2,10 +2,7 @@ package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
-import io.mosip.mimoto.dto.CreateWalletRequestDto;
-import io.mosip.mimoto.dto.ErrorDTO;
-import io.mosip.mimoto.dto.UnlockWalletRequestDto;
-import io.mosip.mimoto.dto.WalletResponseDto;
+import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.UnauthorizedAccessException;
 import io.mosip.mimoto.service.WalletService;
@@ -106,16 +103,16 @@ public class WalletsController {
             operationId = "getWallets",
             security = @SecurityRequirement(name = "SessionAuth")
     )
-    @ApiResponse(responseCode = "200", description = "List of wallets retrieved successfully", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = WalletResponseDto.class)), examples = @ExampleObject(name = "Success response", value = "[{\"walletId\": \"123e4567-e89b-12d3-a456-426614174000\"}, {\"walletId\": \"223e4567-e89b-12d3-a456-426614174001\"}]")))
+    @ApiResponse(responseCode = "200", description = "List of wallets retrieved successfully", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = WalletDetailsResponseDto.class)), examples = @ExampleObject(name = "Success response", value = "[{\"walletName\": \"My Personal Wallet1\",\"walletId\": \"123e4567-e89b-12d3-a456-426614174000\", \"walletStatus\": null}, {\"walletName\": \"My Personal Wallet2\",\"walletId\": \"223e4567-e89b-12d3-a456-426614174001\", \"walletStatus\": \"temporarily_locked\"}]")))
     @ApiResponse(responseCode = "400", description = "Invalid Wallets fetching request", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Invalid User ID", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"User ID cannot be null or empty\"}")))
     @ApiResponse(responseCode = "401", description = "Unauthorized access", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User ID not found in session", value = "{\"errorCode\": \"unauthorized\", \"errorMessage\": \"User ID not found in session\"}")))
     @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
     @ApiResponse(responseCode = "503", description = "Service unavailable", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Database connection failure", value = "{\"errorCode\": \"database_unavailable\", \"errorMessage\": \"Failed to connect to the database\"}")))
     @GetMapping
-    public ResponseEntity<List<WalletResponseDto>> getWallets(HttpSession httpSession) throws InvalidRequestException {
+    public ResponseEntity<List<WalletDetailsResponseDto>> getWallets(HttpSession httpSession) throws InvalidRequestException {
         String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
         log.info("Retrieving wallets for user: {}", userId);
-        List<WalletResponseDto> response = walletService.getWallets(userId);
+        List<WalletDetailsResponseDto> response = walletService.getWallets(userId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -141,9 +138,14 @@ public class WalletsController {
             @ExampleObject(name = "Wallet not found", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet not found\"}"),
             @ExampleObject(name = "Invalid User ID", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"User ID cannot be null or empty\"}"),
             @ExampleObject(name = "Invalid Wallet Pin", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"PIN must be numeric with 6 digits\"}"),
-            @ExampleObject(name = "Incorrect Wallet PIN", value = "{\"errorCode\": \"invalid_pin\", \"errorMessage\": \"Invalid PIN or wallet key provided\"}")
+            @ExampleObject(name = "Incorrect Wallet PIN", value = "{\"errorCode\": \"invalid_pin\", \"errorMessage\": \"Invalid PIN or wallet key provided\"}"),
+            @ExampleObject(name = "Only one attempt left to unlock Wallet before Permanent Lockout", value = "{\"errorCode\": \"last_attempt_before_lockout\", \"errorMessage\": \"Incorrect passcode. Last attempt remaining before your Wallet is permanently locked\"}")
     }))
     @ApiResponse(responseCode = "401", description = "Unauthorized access", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User ID not found in session", value = "{\"errorCode\": \"unauthorized\", \"errorMessage\": \"User ID not found in session\"}")))
+    @ApiResponse(responseCode = "423", description = "Wallet locked Temporarily or Permanently", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {
+            @ExampleObject(name = "Wallet is locked Temporarily", value = "{\"errorCode\": \"temporarily_locked\", \"errorMessage\": \"You’ve reached the maximum number of attempts. Your wallet is now temporarily locked\"}"),
+            @ExampleObject(name = "Wallet is locked Permanently", value = "{\"errorCode\": \"permanently_locked\", \"errorMessage\": \"Your wallet has been permanently locked due to multiple failed attempts. Please click on forgot password to reset your wallet to continue\"}")
+    }))
     @ApiResponse(responseCode = "500", description = "Internal server error - any error occurred while decrypting the Wallet key with Wallet PIN or when fetching Wallet details from the database", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
     @ApiResponse(responseCode = "503", description = "Service unavailable", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Database connection failure", value = "{\"errorCode\": \"database_unavailable\", \"errorMessage\": \"Failed to connect to the database\"}")))
     @PostMapping("/{walletId}/unlock")
@@ -153,8 +155,11 @@ public class WalletsController {
             HttpSession httpSession) throws InvalidRequestException {
         String userId = (String) httpSession.getAttribute(SessionKeys.USER_ID);
         log.info("Unlocking wallet: {} for user: {}", walletId, userId);
-        WalletResponseDto response = walletService.unlockWallet(walletId, wallet.getWalletPin(), httpSession);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        WalletResponseDto responseDto = walletService.unlockWallet(walletId, wallet.getWalletPin(), userId);
+
+        httpSession.setAttribute(SessionKeys.WALLET_KEY, responseDto.getDecryptedWalletKey());
+        httpSession.setAttribute(SessionKeys.WALLET_ID, walletId);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
     /**
