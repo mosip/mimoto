@@ -349,6 +349,7 @@ public class MimotoUtil extends AdminTestUtil {
 		}
 
 	}
+
 	private static String getGoogleIdToken() {
 		String idToken = null;
 
@@ -381,4 +382,5 @@ public class MimotoUtil extends AdminTestUtil {
 		return idToken;
 
 	}
+
 }

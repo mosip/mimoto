@@ -1,18 +1,2 @@
 ##### JIRA number;testcase 
-#MOSIP-12456------Test_Case_Name
-INJIWEB-1629------Mimoto_CreateWallet_SpaceInWalletName_Neg
-INJIWEB-1629------Mimoto_DownloadIssuerCredentialWithGoogleLogin_IssuerMosip_InvalidCodeVerifier_Neg
-INJIWEB-1629------Mimoto_DownloadIssuerCredentialWithGoogleLogin_IssuerMosip_InvalidCode_Neg
-INJIWEB-1629------Mimoto_DownloadIssuerCredentialWithGoogleLogin_IssuerMosip_InvalidCredential_Neg
-INJIWEB-1629------Mimoto_DownloadIssuerCredentialWithGoogleLogin_IssuerMosip_InvalidGrantType_Neg
-INJIWEB-1629------Mimoto_DownloadIssuerCredentialWithGoogleLogin_IssuerMosip_InvalidIssuer_Neg
-INJIWEB-1629------Mimoto_DownloadIssuerCredentialWithGoogleLogin_IssuerMosip_InvalidRedirectUri_Neg
-INJIWEB-1629------Mimoto_DownloadIssuerCredentialWithGoogleLogin_IssuerMosip_NumericGrantType_Neg
-INJIWEB-1629------Mimoto_DownloadIssuerCredentialWithGoogleLogin_IssuerMosip_NumericInCodeVerifier_Neg
-INJIWEB-1629------Mimoto_DownloadIssuerCredentialWithGoogleLogin_IssuerMosip_NumericInCode_Neg
-INJIWEB-1629------Mimoto_DownloadIssuerCredentialWithGoogleLogin_IssuerMosip_NumericInCredential_Neg
-INJIWEB-1629------Mimoto_DownloadIssuerCredentialWithGoogleLogin_IssuerMosip_NumericInIssuer_Neg
-INJIWEB-1629------Mimoto_DownloadIssuerCredentialWithGoogleLogin_IssuerMosip_NumericInRedirectUri_Neg
-INJIWEB-1629------Mimoto_DownloadStayProtectedIssuerCredentialWithGoogleLogin_SunBirdC_InvalidLocale_Neg
-INJIWEB-1629------Mimoto_DownloadStayProtectedIssuerCredentialWithGoogleLogin_SunBirdC_SpaceInLocale_Neg
-INJIWEB-1629------Mimoto_FetchAllCredentials_Empty_WalletId_And_Empty_Accepted_claims_Neg
+#MOSIP-12456------Mimoto_AddIdentity_Binding_smoke_Pos
