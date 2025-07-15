@@ -98,7 +98,7 @@ fileignoreconfig:
 - filename: src/test/java/io/mosip/mimoto/controller/WalletsControllerTest.java
   checksum: c0227f0642513e7b642c7e27a4732e005e3064bf9cc5f9c31f07800f23a4d03d
 - filename: src/main/java/io/mosip/mimoto/service/WalletLockManager.java
-  checksum: 0b7332fb14d20c455e338830283725dbf59f4caa8e7b39b38322ab0977a213d4
+  checksum: c03b3ce388f26e45daaa08f65d589783840b1d143e8a2a89affe7481b27fa430
 - filename: src/test/java/io/mosip/mimoto/service/WalletLockManagerTest.java
   checksum: faa7a26762a6e296db2a2e494ec9e7c8a46427ebc2975677b77bb137e2319356
 - filename: src/test/java/io/mosip/mimoto/service/WalletLockStatusServiceTest.java
