@@ -256,7 +256,7 @@ public class WalletCredentialServiceTest {
                 eq(issuerDTO),
                 eq(supportedResponse),
                 eq(""),
-                eq("-1"),
+                eq(null),
                 eq(locale)
         )).thenReturn(pdfContent);
 
@@ -278,7 +278,7 @@ public class WalletCredentialServiceTest {
                 eq(issuerDTO),
                 eq(supportedResponse),
                 eq(""),
-                eq("-1"),
+                eq(null),
                 eq(locale)
         );
     }
