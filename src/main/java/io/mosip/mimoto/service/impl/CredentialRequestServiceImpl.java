@@ -5,6 +5,8 @@ import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.constant.SigningAlgorithm;
 import io.mosip.mimoto.repository.ProofSigningKeyRepository;
+import io.mosip.mimoto.service.CredentialFormatHandler;
+import io.mosip.mimoto.service.CredentialFormatHandlerFactory;
 import io.mosip.mimoto.service.CredentialRequestService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.JwtGeneratorUtil;
@@ -39,6 +41,9 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
                 .map(String::trim).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
+
+    @Autowired
+    private CredentialFormatHandlerFactory credentialFormatHandlerFactory;
 
     @Override
     public VCCredentialRequest buildRequest(IssuerDTO issuerDTO,
@@ -75,25 +80,12 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
                         .jwt(jwt)
                         .build());
 
-        if ("ldp_vc".equalsIgnoreCase(format)) {
-            List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
-            if (credentialContext == null || credentialContext.isEmpty()) {
-                credentialContext = List.of("https://www.w3.org/2018/credentials/v1");
-            }
+        // Use registry to get appropriate handler and configure format-specific fields
+        CredentialFormatHandler handler = credentialFormatHandlerFactory.getHandler(format);
+        handler.configureCredentialRequest(builder, credentialsSupportedResponse, credentialType);
 
-            builder.credentialDefinition(
-                    VCCredentialDefinition.builder()
-                            .type(credentialsSupportedResponse.getCredentialDefinition().getType())
-                            .context(credentialContext)
-                            .build()
-            );
-        } else if ("vc+sd-jwt".equalsIgnoreCase(format)) {
-            builder.vct(credentialType);
-        }
 
-        VCCredentialRequest request = builder.build();
-
-        return request;
+        return builder.build();
     }
 
     private SigningAlgorithm resolveAlgorithm(CredentialsSupportedResponse credentialsSupportedResponse) {

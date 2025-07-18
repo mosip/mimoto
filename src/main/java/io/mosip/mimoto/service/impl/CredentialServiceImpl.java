@@ -79,25 +79,28 @@ public class CredentialServiceImpl implements CredentialService {
         VCCredentialRequest vcCredentialRequest = credentialRequestService.buildRequest(issuerDTO, credentialType, credentialIssuerWellKnownResponse, response.getC_nonce(), null, null, false);
 
         VCCredentialResponse vcCredentialResponse = downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
-        if (null == vcCredentialResponse.getFormat()) {
+        if(null == vcCredentialResponse.getFormat()) {
             vcCredentialResponse.setFormat(vcCredentialRequest.getFormat());
         }
-        boolean verificationStatus = issuerId.toLowerCase().contains("mock") || credentialVerifierService.verify(vcCredentialResponse);
+        boolean verificationStatus = verifyCredential(vcCredentialResponse, issuerId, credentialType);
         if (verificationStatus) {
             String dataShareUrl = QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type()) ? dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse), credentialValidity) : "";
             return credentialPDFGeneratorService.generatePdfForVerifiableCredentials(credentialType, vcCredentialResponse, issuerDTO, credentialsSupportedResponse, dataShareUrl, credentialValidity, locale);
         }
-        throw new VCVerificationException(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(),
-                SIGNATURE_VERIFICATION_EXCEPTION.getErrorMessage());
-    }
+            throw new VCVerificationException(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(),
+                    SIGNATURE_VERIFICATION_EXCEPTION.getErrorMessage());
+        }
 
     @Override
     public VCCredentialResponse downloadCredential(String credentialEndpoint, VCCredentialRequest vcCredentialRequest, String accessToken) throws InvalidCredentialResourceException {
         VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialEndpoint, MediaType.APPLICATION_JSON,
                 vcCredentialRequest, VCCredentialResponse.class, accessToken);
-        log.debug("VC Credential Response is {} ", vcCredentialResponse);
+        log.debug("VC Credential Response is {} " , vcCredentialResponse);
         if (vcCredentialResponse == null)
             throw new InvalidCredentialResourceException("VC Credential Issue API not accessible");
+        if(null == vcCredentialResponse.getFormat()) {
+            vcCredentialResponse.setFormat(vcCredentialRequest.getFormat());
+        }
         return vcCredentialResponse;
     }
 
@@ -198,7 +201,7 @@ public class CredentialServiceImpl implements CredentialService {
         try {
             return credentialRequestService.buildRequest(
                     issuerConfig.getIssuerDTO(), credentialConfigurationId, issuerConfig.getWellKnownResponse(),
-                    tokenResponse.getAccess_token(),
+                    tokenResponse.getC_nonce(),
                     walletId, base64Key, true);
         } catch (Exception e) {
             log.error("Failed to generate VC credential request for issuerId: {}", issuerConfig.getIssuerDTO().getIssuer_id(), e);

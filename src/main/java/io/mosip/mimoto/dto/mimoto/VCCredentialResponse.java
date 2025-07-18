@@ -20,5 +20,5 @@ public class VCCredentialResponse {
 
     @Valid
     @NotNull
-    private VCCredentialProperties credential;
+    private Object credential;
 }

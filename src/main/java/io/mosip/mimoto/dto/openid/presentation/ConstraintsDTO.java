@@ -11,4 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ConstraintsDTO {
     FieldDTO[] fields;
+    private String limitDisclosure;
 }

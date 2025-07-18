@@ -84,8 +84,8 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
 
         VerifiableCredentialResponseDTO credential;
 
-            credential = credentialService.downloadCredentialAndStoreInDB(
-                    tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale);
+        credential = credentialService.downloadCredentialAndStoreInDB(
+                tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale);
 
         log.debug("Credential stored successfully: {}", credential.getCredentialId());
         return credential;
@@ -103,7 +103,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
             IssuerConfig issuerConfig = null;
             try {
                 issuerConfig = issuersService.getIssuerConfig(issuerId, credential.getCredentialMetadata().getCredentialType());
-            } catch (ApiNotAccessibleException  e) {
+            } catch (InvalidIssuerIdException | ApiNotAccessibleException  e) {
                 log.error("Failed to fetch issuer details for issuerId: {}", issuerId, e);
             }
             return VerifiableCredentialResponseDTO.fromIssuerConfig(issuerConfig, locale, credential.getId());
@@ -169,7 +169,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
 
             // Find credentials supported response for the credential type
             CredentialsSupportedResponse credentialsSupportedResponse = issuerConfig.getCredentialsSupportedResponse();
-            if (credentialsSupportedResponse == null || !credentialsSupportedResponse.getCredentialDefinition().getType().containsAll(vcCredentialResponse.getCredential().getType())) {
+            if (credentialsSupportedResponse == null /*|| !credentialsSupportedResponse.getCredentialDefinition().getType().containsAll(vcCredentialResponse.getCredential().getType())*/) {
                 log.error("Credentials supported response not found for credentialType: {}", credentialMetadata.getCredentialType());
                 throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Invalid credential type configuration");
             }
