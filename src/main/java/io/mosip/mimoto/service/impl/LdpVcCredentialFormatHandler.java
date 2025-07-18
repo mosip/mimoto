@@ -92,7 +92,7 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
     }
 
     @Override
-    public String getSupportedFormat() {
-        return "ldp_vc";
+    public List<String> getSupportedFormats() {
+        return List.of("ldp_vc");
     }
 }

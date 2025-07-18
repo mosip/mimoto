@@ -5,6 +5,7 @@ import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.repository.ProofSigningKeyRepository;
 import io.mosip.mimoto.service.impl.CredentialRequestServiceImpl;
+import io.mosip.mimoto.service.impl.LdpVcCredentialFormatHandler;
 import io.mosip.mimoto.util.*;
 import org.junit.After;
 import org.junit.Before;
@@ -23,6 +24,9 @@ import java.util.Map;
 
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.*;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {CredentialRequestServiceImpl.class})
@@ -43,6 +47,9 @@ public class CredentialRequestServiceTest {
     CredentialRequestServiceImpl credentialRequestBuilder;
 
     @Mock
+    private CredentialFormatHandlerFactory credentialFormatHandlerFactory;
+
+    @Mock
     JoseUtil joseUtil;
 
     IssuerDTO issuerDTO;
@@ -52,6 +59,7 @@ public class CredentialRequestServiceTest {
     public void setUp() {
         issuerId = "issuer1";
         issuerDTO = getIssuerConfigDTO(issuerId);
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(new LdpVcCredentialFormatHandler());
     }
 
     @After

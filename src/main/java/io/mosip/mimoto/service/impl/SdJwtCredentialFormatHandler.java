@@ -108,7 +108,7 @@ public class SdJwtCredentialFormatHandler implements CredentialFormatHandler {
     }
 
     @Override
-    public String getSupportedFormat() {
-        return "vc+sd-jwt";
+    public List<String> getSupportedFormats() {
+        return List.of("vc+sd-jwt", "dc+sd-jwt");
     }
 }
