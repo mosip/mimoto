@@ -9,16 +9,17 @@ import io.mosip.mimoto.service.CredentialRequestService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.JoseUtil;
 import io.mosip.mimoto.util.JwtGeneratorUtil;
+import io.mosip.mimoto.util.KeyGenerationUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.security.KeyPair;
+import java.util.*;
 
 @Service
+@Slf4j
 public class CredentialRequestServiceImpl implements CredentialRequestService {
 
     @Autowired
@@ -45,7 +46,8 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
         if (isLoginFlow) {
             jwt = generateJwtFromDB(walletId, base64EncodedWalletKey, algorithm, wellKnownResponse, issuerDTO, cNonce);
         } else {
-            jwt = joseUtil.generateJwt(wellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), cNonce);
+            KeyPair keyPair = KeyGenerationUtil.generateKeyPair(algorithm);
+            jwt = JwtGeneratorUtil.generateJwt(algorithm, wellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), cNonce, keyPair);
         }
 
         List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
@@ -67,11 +69,25 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
     }
 
     private SigningAlgorithm resolveAlgorithm(CredentialsSupportedResponse credentialsSupportedResponse) {
-        Map<String, ProofTypesSupported> proofTypesSupported = credentialsSupportedResponse.getProofTypesSupported();
-        if (proofTypesSupported.containsKey("jwt")) {
-            return SigningAlgorithm.fromString(proofTypesSupported.get("jwt").getProofSigningAlgValuesSupported().getFirst());
-        }
-        return SigningAlgorithm.RS256;
+        List<String> preferredAlgorithmsOrder = List.of(
+                SigningAlgorithm.ED25519.name(),
+                SigningAlgorithm.ES256K.name(),
+                SigningAlgorithm.ES256.name(), SigningAlgorithm.RS256.name()
+        );
+
+        return Optional
+                .ofNullable(credentialsSupportedResponse.getProofTypesSupported())
+                .map(proofTypesSupported -> proofTypesSupported.get("jwt"))
+                .map(ProofTypesSupported::getProofSigningAlgValuesSupported)
+                .flatMap(issuerSupportedAlgorithms -> preferredAlgorithmsOrder.stream()
+                        .filter(preferredAlgorithm -> issuerSupportedAlgorithms.stream().
+                                anyMatch(issuerSupportedAlgorithm -> issuerSupportedAlgorithm.equalsIgnoreCase(preferredAlgorithm)))
+                        .findFirst())
+                .map(SigningAlgorithm::fromString)
+                .orElseGet(() -> {
+                    log.warn("No matching algorithm found in priority order. Falling back to ED25519");
+                    return SigningAlgorithm.ED25519;
+                });
     }
 
     private String generateJwtFromDB(String walletId,
@@ -86,13 +102,13 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
         SecretKey walletKey = EncryptionDecryptionUtil.bytesToSecretKey(decodedWalletKey);
         byte[] publicKeyBytes = Base64.getDecoder().decode(proofSigningKey.get().getPublicKey());
         byte[] privateKeyInBytes = encryptionDecryptionUtil.decryptWithAES(walletKey, proofSigningKey.get().getEncryptedSecretKey());
+        KeyPair keyPair = JwtGeneratorUtil.getKeyPairFromDBBasedOnAlgorithm(algorithm, publicKeyBytes, privateKeyInBytes);
 
-        return JwtGeneratorUtil.generateJwtUsingDBKeys(algorithm,
+        return JwtGeneratorUtil.generateJwt(algorithm,
                 wellKnownResponse.getCredentialIssuer(),
                 issuerDTO.getClient_id(),
                 cNonce,
-                publicKeyBytes,
-                privateKeyInBytes);
+                keyPair);
     }
 
 
