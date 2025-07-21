@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service.impl;
 
+import io.mosip.mimoto.config.SigningAlgorithmConfig;
 import io.mosip.mimoto.model.ProofSigningKey;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.*;
@@ -30,6 +31,9 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
 
     @Autowired
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
+
+    @Autowired
+    private SigningAlgorithmConfig signingAlgorithmConfig;
 
     @Override
     public VCCredentialRequest buildRequest(IssuerDTO issuerDTO,
@@ -69,17 +73,11 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
     }
 
     private SigningAlgorithm resolveAlgorithm(CredentialsSupportedResponse credentialsSupportedResponse) {
-        List<String> preferredAlgorithmsOrder = List.of(
-                SigningAlgorithm.ED25519.name(),
-                SigningAlgorithm.ES256K.name(),
-                SigningAlgorithm.ES256.name(), SigningAlgorithm.RS256.name()
-        );
-
         return Optional
                 .ofNullable(credentialsSupportedResponse.getProofTypesSupported())
                 .map(proofTypesSupported -> proofTypesSupported.get("jwt"))
                 .map(ProofTypesSupported::getProofSigningAlgValuesSupported)
-                .flatMap(issuerSupportedAlgorithms -> preferredAlgorithmsOrder.stream()
+                .flatMap(issuerSupportedAlgorithms -> signingAlgorithmConfig.getSigningAlgorithmsPriorityOrder().stream()
                         .filter(preferredAlgorithm -> issuerSupportedAlgorithms.stream().
                                 anyMatch(issuerSupportedAlgorithm -> issuerSupportedAlgorithm.equalsIgnoreCase(preferredAlgorithm)))
                         .findFirst())

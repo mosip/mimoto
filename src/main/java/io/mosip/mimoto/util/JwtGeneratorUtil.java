@@ -138,7 +138,7 @@ public class JwtGeneratorUtil {
 
             @Override
             public Set<JWSAlgorithm> supportedJWSAlgorithms() {
-                return Collections.singleton(JWSAlgorithm.EdDSA);
+                return Collections.singleton(JWSAlgorithm.Ed25519);
             }
 
             @Override
