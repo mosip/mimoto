@@ -30,7 +30,7 @@ This document describes the encryption mechanisms implemented in the Mimoto data
 ### Two-Tier Encryption Model
 
 1. **User PII Encryption**: Uses application-managed keys from KeyStore
-2. **Wallet Data Encryption**: Uses PIN-derived keys, with the same key used for both wallet metadata and credentials (stored in session during active use)
+2. **Wallet Data Encryption**: The same PIN-derived AES key is used to encrypt and decrypt both wallet metadata and credentials.
 
 ```
 ┌─────────────────┐    ┌─────────────────┐
