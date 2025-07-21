@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service;
 
+import io.mosip.mimoto.config.SigningAlgorithmConfig;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.service.impl.CredentialRequestServiceImpl;
@@ -9,16 +10,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CredentialRequestServiceTest {
+    @Mock
+    private SigningAlgorithmConfig signingAlgorithmConfig;
     @InjectMocks
     CredentialRequestServiceImpl credentialRequestBuilder;
     
@@ -41,8 +42,6 @@ public class CredentialRequestServiceTest {
 
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         issuerWellKnownResponse.setCredentialIssuer("https://example-issuer.com");
-
-        Mockito.when(joseUtil.generateJwt(any(), any(), any())).thenReturn("jwt");
 
         VCCredentialRequest result = credentialRequestBuilder.buildRequest(
                 issuerDTO,
@@ -67,9 +66,6 @@ public class CredentialRequestServiceTest {
 
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         issuerWellKnownResponse.setCredentialIssuer("https://example-issuer.com");
-
-        Mockito.when(joseUtil.generateJwt(any(), any(), any())).thenReturn("jwt");
-
         VCCredentialRequest result = credentialRequestBuilder.buildRequest(
                 issuerDTO,
                 issuerWellKnownResponse,
@@ -94,8 +90,6 @@ public class CredentialRequestServiceTest {
 
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         issuerWellKnownResponse.setCredentialIssuer("https://example-issuer.com");
-
-        Mockito.when(joseUtil.generateJwt(any(), any(), any())).thenReturn("jwt");
 
         VCCredentialRequest result = credentialRequestBuilder.buildRequest(
                 issuerDTO,
