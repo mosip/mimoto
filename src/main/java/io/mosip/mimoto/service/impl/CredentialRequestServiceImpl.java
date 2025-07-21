@@ -78,8 +78,8 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
                 .map(proofTypesSupported -> proofTypesSupported.get("jwt"))
                 .map(ProofTypesSupported::getProofSigningAlgValuesSupported)
                 .flatMap(issuerSupportedAlgorithms -> signingAlgorithmConfig.getSigningAlgorithmsPriorityOrder().stream()
-                        .filter(preferredAlgorithm -> issuerSupportedAlgorithms.stream().
-                                anyMatch(issuerSupportedAlgorithm -> issuerSupportedAlgorithm.equalsIgnoreCase(preferredAlgorithm)))
+                        .filter(priorityAlgorithm -> issuerSupportedAlgorithms.stream().
+                                anyMatch(issuerSupportedAlgorithm -> issuerSupportedAlgorithm.equalsIgnoreCase(priorityAlgorithm)))
                         .findFirst())
                 .map(SigningAlgorithm::fromString)
                 .orElseGet(() -> {
