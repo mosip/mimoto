@@ -1,5 +1,6 @@
 package io.mosip.mimoto.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -13,6 +14,7 @@ import java.time.Instant;
 @Table(name = "user_metadata")
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UserMetadata {
 
     @Id

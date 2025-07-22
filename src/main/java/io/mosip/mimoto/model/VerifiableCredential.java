@@ -1,5 +1,6 @@
 package io.mosip.mimoto.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +12,7 @@ import java.time.Instant;
 @Table(name = "verifiable_credentials")
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class VerifiableCredential {
 
     @Id
