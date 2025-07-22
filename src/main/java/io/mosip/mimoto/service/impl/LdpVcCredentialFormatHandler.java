@@ -16,7 +16,7 @@ import java.util.Map;
 public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
 
     @Override
-    public Map<String, Object> extractCredentialSubjectProperties(VCCredentialResponse vcCredentialResponse) {
+    public Map<String, Object> extractCredentialClaims(VCCredentialResponse vcCredentialResponse) {
         Map<String, Object> credentialMap = (Map<String, Object>) vcCredentialResponse.getCredential();
         return (Map<String, Object>) credentialMap.get("credentialSubject");
     }
@@ -74,7 +74,7 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
     }
 
     @Override
-    public void configureCredentialRequest(VCCredentialRequest.VCCredentialRequestBuilder builder,
+    public VCCredentialRequest configureCredentialRequest(VCCredentialRequest.VCCredentialRequestBuilder builder,
                                            CredentialsSupportedResponse credentialsSupportedResponse,
                                            String credentialType) {
         // LDP VC specific configuration
@@ -89,10 +89,11 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
                         .context(credentialContext)
                         .build()
         );
+        return builder.build();
     }
 
     @Override
-    public List<String> getSupportedFormats() {
-        return List.of("ldp_vc");
+    public String getSupportedFormat() {
+        return "ldp_vc";
     }
 }

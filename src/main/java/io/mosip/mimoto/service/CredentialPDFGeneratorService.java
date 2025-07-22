@@ -2,23 +2,22 @@ package io.mosip.mimoto.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.WriterException;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
 import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import io.mosip.mimoto.dto.IssuerDTO;
-import io.mosip.mimoto.dto.mimoto.*;
+import io.mosip.mimoto.dto.mimoto.CredentialIssuerDisplayResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialSupportedDisplayResponse;
+import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
+import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.service.impl.PresentationServiceImpl;
 import io.mosip.mimoto.util.LocaleUtils;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
+import io.mosip.pixelpass.types.ECC;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -26,8 +25,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -63,13 +64,15 @@ public class CredentialPDFGeneratorService {
     @Value("${mosip.inji.qr.data.size.limit:4296}")
     private Integer allowedQRDataSizeLimit;
 
+    private static final ECC DEFAULT_ECC_LEVEL = ECC.L;
+
     public ByteArrayInputStream generatePdfForVerifiableCredentials(String credentialType, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
 
         // Get the appropriate processor based on format
         CredentialFormatHandler processor = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
 
         // Extract credential properties using the specific processor
-        Map<String, Object> credentialProperties = processor.extractCredentialSubjectProperties(vcCredentialResponse);
+        Map<String, Object> credentialProperties = processor.extractCredentialClaims(vcCredentialResponse);
 
         // Load display properties using the specific processor
         LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties =
@@ -87,15 +90,22 @@ public class CredentialPDFGeneratorService {
             VCCredentialResponse vcCredentialResponse,
             IssuerDTO issuerDTO,
             String dataShareUrl,
-            String credentialValidity) throws IOException, WriterException {
+            String credentialValidity) throws IOException {
 
         Map<String, Object> data = new HashMap<>();
         LinkedHashMap<String, Object> rowProperties = new LinkedHashMap<>();
 
-        String backgroundColor = credentialsSupportedResponse.getDisplay().getFirst().getBackgroundColor();
-        String backgroundImage = credentialsSupportedResponse.getDisplay().getFirst().getBackgroundImage().getUri();
-        String textColor = credentialsSupportedResponse.getDisplay().getFirst().getTextColor();
-        String credentialSupportedType = credentialsSupportedResponse.getDisplay().getFirst().getName();
+        CredentialSupportedDisplayResponse firstDisplay = Optional.ofNullable(credentialsSupportedResponse.getDisplay())
+                .filter(list -> !list.isEmpty())
+                .map(list -> list.get(0))
+                .orElse(null);
+
+        String backgroundColor = firstDisplay != null ? firstDisplay.getBackgroundColor() : null;
+        String backgroundImage = firstDisplay != null && firstDisplay.getBackgroundImage() != null
+                ? firstDisplay.getBackgroundImage().getUri()
+                : null;
+        String textColor = firstDisplay != null ? firstDisplay.getTextColor() : null;
+        String credentialSupportedType = firstDisplay != null ? firstDisplay.getName() : null;
 
         String face = extractFace(vcCredentialResponse);
 
@@ -130,7 +140,7 @@ public class CredentialPDFGeneratorService {
     private String extractFace(VCCredentialResponse vcCredentialResponse) {
         // Use the appropriate processor to extract credential properties
         CredentialFormatHandler processor = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
-        Map<String, Object> credentialSubject = processor.extractCredentialSubjectProperties(vcCredentialResponse);
+        Map<String, Object> credentialSubject = processor.extractCredentialClaims(vcCredentialResponse);
         Object face = credentialSubject.get("face");
         return face != null ? face.toString() : null;
     }
@@ -177,29 +187,16 @@ public class CredentialPDFGeneratorService {
         return new ByteArrayInputStream(outputStream.toByteArray());
     }
 
-    private String constructQRCodeWithVCData(VCCredentialResponse vcCredentialResponse) throws JsonProcessingException, WriterException {
-        String qrData = pixelPass.generateQRData(objectMapper.writeValueAsString(vcCredentialResponse.getCredential()), "");
-        if (allowedQRDataSizeLimit > qrData.length()) {
-            return constructQRCode(qrData);
-        }
-        return "";
+    private String constructQRCodeWithVCData(VCCredentialResponse vcCredentialResponse) throws JsonProcessingException {
+        return pixelPass.generateQRCode(objectMapper.writeValueAsString(vcCredentialResponse.getCredential()), DEFAULT_ECC_LEVEL, "");
     }
 
-    private String constructQRCodeWithAuthorizeRequest(VCCredentialResponse vcCredentialResponse, String dataShareUrl) throws WriterException, JsonProcessingException {
+    private String constructQRCodeWithAuthorizeRequest(VCCredentialResponse vcCredentialResponse, String dataShareUrl) throws JsonProcessingException {
         PresentationDefinitionDTO presentationDefinitionDTO = presentationService.constructPresentationDefinition(vcCredentialResponse);
         String presentationString = objectMapper.writeValueAsString(presentationDefinitionDTO);
         String qrData = String.format(ovpQRDataPattern, URLEncoder.encode(dataShareUrl, StandardCharsets.UTF_8), URLEncoder.encode(presentationString, StandardCharsets.UTF_8));
-        return constructQRCode(qrData);
+        return pixelPass.generateQRCode(qrData, DEFAULT_ECC_LEVEL, "");
     }
-
-    private String constructQRCode(String qrData) throws WriterException {
-        QRCodeWriter qrCodeWriter = new QRCodeWriter();
-        BitMatrix bitMatrix = qrCodeWriter.encode(qrData, BarcodeFormat.QR_CODE, qrCodeWidth, qrCodeHeight);
-        BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
-        return Utilities.encodeToString(qrImage, "png");
-    }
-
-
 
 }
 

@@ -1,5 +1,9 @@
 package io.mosip.mimoto.service.impl;
 
+
+import java.nio.charset.StandardCharsets;
+import com.authlete.sd.Disclosure;
+import com.authlete.sd.SDJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.service.CredentialFormatHandler;
@@ -8,18 +12,23 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Slf4j
 @Component
 public class SdJwtCredentialFormatHandler implements CredentialFormatHandler {
+
     @Autowired
     private ObjectMapper objectMapper;
 
     @Override
-    public Map<String, Object> extractCredentialSubjectProperties(VCCredentialResponse vcCredentialResponse) {
-        return extractClaimsFromSdJwt((String) vcCredentialResponse.getCredential());
+    public Map<String, Object> extractCredentialClaims(VCCredentialResponse vcCredentialResponse) {
+        Object credential = vcCredentialResponse.getCredential();
+        if (credential instanceof String) {
+            return extractClaimsFromSdJwt((String) credential);
+        }
+        log.warn("Unexpected credential format for SD-JWT VC: {}", credential);
+        return Collections.emptyMap();
     }
 
     @Override
@@ -30,9 +39,11 @@ public class SdJwtCredentialFormatHandler implements CredentialFormatHandler {
 
         LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties = new LinkedHashMap<>();
 
-        // SD-JWT format — 'claims' is Map<String, Object> and needs conversion
         Map<String, Object> rawClaims = credentialsSupportedResponse.getClaims();
-
+        if (rawClaims != null && rawClaims.size() == 1
+                && rawClaims.values().iterator().next() instanceof Map) {
+            rawClaims = (Map<String, Object>) rawClaims.values().iterator().next();
+        }
         Map<String, CredentialDisplayResponseDto> convertedClaimsMap = new HashMap<>();
         if (rawClaims != null) {
             rawClaims.forEach((key, value) -> {
@@ -50,7 +61,6 @@ public class SdJwtCredentialFormatHandler implements CredentialFormatHandler {
         }
 
         String resolvedLocale = LocaleUtils.resolveLocaleWithFallback(displayConfigMap, userLocale);
-
         LinkedHashMap<String, CredentialIssuerDisplayResponse> localizedDisplayMap = new LinkedHashMap<>();
 
         if (resolvedLocale != null) {
@@ -77,38 +87,96 @@ public class SdJwtCredentialFormatHandler implements CredentialFormatHandler {
         return displayProperties;
     }
 
-    private Map<String, Object> extractClaimsFromSdJwt(String sdJwt) {
+    private Map<String, Object> extractClaimsFromSdJwt(String sdJwtString) {
         try {
-            String[] parts = sdJwt.split("\\.");
-            if (parts.length < 2) {
-                log.error("Invalid SD-JWT format");
-                return Collections.emptyMap();
-            }
-            String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-            Map<String, Object> payload = objectMapper.readValue(payloadJson, Map.class);
+            // Parse the SD-JWT using Authlete library
+            SDJWT sdJwt = SDJWT.parse(sdJwtString);
 
-            Object credentialSubject = payload.get("credentialSubject");
+            // Get all disclosed claims by processing disclosures
+            Map<String, Object> disclosedClaims = new HashMap<>();
+
+            // Manually parse the JWT payload from the credential JWT
+            String credentialJwt = sdJwt.getCredentialJwt();
+            if (credentialJwt != null) {
+                Map<String, Object> jwtPayload = parseJwtPayload(credentialJwt);
+                if (jwtPayload != null) {
+                    disclosedClaims.putAll(jwtPayload);
+                }
+            }
+
+            // Process disclosures to get selectively disclosed claims
+            List<Disclosure> disclosures = sdJwt.getDisclosures();
+            if (disclosures != null && !disclosures.isEmpty()) {
+                for (Disclosure disclosure : disclosures) {
+                    try {
+                        // Get the claim name and value from disclosure
+                        String claimName = disclosure.getClaimName();
+                        Object claimValue = disclosure.getClaimValue();
+
+                        if (claimName != null && claimValue != null) {
+                            disclosedClaims.put(claimName, claimValue);
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to process disclosure: {}", e.getMessage());
+                    }
+                }
+            }
+
+            // Extract credentialSubject if present, otherwise return all claims
+            Object credentialSubject = disclosedClaims.get("credentialSubject");
             if (credentialSubject instanceof Map) {
                 return (Map<String, Object>) credentialSubject;
             } else {
-                return payload; // fallback if claims are flattened
+                // Remove JWT standard claims that are not part of credential data
+                Map<String, Object> credentialClaims = new HashMap<>(disclosedClaims);
+                credentialClaims.remove("iss");
+                credentialClaims.remove("sub");
+                credentialClaims.remove("aud");
+                credentialClaims.remove("exp");
+                credentialClaims.remove("nbf");
+                credentialClaims.remove("iat");
+                credentialClaims.remove("jti");
+                credentialClaims.remove("_sd");
+                credentialClaims.remove("_sd_alg");
+
+                return credentialClaims;
             }
+
+        } catch (IllegalArgumentException e) {
+            log.error("Error parsing SD-JWT with Authlete library: {}", e.getMessage(), e);
+            return Collections.emptyMap();
         } catch (Exception e) {
-            log.error("Error parsing SD-JWT", e);
+            log.error("Unexpected error processing SD-JWT", e);
             return Collections.emptyMap();
         }
     }
 
-    @Override
-    public void configureCredentialRequest(VCCredentialRequest.VCCredentialRequestBuilder builder,
-                                           CredentialsSupportedResponse credentialsSupportedResponse,
-                                           String credentialType) {
-        // SD-JWT specific configuration
-        builder.sdJwtVct(credentialType);
+    private Map<String, Object> parseJwtPayload(String jwt) {
+        try {
+            String[] parts = jwt.split("\\.");
+            if (parts.length < 2) {
+                log.error("Invalid JWT format");
+                return null;
+            }
+
+            String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+            return objectMapper.readValue(payloadJson, Map.class);
+        } catch (Exception e) {
+            log.error("Error parsing JWT payload", e);
+            return null;
+        }
     }
 
     @Override
-    public List<String> getSupportedFormats() {
-        return List.of("vc+sd-jwt", "dc+sd-jwt");
+    public VCCredentialRequest configureCredentialRequest(VCCredentialRequest.VCCredentialRequestBuilder builder,
+                                                          CredentialsSupportedResponse credentialsSupportedResponse,
+                                                          String credentialType) {
+        builder.vct(credentialType);
+        return builder.build();
+    }
+
+    @Override
+    public String getSupportedFormat() {
+        return "dc+sd-jwt";
     }
 }

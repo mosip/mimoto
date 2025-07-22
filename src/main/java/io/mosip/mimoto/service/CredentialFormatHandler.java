@@ -13,7 +13,7 @@ public interface CredentialFormatHandler {
     /**
      * Extract credential subject properties from VC response
      */
-    Map<String, Object> extractCredentialSubjectProperties(VCCredentialResponse vcCredentialResponse);
+    Map<String, Object> extractCredentialClaims(VCCredentialResponse vcCredentialResponse);
 
     /**
      * Load display properties from well-known configuration
@@ -26,12 +26,12 @@ public interface CredentialFormatHandler {
     /**
      * Configure format-specific fields in the credential request builder
      */
-    void configureCredentialRequest(VCCredentialRequest.VCCredentialRequestBuilder builder,
+    VCCredentialRequest configureCredentialRequest(VCCredentialRequest.VCCredentialRequestBuilder builder,
                                     CredentialsSupportedResponse credentialsSupportedResponse,
                                     String credentialType);
 
     /**
      * Get the supported format for this processor
      */
-    List<String> getSupportedFormats();
+    String getSupportedFormat();
 }

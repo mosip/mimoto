@@ -82,10 +82,7 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
 
         // Use registry to get appropriate handler and configure format-specific fields
         CredentialFormatHandler handler = credentialFormatHandlerFactory.getHandler(format);
-        handler.configureCredentialRequest(builder, credentialsSupportedResponse, credentialType);
-
-
-        return builder.build();
+        return handler.configureCredentialRequest(builder, credentialsSupportedResponse, credentialType);
     }
 
     private SigningAlgorithm resolveAlgorithm(CredentialsSupportedResponse credentialsSupportedResponse) {

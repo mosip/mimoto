@@ -81,7 +81,6 @@
         <googlecode.json-simple.version>1.1.1</googlecode.json-simple.version>
         <bouncycastle.version>1.78.1</bouncycastle.version>
         <jwt.version> 3.8.1</jwt.version>
-        <google.zxing.version>3.3.3</google.zxing.version>
         <itextcore.version>8.0.3</itextcore.version>
         <itexthtml2pdf.version>5.0.3</itexthtml2pdf.version>
         <itext.version>5.5.13</itext.version>
@@ -406,11 +405,6 @@
             <version>${itext.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.google.zxing</groupId>
-            <artifactId>javase</artifactId>
-            <version>${google.zxing.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.http-client</groupId>
             <artifactId>google-http-client-jackson2</artifactId>
             <version>1.22.0</version>
@@ -502,6 +496,11 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
             <version>3.9.13</version>
+        </dependency>
+        <dependency>
+            <groupId>com.authlete</groupId>
+            <artifactId>sd-jwt</artifactId>
+            <version>1.5</version>
         </dependency>
     </dependencies>
 

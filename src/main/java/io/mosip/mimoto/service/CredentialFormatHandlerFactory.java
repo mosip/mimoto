@@ -16,16 +16,22 @@ public class CredentialFormatHandlerFactory {
     @Autowired
     public CredentialFormatHandlerFactory(List<CredentialFormatHandler> handlers) {
         this.handlers = handlers.stream()
-                .flatMap(handler -> handler.getSupportedFormats().stream()
-                        .map(format -> Map.entry(format, handler)))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toMap(
+                        CredentialFormatHandler::getSupportedFormat,
+                        Function.identity()
+                ));
     }
 
     public CredentialFormatHandler getHandler(String format) {
+        if ("vc+sd-jwt".equals(format)) {
+            format = "dc+sd-jwt";
+        }
+
         CredentialFormatHandler processor = handlers.get(format);
         if (processor == null) {
             throw new IllegalArgumentException("Unsupported credential format: " + format);
         }
+
         return processor;
     }
 }

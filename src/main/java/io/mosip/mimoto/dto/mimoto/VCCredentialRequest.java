@@ -27,5 +27,5 @@ public class VCCredentialRequest {
     @NotNull
     private VCCredentialDefinition credentialDefinition;
 
-    private String sdJwtVct;
+    private String vct;
 }
