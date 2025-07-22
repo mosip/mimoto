@@ -14,7 +14,6 @@ import java.time.Instant;
 @Table(name = "user_metadata")
 @Getter
 @Setter
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class UserMetadata {
 
     @Id

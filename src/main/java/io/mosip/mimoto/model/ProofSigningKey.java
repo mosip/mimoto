@@ -14,7 +14,6 @@ import java.time.Instant;
 @Table(name = "proof_signing_key")
 @Getter
 @Setter
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class ProofSigningKey {
 
     @Id

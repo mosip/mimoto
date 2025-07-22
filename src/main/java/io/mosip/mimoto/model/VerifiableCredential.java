@@ -12,7 +12,6 @@ import java.time.Instant;
 @Table(name = "verifiable_credentials")
 @Getter
 @Setter
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class VerifiableCredential {
 
     @Id
