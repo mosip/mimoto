@@ -29,10 +29,6 @@ public class JwtGeneratorUtil {
         }
     }
 
-    public static KeyPair getKeyPairFromDBBasedOnAlgorithm(SigningAlgorithm algorithm, byte[] publicKeyBytes, byte[] privateKeyBytes) throws Exception {
-        return KeyGenerationUtil.getKeyPairFromDBStoredKeys(algorithm, publicKeyBytes, privateKeyBytes);
-    }
-
     public static String generateJwt(SigningAlgorithm algorithm, String audience, String clientId, String cNonce, KeyPair keyPair) throws Exception {
         JWK jwk = generateJwk(algorithm, keyPair);
         JWSSigner signer = createSigner(algorithm, jwk);

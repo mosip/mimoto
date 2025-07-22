@@ -1,6 +1,5 @@
 package io.mosip.mimoto.service.impl;
 
-import io.mosip.mimoto.config.SigningAlgorithmConfig;
 import io.mosip.mimoto.model.ProofSigningKey;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.*;
@@ -13,11 +12,13 @@ import io.mosip.mimoto.util.JwtGeneratorUtil;
 import io.mosip.mimoto.util.KeyGenerationUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.security.KeyPair;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -32,8 +33,16 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
     @Autowired
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
-    @Autowired
-    private SigningAlgorithmConfig signingAlgorithmConfig;
+    @Value("${signing.algorithms.priority.order}")
+    private String signingAlgorithmsPriorityOrder;
+
+    private static final SigningAlgorithm FALLBACK_SIGNING_ALG = SigningAlgorithm.ED25519;
+
+    public LinkedHashSet<String> getSigningAlgorithmsPriorityOrder() {
+        return Arrays.stream(signingAlgorithmsPriorityOrder.split(","))
+                .map(String::trim).collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
 
     @Override
     public VCCredentialRequest buildRequest(IssuerDTO issuerDTO,
@@ -73,18 +82,27 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
     }
 
     private SigningAlgorithm resolveAlgorithm(CredentialsSupportedResponse credentialsSupportedResponse) {
+        Map<String, ProofTypesSupported> proofTypesSupported = credentialsSupportedResponse.getProofTypesSupported();
+        ProofTypesSupported proofSigningAlgValuesSupported = proofTypesSupported.get("jwt");
+        Set<String> signingAlgoPriorityOrderSet = getSigningAlgorithmsPriorityOrder();
+
+
         return Optional
-                .ofNullable(credentialsSupportedResponse.getProofTypesSupported())
-                .map(proofTypesSupported -> proofTypesSupported.get("jwt"))
+                .ofNullable(proofSigningAlgValuesSupported)
                 .map(ProofTypesSupported::getProofSigningAlgValuesSupported)
-                .flatMap(issuerSupportedAlgorithms -> signingAlgorithmConfig.getSigningAlgorithmsPriorityOrder().stream()
+                .flatMap(issuerSupportedAlgorithms -> signingAlgoPriorityOrderSet.stream()
                         .filter(priorityAlgorithm -> issuerSupportedAlgorithms.stream().
                                 anyMatch(issuerSupportedAlgorithm -> issuerSupportedAlgorithm.equalsIgnoreCase(priorityAlgorithm)))
                         .findFirst())
                 .map(SigningAlgorithm::fromString)
                 .orElseGet(() -> {
-                    log.warn("No matching algorithm found in priority order. Falling back to ED25519");
-                    return SigningAlgorithm.ED25519;
+                    if (proofSigningAlgValuesSupported == null) {
+                        log.warn("JWT proof type is missing in proof_types_supported field of Issuer so falling back to {}", FALLBACK_SIGNING_ALG);
+                    } else {
+                        log.warn("None of the Issuer Supported Algorithms: {} are found in the priority order: {}. Falling back to {}",
+                                proofSigningAlgValuesSupported.getProofSigningAlgValuesSupported(), signingAlgoPriorityOrderSet, FALLBACK_SIGNING_ALG);
+                    }
+                    return FALLBACK_SIGNING_ALG;
                 });
     }
 
@@ -100,7 +118,7 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
         SecretKey walletKey = EncryptionDecryptionUtil.bytesToSecretKey(decodedWalletKey);
         byte[] publicKeyBytes = Base64.getDecoder().decode(proofSigningKey.get().getPublicKey());
         byte[] privateKeyInBytes = encryptionDecryptionUtil.decryptWithAES(walletKey, proofSigningKey.get().getEncryptedSecretKey());
-        KeyPair keyPair = JwtGeneratorUtil.getKeyPairFromDBBasedOnAlgorithm(algorithm, publicKeyBytes, privateKeyInBytes);
+        KeyPair keyPair = KeyGenerationUtil.getKeyPairFromDBStoredKeys(algorithm, publicKeyBytes, privateKeyInBytes);
 
         return JwtGeneratorUtil.generateJwt(algorithm,
                 wellKnownResponse.getCredentialIssuer(),
