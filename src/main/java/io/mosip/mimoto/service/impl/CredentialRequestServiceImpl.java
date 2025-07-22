@@ -33,7 +33,7 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
     @Autowired
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
-    @Value("${signing.algorithms.priority.order}")
+    @Value("${signing.algorithms.priority.order:ED25519,ES256K,ES256,RS256}")
     private String signingAlgorithmsPriorityOrder;
 
     private static final SigningAlgorithm FALLBACK_SIGNING_ALG = SigningAlgorithm.ED25519;

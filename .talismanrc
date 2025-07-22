@@ -106,9 +106,9 @@ fileignoreconfig:
 - filename: docs/api-documentation-openapi.json
   checksum: b5f643bfa3fcfec0548747a321f7ecc4b7b2b79fbbf3c0152c3369aeddf0f566
 - filename: src/main/java/io/mosip/mimoto/util/JwtGeneratorUtil.java
-  checksum: 19f51863b4d90f9e4ff21599290578d43cd1a518fa34ae83e42738ac4cefdbb9
+  checksum: 1ef0293cd0aca622a0b8d5a9baca059b789fd64367d13c40f4cb2fda99f257d5
 - filename: src/main/java/io/mosip/mimoto/service/impl/CredentialRequestServiceImpl.java
-  checksum: 27efd509b686940fa2f5d4cc4bad2e845e4fbefcca9168b4a7e363388dedf776
+  checksum: 84de56a967fa15750eb5d3d0786b7e2dbbcbb684d4e9342f77ddfebb69200131
 - filename: src/main/java/io/mosip/mimoto/constant/SigningAlgorithm.java
   checksum: fcb462b4baec6db1aa48c16fad923dc7a20407aa072efeb3879c236e7a4d74fe
 - filename: src/test/resources/application-test.properties
