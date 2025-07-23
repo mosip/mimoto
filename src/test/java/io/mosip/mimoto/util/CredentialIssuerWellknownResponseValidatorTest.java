@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.*;
 
@@ -20,12 +21,16 @@ import static io.mosip.mimoto.util.TestUtilities.getCredentialIssuerWellKnownRes
 import static io.mosip.mimoto.util.TestUtilities.getCredentialSupportedResponse;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class CredentialIssuerWellknownResponseValidatorTest {
+import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
+
+@SpringBootTest(classes = {CredentialIssuerWellknownResponseValidator.class, CredentialIssuerWellKnownResponse.class, ValidationAutoConfiguration.class})
+class CredentialIssuerWellknownResponseValidatorTest {
 
     @Autowired
     private Validator validator;
 
-    CredentialIssuerWellKnownResponse response;
+    @Autowired
+    private CredentialIssuerWellKnownResponse response;
 
     @BeforeEach
     void setUp() {
@@ -36,7 +41,7 @@ public class CredentialIssuerWellknownResponseValidatorTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenCredentialIssuerIsMissingInCredentialIssuerWellknownResponse() {
+    void shouldThrowExceptionWhenCredentialIssuerIsMissingInCredentialIssuerWellknownResponse() {
         response.setCredentialIssuer("");
         response.setCredentialEndPoint("http://example.com/credential");
 
@@ -51,7 +56,7 @@ public class CredentialIssuerWellknownResponseValidatorTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenCredentialEndpointIsIncorrectInCredentialIssuerWellknownResponse() {
+    void shouldThrowExceptionWhenCredentialEndpointIsIncorrectInCredentialIssuerWellknownResponse() {
         response.setCredentialEndPoint("http://example.com"); // Incorrect because it does not end with "/credential"
 
         CredentialIssuerWellknownResponseValidator credentialIssuerWellknownResponseValidator = new CredentialIssuerWellknownResponseValidator();
@@ -65,7 +70,7 @@ public class CredentialIssuerWellknownResponseValidatorTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenAuthorizationServersIsEmpty() {
+    void shouldThrowExceptionWhenAuthorizationServersIsEmpty() {
         response.setCredentialIssuer("https://valid.url/credential");
         response.setAuthorizationServers(Collections.emptyList());  // Invalid empty list
 
@@ -80,7 +85,7 @@ public class CredentialIssuerWellknownResponseValidatorTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenAuthorizationServersIsNull() {
+    void shouldThrowExceptionWhenAuthorizationServersIsNull() {
         response.setCredentialIssuer("https://valid.url/credential");
         response.setAuthorizationServers(null);
 
@@ -95,7 +100,7 @@ public class CredentialIssuerWellknownResponseValidatorTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenFormatIsMissingInCredentialsSupported() {
+    void shouldThrowExceptionWhenFormatIsMissingInCredentialsSupported() {
         CredentialsSupportedResponse credentialsSupportedResponse = getCredentialSupportedResponse("CredentialType1");
         credentialsSupportedResponse.setFormat(null);
         response = getCredentialIssuerWellKnownResponseDto("Issuer1",
@@ -113,7 +118,7 @@ public class CredentialIssuerWellknownResponseValidatorTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenLogoUrlIsInvalid() {
+    void shouldThrowExceptionWhenLogoUrlIsInvalid() {
         response.getCredentialConfigurationsSupported().get("CredentialType1").getDisplay().getFirst().getLogo().setUrl("ftp//invalid-url");  // Invalid URL
         CredentialIssuerWellknownResponseValidator credentialIssuerWellknownResponseValidator = new CredentialIssuerWellknownResponseValidator();
 
@@ -127,7 +132,7 @@ public class CredentialIssuerWellknownResponseValidatorTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenBackgroundImageUrlIsInvalid() {
+    void shouldThrowExceptionWhenBackgroundImageUrlIsInvalid() {
         response.getCredentialConfigurationsSupported().get("CredentialType1").getDisplay().getFirst().setBackgroundImage(new BackgroundImageDTO("local//imgbasebase64"));
 
         CredentialIssuerWellknownResponseValidator credentialIssuerWellknownResponseValidator = new CredentialIssuerWellknownResponseValidator();
@@ -142,7 +147,7 @@ public class CredentialIssuerWellknownResponseValidatorTest {
     }
 
     @Test
-    public void shouldDetectMissingMandatoryFields() {
+    void shouldDetectMissingMandatoryFields() {
         response.setCredentialEndPoint(null);
         response.setCredentialConfigurationsSupported(null);
         response.setAuthorizationServers(null);
@@ -161,7 +166,7 @@ public class CredentialIssuerWellknownResponseValidatorTest {
     }
 
     @Test
-    public void shouldDetectMissingMandatoryFieldsOfCredentialSupportedResponse() {
+    void shouldDetectMissingMandatoryFieldsOfCredentialSupportedResponse() {
         response.getCredentialConfigurationsSupported().get("CredentialType1").setFormat(null);
         response.getCredentialConfigurationsSupported().get("CredentialType1").setScope(null);
         response.getCredentialConfigurationsSupported().get("CredentialType1").setDisplay(null);
@@ -182,7 +187,19 @@ public class CredentialIssuerWellknownResponseValidatorTest {
     }
 
     @Test
-    public void shouldDetectMissingProofAlgorithmsSupported() {
+    void shouldThrowExceptionIfProofTypesSupportedValueIsEmptyInCredentialSupportedResponse() {
+        response.getCredentialConfigurationsSupported().get("CredentialType1").setProofTypesSupported(new HashMap<>());
+        CredentialIssuerWellknownResponseValidator credentialIssuerWellknownResponseValidator = new CredentialIssuerWellknownResponseValidator();
+
+        InvalidWellknownResponseException invalidWellknownResponseException = assertThrows(InvalidWellknownResponseException.class, () ->
+                credentialIssuerWellknownResponseValidator.validate(response, validator));
+        String message = invalidWellknownResponseException.getMessage();
+        assertTrue(message.contains("RESIDENT-APP-041 --> Invalid Wellknown from Issuer"));
+        assertTrue(message.contains("credentialConfigurationsSupported[CredentialType1].proofTypesSupported: Proof types supported must not be empty"));
+    }
+
+    @Test
+    void shouldThrowExceptionIfProofSigningAlgorithmsSupportedValueIsNullInCredentialSupportedResponse() {
         response.getCredentialConfigurationsSupported().get("CredentialType1").getProofTypesSupported().get("jwt").setProofSigningAlgValuesSupported(null);
         CredentialIssuerWellknownResponseValidator credentialIssuerWellknownResponseValidator = new CredentialIssuerWellknownResponseValidator();
 
@@ -190,13 +207,23 @@ public class CredentialIssuerWellknownResponseValidatorTest {
                 credentialIssuerWellknownResponseValidator.validate(response, validator));
         String message = invalidWellknownResponseException.getMessage();
         assertTrue(message.contains("RESIDENT-APP-041 --> Invalid Wellknown from Issuer"));
-        assertTrue(message.contains("credentialConfigurationsSupported[CredentialType1].proofTypesSupported[jwt].proofSigningAlgValuesSupported: must not be null"));
         assertTrue(message.contains("credentialConfigurationsSupported[CredentialType1].proofTypesSupported[jwt].proofSigningAlgValuesSupported: must not be empty"));
-
     }
 
     @Test
-    public void shouldDetectMissingMandatoryFieldsOfCredentialSupportedDisplayResponse() {
+    void shouldThrowExceptionIfProofSigningAlgorithmsSupportedValueIsEmptyInCredentialSupportedResponse() {
+        response.getCredentialConfigurationsSupported().get("CredentialType1").getProofTypesSupported().get("jwt").setProofSigningAlgValuesSupported(new ArrayList<>());
+        CredentialIssuerWellknownResponseValidator credentialIssuerWellknownResponseValidator = new CredentialIssuerWellknownResponseValidator();
+
+        InvalidWellknownResponseException invalidWellknownResponseException = assertThrows(InvalidWellknownResponseException.class, () ->
+                credentialIssuerWellknownResponseValidator.validate(response, validator));
+        String message = invalidWellknownResponseException.getMessage();
+        assertTrue(message.contains("RESIDENT-APP-041 --> Invalid Wellknown from Issuer"));
+        assertTrue(message.contains("credentialConfigurationsSupported[CredentialType1].proofTypesSupported[jwt].proofSigningAlgValuesSupported: must not be empty"));
+    }
+
+    @Test
+    void shouldDetectMissingMandatoryFieldsOfCredentialSupportedDisplayResponse() {
         // Create a new response object with nested display response details
         List<CredentialSupportedDisplayResponse> credentialSupportedDisplayResponseList = new ArrayList<>();
         CredentialSupportedDisplayResponse credentialSupportedDisplayResponse = new CredentialSupportedDisplayResponse();
@@ -228,8 +255,8 @@ public class CredentialIssuerWellknownResponseValidatorTest {
     @Nested
     class LdpVcFormatWellKnownResponseValidationTest {
         @Test
-        public void shouldDetectMissingMandatoryFieldsCredentialDefinitionOfCredentialSupportedResponse() {
-            CredentialIssuerWellKnownResponse response = getCredentialIssuerWellKnownResponseDto("Issuer1",
+        void shouldDetectMissingMandatoryFieldsCredentialDefinitionOfCredentialSupportedResponse() {
+            response = getCredentialIssuerWellKnownResponseDto("Issuer1",
                     Map.of("CredentialType1", getCredentialSupportedResponse("CredentialType1")));
             response.getCredentialConfigurationsSupported().get("CredentialType1").setCredentialDefinition(null);
             CredentialIssuerWellknownResponseValidator credentialIssuerWellknownResponseValidator = new CredentialIssuerWellknownResponseValidator();
@@ -243,8 +270,8 @@ public class CredentialIssuerWellknownResponseValidatorTest {
         }
 
         @Test
-        public void shouldDetectMissingMandatoryFieldsOfCredentialDefinitionInWellknownResponse() {
-            CredentialIssuerWellKnownResponse response = getCredentialIssuerWellKnownResponseDto("Issuer1",
+        void shouldDetectMissingMandatoryFieldsOfCredentialDefinitionInWellknownResponse() {
+            response = getCredentialIssuerWellKnownResponseDto("Issuer1",
                     Map.of("CredentialType1", getCredentialSupportedResponse("CredentialType1")));
             CredentialDefinitionResponseDto credentialDefinitionResponseDto = new CredentialDefinitionResponseDto();
             credentialDefinitionResponseDto.setCredentialSubject(null);
@@ -264,8 +291,8 @@ public class CredentialIssuerWellknownResponseValidatorTest {
         }
 
         @Test
-        public void shouldThrowExceptionWhenCredentialDefinitionTypeIsEmpty() {
-            CredentialIssuerWellKnownResponse response = getCredentialIssuerWellKnownResponseDto("Issuer1",
+        void shouldThrowExceptionWhenCredentialDefinitionTypeIsEmpty() {
+            response = getCredentialIssuerWellKnownResponseDto("Issuer1",
                     Map.of("CredentialType1", getCredentialSupportedResponse("CredentialType1")));
             response.getCredentialConfigurationsSupported().get("CredentialType1").getCredentialDefinition().setType(Collections.emptyList());  // Invalid empty list
 

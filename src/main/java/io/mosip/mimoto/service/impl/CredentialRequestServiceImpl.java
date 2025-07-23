@@ -97,9 +97,9 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
                 .map(SigningAlgorithm::fromString)
                 .orElseGet(() -> {
                     if (proofSigningAlgValuesSupported == null) {
-                        log.warn("JWT proof type is missing in proof_types_supported field of Issuer so falling back to {}", FALLBACK_SIGNING_ALG);
+                        log.warn("JWT proof type is missing in proof_types_supported field of Issuer well-known so falling back to {}", FALLBACK_SIGNING_ALG);
                     } else {
-                        log.warn("None of the Issuer Supported Algorithms: {} are found in the priority order: {}. Falling back to {}",
+                        log.warn("None of the Issuer Supported Algorithms: {} are found in the predefined signing algorithms priority order: {} so falling back to {}",
                                 proofSigningAlgValuesSupported.getProofSigningAlgValuesSupported(), signingAlgoPriorityOrderSet, FALLBACK_SIGNING_ALG);
                     }
                     return FALLBACK_SIGNING_ALG;

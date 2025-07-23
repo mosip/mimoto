@@ -108,7 +108,7 @@ fileignoreconfig:
 - filename: src/main/java/io/mosip/mimoto/util/JwtGeneratorUtil.java
   checksum: 1ef0293cd0aca622a0b8d5a9baca059b789fd64367d13c40f4cb2fda99f257d5
 - filename: src/main/java/io/mosip/mimoto/service/impl/CredentialRequestServiceImpl.java
-  checksum: 84de56a967fa15750eb5d3d0786b7e2dbbcbb684d4e9342f77ddfebb69200131
+  checksum: 55e321a4d127e7b45aba5c643fbc9083af41d7c102ebdc5b2ca521212733a616
 - filename: src/main/java/io/mosip/mimoto/constant/SigningAlgorithm.java
   checksum: fcb462b4baec6db1aa48c16fad923dc7a20407aa072efeb3879c236e7a4d74fe
 - filename: src/test/resources/application-test.properties
@@ -117,5 +117,6 @@ fileignoreconfig:
   checksum: 8f930ada726909cf0ad4e1112d8b4cca7b7eae7268f8e6b1abe38cb5f739d24c
 - filename: src/main/resources/application-local.properties
   checksum: 11e815832a44edfd9ba5499bed2e9037ae694eb8ce9968e1798b848d436e9871
-
+- filename: src/test/java/io/mosip/mimoto/service/CredentialRequestServiceTest.java
+  checksum: 3610695ebc3f8de98a1d27162dccd881b2d0f43fa502bcb485f747d393d7307a
 version: ""

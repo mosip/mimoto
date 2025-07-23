@@ -13,7 +13,6 @@ import java.util.List;
 public class ProofTypesSupported {
 
     @NotEmpty
-    @NotNull
     @JsonProperty("proof_signing_alg_values_supported")
     @SerializedName("proof_signing_alg_values_supported")
     @Schema(description = "Support Alg for proof Signing")
