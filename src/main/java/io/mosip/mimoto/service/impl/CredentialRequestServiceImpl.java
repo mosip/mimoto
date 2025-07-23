@@ -7,7 +7,6 @@ import io.mosip.mimoto.constant.SigningAlgorithm;
 import io.mosip.mimoto.repository.ProofSigningKeyRepository;
 import io.mosip.mimoto.service.CredentialRequestService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
-import io.mosip.mimoto.util.JoseUtil;
 import io.mosip.mimoto.util.JwtGeneratorUtil;
 import io.mosip.mimoto.util.KeyGenerationUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -25,9 +24,6 @@ import java.util.stream.Collectors;
 public class CredentialRequestServiceImpl implements CredentialRequestService {
 
     @Autowired
-    private JoseUtil joseUtil;
-
-    @Autowired
     private ProofSigningKeyRepository proofSigningKeyRepository;
 
     @Autowired
@@ -38,7 +34,7 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
 
     private static final SigningAlgorithm FALLBACK_SIGNING_ALG = SigningAlgorithm.ED25519;
 
-    public LinkedHashSet<String> getSigningAlgorithmsPriorityOrder() {
+    public Set<String> getSigningAlgorithmsPriorityOrder() {
         return Arrays.stream(signingAlgorithmsPriorityOrder.split(","))
                 .map(String::trim).collect(Collectors.toCollection(LinkedHashSet::new));
     }
@@ -51,16 +47,18 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
                                             String cNonce,
                                             String walletId,
                                             String base64EncodedWalletKey,
-                                            Boolean isLoginFlow) throws Exception {
+                                            boolean isLoginFlow) throws Exception {
 
-        SigningAlgorithm algorithm = resolveAlgorithm(credentialsSupportedResponse);
+        SigningAlgorithm signingAlgorithm = resolveAlgorithm(credentialsSupportedResponse);
 
         String jwt;
         if (isLoginFlow) {
-            jwt = generateJwtFromDB(walletId, base64EncodedWalletKey, algorithm, wellKnownResponse, issuerDTO, cNonce);
+            jwt = generateJwtUsingDBKeys(walletId, base64EncodedWalletKey, signingAlgorithm, wellKnownResponse, issuerDTO, cNonce);
         } else {
-            KeyPair keyPair = KeyGenerationUtil.generateKeyPair(algorithm);
-            jwt = JwtGeneratorUtil.generateJwt(algorithm, wellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), cNonce, keyPair);
+            KeyPair keyPair = KeyGenerationUtil.generateKeyPair(signingAlgorithm);
+            //Not logging the actual keys for security reasons
+            log.debug("Generated KeyPair for signing signingAlgorithm: {}", signingAlgorithm);
+            jwt = JwtGeneratorUtil.generateJwt(signingAlgorithm, wellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), cNonce, keyPair);
         }
 
         List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
@@ -106,26 +104,26 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
                 });
     }
 
-    private String generateJwtFromDB(String walletId,
-                                     String base64EncodedWalletKey,
-                                     SigningAlgorithm algorithm,
-                                     CredentialIssuerWellKnownResponse wellKnownResponse,
-                                     IssuerDTO issuerDTO,
-                                     String cNonce) throws Exception {
+    private String generateJwtUsingDBKeys(String walletId,
+                                          String base64EncodedWalletKey,
+                                          SigningAlgorithm signingAlgorithm,
+                                          CredentialIssuerWellKnownResponse wellKnownResponse,
+                                          IssuerDTO issuerDTO,
+                                          String cNonce) throws Exception {
 
-        Optional<ProofSigningKey> proofSigningKey = proofSigningKeyRepository.findByWalletIdAndAlgorithm(walletId, algorithm.name());
+        Optional<ProofSigningKey> proofSigningKey = proofSigningKeyRepository.findByWalletIdAndAlgorithm(walletId, signingAlgorithm.name());
         byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
         SecretKey walletKey = EncryptionDecryptionUtil.bytesToSecretKey(decodedWalletKey);
         byte[] publicKeyBytes = Base64.getDecoder().decode(proofSigningKey.get().getPublicKey());
         byte[] privateKeyInBytes = encryptionDecryptionUtil.decryptWithAES(walletKey, proofSigningKey.get().getEncryptedSecretKey());
-        KeyPair keyPair = KeyGenerationUtil.getKeyPairFromDBStoredKeys(algorithm, publicKeyBytes, privateKeyInBytes);
+        KeyPair keyPair = KeyGenerationUtil.getKeyPairFromDBStoredKeys(signingAlgorithm, publicKeyBytes, privateKeyInBytes);
+        //Not logging the actual keys for security reasons
+        log.debug("Fetched KeyPair for signing signingAlgorithm: {} from database", signingAlgorithm);
 
-        return JwtGeneratorUtil.generateJwt(algorithm,
+        return JwtGeneratorUtil.generateJwt(signingAlgorithm,
                 wellKnownResponse.getCredentialIssuer(),
                 issuerDTO.getClient_id(),
                 cNonce,
                 keyPair);
     }
-
-
 }

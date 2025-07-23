@@ -29,12 +29,12 @@ public class JwtGeneratorUtil {
         }
     }
 
-    public static String generateJwt(SigningAlgorithm algorithm, String audience, String clientId, String cNonce, KeyPair keyPair) throws Exception {
-        JWK jwk = generateJwk(algorithm, keyPair);
-        JWSSigner signer = createSigner(algorithm, jwk);
+    public static String generateJwt(SigningAlgorithm signingAlgorithm, String audience, String clientId, String cNonce, KeyPair keyPair) throws Exception {
+        JWK jwk = generateJwk(signingAlgorithm, keyPair);
+        JWSSigner signer = createSigner(signingAlgorithm, jwk);
 
         JWTClaimsSet claimsSet = createClaims(clientId, audience, cNonce);
-        JWSHeader header = new JWSHeader.Builder(algorithm.getJWSAlgorithm())
+        JWSHeader header = new JWSHeader.Builder(signingAlgorithm.getJWSAlgorithm())
                 .type(new JOSEObjectType("openid4vci-proof+jwt"))
                 .jwk(jwk.toPublicJWK())
                 .build();
@@ -44,7 +44,7 @@ public class JwtGeneratorUtil {
         return signedJWT.serialize();
     }
 
-    private static JWTClaimsSet createClaims(String clientId, String audience, String cNonce) throws java.text.ParseException {
+    private static JWTClaimsSet createClaims(String clientId, String audience, String cNonce) {
         long nowSeconds = System.currentTimeMillis() / 1000;
         Date issuedAt = new Date(nowSeconds * 1000);
         Date expiresAt = new Date((nowSeconds + 18000) * 1000);
