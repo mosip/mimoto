@@ -56,7 +56,6 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
             jwt = generateJwtUsingDBKeys(walletId, base64EncodedWalletKey, signingAlgorithm, wellKnownResponse, issuerDTO, cNonce);
         } else {
             KeyPair keyPair = KeyGenerationUtil.generateKeyPair(signingAlgorithm);
-            //Not logging the actual keys for security reasons
             log.debug("Generated KeyPair for signing signingAlgorithm: {}", signingAlgorithm);
             jwt = JwtGeneratorUtil.generateJwt(signingAlgorithm, wellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), cNonce, keyPair);
         }
@@ -117,7 +116,6 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
         byte[] publicKeyBytes = Base64.getDecoder().decode(proofSigningKey.get().getPublicKey());
         byte[] privateKeyInBytes = encryptionDecryptionUtil.decryptWithAES(walletKey, proofSigningKey.get().getEncryptedSecretKey());
         KeyPair keyPair = KeyGenerationUtil.getKeyPairFromDBStoredKeys(signingAlgorithm, publicKeyBytes, privateKeyInBytes);
-        //Not logging the actual keys for security reasons
         log.debug("Fetched KeyPair for signing signingAlgorithm: {} from database", signingAlgorithm);
 
         return JwtGeneratorUtil.generateJwt(signingAlgorithm,
