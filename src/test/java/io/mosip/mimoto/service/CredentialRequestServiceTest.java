@@ -1,36 +1,44 @@
 package io.mosip.mimoto.service;
 
-import io.mosip.mimoto.config.SigningAlgorithmConfig;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.*;
+import io.mosip.mimoto.repository.ProofSigningKeyRepository;
 import io.mosip.mimoto.service.impl.CredentialRequestServiceImpl;
 import io.mosip.mimoto.util.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.*;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {CredentialRequestServiceImpl.class})
+@TestPropertySource(locations = "classpath:application-test.properties")
 public class CredentialRequestServiceTest {
-    @Mock
-    private SigningAlgorithmConfig signingAlgorithmConfig;
-    @InjectMocks
-    CredentialRequestServiceImpl credentialRequestBuilder;
+    @Autowired
+    private CredentialRequestServiceImpl credentialRequestBuilder;
+
+    @MockBean
+    private ProofSigningKeyRepository proofSigningKeyRepository;
+
+    @MockBean
+    private EncryptionDecryptionUtil encryptionDecryptionUtil;
     
-    @Mock
+    @MockBean
     JoseUtil joseUtil;
 
     IssuerDTO issuerDTO;
     String issuerId;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         issuerId = "issuer1";
         issuerDTO = getIssuerConfigDTO(issuerId);
     }
