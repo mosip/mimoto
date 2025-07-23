@@ -55,9 +55,6 @@ class CredentialPDFGeneratorServiceTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "ovpQRDataPattern", "test-pattern-%s-%s");
-        ReflectionTestUtils.setField(credentialPDFGeneratorService, "qrCodeHeight", 500);
-        ReflectionTestUtils.setField(credentialPDFGeneratorService, "qrCodeWidth", 500);
-        ReflectionTestUtils.setField(credentialPDFGeneratorService, "allowedQRDataSizeLimit", 2000);
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "pixelPass", pixelPass);
         // Mock the handler factory to return the handler for the test format
         when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);

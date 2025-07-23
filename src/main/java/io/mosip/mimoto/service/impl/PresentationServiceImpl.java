@@ -2,6 +2,7 @@ package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponseProof;
@@ -107,7 +108,7 @@ public class PresentationServiceImpl implements PresentationService {
         List<SubmissionDescriptorDTO> submissionDescriptorDTOList = verifiablePresentationDTO.getVerifiableCredential()
                 .stream().map(verifiableCredential -> SubmissionDescriptorDTO.builder()
                         .id(inputDescriptorDTO.getId())
-                        .format("ldp_vc")
+                        .format(CredentialFormat.LDP_VC.getFormat())
                         .path("$.verifiableCredential[" + atomicInteger.getAndIncrement() + "]").build()).collect(Collectors.toList());
 
         PresentationSubmissionDTO presentationSubmissionDTO = PresentationSubmissionDTO.builder()
@@ -121,7 +122,7 @@ public class PresentationServiceImpl implements PresentationService {
         String fmt = vcRes.getFormat();
         List<InputDescriptorDTO> inputDescriptors = new ArrayList<>();
 
-        if ("ldp_vc".equalsIgnoreCase(fmt)
+        if (CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(fmt)
                 && vcRes.getCredential() instanceof VCCredentialProperties ldp) {
 
             String lastType = ldp.getType().get(ldp.getType().size() - 1);
@@ -142,9 +143,7 @@ public class PresentationServiceImpl implements PresentationService {
                     .format(format)
                     .build());
 
-        } else if ("sd_jwt_vc".equalsIgnoreCase(fmt) || "vc+sd-jwt".equalsIgnoreCase(fmt) || "dc+sd-jwt".equalsIgnoreCase(fmt)) {
-
-            // Use vct (VC type) matching — often in unsecured payload under "vct" or "vc.type"
+        } else if (CredentialFormat.DC_SD_JWT.getFormat().equalsIgnoreCase(fmt) || CredentialFormat.VC_SD_JWT.getFormat().equalsIgnoreCase(fmt)) {
             FieldDTO field = FieldDTO.builder()
                     .path(new String[]{"$.vct"})
                     .filter(FilterDTO.builder().type("string")
@@ -171,7 +170,4 @@ public class PresentationServiceImpl implements PresentationService {
                 .inputDescriptors(inputDescriptors)
                 .build();
     }
-
-
-
 }

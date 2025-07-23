@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service;
 
+import io.mosip.mimoto.constant.CredentialFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -23,9 +24,10 @@ public class CredentialFormatHandlerFactory {
     }
 
     public CredentialFormatHandler getHandler(String format) {
-        if ("vc+sd-jwt".equals(format)) {
-            format = "dc+sd-jwt";
+        if (CredentialFormat.VC_SD_JWT.getFormat().equals(format)) {
+            format = CredentialFormat.DC_SD_JWT.getFormat();
         }
+
 
         CredentialFormatHandler processor = handlers.get(format);
         if (processor == null) {

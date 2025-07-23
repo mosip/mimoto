@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import com.authlete.sd.Disclosure;
 import com.authlete.sd.SDJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.service.CredentialFormatHandler;
 import io.mosip.mimoto.util.LocaleUtils;
@@ -177,6 +178,6 @@ public class SdJwtCredentialFormatHandler implements CredentialFormatHandler {
 
     @Override
     public String getSupportedFormat() {
-        return "dc+sd-jwt";
+        return CredentialFormat.DC_SD_JWT.getFormat();
     }
 }

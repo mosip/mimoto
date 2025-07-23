@@ -51,7 +51,7 @@ public class DataShareServiceImpl {
         pathMatcher = new AntPathMatcher();
     }
 
-    public String storeDataInDataShare(String data, String credentialValidity) throws Exception {
+    public String storeDataInDataShare(String data, String credentialValidity) throws InvalidCredentialResourceException {
         ByteArrayResource contentsAsResource = new ByteArrayResource(data.getBytes()) {
             @Override
             public String getFilename() {
@@ -69,7 +69,7 @@ public class DataShareServiceImpl {
         return  dataShareResponseWrapperDTO.getDataShare().getUrl();
     }
 
-    private DataShareResponseWrapperDTO pushCredentialIntoDataShare(HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity, String credentialValidity) throws Exception {
+    private DataShareResponseWrapperDTO pushCredentialIntoDataShare(HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity, String credentialValidity) throws InvalidCredentialResourceException {
         int attempt =0 ;
         DataShareResponseWrapperDTO dataShareResponseWrapperDTO = null;
         while(attempt++ < maxRetryCount ){

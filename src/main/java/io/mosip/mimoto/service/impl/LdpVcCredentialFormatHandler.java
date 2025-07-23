@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service.impl;
 
+import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.service.CredentialFormatHandler;
 import io.mosip.mimoto.util.LocaleUtils;
@@ -17,8 +18,8 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
 
     @Override
     public Map<String, Object> extractCredentialClaims(VCCredentialResponse vcCredentialResponse) {
-        Map<String, Object> credentialMap = (Map<String, Object>) vcCredentialResponse.getCredential();
-        return (Map<String, Object>) credentialMap.get("credentialSubject");
+        VCCredentialProperties credential = (VCCredentialProperties) vcCredentialResponse.getCredential();
+        return (Map<String, Object>) credential.getCredentialSubject();
     }
 
     @Override
@@ -94,6 +95,6 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
 
     @Override
     public String getSupportedFormat() {
-        return "ldp_vc";
+        return CredentialFormat.LDP_VC.getFormat();
     }
 }

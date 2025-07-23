@@ -6,7 +6,6 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialRequest;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 public interface CredentialFormatHandler {

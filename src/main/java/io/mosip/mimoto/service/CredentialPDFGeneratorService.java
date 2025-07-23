@@ -55,15 +55,6 @@ public class CredentialPDFGeneratorService {
     @Value("${mosip.inji.ovp.qrdata.pattern}")
     private String ovpQRDataPattern;
 
-    @Value("${mosip.inji.qr.code.height:500}")
-    private Integer qrCodeHeight;
-
-    @Value("${mosip.inji.qr.code.width:500}")
-    private Integer qrCodeWidth;
-
-    @Value("${mosip.inji.qr.data.size.limit:4296}")
-    private Integer allowedQRDataSizeLimit;
-
     private static final ECC DEFAULT_ECC_LEVEL = ECC.L;
 
     public ByteArrayInputStream generatePdfForVerifiableCredentials(String credentialType, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
@@ -97,7 +88,7 @@ public class CredentialPDFGeneratorService {
 
         CredentialSupportedDisplayResponse firstDisplay = Optional.ofNullable(credentialsSupportedResponse.getDisplay())
                 .filter(list -> !list.isEmpty())
-                .map(list -> list.get(0))
+                .map(List::getFirst)
                 .orElse(null);
 
         String backgroundColor = firstDisplay != null ? firstDisplay.getBackgroundColor() : null;
@@ -109,14 +100,12 @@ public class CredentialPDFGeneratorService {
 
         String face = extractFace(vcCredentialResponse);
 
-        displayProperties.forEach((key, valueMap) -> {
-            valueMap.forEach((display, val) -> {
-                String displayName = display.getName();
-                String locale = display.getLocale();
-                String strVal = formatValue(val, locale);
-                rowProperties.put(key, Map.of(displayName, strVal));
-            });
-        });
+        displayProperties.forEach((key, valueMap) -> valueMap.forEach((display, val) -> {
+            String displayName = display.getName();
+            String locale = display.getLocale();
+            String strVal = formatValue(val, locale);
+            rowProperties.put(key, Map.of(displayName, strVal));
+        }));
 
         String qrCodeImage = "";
         if (QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type())) {
@@ -151,9 +140,9 @@ public class CredentialPDFGeneratorService {
         } else if (val instanceof List) {
             List<?> list = (List<?>) val;
             if (list.isEmpty()) return "";
-            if (list.get(0) instanceof String) {
+            if (list.getFirst() instanceof String) {
                 return String.join(", ", (List<String>) list);
-            } else if (list.get(0) instanceof Map<?, ?>) {
+            } else if (list.getFirst() instanceof Map<?, ?>) {
                 return list.stream()
                         .map(item -> (Map<?, ?>) item)
                         .filter(m -> LocaleUtils.matchesLocale(m.get("language").toString(), locale))
