@@ -109,7 +109,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
             IssuerConfig issuerConfig = null;
             try {
                 issuerConfig = issuersService.getIssuerConfig(issuerId, credential.getCredentialMetadata().getCredentialType());
-            } catch (ApiNotAccessibleException  e) {
+            } catch (InvalidIssuerIdException | ApiNotAccessibleException  e) {
                 log.error("Failed to fetch issuer details for issuerId: {}", issuerId, e);
             }
             return VerifiableCredentialResponseDTO.fromIssuerConfig(issuerConfig, locale, credential.getId());
