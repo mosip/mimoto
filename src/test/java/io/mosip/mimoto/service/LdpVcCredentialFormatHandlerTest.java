@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.service.impl.LdpVcCredentialFormatHandler;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.MockedStatic;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
@@ -27,6 +29,9 @@ class LdpVcCredentialFormatHandlerTest {
     private VCCredentialProperties vcCredentialProperties;
     private CredentialsSupportedResponse credentialsSupportedResponse;
     private CredentialDefinitionResponseDto credentialDefinition;
+    @Spy
+    private ObjectMapper objectMapper;
+
 
     @BeforeEach
     void setUp() {
