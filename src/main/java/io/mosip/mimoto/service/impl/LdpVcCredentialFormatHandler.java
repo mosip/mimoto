@@ -1,10 +1,12 @@
 package io.mosip.mimoto.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.service.CredentialFormatHandler;
 import io.mosip.mimoto.util.LocaleUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -16,9 +18,12 @@ import java.util.Map;
 @Component
 public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Override
     public Map<String, Object> extractCredentialClaims(VCCredentialResponse vcCredentialResponse) {
-        VCCredentialProperties credential = (VCCredentialProperties) vcCredentialResponse.getCredential();
+        VCCredentialProperties credential = objectMapper.convertValue(vcCredentialResponse.getCredential(), VCCredentialProperties.class);
         return (Map<String, Object>) credential.getCredentialSubject();
     }
 
