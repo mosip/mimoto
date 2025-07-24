@@ -9,7 +9,6 @@ import org.junit.Test;
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import static org.junit.Assert.*;
@@ -31,13 +30,12 @@ public class JwtGeneratorUtilTest {
         KeyPair keyPair = generator.generateKeyPair();
         List<Object> expectedClaims = Arrays.asList("client-id", "audience", "nonce-rs256");
 
-        String jwt = JwtGeneratorUtil.generateJwtUsingDBKeys(
+        String jwt = JwtGeneratorUtil.generateJwt(
                 SigningAlgorithm.RS256,
                 "audience",
                 "client-id",
                 "nonce-rs256",
-                keyPair.getPublic().getEncoded(),
-                keyPair.getPrivate().getEncoded()
+                keyPair
         );
 
         SignedJWT signedJWT = SignedJWT.parse(jwt);
@@ -58,13 +56,12 @@ public class JwtGeneratorUtilTest {
         KeyPair keyPair = generator.generateKeyPair();
         List<Object> expectedClaims = Arrays.asList("client-id", "audience", "nonce-es256");
 
-        String jwt = JwtGeneratorUtil.generateJwtUsingDBKeys(
+        String jwt = JwtGeneratorUtil.generateJwt(
                 SigningAlgorithm.ES256,
                 "audience",
                 "client-id",
                 "nonce-es256",
-                keyPair.getPublic().getEncoded(),
-                keyPair.getPrivate().getEncoded()
+                keyPair
         );
 
         SignedJWT signedJWT = SignedJWT.parse(jwt);
@@ -85,13 +82,12 @@ public class JwtGeneratorUtilTest {
         KeyPair keyPair = generator.generateKeyPair();
         List<Object> expectedClaims = Arrays.asList("client-id", "audience", "nonce-es256k");
 
-        String jwt = JwtGeneratorUtil.generateJwtUsingDBKeys(
+        String jwt = JwtGeneratorUtil.generateJwt(
                 SigningAlgorithm.ES256K,
                 "audience",
                 "client-id",
                 "nonce-es256k",
-                keyPair.getPublic().getEncoded(),
-                keyPair.getPrivate().getEncoded()
+                keyPair
         );
 
         SignedJWT signedJWT = SignedJWT.parse(jwt);
@@ -111,13 +107,12 @@ public class JwtGeneratorUtilTest {
         KeyPair keyPair = generator.generateKeyPair();
         List<Object> expectedClaims = Arrays.asList("client-id", "audience", "nonce-ed25519");
 
-        String jwt = JwtGeneratorUtil.generateJwtUsingDBKeys(
+        String jwt = JwtGeneratorUtil.generateJwt(
                 SigningAlgorithm.ED25519,
                 "audience",
                 "client-id",
                 "nonce-ed25519",
-                keyPair.getPublic().getEncoded(),
-                keyPair.getPrivate().getEncoded()
+                keyPair
         );
 
         SignedJWT signedJWT = SignedJWT.parse(jwt);

@@ -13,6 +13,6 @@ public interface CredentialRequestService {
             String cNonce,
             String walletId,
             String base64EncodedWalletKey,
-            Boolean isLoginFlow
+            boolean isLoginFlow
     ) throws Exception;
 }

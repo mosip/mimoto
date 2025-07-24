@@ -6,7 +6,7 @@ public enum SigningAlgorithm {
     RS256(JWSAlgorithm.RS256, "RSA"),
     ES256(JWSAlgorithm.ES256, "EC"),
     ES256K(JWSAlgorithm.ES256K, "EC"),
-    ED25519(JWSAlgorithm.EdDSA, "Ed25519");
+    ED25519(JWSAlgorithm.Ed25519, "Ed25519");
 
     private final JWSAlgorithm jwsAlgorithm;
     private final String keyFactoryAlgorithm;
