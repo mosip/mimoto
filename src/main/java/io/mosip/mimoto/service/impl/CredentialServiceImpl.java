@@ -58,8 +58,7 @@ public class CredentialServiceImpl implements CredentialService {
                 credentialIssuerConfiguration.getCredentialEndPoint(),
                 credentialIssuerConfiguration.getCredentialConfigurationsSupported());
         CredentialsSupportedResponse credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported().get(credentialType);
-        VCCredentialRequest vcCredentialRequest = credentialRequestService.buildRequest(issuerDTO, credentialIssuerWellKnownResponse, credentialsSupportedResponse, response.getC_nonce(), null, null, false
-        );
+        VCCredentialRequest vcCredentialRequest = credentialRequestService.buildRequest(issuerDTO, credentialIssuerWellKnownResponse, credentialsSupportedResponse, response.getC_nonce(), null, null, false);
         VCCredentialResponse vcCredentialResponse = downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
         boolean verificationStatus = issuerId.toLowerCase().contains("mock") || credentialVerifierService.verify(vcCredentialResponse);
         if (verificationStatus) {
