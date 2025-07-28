@@ -61,10 +61,8 @@ public class PresentationServiceImpl implements PresentationService {
                 .map(inputDescriptorDTO -> {
                     boolean matchingProofTypes = false;
 
-                    if ("ldp_vc".equalsIgnoreCase(vcCredentialResponse.getFormat())
-                            && vcCredentialResponse.getCredential() instanceof VCCredentialProperties ldpCredential
-                            && ldpCredential.getProof() != null) {
-
+                    if ("ldp_vc".equalsIgnoreCase(vcCredentialResponse.getFormat())) {
+                        VCCredentialProperties ldpCredential = objectMapper.convertValue(vcCredentialResponse.getCredential(), VCCredentialProperties.class);
                         matchingProofTypes = inputDescriptorDTO.getFormat().get("ldpVc").get("proofTypes")
                                 .stream()
                                 .anyMatch(proofType -> ldpCredential.getProof().getType().equals(proofType));
@@ -155,9 +153,8 @@ public class PresentationServiceImpl implements PresentationService {
         String fmt = vcRes.getFormat();
         List<InputDescriptorDTO> inputDescriptors = new ArrayList<>();
 
-        if (CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(fmt)
-                && vcRes.getCredential() instanceof VCCredentialProperties ldp) {
-
+        if (CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(fmt)) {
+            VCCredentialProperties ldp = objectMapper.convertValue(vcRes.getCredential(), VCCredentialProperties.class);
             String lastType = ldp.getType().get(ldp.getType().size() - 1);
             String proofType = Optional.ofNullable(ldp.getProof()).map(VCCredentialResponseProof::getType).orElse(null);
 
@@ -191,7 +188,7 @@ public class PresentationServiceImpl implements PresentationService {
                     )
             );
 
-            inputDescriptors.add(InputDescriptorDTO.builder()
+           inputDescriptors.add(InputDescriptorDTO.builder()
                     .id(UUID.randomUUID().toString())
                     .constraints(ConstraintsDTO.builder().limitDisclosure("required").fields(new FieldDTO[]{ field }).build())
                     .format((Map) sdFormat)
