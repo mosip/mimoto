@@ -108,7 +108,6 @@ public class MosipTestRunner {
 			
 			String testCasesToExecuteString = MimotoConfigManager.getproperty("testCasesToExecute");
 
-			
 			DependencyResolver.loadDependencies(getGlobalResourcePath() + "/" + "config/testCaseInterDependency.json");
 
 			if (!testCasesToExecuteString.isBlank()) {

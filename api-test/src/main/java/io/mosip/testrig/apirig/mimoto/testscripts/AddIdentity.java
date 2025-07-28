@@ -122,8 +122,8 @@ public class AddIdentity extends MimotoUtil implements ITest {
 				} catch (Exception e) {
 					logger.error(e.getMessage());
 				}
-			inputJson = replaceKeywordWithValue(inputJson, "$PHONENUMBERFORIDENTITY$", phoneNumber, testCaseName);
-			inputJson = replaceKeywordWithValue(inputJson, "$EMAILVALUE$", email, testCaseName);
+			inputJson = replaceKeywordWithValue(inputJson, "$PHONENUMBERFORIDENTITY$", phoneNumber);
+			inputJson = replaceKeywordWithValue(inputJson, "$EMAILVALUE$", email);
 		}
 		inputJson = MimotoUtil.inputstringKeyWordHandeler(inputJson, testCaseName);
 
