@@ -2,6 +2,11 @@ package io.mosip.mimoto.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
@@ -25,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -55,6 +61,12 @@ public class CredentialPDFGeneratorService {
     @Value("${mosip.inji.ovp.qrdata.pattern}")
     private String ovpQRDataPattern;
 
+    @Value("${mosip.inji.qr.code.height:500}")
+    Integer qrCodeHeight;
+
+    @Value("${mosip.inji.qr.code.width:500}")
+    Integer qrCodeWidth;
+
     private static final ECC DEFAULT_ECC_LEVEL = ECC.L;
 
     public ByteArrayInputStream generatePdfForVerifiableCredentials(String credentialType, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
@@ -81,7 +93,7 @@ public class CredentialPDFGeneratorService {
             VCCredentialResponse vcCredentialResponse,
             IssuerDTO issuerDTO,
             String dataShareUrl,
-            String credentialValidity) throws IOException {
+            String credentialValidity) throws IOException, WriterException {
 
         Map<String, Object> data = new HashMap<>();
         LinkedHashMap<String, Object> rowProperties = new LinkedHashMap<>();
@@ -180,12 +192,21 @@ public class CredentialPDFGeneratorService {
         return pixelPass.generateQRCode(objectMapper.writeValueAsString(vcCredentialResponse.getCredential()), DEFAULT_ECC_LEVEL, "");
     }
 
-    private String constructQRCodeWithAuthorizeRequest(VCCredentialResponse vcCredentialResponse, String dataShareUrl) throws JsonProcessingException {
+    private String constructQRCodeWithAuthorizeRequest(VCCredentialResponse vcCredentialResponse, String dataShareUrl) throws WriterException, JsonProcessingException {
         PresentationDefinitionDTO presentationDefinitionDTO = presentationService.constructPresentationDefinition(vcCredentialResponse);
         String presentationString = objectMapper.writeValueAsString(presentationDefinitionDTO);
         String qrData = String.format(ovpQRDataPattern, URLEncoder.encode(dataShareUrl, StandardCharsets.UTF_8), URLEncoder.encode(presentationString, StandardCharsets.UTF_8));
-        return pixelPass.generateQRCode(qrData, DEFAULT_ECC_LEVEL, "");
+        return constructQRCode(qrData);
     }
+
+    private String constructQRCode(String qrData) throws WriterException {
+        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+        BitMatrix bitMatrix = qrCodeWriter.encode(qrData, BarcodeFormat.QR_CODE, qrCodeWidth, qrCodeHeight);
+        BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
+        return Utilities.encodeToString(qrImage, "png");
+    }
+
+
 
 }
 

@@ -52,7 +52,7 @@ public class CredentialVerifierServiceTest {
                 .build();
 
         vcCredentialResponse = VCCredentialResponse.builder()
-                .format("LDP_VC")
+                .format(CredentialFormat.LDP_VC.getValue())
                 .credential(credentialProperties)
                 .build();
 
@@ -98,7 +98,7 @@ public class CredentialVerifierServiceTest {
     public void testVerifyWithNullCredential() throws Exception {
         // Arrange
         VCCredentialResponse nullCredentialResponse = VCCredentialResponse.builder()
-                .format("LDP_VC")
+                .format(CredentialFormat.LDP_VC.getValue())
                 .credential(null)
                 .build();
 
