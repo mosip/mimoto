@@ -68,11 +68,11 @@ fileignoreconfig:
 - filename: helm/mimoto/values.yaml
   checksum: 894215a6578dd6f27e22df1554ee87bfc7ef0f579d03c805f30d976546dfee35
 - filename: src/main/java/io/mosip/mimoto/util/JoseUtil.java
-  checksum: 65c4d7f9d4f28e7e4e5376e4f6cdce8b49b485c3ea2ab214f72d018d5d73b6aa
+  checksum: b6123f66cb7dbe208cb8d5f8b4b664d742c918608ec0ad22dfa3ab27ab9ec32e
 - filename: README.md
   checksum: 1f5deaa63f65986c215dedc9adc6021b4d15dd4e475802013816b130373be3d0
 - filename: docker-compose/docker-compose.yml
-  checksum: 857f5dcebdef810161b9ef09ad078c091c7d9969035bc45132975b296675dac9
+  checksum: de584fb85a433549761160a8e69f60b246fc466cbe1d059e74a31ef302b3c0d0
 - filename: src/test/java/io/mosip/mimoto/util/WalletValidatorTest.java
   checksum: 90dce7daa19f0eb9050194a3c77a88d449a83c337d9041bfdeb7bfded3bbd12c
 - filename: src/main/java/io/mosip/mimoto/exception/ErrorConstants.java
@@ -113,12 +113,14 @@ fileignoreconfig:
   checksum: c669189f60e8fa5f0cb47d3c7cbb4ab34d87afbb6fb4de65b7eb06c691a41034
 - filename: src/main/java/io/mosip/mimoto/constant/SigningAlgorithm.java
   checksum: fcb462b4baec6db1aa48c16fad923dc7a20407aa072efeb3879c236e7a4d74fe
+- filename: api-test/src/main/resources/config/IDRepo.properties
+  checksum: dfdffc817362f6c6067a5c2ce5db9c6759faebaf754590deea307bbb71e81381
 - filename: src/test/resources/application-test.properties
   checksum: ef0f61c5a977aef0e7c71d5c4761805654eb7abbd44affa3814bec924cbc340a
-- filename: src/main/resources/application-default.properties
-  checksum: 405ddb92ddd6b338520776e1cf77e61695276ee63a7c906a3dae3a54f6039f23
-- filename: docker-compose/config/mimoto-default.properties
-  checksum: 0c0e35e45417b2ed398130bf01687cf606c05871d72e3085fd79ddc2909ee113
 - filename: src/main/resources/application-local.properties
-  checksum: 9db71445207d5da03ec7d51ab9738cf352d4f5a4c7d54cb60005794880e72735
+  checksum: 89f28c12821d470c2b7744dc489f34504d8035886de0a722165ab935749fb6a7
+- filename: docker-compose/config/mimoto-default.properties
+  checksum: 1360623bc85df4564465e1ac8fde54b4a40d3708658e1526f8406e76db8e912e
+- filename: src/main/resources/application-default.properties
+  checksum: 307383d2117b35792b9254b356ad7383a90d783a859c53ff0104acf4ef64e74f
 version: ""
