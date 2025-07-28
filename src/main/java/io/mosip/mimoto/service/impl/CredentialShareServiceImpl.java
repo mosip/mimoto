@@ -5,7 +5,6 @@ import io.mosip.biometrics.util.CommonUtil;
 import io.mosip.kernel.biometrics.constant.BiometricType;
 import io.mosip.kernel.biometrics.entities.BDBInfo;
 import io.mosip.kernel.biometrics.entities.BIR;
-import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.kernel.core.websub.spi.PublisherClient;
 import io.mosip.mimoto.constant.*;
 import io.mosip.mimoto.dto.CryptoWithPinRequestDto;
@@ -110,9 +109,6 @@ public class CredentialShareServiceImpl implements CredentialShareService {
 
     @Value("${mosip.datashare.policy.id}")
     private String policyId;
-
-    @Value("${mosip.template-language}")
-    private String templateLang;
 
     @Value("#{'${mosip.mandatory-languages:}'.concat('${mosip.optional-languages:}')}")
     private String supportedLang;

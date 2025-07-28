@@ -46,7 +46,7 @@ fileignoreconfig:
 - filename: src/main/java/io/mosip/mimoto/exception/PlatformErrorMessages.java
   checksum: eddc1f3d44e8b8676c5c4ff6ed94ba9018f3a562d4e17908234704493ec6b35e
 - filename: src/main/java/io/mosip/mimoto/service/impl/CredentialShareServiceImpl.java
-  checksum: 4b17319b2ec9e41c943798700d7bf382281f1dd752246e635991f398a9bc9234
+  checksum: 24901c66caf404dd60e5c3b5db06dee262c7260482c7fb858791b548e96da172
 - filename: src/main/java/io/mosip/mimoto/util/RestApiClient.java
   checksum: 77b8afdefbb1f8ff56e140836e6713d150ac48f99c6778e43bc2854e5fcd4732
 - filename: src/main/java/io/mosip/mimoto/util/CryptoUtil.java
@@ -115,10 +115,10 @@ fileignoreconfig:
   checksum: fcb462b4baec6db1aa48c16fad923dc7a20407aa072efeb3879c236e7a4d74fe
 - filename: src/test/resources/application-test.properties
   checksum: ef0f61c5a977aef0e7c71d5c4761805654eb7abbd44affa3814bec924cbc340a
-- filename: src/main/resources/application-local.properties
-  checksum: f8ae0c33f974dd4da6441bfde0c2c37b1ca4080a6916205d8eab46b2b2475269
 - filename: src/main/resources/application-default.properties
-  checksum: 2e50ff6665114084b9b5341cac125199749e32d3872c7cd0fe6a434ae74e840e
+  checksum: 91afa294bd37f37c7306c75fe32e4446b65b5288c75d04be39974936ceb4a736
+- filename: src/main/resources/application-local.properties
+  checksum: 4adde2f5a00c46e28edce60fe6e869e6fc97f5f8e8d0628e2c22e9c8199c15b2
 - filename: docker-compose/config/mimoto-default.properties
-  checksum: 807f2d2e729d5b2e991c9ab3b17ae00bad04a6afd7aa94b7591099de29a24ebd
+  checksum: 0aa34f11f16708b5cf84e27c46a5bd6f168cfabc126ad7143c13520903a7264c
 version: ""
