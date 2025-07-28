@@ -17,7 +17,7 @@ import java.util.*;
 
 @Slf4j
 @Component
-public class SdJwtCredentialFormatHandler implements CredentialFormatHandler {
+public class DcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -169,11 +169,10 @@ public class SdJwtCredentialFormatHandler implements CredentialFormatHandler {
     }
 
     @Override
-    public VCCredentialRequest configureCredentialRequest(VCCredentialRequest.VCCredentialRequestBuilder builder,
-                                                          CredentialsSupportedResponse credentialsSupportedResponse,
-                                                          String credentialType) {
-        builder.vct(credentialType);
-        return builder.build();
+    public VCCredentialRequest configureCredentialRequest(VCCredentialRequestProof proof, CredentialsSupportedResponse credentialsSupportedResponse, String credentialType) {
+
+        return VCCredentialRequest.builder().format(getSupportedFormat())
+                .proof(proof).vct(credentialType).build();
     }
 
     @Override

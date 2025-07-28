@@ -80,22 +80,24 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
     }
 
     @Override
-    public VCCredentialRequest configureCredentialRequest(VCCredentialRequest.VCCredentialRequestBuilder builder,
-                                           CredentialsSupportedResponse credentialsSupportedResponse,
-                                           String credentialType) {
-        // LDP VC specific configuration
+    public VCCredentialRequest configureCredentialRequest(
+            VCCredentialRequestProof proof,
+            CredentialsSupportedResponse credentialsSupportedResponse,
+            String credentialType) {
+
         List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
         if (credentialContext == null || credentialContext.isEmpty()) {
             credentialContext = List.of("https://www.w3.org/2018/credentials/v1");
         }
 
-        builder.credentialDefinition(
-                VCCredentialDefinition.builder()
+        return VCCredentialRequest.builder()
+                .format(getSupportedFormat())  // Using internal format
+                .proof(proof)
+                .credentialDefinition(VCCredentialDefinition.builder()
                         .type(credentialsSupportedResponse.getCredentialDefinition().getType())
                         .context(credentialContext)
-                        .build()
-        );
-        return builder.build();
+                        .build())
+                .build();
     }
 
     @Override

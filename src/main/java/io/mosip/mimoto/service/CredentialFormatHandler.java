@@ -1,9 +1,6 @@
 package io.mosip.mimoto.service;
 
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerDisplayResponse;
-import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
-import io.mosip.mimoto.dto.mimoto.VCCredentialRequest;
-import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
+import io.mosip.mimoto.dto.mimoto.*;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -22,12 +19,12 @@ public interface CredentialFormatHandler {
             CredentialsSupportedResponse credentialsSupportedResponse,
             String userLocale);
 
-    /**
-     * Configure format-specific fields in the credential request builder
-     */
-    VCCredentialRequest configureCredentialRequest(VCCredentialRequest.VCCredentialRequestBuilder builder,
-                                    CredentialsSupportedResponse credentialsSupportedResponse,
-                                    String credentialType);
+        /**
+         * Configure format-specific fields in the credential request builder
+         */
+        VCCredentialRequest configureCredentialRequest(VCCredentialRequestProof proof,
+                                                       CredentialsSupportedResponse credentialsSupportedResponse,
+                                                       String credentialType);
 
     /**
      * Get the supported format for this processor

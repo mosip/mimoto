@@ -83,6 +83,23 @@ public class PresentationServiceImpl implements PresentationService {
                                 throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
                             }
                         }
+                    } else if (CredentialFormat.VC_SD_JWT.getFormat().equalsIgnoreCase(vcCredentialResponse.getFormat())
+                            || CredentialFormat.DC_SD_JWT.getFormat().equalsIgnoreCase(vcCredentialResponse.getFormat())) {
+
+                        String sdJwt = (String) vcCredentialResponse.getCredential(); // assuming credential is a raw SD-JWT string or a structured SD-JWT object
+
+                        // Construct presentation_submission (update to handle sd_jwt_vc)
+                        String presentationSubmission = null;
+                        try {
+                            presentationSubmission = constructPresentationSubmissionForSDJWT(presentationDefinitionDTO, inputDescriptorDTO);
+                        } catch (JsonProcessingException e) {
+                            throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
+                        }
+
+                        return String.format(injiOvpRedirectURLPattern,
+                                presentationRequestDTO.getRedirectUri(),
+                                Base64.getUrlEncoder().encodeToString(sdJwt.getBytes(StandardCharsets.UTF_8)),
+                                URLEncoder.encode(presentationSubmission, StandardCharsets.UTF_8));
                     }
                     log.info("No Credentials Matched the VP request.");
                     throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
@@ -101,6 +118,22 @@ public class PresentationServiceImpl implements PresentationService {
                 .type(Collections.singletonList("VerifiablePresentation"))
                 .context(Collections.singletonList("https://www.w3.org/2018/credentials/v1"))
                 .build();
+    }
+
+    private String constructPresentationSubmissionForSDJWT(PresentationDefinitionDTO presentationDefinitionDTO, InputDescriptorDTO inputDescriptorDTO) throws JsonProcessingException {
+        SubmissionDescriptorDTO submissionDescriptorDTO = SubmissionDescriptorDTO.builder()
+                .id(inputDescriptorDTO.getId())
+                .format("vc_sd_jwt") // or "dc_sd_jwt" depending on credential
+                .path("$.") // Assuming SD-JWT is the root
+                .build();
+
+        PresentationSubmissionDTO presentationSubmissionDTO = PresentationSubmissionDTO.builder()
+                .id(UUID.randomUUID().toString())
+                .definition_id(presentationDefinitionDTO.getId())
+                .descriptorMap(Collections.singletonList(submissionDescriptorDTO))
+                .build();
+
+        return objectMapper.writeValueAsString(presentationSubmissionDTO);
     }
 
     private String constructPresentationSubmission(VerifiablePresentationDTO verifiablePresentationDTO, PresentationDefinitionDTO presentationDefinitionDTO, InputDescriptorDTO inputDescriptorDTO) throws JsonProcessingException {

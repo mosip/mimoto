@@ -24,11 +24,6 @@ public class CredentialFormatHandlerFactory {
     }
 
     public CredentialFormatHandler getHandler(String format) {
-        if (CredentialFormat.VC_SD_JWT.getFormat().equals(format)) {
-            format = CredentialFormat.DC_SD_JWT.getFormat();
-        }
-
-
         CredentialFormatHandler processor = handlers.get(format);
         if (processor == null) {
             throw new IllegalArgumentException("Unsupported credential format: " + format);

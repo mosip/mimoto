@@ -73,16 +73,14 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No proof type available"));
 
-        VCCredentialRequest.VCCredentialRequestBuilder builder = VCCredentialRequest.builder()
-                .format(format)
-                .proof(VCCredentialRequestProof.builder()
-                        .proofType(proofType)
-                        .jwt(jwt)
-                        .build());
+        VCCredentialRequestProof proof = VCCredentialRequestProof.builder()
+                .proofType(proofType)
+                .jwt(jwt)
+                .build();
 
-        // Use registry to get appropriate handler and configure format-specific fields
         CredentialFormatHandler handler = credentialFormatHandlerFactory.getHandler(format);
-        return handler.configureCredentialRequest(builder, credentialsSupportedResponse, credentialType);
+
+        return handler.configureCredentialRequest(proof, credentialsSupportedResponse, credentialType);
     }
 
     private SigningAlgorithm resolveAlgorithm(CredentialsSupportedResponse credentialsSupportedResponse) {

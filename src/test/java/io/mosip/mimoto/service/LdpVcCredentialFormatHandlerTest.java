@@ -314,10 +314,14 @@ class LdpVcCredentialFormatHandlerTest {
         credentialsSupportedResponse.setCredentialDefinition(credentialDefinition);
 
         String credentialType = "IdentityCredential";
+        VCCredentialRequestProof proof = VCCredentialRequestProof.builder()
+                .proofType("jwt")
+                .jwt("sample.jwt.token")
+                .build();
 
         // When
         VCCredentialRequest result = ldpVcCredentialFormatHandler.configureCredentialRequest(
-                builder, credentialsSupportedResponse, credentialType);
+                proof, credentialsSupportedResponse, credentialType);
 
         // Then
         assertNotNull(result);
@@ -338,10 +342,14 @@ class LdpVcCredentialFormatHandlerTest {
         credentialsSupportedResponse.setCredentialDefinition(credentialDefinition);
 
         String credentialType = "IdentityCredential";
+        VCCredentialRequestProof proof = VCCredentialRequestProof.builder()
+                .proofType("jwt")  // or whatever proof type you expect
+                .jwt("sample.jwt.token")
+                .build();
 
         // When
         VCCredentialRequest result = ldpVcCredentialFormatHandler.configureCredentialRequest(
-                builder, credentialsSupportedResponse, credentialType);
+                proof, credentialsSupportedResponse, credentialType);
 
         // Then
         assertNotNull(result);
@@ -362,10 +370,14 @@ class LdpVcCredentialFormatHandlerTest {
         credentialsSupportedResponse.setCredentialDefinition(credentialDefinition);
 
         String credentialType = "IdentityCredential";
+        VCCredentialRequestProof proof = VCCredentialRequestProof.builder()
+                .proofType("jwt")  // or whatever proof type you expect
+                .jwt("sample.jwt.token")
+                .build();
 
         // When
         VCCredentialRequest result = ldpVcCredentialFormatHandler.configureCredentialRequest(
-                builder, credentialsSupportedResponse, credentialType);
+                proof, credentialsSupportedResponse, credentialType);
 
         // Then
         assertNotNull(result);
