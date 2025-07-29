@@ -338,7 +338,7 @@ class DcSdJwtCredentialFormatHandlerTest {
     }
 
     @Test
-    void configureCredentialRequestShouldSetVctAndReturnBuiltRequest() {
+    void buildCredentialRequestShouldSetVctAndReturnBuiltRequest() {
         // Given
         VCCredentialRequest.VCCredentialRequestBuilder builder = VCCredentialRequest.builder();
         VCCredentialRequestProof proof = VCCredentialRequestProof.builder()
@@ -348,7 +348,7 @@ class DcSdJwtCredentialFormatHandlerTest {
         String credentialType = "IdentityCredential";
 
         // When
-        VCCredentialRequest result = dcSdJwtCredentialFormatHandler.configureCredentialRequest(
+        VCCredentialRequest result = dcSdJwtCredentialFormatHandler.buildCredentialRequest(
                 proof, credentialsSupportedResponse, credentialType);
 
         // Then

@@ -20,11 +20,11 @@ public interface CredentialFormatHandler {
             String userLocale);
 
         /**
-         * Configure format-specific fields in the credential request builder
+         * Build format-specific fields in the credential request object
          */
-        VCCredentialRequest configureCredentialRequest(VCCredentialRequestProof proof,
-                                                       CredentialsSupportedResponse credentialsSupportedResponse,
-                                                       String credentialType);
+        VCCredentialRequest buildCredentialRequest(VCCredentialRequestProof proof,
+                                                   CredentialsSupportedResponse credentialsSupportedResponse,
+                                                   String credentialType);
 
     /**
      * Get the supported format for this processor

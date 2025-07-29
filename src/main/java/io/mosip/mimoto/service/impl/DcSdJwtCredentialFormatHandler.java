@@ -169,7 +169,7 @@ public class DcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
     }
 
     @Override
-    public VCCredentialRequest configureCredentialRequest(VCCredentialRequestProof proof, CredentialsSupportedResponse credentialsSupportedResponse, String credentialType) {
+    public VCCredentialRequest buildCredentialRequest(VCCredentialRequestProof proof, CredentialsSupportedResponse credentialsSupportedResponse, String credentialType) {
 
         return VCCredentialRequest.builder().format(getSupportedFormat())
                 .proof(proof).vct(credentialType).build();

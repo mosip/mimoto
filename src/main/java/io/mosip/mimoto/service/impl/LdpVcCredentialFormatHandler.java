@@ -80,7 +80,7 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
     }
 
     @Override
-    public VCCredentialRequest configureCredentialRequest(
+    public VCCredentialRequest buildCredentialRequest(
             VCCredentialRequestProof proof,
             CredentialsSupportedResponse credentialsSupportedResponse,
             String credentialType) {

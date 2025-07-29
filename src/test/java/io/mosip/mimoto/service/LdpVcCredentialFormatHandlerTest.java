@@ -302,7 +302,7 @@ class LdpVcCredentialFormatHandlerTest {
     }
 
     @Test
-    void configureCredentialRequestWithValidCredentialsSupportedResponseShouldReturnConfiguredRequest() {
+    void buildCredentialRequestWithValidCredentialsSupportedResponseShouldReturnConfiguredRequest() {
         // Given
         VCCredentialRequest.VCCredentialRequestBuilder builder = VCCredentialRequest.builder();
 
@@ -320,7 +320,7 @@ class LdpVcCredentialFormatHandlerTest {
                 .build();
 
         // When
-        VCCredentialRequest result = ldpVcCredentialFormatHandler.configureCredentialRequest(
+        VCCredentialRequest result = ldpVcCredentialFormatHandler.buildCredentialRequest(
                 proof, credentialsSupportedResponse, credentialType);
 
         // Then
@@ -331,7 +331,7 @@ class LdpVcCredentialFormatHandlerTest {
     }
 
     @Test
-    void configureCredentialRequestWithNullContextShouldUseDefaultContext() {
+    void buildCredentialRequestWithNullContextShouldUseDefaultContext() {
         // Given
         VCCredentialRequest.VCCredentialRequestBuilder builder = VCCredentialRequest.builder();
 
@@ -348,7 +348,7 @@ class LdpVcCredentialFormatHandlerTest {
                 .build();
 
         // When
-        VCCredentialRequest result = ldpVcCredentialFormatHandler.configureCredentialRequest(
+        VCCredentialRequest result = ldpVcCredentialFormatHandler.buildCredentialRequest(
                 proof, credentialsSupportedResponse, credentialType);
 
         // Then
@@ -359,7 +359,7 @@ class LdpVcCredentialFormatHandlerTest {
     }
 
     @Test
-    void configureCredentialRequestWithEmptyContextShouldUseDefaultContext() {
+    void buildCredentialRequestWithEmptyContextShouldUseDefaultContext() {
         // Given
         VCCredentialRequest.VCCredentialRequestBuilder builder = VCCredentialRequest.builder();
 
@@ -376,7 +376,7 @@ class LdpVcCredentialFormatHandlerTest {
                 .build();
 
         // When
-        VCCredentialRequest result = ldpVcCredentialFormatHandler.configureCredentialRequest(
+        VCCredentialRequest result = ldpVcCredentialFormatHandler.buildCredentialRequest(
                 proof, credentialsSupportedResponse, credentialType);
 
         // Then

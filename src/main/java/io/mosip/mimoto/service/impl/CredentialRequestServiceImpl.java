@@ -80,7 +80,7 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
 
         CredentialFormatHandler handler = credentialFormatHandlerFactory.getHandler(format);
 
-        return handler.configureCredentialRequest(proof, credentialsSupportedResponse, credentialType);
+        return handler.buildCredentialRequest(proof, credentialsSupportedResponse, credentialType);
     }
 
     private SigningAlgorithm resolveAlgorithm(CredentialsSupportedResponse credentialsSupportedResponse) {
