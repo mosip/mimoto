@@ -631,4 +631,21 @@ public class WalletCredentialsControllerTest {
         verifiableCredentialRequest.setRedirectUri(redirectUri);
         verifiableCredentialRequest.setCodeVerifier(codeVerifier);
     }
+
+    @Test
+    public void shouldThrowInvalidRequestForInvalidLocaleCode() throws Exception {
+        buildVerifiableCredentialRequest(issuer, credentialConfigurationId, code, grantType, redirectUri, codeVerifier);
+
+        // "zz" is not a valid ISO 639-1 language code
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header("Accept-Language", "zz")
+                        .content(createRequestBody(verifiableCredentialRequest))
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("Locale must be a valid 2-letter code"));
+    }
 }
