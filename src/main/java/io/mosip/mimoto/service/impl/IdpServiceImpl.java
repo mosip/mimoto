@@ -18,6 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpStatus;
 
 import static io.mosip.mimoto.exception.ErrorConstants.*;
 
@@ -98,7 +99,11 @@ public class IdpServiceImpl implements IdpService {
         } catch (InvalidIssuerIdException e) {
             throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Invalid issuer");
         } catch (HttpClientErrorException e) {
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Request failed due to invalid input detected by an external service.");
+            if (e.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Request failed due to invalid input detected by an external service.");
+            } else {
+                throw e;
+            }
         }
     }
 

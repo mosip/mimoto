@@ -70,9 +70,9 @@ public class LocaleUtils {
     }
 
     public static boolean isValidLanguageCode(String code) {
-        return code != null &&
+        return (code != null &&
                 code.length() == 2 &&
                 code.matches("[a-zA-Z]{2}") &&
-                java.util.Arrays.asList(Locale.getISOLanguages()).contains(code.toLowerCase());
+                java.util.Arrays.asList(Locale.getISOLanguages()).contains(code.toLowerCase()));
     }
 }

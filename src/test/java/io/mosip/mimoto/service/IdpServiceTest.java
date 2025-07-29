@@ -138,11 +138,10 @@ public class IdpServiceTest {
         when(restTemplate.postForObject(eq("https://example.com/token"), any(HttpEntity.class), eq(TokenResponseDTO.class)))
                 .thenReturn(null);
 
-        Map<String, String> validParams = new HashMap<>(params);
-        validParams.put("code_verifier", "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk");
+        params.put("code_verifier", "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk");
 
         IdpException ex = assertThrows(IdpException.class, () ->
-                idpService.getTokenResponse(validParams));
+                idpService.getTokenResponse(params));
 
         assertEquals("RESIDENT-APP-034 --> Exception occurred while performing the authorization", ex.getMessage());
     }
@@ -168,10 +167,9 @@ public class IdpServiceTest {
         when(restTemplate.postForObject(eq("https://example.com/token"), any(HttpEntity.class), eq(TokenResponseDTO.class)))
                 .thenReturn(tokenResponseDTO);
 
-        Map<String, String> validParams = new HashMap<>(params);
-        validParams.put("code_verifier", "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk");
+        params.put("code_verifier", "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk");
 
-        TokenResponseDTO response = idpService.getTokenResponse(validParams);
+        TokenResponseDTO response = idpService.getTokenResponse(params);
 
         assertNotNull(response);
         assertEquals(tokenResponseDTO, response);
