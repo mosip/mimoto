@@ -1,7 +1,6 @@
 package io.mosip.mimoto.service.impl;
 
 
-import java.nio.charset.StandardCharsets;
 import com.authlete.sd.Disclosure;
 import com.authlete.sd.SDJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Slf4j
@@ -40,11 +40,29 @@ public class DcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
 
         LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties = new LinkedHashMap<>();
 
+        // Remove "credentialSubject" and "disclosures" from credentialProperties
+        Map<String, Object> filteredCredentialProperties = new HashMap<>();
+
+        credentialProperties.forEach((outerKey, outerValue) -> {
+            if (outerValue instanceof Map) {
+                Map<?, ?> innerMap = (Map<?, ?>) outerValue;
+                for (Map.Entry<?, ?> innerEntry : innerMap.entrySet()) {
+                    if (innerEntry.getKey() instanceof String) {
+                        filteredCredentialProperties.put((String) innerEntry.getKey(), innerEntry.getValue());
+                    }
+                }
+            } else {
+                filteredCredentialProperties.put(outerKey, outerValue);
+            }
+        });
+
+        // Extract raw claims and convert to DTOs
         Map<String, Object> rawClaims = credentialsSupportedResponse.getClaims();
         if (rawClaims != null && rawClaims.size() == 1
                 && rawClaims.values().iterator().next() instanceof Map) {
             rawClaims = (Map<String, Object>) rawClaims.values().iterator().next();
         }
+
         Map<String, CredentialDisplayResponseDto> convertedClaimsMap = new HashMap<>();
         if (rawClaims != null) {
             rawClaims.forEach((key, value) -> {
@@ -53,19 +71,16 @@ public class DcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
             });
         }
 
-        Map<String, CredentialDisplayResponseDto> displayConfigMap = convertedClaimsMap;
-        List<String> orderedKeys = credentialsSupportedResponse.getOrder();
-
-        if (displayConfigMap == null) {
+        if (convertedClaimsMap.isEmpty()) {
             log.warn("No display configuration found for SD-JWT format");
             return displayProperties;
         }
 
-        String resolvedLocale = LocaleUtils.resolveLocaleWithFallback(displayConfigMap, userLocale);
+        String resolvedLocale = LocaleUtils.resolveLocaleWithFallback(convertedClaimsMap, userLocale);
         LinkedHashMap<String, CredentialIssuerDisplayResponse> localizedDisplayMap = new LinkedHashMap<>();
 
         if (resolvedLocale != null) {
-            displayConfigMap.forEach((key, dto) -> {
+            convertedClaimsMap.forEach((key, dto) -> {
                 dto.getDisplay().stream()
                         .filter(display -> LocaleUtils.matchesLocale(display.getLocale(), resolvedLocale))
                         .findFirst()
@@ -73,13 +88,14 @@ public class DcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
             });
         }
 
+        List<String> orderedKeys = credentialsSupportedResponse.getOrder();
         List<String> fieldKeys = (orderedKeys != null && !orderedKeys.isEmpty())
                 ? orderedKeys
                 : new ArrayList<>(localizedDisplayMap.keySet());
 
         for (String key : fieldKeys) {
             CredentialIssuerDisplayResponse display = localizedDisplayMap.get(key);
-            Object value = credentialProperties.get(key);
+            Object value = filteredCredentialProperties.get(key);
             if (display != null && value != null) {
                 displayProperties.put(key, Map.of(display, value));
             }
@@ -88,34 +104,41 @@ public class DcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
         return displayProperties;
     }
 
-    private Map<String, Object> extractClaimsFromSdJwt(String sdJwtString) {
-        try {
-            // Parse the SD-JWT using Authlete library
-            SDJWT sdJwt = SDJWT.parse(sdJwtString);
 
-            // Get all disclosed claims by processing disclosures
+    public Map<String, Object> extractClaimsFromSdJwt(String sdJwtString) {
+        try {
+            SDJWT sdJwt = SDJWT.parse(sdJwtString);
             Map<String, Object> disclosedClaims = new HashMap<>();
 
-            // Manually parse the JWT payload from the credential JWT
+            // Parse JWT payload
             String credentialJwt = sdJwt.getCredentialJwt();
             if (credentialJwt != null) {
                 Map<String, Object> jwtPayload = parseJwtPayload(credentialJwt);
                 if (jwtPayload != null) {
-                    disclosedClaims.putAll(jwtPayload);
+                    // Check if 'credentialSubject' is present
+                    if (jwtPayload.containsKey("credentialSubject")) {
+                        Object credentialSubject = jwtPayload.get("credentialSubject");
+                        if (credentialSubject instanceof Map) {
+                            disclosedClaims.putAll((Map<String, Object>) credentialSubject);
+                        }
+                    } else {
+                        // No credentialSubject, put all claims at root level
+                        disclosedClaims.putAll(jwtPayload);
+                    }
                 }
             }
 
-            // Process disclosures to get selectively disclosed claims
+            // Add disclosures
             List<Disclosure> disclosures = sdJwt.getDisclosures();
+            Map<String, Object> disclosuresClaims = new HashMap<>();
             if (disclosures != null && !disclosures.isEmpty()) {
                 for (Disclosure disclosure : disclosures) {
                     try {
-                        // Get the claim name and value from disclosure
                         String claimName = disclosure.getClaimName();
                         Object claimValue = disclosure.getClaimValue();
 
                         if (claimName != null && claimValue != null) {
-                            disclosedClaims.put(claimName, claimValue);
+                            disclosuresClaims.put(claimName, claimValue);
                         }
                     } catch (Exception e) {
                         log.warn("Failed to process disclosure: {}", e.getMessage());
@@ -123,25 +146,16 @@ public class DcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
                 }
             }
 
-            // Extract credentialSubject if present, otherwise return all claims
-            Object credentialSubject = disclosedClaims.get("credentialSubject");
-            if (credentialSubject instanceof Map) {
-                return (Map<String, Object>) credentialSubject;
-            } else {
-                // Remove JWT standard claims that are not part of credential data
-                Map<String, Object> credentialClaims = new HashMap<>(disclosedClaims);
-                credentialClaims.remove("iss");
-                credentialClaims.remove("sub");
-                credentialClaims.remove("aud");
-                credentialClaims.remove("exp");
-                credentialClaims.remove("nbf");
-                credentialClaims.remove("iat");
-                credentialClaims.remove("jti");
-                credentialClaims.remove("_sd");
-                credentialClaims.remove("_sd_alg");
+            // Remove standard JWT claims and SD-JWT metadata
+            List<String> metadataKeys = Arrays.asList("iss", "sub", "aud", "exp", "nbf", "iat", "jti", "_sd", "_sd_alg");
+            metadataKeys.forEach(disclosedClaims::remove);
 
-                return credentialClaims;
-            }
+            // Separate credentialSubject if present
+            Map<String, Object> result = new HashMap<>();
+            result.put("credentialSubject", disclosedClaims);
+            result.put("disclosures", disclosuresClaims);
+
+            return result;
 
         } catch (IllegalArgumentException e) {
             log.error("Error parsing SD-JWT with Authlete library: {}", e.getMessage(), e);
@@ -179,4 +193,5 @@ public class DcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
     public String getSupportedFormat() {
         return CredentialFormat.DC_SD_JWT.getFormat();
     }
+
 }
