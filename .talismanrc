@@ -124,5 +124,5 @@ fileignoreconfig:
 - filename: src/main/resources/application-default.properties
   checksum: 33fe6537d995d7b3093701d9e02241c823a8d208b8c60e0d4749799a28ae70b5
 - filename: README.md
-  checksum: 58a94d44f8a2e0e03f2d5680d3a5f87445c04bed745207675cb63853a6ee5eba
+  checksum: 17ddc38e7aad70d58117acc7dc3d88a4eb5b44cf15e646b46c2213f80096911c
 version: ""

@@ -22,7 +22,10 @@ The project requires JDK 21, postgres, redis and google client credentials
     spring.security.oauth2.client.registration.google.client-id=
     spring.security.oauth2.client.registration.google.client-secret=
     ```
-3. Keystore(oidckeystore.p12) Configuration:
+3. Add Id providers as issuers in `mimoto-issuers-config.json`. For each provider, include the token_endpoint property, which should be an HTTPS URL. This can either be an exposed domain or, for local setups, an ngrok URL if you're using mimoto for local testing with the Inji mobile wallet.
+4. Add or update the verifiers clientId, redirect and response Uris in `mimoto-trusted-verifiers.json` for Online Sharing.
+5. Use the esignet services running on any environment and update esignet host references in `mimoto-default.properties` and `mimoto-issuers-config.json`.
+6. Keystore(oidckeystore.p12) Configuration:
    - Create a folder named `certs` in the root directory of the project and place your PKCS#12 keystore file(oidckeystore.p12) which is being created as part of OIDC client onboarding. Refer to this https://docs.inji.io/inji-wallet/inji-mobile/technical-overview/customization-overview/credential_providers documentation to get the instructions on how to generate the keystore file. 
    - After adding keystore file update the following properties in application-local.properties file.
     ```
@@ -30,15 +33,15 @@ The project requires JDK 21, postgres, redis and google client credentials
     mosip.kernel.keymanager.hsm.config-path=<path to the keystore file>
     mosip.kernel.keymanager.hsm.keystore-pass=<your-keystore-password> 
     ```
-4. Run the SQLs using <db name>/deploy.sh script. from [db_scripts folder](db_scripts/inji_mimoto)
+7. Run the SQLs using <db name>/deploy.sh script. from [db_scripts folder](db_scripts/inji_mimoto)
    ```
    ./deploy.sh deploy.properties
    ```
-5. Build the jar
+8. Build the jar
     ```
     mvn clean install -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true
     ```
-6. Run following command 
+9. Run following command 
     ```
     mvn spring-boot:run -Dspring.profiles.active=local
     ```
