@@ -22,6 +22,25 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
     private ObjectMapper objectMapper;
 
     @Override
+    public String getSupportedFormat() {
+        return CredentialFormat.LDP_VC.getFormat();
+    }
+
+    @Override
+    public VCCredentialRequest buildCredentialRequest(VCCredentialRequestProof proof, CredentialsSupportedResponse credentialsSupportedResponse, String credentialType) {
+
+        List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
+        if (credentialContext == null || credentialContext.isEmpty()) {
+            credentialContext = List.of("https://www.w3.org/2018/credentials/v1");
+        }
+
+        return VCCredentialRequest.builder().format(getSupportedFormat())  // Using internal format
+                .proof(proof).credentialDefinition(VCCredentialDefinition.builder()
+                        .type(credentialsSupportedResponse.getCredentialDefinition().getType())
+                        .context(credentialContext).build()).build();
+    }
+
+    @Override
     public Map<String, Object> extractCredentialClaims(VCCredentialResponse vcCredentialResponse) {
         VCCredentialProperties credential = objectMapper.convertValue(vcCredentialResponse.getCredential(), VCCredentialProperties.class);
         return (Map<String, Object>) credential.getCredentialSubject();
@@ -77,31 +96,5 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
         }
 
         return displayProperties;
-    }
-
-    @Override
-    public VCCredentialRequest buildCredentialRequest(
-            VCCredentialRequestProof proof,
-            CredentialsSupportedResponse credentialsSupportedResponse,
-            String credentialType) {
-
-        List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
-        if (credentialContext == null || credentialContext.isEmpty()) {
-            credentialContext = List.of("https://www.w3.org/2018/credentials/v1");
-        }
-
-        return VCCredentialRequest.builder()
-                .format(getSupportedFormat())  // Using internal format
-                .proof(proof)
-                .credentialDefinition(VCCredentialDefinition.builder()
-                        .type(credentialsSupportedResponse.getCredentialDefinition().getType())
-                        .context(credentialContext)
-                        .build())
-                .build();
-    }
-
-    @Override
-    public String getSupportedFormat() {
-        return CredentialFormat.LDP_VC.getFormat();
     }
 }

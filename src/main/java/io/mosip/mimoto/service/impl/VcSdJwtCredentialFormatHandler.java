@@ -23,6 +23,17 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
     private ObjectMapper objectMapper;
 
     @Override
+    public String getSupportedFormat() {
+        return CredentialFormat.VC_SD_JWT.getFormat();
+    }
+
+
+    @Override
+    public VCCredentialRequest buildCredentialRequest(VCCredentialRequestProof proof, CredentialsSupportedResponse credentialsSupportedResponse, String credentialType) {
+        return VCCredentialRequest.builder().format(getSupportedFormat()).proof(proof).vct(credentialType).build();
+    }
+
+    @Override
     public Map<String, Object> extractCredentialClaims(VCCredentialResponse vcCredentialResponse) {
         Object credential = vcCredentialResponse.getCredential();
         if (credential instanceof String) {
@@ -104,7 +115,6 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
         return displayProperties;
     }
 
-
     public Map<String, Object> extractClaimsFromSdJwt(String sdJwtString) {
         try {
             SDJWT sdJwt = SDJWT.parse(sdJwtString);
@@ -180,18 +190,6 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
             log.error("Error parsing JWT payload", e);
             return null;
         }
-    }
-
-    @Override
-    public VCCredentialRequest buildCredentialRequest(VCCredentialRequestProof proof, CredentialsSupportedResponse credentialsSupportedResponse, String credentialType) {
-
-        return VCCredentialRequest.builder().format(getSupportedFormat())
-                .proof(proof).vct(credentialType).build();
-    }
-
-    @Override
-    public String getSupportedFormat() {
-        return CredentialFormat.VC_SD_JWT.getFormat();
     }
 
 }

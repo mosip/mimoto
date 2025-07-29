@@ -6,6 +6,17 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public interface CredentialFormatHandler {
+
+    /**
+     * Get the supported format for this processor
+     */
+    String getSupportedFormat();
+
+    /**
+     * Build format-specific fields in the credential request object
+     */
+    VCCredentialRequest buildCredentialRequest(VCCredentialRequestProof proof, CredentialsSupportedResponse credentialsSupportedResponse, String credentialType);
+
     /**
      * Extract credential subject properties from VC response
      */
@@ -19,15 +30,5 @@ public interface CredentialFormatHandler {
             CredentialsSupportedResponse credentialsSupportedResponse,
             String userLocale);
 
-        /**
-         * Build format-specific fields in the credential request object
-         */
-        VCCredentialRequest buildCredentialRequest(VCCredentialRequestProof proof,
-                                                   CredentialsSupportedResponse credentialsSupportedResponse,
-                                                   String credentialType);
 
-    /**
-     * Get the supported format for this processor
-     */
-    String getSupportedFormat();
 }
