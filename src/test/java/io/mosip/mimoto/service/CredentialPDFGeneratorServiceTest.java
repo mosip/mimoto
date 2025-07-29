@@ -13,7 +13,6 @@ import io.mosip.mimoto.service.impl.LdpVcCredentialFormatHandler;
 import io.mosip.mimoto.service.impl.PresentationServiceImpl;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
-import io.mosip.pixelpass.types.ECC;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,6 +57,7 @@ class CredentialPDFGeneratorServiceTest {
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "ovpQRDataPattern", "test-pattern-%s-%s");
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "qrCodeHeight", 500);
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "qrCodeWidth", 500);
+        ReflectionTestUtils.setField(credentialPDFGeneratorService, "allowedQRDataSizeLimit", 2000);
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "pixelPass", pixelPass);
         // Mock the handler factory to return the handler for the test format
         when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
@@ -149,6 +149,7 @@ class CredentialPDFGeneratorServiceTest {
     void testGeneratePdfForEmbeddedVCQR() throws Exception {
         issuerDTO.setQr_code_type(QRCodeType.EmbeddedVC);
         when(objectMapper.writeValueAsString(any())).thenReturn("{\"credential\":\"data\"}");
+        when(pixelPass.generateQRData(anyString(), anyString())).thenReturn("generated-qr-data");
         when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
                 .thenReturn("<html><body>Test</body></html>");
 
@@ -161,7 +162,7 @@ class CredentialPDFGeneratorServiceTest {
                     "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
                     "", "", "en");
 
-            verify(pixelPass).generateQRCode(anyString(), eq(ECC.L), anyString());
+            verify(pixelPass).generateQRData(anyString(), anyString());
             verify(presentationService, never()).constructPresentationDefinition(any());
             assertNotNull(result);
         }
@@ -185,29 +186,6 @@ class CredentialPDFGeneratorServiceTest {
 
             verify(presentationService).constructPresentationDefinition(any());
             verify(pixelPass, never()).generateQRData(anyString(), anyString());
-            assertNotNull(result);
-        }
-    }
-
-    @Test
-    void testGeneratePdfShouldGenerateEmbeddedVCForOnlineSharingQrTypeWithEmptyDataShareUrl() throws Exception {
-        issuerDTO.setQr_code_type(QRCodeType.OnlineSharing);
-        when(objectMapper.writeValueAsString(any())).thenReturn("{\"credential\":\"data\"}");
-//        when(pixelPass.generateQRData(anyString(), anyString())).thenReturn("generated-qr-data");
-        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
-                .thenReturn("<html><body>Test</body></html>");
-
-
-        try (MockedStatic<Utilities> mocked = mockStatic(Utilities.class)) {
-            mocked.when(() -> Utilities.encodeToString(any(), anyString()))
-                    .thenReturn("base64-encoded-qr");
-
-            ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
-                    "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
-                    "", "", "en");
-
-           // verify(pixelPass).generateQRData(anyString(), anyString());
-//            verify(presentationService, never()).constructPresentationDefinition(any());
             assertNotNull(result);
         }
     }

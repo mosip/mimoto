@@ -22,7 +22,6 @@ import io.mosip.mimoto.service.impl.PresentationServiceImpl;
 import io.mosip.mimoto.util.LocaleUtils;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
-import io.mosip.pixelpass.types.ECC;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -67,7 +66,8 @@ public class CredentialPDFGeneratorService {
     @Value("${mosip.inji.qr.code.width:500}")
     Integer qrCodeWidth;
 
-    private static final ECC DEFAULT_ECC_LEVEL = ECC.L;
+    @Value("${mosip.inji.qr.data.size.limit:4096}")
+    Integer allowedQRDataSizeLimit;
 
     public ByteArrayInputStream generatePdfForVerifiableCredentials(String credentialType, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
 
@@ -188,8 +188,12 @@ public class CredentialPDFGeneratorService {
         return new ByteArrayInputStream(outputStream.toByteArray());
     }
 
-    private String constructQRCodeWithVCData(VCCredentialResponse vcCredentialResponse) throws JsonProcessingException {
-        return pixelPass.generateQRCode(objectMapper.writeValueAsString(vcCredentialResponse.getCredential()), DEFAULT_ECC_LEVEL, "");
+    private String constructQRCodeWithVCData(VCCredentialResponse vcCredentialResponse) throws JsonProcessingException, WriterException {
+        String qrData = pixelPass.generateQRData(objectMapper.writeValueAsString(vcCredentialResponse.getCredential()), "");
+        if (allowedQRDataSizeLimit > qrData.length()) {
+            return constructQRCode(qrData);
+        }
+        return "";
     }
 
     private String constructQRCodeWithAuthorizeRequest(VCCredentialResponse vcCredentialResponse, String dataShareUrl) throws WriterException, JsonProcessingException {
@@ -205,9 +209,6 @@ public class CredentialPDFGeneratorService {
         BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
         return Utilities.encodeToString(qrImage, "png");
     }
-
-
-
 }
 
 
