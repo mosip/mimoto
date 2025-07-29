@@ -6,7 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.mimoto.*;
-import io.mosip.mimoto.service.impl.DcSdJwtCredentialFormatHandler;
+import io.mosip.mimoto.service.impl.VcSdJwtCredentialFormatHandler;
 import io.mosip.mimoto.util.LocaleUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,13 +23,13 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class DcSdJwtCredentialFormatHandlerTest {
+class VcSdJwtCredentialFormatHandlerTest {
 
     @Mock
     private ObjectMapper objectMapper;
 
     @InjectMocks
-    private DcSdJwtCredentialFormatHandler dcSdJwtCredentialFormatHandler;
+    private VcSdJwtCredentialFormatHandler vcSdJwtCredentialFormatHandler;
 
     private VCCredentialResponse vcCredentialResponse;
     private CredentialsSupportedResponse credentialsSupportedResponse;
@@ -61,7 +61,7 @@ class DcSdJwtCredentialFormatHandlerTest {
             Map<String, Object> jwtPayload = createSampleJwtPayload();
             when(objectMapper.readValue(anyString(), eq(Map.class))).thenReturn(jwtPayload);
 
-            Map<String, Object> result = dcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
+            Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
             assertNotNull(result);
             assertTrue(result.containsKey("credentialSubject"));
@@ -82,7 +82,7 @@ class DcSdJwtCredentialFormatHandlerTest {
         vcCredentialResponse.setCredential(new Object());
 
         // When
-        Map<String, Object> result = dcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
+        Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
         // Then
         assertNotNull(result);
@@ -99,7 +99,7 @@ class DcSdJwtCredentialFormatHandlerTest {
                     .thenThrow(new IllegalArgumentException("Invalid SD-JWT"));
 
             // When
-            Map<String, Object> result = dcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
+            Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
             // Then
             assertNotNull(result);
@@ -124,7 +124,7 @@ class DcSdJwtCredentialFormatHandlerTest {
             jwtPayload.put("credentialSubject", credentialSubject);
             when(objectMapper.readValue(anyString(), eq(Map.class))).thenReturn(jwtPayload);
 
-            Map<String, Object> result = dcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
+            Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
             assertNotNull(result);
             assertTrue(result.containsKey("credentialSubject"));
@@ -153,7 +153,7 @@ class DcSdJwtCredentialFormatHandlerTest {
             Map<String, Object> jwtPayload = createSampleJwtPayload();
             when(objectMapper.readValue(anyString(), eq(Map.class))).thenReturn(jwtPayload);
 
-            Map<String, Object> result = dcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
+            Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
             assertNotNull(result);
             assertTrue(result.containsKey("credentialSubject"));
@@ -176,7 +176,7 @@ class DcSdJwtCredentialFormatHandlerTest {
             when(mockSdJwt.getCredentialJwt()).thenReturn(null);
             when(mockSdJwt.getDisclosures()).thenReturn(new ArrayList<>());
 
-            Map<String, Object> result = dcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
+            Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
             assertNotNull(result);
             // Both credentialSubject and disclosures should be empty maps
@@ -212,7 +212,7 @@ class DcSdJwtCredentialFormatHandlerTest {
 
             // When
             LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> result =
-                    dcSdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
+                    vcSdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
                             credentialProperties, credentialsSupportedResponse, "en");
 
             // Then
@@ -249,7 +249,7 @@ class DcSdJwtCredentialFormatHandlerTest {
 
             // When
             LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> result =
-                    dcSdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
+                    vcSdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
                             credentialProperties, credentialsSupportedResponse, "en");
 
             // Then
@@ -267,7 +267,7 @@ class DcSdJwtCredentialFormatHandlerTest {
 
         // When
         LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> result =
-                dcSdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
+                vcSdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
                         credentialProperties, credentialsSupportedResponse, "en");
 
         // Then
@@ -294,7 +294,7 @@ class DcSdJwtCredentialFormatHandlerTest {
 
             // When
             LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> result =
-                    dcSdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
+                    vcSdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
                             credentialProperties, credentialsSupportedResponse, "fr");
 
             // Then
@@ -328,7 +328,7 @@ class DcSdJwtCredentialFormatHandlerTest {
 
             // When
             LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> result =
-                    dcSdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
+                    vcSdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
                             credentialProperties, credentialsSupportedResponse, "en");
 
             // Then
@@ -351,7 +351,7 @@ class DcSdJwtCredentialFormatHandlerTest {
         String credentialType = "IdentityCredential";
 
         // When
-        VCCredentialRequest result = dcSdJwtCredentialFormatHandler.buildCredentialRequest(
+        VCCredentialRequest result = vcSdJwtCredentialFormatHandler.buildCredentialRequest(
                 proof, credentialsSupportedResponse, credentialType);
 
         // Then
@@ -363,10 +363,10 @@ class DcSdJwtCredentialFormatHandlerTest {
     @Test
     void getSupportedFormatShouldReturnCorrectFormat() {
         // When
-        String result = dcSdJwtCredentialFormatHandler.getSupportedFormat();
+        String result = vcSdJwtCredentialFormatHandler.getSupportedFormat();
 
         // Then
-        assertEquals(CredentialFormat.DC_SD_JWT.getFormat(), result);
+        assertEquals(CredentialFormat.VC_SD_JWT.getFormat(), result);
     }
 
     // Helper methods
