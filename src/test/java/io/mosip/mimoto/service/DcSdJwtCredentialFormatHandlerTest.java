@@ -50,7 +50,6 @@ class DcSdJwtCredentialFormatHandlerTest {
 
     @Test
     void extractCredentialClaimsWithStringCredentialShouldReturnClaims() throws JsonProcessingException {
-        // Given
         vcCredentialResponse.setCredential(sampleSdJwtString);
 
         try (MockedStatic<SDJWT> mockedSdJwt = mockStatic(SDJWT.class)) {
@@ -62,16 +61,18 @@ class DcSdJwtCredentialFormatHandlerTest {
             Map<String, Object> jwtPayload = createSampleJwtPayload();
             when(objectMapper.readValue(anyString(), eq(Map.class))).thenReturn(jwtPayload);
 
-            // When
             Map<String, Object> result = dcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
-            // Then
             assertNotNull(result);
-            assertEquals("John Doe", result.get("name"));
-            assertEquals(true, result.get("admin"));
-            assertFalse(result.containsKey("iss"));
-            assertFalse(result.containsKey("sub"));
-            assertFalse(result.containsKey("iat"));
+            assertTrue(result.containsKey("credentialSubject"));
+            Map<String, Object> subject = (Map<String, Object>) result.get("credentialSubject");
+            assertEquals("John Doe", subject.get("name"));
+            assertEquals(true, subject.get("admin"));
+            assertFalse(subject.containsKey("iss"));
+            assertFalse(subject.containsKey("sub"));
+            assertFalse(subject.containsKey("iat"));
+            assertTrue(result.containsKey("disclosures"));
+            assertTrue(((Map<?, ?>) result.get("disclosures")).isEmpty());
         }
     }
 
@@ -108,7 +109,6 @@ class DcSdJwtCredentialFormatHandlerTest {
 
     @Test
     void extractCredentialClaimsWithCredentialSubjectShouldReturnCredentialSubject() throws JsonProcessingException {
-        // Given
         vcCredentialResponse.setCredential(sampleSdJwtString);
         Map<String, Object> credentialSubject = new HashMap<>();
         credentialSubject.put("firstName", "John");
@@ -124,20 +124,19 @@ class DcSdJwtCredentialFormatHandlerTest {
             jwtPayload.put("credentialSubject", credentialSubject);
             when(objectMapper.readValue(anyString(), eq(Map.class))).thenReturn(jwtPayload);
 
-            // When
             Map<String, Object> result = dcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
-            // Then
             assertNotNull(result);
-            assertEquals(credentialSubject, result);
-            assertEquals("John", result.get("firstName"));
-            assertEquals("Doe", result.get("lastName"));
+            assertTrue(result.containsKey("credentialSubject"));
+            Map<String, Object> subject = (Map<String, Object>) result.get("credentialSubject");
+            assertEquals(credentialSubject, subject);
+            assertEquals("John", subject.get("firstName"));
+            assertEquals("Doe", subject.get("lastName"));
         }
     }
 
     @Test
     void extractCredentialClaimsWithDisclosuresShouldIncludeDisclosedClaims() throws JsonProcessingException {
-        // Given
         vcCredentialResponse.setCredential(sampleSdJwtString);
 
         try (MockedStatic<SDJWT> mockedSdJwt = mockStatic(SDJWT.class)) {
@@ -154,19 +153,21 @@ class DcSdJwtCredentialFormatHandlerTest {
             Map<String, Object> jwtPayload = createSampleJwtPayload();
             when(objectMapper.readValue(anyString(), eq(Map.class))).thenReturn(jwtPayload);
 
-            // When
             Map<String, Object> result = dcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
-            // Then
             assertNotNull(result);
-            assertEquals("disclosedValue", result.get("disclosedClaim"));
-            assertEquals("John Doe", result.get("name"));
+            assertTrue(result.containsKey("credentialSubject"));
+            Map<String, Object> subject = (Map<String, Object>) result.get("credentialSubject");
+            assertEquals("John Doe", subject.get("name"));
+            assertTrue(result.containsKey("disclosures"));
+            Map<String, Object> disclosuresMap = (Map<String, Object>) result.get("disclosures");
+            assertEquals("disclosedValue", disclosuresMap.get("disclosedClaim"));
         }
     }
 
+
     @Test
     void extractCredentialClaimsWithNullCredentialJwtShouldHandleGracefully() {
-        // Given
         vcCredentialResponse.setCredential(sampleSdJwtString);
 
         try (MockedStatic<SDJWT> mockedSdJwt = mockStatic(SDJWT.class)) {
@@ -175,12 +176,14 @@ class DcSdJwtCredentialFormatHandlerTest {
             when(mockSdJwt.getCredentialJwt()).thenReturn(null);
             when(mockSdJwt.getDisclosures()).thenReturn(new ArrayList<>());
 
-            // When
             Map<String, Object> result = dcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
-            // Then
             assertNotNull(result);
-            assertTrue(result.isEmpty());
+            // Both credentialSubject and disclosures should be empty maps
+            assertTrue(result.containsKey("credentialSubject"));
+            assertTrue(((Map<?, ?>) result.get("credentialSubject")).isEmpty());
+            assertTrue(result.containsKey("disclosures"));
+            assertTrue(((Map<?, ?>) result.get("disclosures")).isEmpty());
         }
     }
 
