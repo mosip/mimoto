@@ -9,6 +9,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -29,6 +31,14 @@ class CredentialFormatHandlerFactoryTest {
         mockVcSdJwtHandler = mock(CredentialFormatHandler.class);
     }
 
+    private static Map<String, CredentialFormatHandler> toHandlerMap(List<CredentialFormatHandler> handlers) {
+        return handlers.stream()
+                .collect(Collectors.toMap(
+                        CredentialFormatHandler::getSupportedFormat,
+                        h -> h
+                ));
+    }
+
     @Test
     void constructorWithValidHandlersShouldInitializeHandlersMap() {
         // Given
@@ -41,7 +51,7 @@ class CredentialFormatHandlerFactoryTest {
         );
 
         // When
-        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(handlers);
+        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(toHandlerMap(handlers));
 
         // Then
         assertNotNull(credentialFormatHandlerFactory);
@@ -56,7 +66,7 @@ class CredentialFormatHandlerFactoryTest {
         List<CredentialFormatHandler> handlers = Collections.emptyList();
 
         // When
-        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(handlers);
+        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(toHandlerMap(handlers));
 
         // Then
         assertNotNull(credentialFormatHandlerFactory);
@@ -67,7 +77,7 @@ class CredentialFormatHandlerFactoryTest {
         // Given
         when(mockDcSdJwtHandler.getSupportedFormat()).thenReturn(CredentialFormat.DC_SD_JWT.getFormat());
         List<CredentialFormatHandler> handlers = Arrays.asList(mockDcSdJwtHandler);
-        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(handlers);
+        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(toHandlerMap(handlers));
 
         // When
         CredentialFormatHandler result = credentialFormatHandlerFactory.getHandler(CredentialFormat.DC_SD_JWT.getFormat());
@@ -82,7 +92,7 @@ class CredentialFormatHandlerFactoryTest {
         // Given
         when(mockLdpVcHandler.getSupportedFormat()).thenReturn(CredentialFormat.LDP_VC.getFormat());
         List<CredentialFormatHandler> handlers = Arrays.asList(mockLdpVcHandler);
-        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(handlers);
+        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(toHandlerMap(handlers));
 
         // When
         CredentialFormatHandler result = credentialFormatHandlerFactory.getHandler(CredentialFormat.LDP_VC.getFormat());
@@ -97,7 +107,7 @@ class CredentialFormatHandlerFactoryTest {
         // Given
         when(mockDcSdJwtHandler.getSupportedFormat()).thenReturn(CredentialFormat.DC_SD_JWT.getFormat());
         List<CredentialFormatHandler> handlers = Arrays.asList(mockDcSdJwtHandler);
-        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(handlers);
+        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(toHandlerMap(handlers));
 
         String unsupportedFormat = "unsupported_format";
 
@@ -115,7 +125,7 @@ class CredentialFormatHandlerFactoryTest {
         // Given
         when(mockDcSdJwtHandler.getSupportedFormat()).thenReturn(CredentialFormat.DC_SD_JWT.getFormat());
         List<CredentialFormatHandler> handlers = Arrays.asList(mockDcSdJwtHandler);
-        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(handlers);
+        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(toHandlerMap(handlers));
 
         // When & Then
         IllegalArgumentException exception = assertThrows(
@@ -131,7 +141,7 @@ class CredentialFormatHandlerFactoryTest {
         // Given
         when(mockDcSdJwtHandler.getSupportedFormat()).thenReturn(CredentialFormat.DC_SD_JWT.getFormat());
         List<CredentialFormatHandler> handlers = Arrays.asList(mockDcSdJwtHandler);
-        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(handlers);
+        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(toHandlerMap(handlers));
 
         String emptyFormat = "";
 
@@ -153,7 +163,7 @@ class CredentialFormatHandlerFactoryTest {
         List<CredentialFormatHandler> handlers = Arrays.asList(
                 mockDcSdJwtHandler, mockLdpVcHandler
         );
-        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(handlers);
+        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(toHandlerMap(handlers));
 
         // When & Then
         CredentialFormatHandler sdJwtResult = credentialFormatHandlerFactory.getHandler(CredentialFormat.DC_SD_JWT.getFormat());
@@ -168,7 +178,7 @@ class CredentialFormatHandlerFactoryTest {
         // Given - Only LDP VC handler available, no DC_SD_JWT handler
         when(mockLdpVcHandler.getSupportedFormat()).thenReturn(CredentialFormat.LDP_VC.getFormat());
         List<CredentialFormatHandler> handlers = Arrays.asList(mockLdpVcHandler);
-        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(handlers);
+        credentialFormatHandlerFactory = new CredentialFormatHandlerFactory(toHandlerMap(handlers));
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
@@ -186,6 +196,6 @@ class CredentialFormatHandlerFactoryTest {
         List<CredentialFormatHandler> handlers = Arrays.asList(mockDcSdJwtHandler, null);
 
         // When & Then - Should handle null handler gracefully (might throw NPE during construction)
-        assertThrows(NullPointerException.class, () -> new CredentialFormatHandlerFactory(handlers));
+        assertThrows(NullPointerException.class, () -> new CredentialFormatHandlerFactory(toHandlerMap(handlers)));
     }
 }

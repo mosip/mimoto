@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
+@Component("dc+sd-jwt")
 public class DcSdJwtCredentialFormatHandler extends VcSdJwtCredentialFormatHandler {
     @Override
     public String getSupportedFormat() {

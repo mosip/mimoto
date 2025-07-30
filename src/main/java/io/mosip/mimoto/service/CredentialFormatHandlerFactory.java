@@ -15,12 +15,8 @@ public class CredentialFormatHandlerFactory {
     private final Map<String, CredentialFormatHandler> handlers;
 
     @Autowired
-    public CredentialFormatHandlerFactory(List<CredentialFormatHandler> handlers) {
-        this.handlers = handlers.stream()
-                .collect(Collectors.toMap(
-                        CredentialFormatHandler::getSupportedFormat,
-                        Function.identity()
-                ));
+    public CredentialFormatHandlerFactory(Map<String, CredentialFormatHandler> handlers) {
+        this.handlers = handlers;
     }
 
     public CredentialFormatHandler getHandler(String format) {

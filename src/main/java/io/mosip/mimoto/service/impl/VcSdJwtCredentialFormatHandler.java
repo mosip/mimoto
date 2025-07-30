@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Slf4j
-@Component
+@Component("vc+sd-jwt")
 public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
 
     @Autowired

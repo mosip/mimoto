@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@Component
+@Component("ldp_vc")
 public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
 
     @Autowired
