@@ -10,7 +10,6 @@ import io.mosip.mimoto.dto.openid.presentation.*;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
-import io.mosip.mimoto.util.RestApiClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,16 +30,10 @@ public class PresentationServiceImpl implements PresentationService {
     DataShareServiceImpl dataShareService;
 
     @Autowired
-    RestApiClient restApiClient;
-
-    @Autowired
     ObjectMapper objectMapper;
 
     @Value("${mosip.inji.ovp.redirect.url.pattern}")
     String injiOvpRedirectURLPattern;
-
-    @Value("${mosip.data.share.url}")
-    String dataShareUrl;
 
     @Value("${server.tomcat.max-http-response-header-size:65536}")
     Integer maximumResponseHeaderSize;
@@ -59,11 +52,10 @@ public class PresentationServiceImpl implements PresentationService {
                 .stream()
                 .findFirst()
                 .map(inputDescriptorDTO -> {
-                    boolean matchingProofTypes = false;
 
                     if ("ldp_vc".equalsIgnoreCase(vcCredentialResponse.getFormat())) {
                         VCCredentialProperties ldpCredential = objectMapper.convertValue(vcCredentialResponse.getCredential(), VCCredentialProperties.class);
-                        matchingProofTypes = inputDescriptorDTO.getFormat().get("ldpVc").get("proofTypes")
+                        boolean matchingProofTypes = inputDescriptorDTO.getFormat().get("ldpVc").get("proofTypes")
                                 .stream()
                                 .anyMatch(proofType -> ldpCredential.getProof().getType().equals(proofType));
 
@@ -84,20 +76,7 @@ public class PresentationServiceImpl implements PresentationService {
                     } else if (CredentialFormat.VC_SD_JWT.getFormat().equalsIgnoreCase(vcCredentialResponse.getFormat())
                             || CredentialFormat.DC_SD_JWT.getFormat().equalsIgnoreCase(vcCredentialResponse.getFormat())) {
 
-                        String sdJwt = (String) vcCredentialResponse.getCredential(); // assuming credential is a raw SD-JWT string or a structured SD-JWT object
-
-                        // Construct presentation_submission (update to handle sd_jwt_vc)
-                        String presentationSubmission = null;
-                        try {
-                            presentationSubmission = constructPresentationSubmissionForSDJWT(presentationDefinitionDTO, inputDescriptorDTO);
-                        } catch (JsonProcessingException e) {
-                            throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
-                        }
-
-                        return String.format(injiOvpRedirectURLPattern,
-                                presentationRequestDTO.getRedirectUri(),
-                                Base64.getUrlEncoder().encodeToString(sdJwt.getBytes(StandardCharsets.UTF_8)),
-                                URLEncoder.encode(presentationSubmission, StandardCharsets.UTF_8));
+                        throw new UnsupportedOperationException("OnlineSharing is not supported for SD-JWT format yet.");
                     }
                     log.info("No Credentials Matched the VP request.");
                     throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
@@ -116,22 +95,6 @@ public class PresentationServiceImpl implements PresentationService {
                 .type(Collections.singletonList("VerifiablePresentation"))
                 .context(Collections.singletonList("https://www.w3.org/2018/credentials/v1"))
                 .build();
-    }
-
-    private String constructPresentationSubmissionForSDJWT(PresentationDefinitionDTO presentationDefinitionDTO, InputDescriptorDTO inputDescriptorDTO) throws JsonProcessingException {
-        SubmissionDescriptorDTO submissionDescriptorDTO = SubmissionDescriptorDTO.builder()
-                .id(inputDescriptorDTO.getId())
-                .format("vc_sd_jwt") // or "dc_sd_jwt" depending on credential
-                .path("$.") // Assuming SD-JWT is the root
-                .build();
-
-        PresentationSubmissionDTO presentationSubmissionDTO = PresentationSubmissionDTO.builder()
-                .id(UUID.randomUUID().toString())
-                .definition_id(presentationDefinitionDTO.getId())
-                .descriptorMap(Collections.singletonList(submissionDescriptorDTO))
-                .build();
-
-        return objectMapper.writeValueAsString(presentationSubmissionDTO);
     }
 
     private String constructPresentationSubmission(VerifiablePresentationDTO verifiablePresentationDTO, PresentationDefinitionDTO presentationDefinitionDTO, InputDescriptorDTO inputDescriptorDTO) throws JsonProcessingException {
@@ -173,26 +136,6 @@ public class PresentationServiceImpl implements PresentationService {
                     .format(format)
                     .build());
 
-        } else if (CredentialFormat.DC_SD_JWT.getFormat().equalsIgnoreCase(fmt) || CredentialFormat.VC_SD_JWT.getFormat().equalsIgnoreCase(fmt)) {
-            FieldDTO field = FieldDTO.builder()
-                    .path(new String[]{"$.vct"})
-                    .filter(FilterDTO.builder().type("string")
-                            .pattern("desiredCredentialTypeUri") // replace with your VC type URI
-                            .build())
-                    .build();
-
-            Map<String, Object> sdFormat = Map.of(
-                    fmt, Map.of(
-                            "sd-jwt_alg_values", List.of("ES256","ES384"),
-                            "kb-jwt_alg_values", List.of("ES256","ES384")
-                    )
-            );
-
-           inputDescriptors.add(InputDescriptorDTO.builder()
-                    .id(UUID.randomUUID().toString())
-                    .constraints(ConstraintsDTO.builder().limitDisclosure("required").fields(new FieldDTO[]{ field }).build())
-                    .format((Map) sdFormat)
-                    .build());
         }
 
         return PresentationDefinitionDTO.builder()

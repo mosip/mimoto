@@ -40,7 +40,6 @@ public class PresentationServiceTest {
     @Before
     public void setup() throws JsonProcessingException {
         ReflectionTestUtils.setField(presentationService, "injiOvpRedirectURLPattern", "%s#vp_token=%s&presentation_submission=%s");
-        ReflectionTestUtils.setField(presentationService, "dataShareUrl", "test_resource");
         ReflectionTestUtils.setField(presentationService, "maximumResponseHeaderSize", 65536);
         when(objectMapper.writeValueAsString(any())).thenReturn("test-data");
     }
