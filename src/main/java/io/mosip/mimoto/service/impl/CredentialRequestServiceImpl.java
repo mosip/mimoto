@@ -67,20 +67,19 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
         }
 
         String format = credentialsSupportedResponse.getFormat();
-        String proofType = credentialsSupportedResponse.getProofTypesSupported()
+        return credentialsSupportedResponse.getProofTypesSupported()
                 .keySet()
                 .stream()
                 .findFirst()
+                .map(proofType -> {
+                    VCCredentialRequestProof proof = VCCredentialRequestProof.builder()
+                            .proofType(proofType)
+                            .jwt(jwt)
+                            .build();
+                    CredentialFormatHandler handler = credentialFormatHandlerFactory.getHandler(format);
+                    return handler.buildCredentialRequest(proof, credentialsSupportedResponse, credentialConfigurationId);
+                })
                 .orElseThrow(() -> new IllegalArgumentException("No proof type available"));
-
-        VCCredentialRequestProof proof = VCCredentialRequestProof.builder()
-                .proofType(proofType)
-                .jwt(jwt)
-                .build();
-
-        CredentialFormatHandler handler = credentialFormatHandlerFactory.getHandler(format);
-
-        return handler.buildCredentialRequest(proof, credentialsSupportedResponse, credentialConfigurationId);
     }
 
     private SigningAlgorithm resolveAlgorithm(CredentialsSupportedResponse credentialsSupportedResponse) {
