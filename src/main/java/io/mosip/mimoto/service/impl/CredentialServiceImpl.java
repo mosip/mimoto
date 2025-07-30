@@ -79,9 +79,7 @@ public class CredentialServiceImpl implements CredentialService {
         VCCredentialRequest vcCredentialRequest = credentialRequestService.buildRequest(issuerDTO, credentialType, credentialIssuerWellKnownResponse, response.getC_nonce(), null, null, false);
 
         VCCredentialResponse vcCredentialResponse = downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
-        if(null == vcCredentialResponse.getFormat()) {
-            vcCredentialResponse.setFormat(vcCredentialRequest.getFormat());
-        }
+
         boolean verificationStatus = verifyCredential(vcCredentialResponse, issuerId, credentialType);
         if (verificationStatus) {
             String dataShareUrl = QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type()) ? dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse), credentialValidity) : "";
@@ -99,7 +97,7 @@ public class CredentialServiceImpl implements CredentialService {
             throw new InvalidCredentialResourceException("VC Credential Issue API not accessible");
         log.debug("VC Credential Response is {} " , response);
 
-        return new VCCredentialResponse(vcCredentialRequest.getFormat(), response);
+        return new VCCredentialResponse(vcCredentialRequest.getFormat(), response.getCredential());
     }
 
     /**
