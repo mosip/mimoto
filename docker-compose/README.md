@@ -30,9 +30,15 @@ Refer [here](https://docs.inji.io/inji-wallet/inji-mobile/technical-overview/cus
          - GOOGLE_OAUTH_CLIENT_ID=<your-client-id>
          - GOOGLE_OAUTH_CLIENT_SECRET=<your-client-secret>
 
-6. Start the docker-compose file
-
-> docker-compose up
+6. Start the services using docker-compose
+    - If you are running Mimoto using docker compose, then use the following command
+    ```bash
+        docker-compose up
+    ```
+    - If you are running Mimoto locally and the other services (like Datashare service) using Docker Compose, then use the following command to override the SHARE_DOMAIN property of Datashare service
+    ```bash
+       docker-compose -f docker-compose.yml -f docker-compose.local.yml up
+    ```
 
 7. Access Apis as
    * http://localhost:8099/v1/mimoto/allProperties

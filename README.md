@@ -50,7 +50,7 @@ The project requires JDK 21, postgres, redis and google client credentials
 2. Follow the below steps to use custom build image in docker-compose
 * Build the mimoto.jar
   ```mvn clean install -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true```
-* Build docker image, use any image tag
+* Build docker image by running the below command in the directory where Dockerfile is present, use any image tag
   ```docker build -t <image-with-tag> .```
 * Use newly built docker image in docker-compose file
 

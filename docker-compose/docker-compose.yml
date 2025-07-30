@@ -21,6 +21,7 @@ services:
       - active_profile_env=inji-default,standalone
       - SPRING_CONFIG_NAME=data-share
       - SPRING_CONFIG_LOCATION=/home/mosip/
+      - SHARE_DOMAIN=datashare-service:8097
     volumes:
       - ./config/data-share-inji-default.properties:/home/mosip/data-share-inji-default.properties
       - ./config/data-share-standalone.properties:/home/mosip/data-share-standalone.properties
@@ -65,7 +66,7 @@ services:
       - container_user=mosip
       - active_profile_env=default
       - SPRING_CONFIG_NAME=mimoto
-      - SPRING_CONFIG_LOCATION=/home/mosip/,/home/mosip/inji-default.properties
+      - SPRING_CONFIG_LOCATION=/home/mosip/
       - SPRING_CLOUD_BOOTSTRAP_LOCATION=/home/mosip/mimoto-bootstrap.properties
       - oidc_p12_password=dummypassword
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/inji_mimoto # Add Postgres
@@ -75,8 +76,10 @@ services:
       - POSTGRES_PASSWORD=postgres
       - GOOGLE_OAUTH_CLIENT_ID=clientId
       - GOOGLE_OAUTH_CLIENT_SECRET=clientSecret
+      - DATASHARE_DOMAIN=${DATASHARE_DOMAIN}
     volumes:
       - ./config/mimoto-default.properties:/home/mosip/mimoto-default.properties
+      - ./config/inji-default.properties:/home/mosip/inji-default.properties
       - ./config/mimoto-bootstrap.properties:/home/mosip/mimoto-bootstrap.properties
       - ./config/inji-default.properties:/home/mosip/inji-default.properties
       - ./config/mimoto-issuers-config.json:/home/mosip/mimoto-issuers-config.json
