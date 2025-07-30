@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component("vc+sd-jwt")
@@ -39,7 +40,7 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
         if (credential instanceof String) {
             return extractClaimsFromSdJwt((String) credential);
         }
-        log.warn("Unexpected credential format for SD-JWT VC: {}", credential);
+        log.warn("Unexpected credential format in response for SD-JWT VC: {}", credential);
         return Collections.emptyMap();
     }
 
@@ -68,19 +69,17 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
         });
 
         // Extract raw claims and convert to DTOs
-        Map<String, Object> rawClaims = credentialsSupportedResponse.getClaims();
-        if (rawClaims != null && rawClaims.size() == 1
-                && rawClaims.values().iterator().next() instanceof Map) {
-            rawClaims = (Map<String, Object>) rawClaims.values().iterator().next();
-        }
+        Map<String, Object> rawClaims = Optional.ofNullable(credentialsSupportedResponse.getClaims())
+                .map(map -> (map.size() == 1 && map.values().iterator().next() instanceof Map)
+                        ? (Map<String, Object>) map.values().iterator().next()
+                        : map)
+                .orElse(Collections.emptyMap());
 
-        Map<String, CredentialDisplayResponseDto> convertedClaimsMap = new HashMap<>();
-        if (rawClaims != null) {
-            rawClaims.forEach((key, value) -> {
-                CredentialDisplayResponseDto dto = objectMapper.convertValue(value, CredentialDisplayResponseDto.class);
-                convertedClaimsMap.put(key, dto);
-            });
-        }
+        Map<String, CredentialDisplayResponseDto> convertedClaimsMap = rawClaims.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> objectMapper.convertValue(entry.getValue(), CredentialDisplayResponseDto.class)
+                ));
 
         if (convertedClaimsMap.isEmpty()) {
             log.warn("No display configuration found for SD-JWT format");
@@ -179,7 +178,7 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
     private Map<String, Object> parseJwtPayload(String jwt) {
         try {
             String[] parts = jwt.split("\\.");
-            if (parts.length < 2) {
+            if (parts.length < 3) {
                 log.error("Invalid JWT format");
                 return null;
             }
