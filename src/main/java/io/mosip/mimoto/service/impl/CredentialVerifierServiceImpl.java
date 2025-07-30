@@ -23,7 +23,7 @@ public class CredentialVerifierServiceImpl implements CredentialVerifierService 
     private CredentialsVerifier credentialsVerifier;
 
     public boolean verify(VCCredentialResponse response) throws JsonProcessingException, VCVerificationException {
-        String credentialString = objectMapper.writeValueAsString(response.getCredential());
+        String credentialString = response.getCredential() instanceof String ? (String) response.getCredential() : objectMapper.writeValueAsString(response.getCredential());
         VerificationResult result = credentialsVerifier.verify(credentialString, Objects.requireNonNull(CredentialFormat.Companion.fromValue(response.getFormat())));
         if (!result.getVerificationStatus()) {
             throw new VCVerificationException(result.getVerificationErrorCode().toLowerCase(), result.getVerificationMessage());

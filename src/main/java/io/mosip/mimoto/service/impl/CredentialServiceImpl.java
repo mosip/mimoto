@@ -231,7 +231,7 @@ public class CredentialServiceImpl implements CredentialService {
     private boolean verifyCredential(VCCredentialResponse vcCredentialResponse, String issuerId, String credentialType)
             throws VCVerificationException {
         try {
-            return issuerId.toLowerCase().contains("mock") || credentialVerifierService.verify(vcCredentialResponse);
+            return credentialVerifierService.verify(vcCredentialResponse);
         } catch (VCVerificationException | JsonProcessingException e) {
             log.error("Credential verification failed for issuerId: {}, credentialType: {}", issuerId, credentialType, e);
             throw new VCVerificationException(
