@@ -53,7 +53,7 @@ public class PresentationServiceImpl implements PresentationService {
                 .findFirst()
                 .map(inputDescriptorDTO -> {
 
-                    if ("ldp_vc".equalsIgnoreCase(vcCredentialResponse.getFormat())) {
+                    if (CredentialFormat.LDP_VC.toString().equalsIgnoreCase(vcCredentialResponse.getFormat())) {
                         VCCredentialProperties ldpCredential = objectMapper.convertValue(vcCredentialResponse.getCredential(), VCCredentialProperties.class);
                         boolean matchingProofTypes = inputDescriptorDTO.getFormat().get("ldpVc").get("proofTypes")
                                 .stream()
