@@ -139,9 +139,9 @@ public class CredentialPDFGeneratorService {
     }
 
     private String extractFace(VCCredentialResponse vcCredentialResponse) {
-        // Use the appropriate processor to extract credential properties
-        CredentialFormatHandler processor = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
-        Map<String, Object> credentialSubject = processor.extractCredentialClaims(vcCredentialResponse);
+        // Use the appropriate credentialFormatHandler to extract credential properties
+        CredentialFormatHandler credentialFormatHandler = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
+        Map<String, Object> credentialSubject = credentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
         Object face = credentialSubject.get("face");
         return face != null ? face.toString() : null;
     }

@@ -344,6 +344,11 @@ public class TestUtilities {
                 .format("ldp_vc").build();
     }
 
+    public static VerifiableCredentialResponse getVerifiableCredentialResponseDTO(String type) {
+        return VerifiableCredentialResponse.builder()
+                .credential(getVCCredentialPropertiesDTO(type)).build();
+    }
+
     public static DataShareResponseDto getDataShareResponseDTO(String errorCode) {
         return DataShareResponseDto.builder()
                 .dataShare(new DataShare())

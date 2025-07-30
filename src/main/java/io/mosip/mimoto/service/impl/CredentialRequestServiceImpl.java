@@ -47,13 +47,13 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
 
     @Override
     public VCCredentialRequest buildRequest(IssuerDTO issuerDTO,
-                                            String credentialType,
+                                            String credentialConfigurationId,
                                             CredentialIssuerWellKnownResponse wellKnownResponse,
                                             String cNonce,
                                             String walletId,
                                             String base64EncodedWalletKey,
                                             boolean isLoginFlow) throws Exception {
-        CredentialsSupportedResponse credentialsSupportedResponse = wellKnownResponse.getCredentialConfigurationsSupported().get(credentialType);
+        CredentialsSupportedResponse credentialsSupportedResponse = wellKnownResponse.getCredentialConfigurationsSupported().get(credentialConfigurationId);
 
         SigningAlgorithm signingAlgorithm = resolveAlgorithm(credentialsSupportedResponse);
 
@@ -80,7 +80,7 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
 
         CredentialFormatHandler handler = credentialFormatHandlerFactory.getHandler(format);
 
-        return handler.buildCredentialRequest(proof, credentialsSupportedResponse, credentialType);
+        return handler.buildCredentialRequest(proof, credentialsSupportedResponse, credentialConfigurationId);
     }
 
     private SigningAlgorithm resolveAlgorithm(CredentialsSupportedResponse credentialsSupportedResponse) {

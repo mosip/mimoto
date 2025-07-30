@@ -7,7 +7,7 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialRequest;
 public interface CredentialRequestService {
     VCCredentialRequest buildRequest(
             IssuerDTO issuerDTO,
-            String credentialType,
+            String credentialConfigurationId,
             CredentialIssuerWellKnownResponse wellKnownResponse,
             String cNonce,
             String walletId,

@@ -101,15 +101,15 @@ public class CredentialServiceTest {
                 any(String.class),
                 any(CredentialIssuerWellKnownResponse.class),
                 any(String.class), any(), any(), eq(false))).thenReturn(getVCCredentialRequestDTO());
-        VCCredentialResponse vcCredentialResponse = getVCCredentialResponseDTO("CredentialType1");
+        VerifiableCredentialResponse vcCredentialResponse = getVerifiableCredentialResponseDTO("CredentialType1");
         when(restApiClient.postApi(
                 any(String.class),
                 any(MediaType.class),
                 any(VCCredentialRequest.class),
-                eq(VCCredentialResponse.class),
+                eq(VerifiableCredentialResponse.class),
                 any(String.class)
         )).thenReturn(vcCredentialResponse);
-        when(credentialVerifierService.verify(vcCredentialResponse)).thenReturn(false);
+        when(credentialVerifierService.verify(any(VCCredentialResponse.class))).thenReturn(false);
         VCVerificationException actualException = assertThrows(VCVerificationException.class, () ->
                 credentialService.downloadCredentialAsPDF(issuerId, "CredentialType1", expectedTokenResponse, "once", "en"));
 
@@ -124,19 +124,27 @@ public class CredentialServiceTest {
                 any(String.class),
                 any(CredentialIssuerWellKnownResponse.class),
                 any(String.class), any(), any(), eq(false))).thenReturn(getVCCredentialRequestDTO());
-        VCCredentialResponse vcCredentialResponse = getVCCredentialResponseDTO("CredentialType1");
+        VerifiableCredentialResponse vcCredentialResponse = getVerifiableCredentialResponseDTO("CredentialType1");
         when(restApiClient.postApi(
                 any(String.class),
                 any(MediaType.class),
                 any(VCCredentialRequest.class),
-                eq(VCCredentialResponse.class),
+                eq(VerifiableCredentialResponse.class),
                 any(String.class)
         )).thenReturn(vcCredentialResponse);
-        when(credentialVerifierService.verify(vcCredentialResponse)).thenReturn(true);
+        when(credentialVerifierService.verify(any(VCCredentialResponse.class))).thenReturn(true);
         issuerDTO.setQr_code_type(QRCodeType.None);
 
         ByteArrayInputStream expectedPDFByteArray = generatePdfFromHTML();
-        Mockito.when(credentialUtilService.generatePdfForVerifiableCredentials("CredentialType1", vcCredentialResponse, issuerDTO, issuerConfig.getCredentialConfigurationsSupported().get("CredentialType1"), "", "once", "en")).thenReturn(expectedPDFByteArray);
+        Mockito.when(credentialUtilService.generatePdfForVerifiableCredentials(
+                eq("CredentialType1"),
+                any(VCCredentialResponse.class),
+                eq(issuerDTO),
+                eq(issuerConfig.getCredentialConfigurationsSupported().get("CredentialType1")),
+                eq(""),
+                eq("once"),
+                eq("en")
+        )).thenReturn(expectedPDFByteArray);
 
         ByteArrayInputStream actualPDFByteArray =
                 credentialService.downloadCredentialAsPDF(issuerId, "CredentialType1", expectedTokenResponse, "once", "en");

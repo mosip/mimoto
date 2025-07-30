@@ -93,15 +93,13 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public VCCredentialResponse downloadCredential(String credentialEndpoint, VCCredentialRequest vcCredentialRequest, String accessToken) throws InvalidCredentialResourceException {
-        VCCredentialResponse vcCredentialResponse = restApiClient.postApi(credentialEndpoint, MediaType.APPLICATION_JSON,
-                vcCredentialRequest, VCCredentialResponse.class, accessToken);
-        log.debug("VC Credential Response is {} " , vcCredentialResponse);
-        if (vcCredentialResponse == null)
+        VerifiableCredentialResponse response = restApiClient.postApi(credentialEndpoint, MediaType.APPLICATION_JSON,
+                vcCredentialRequest, VerifiableCredentialResponse.class, accessToken);
+        if (response == null)
             throw new InvalidCredentialResourceException("VC Credential Issue API not accessible");
-        if(null == vcCredentialResponse.getFormat()) {
-            vcCredentialResponse.setFormat(vcCredentialRequest.getFormat());
-        }
-        return vcCredentialResponse;
+        log.debug("VC Credential Response is {} " , response);
+
+        return new VCCredentialResponse(vcCredentialRequest.getFormat(), response);
     }
 
     /**
