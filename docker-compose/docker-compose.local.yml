@@ -1,4 +1,0 @@
-services:
-  datashare:
-    environment:
-      - SHARE_DOMAIN=localhost:8097

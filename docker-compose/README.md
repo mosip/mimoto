@@ -11,17 +11,22 @@ This is the docker-compose setup to run mimoto which act as BFF for Inji mobile 
 
 ## How to run this setup?
 
-1. Add Id providers as issuers in mimoto-issuers-config.json. For each provider, include the token_endpoint property, which should be an HTTPS URL. This can either be an exposed domain or, for local setups, an ngrok URL if you're using mimoto for local testing with the Inji mobile wallet.
-
+1. Add ID providers as issuers in mimoto-issuers-config.json. For each provider, include the token_endpoint property, which should be an HTTPS URL. This can either be an exposed domain or, for local setups, an ngrok URL if you're using mimoto for local testing with the Inji mobile wallet.
 2. Add verifiers clientId and redirect Uris in mimoto-trusted-verifiers.json for Online Sharing
-
-3. Start esignet services and update esignet host references in mimoto-default.properties and mimoto-issuers-config.json
-
-4. Create certs folder in the same directory and create OIDC client. Add key in oidckeystore.p12 and copy this file under certs folder.
-Refer [here](https://docs.inji.io/inji-wallet/inji-mobile/technical-overview/customization-overview/credential_providers) to create client
-* Update client_id and client_alias as per onboarding in mimoto-issuers-config.json file.
-* Update oidc_p12_password in docker-compose.yml to match the password set for the oidckeystore.p12 file.
-5. Refer to the [How to create Google Client Credentials](#how-to-create-google-client-credentials) section to create 
+3. Use the Auth Server services running on any environment and update the following properties in `mimoto-issuers-config.json` file of `docker-compose/config` folder to point to the Auth Server's token endpoint:
+    ```properties
+    proxy_token_endpoint=<Auth Server token endpoint>
+    authorization_audience=<Auth Server token endpoint>
+    ```
+4. To use the e-signet service running on any environment for wallet binding scenarios then update the following property to point to the e-signet running on specific env
+    ```properties
+    mosip.esignet.host=<Host url of e-signet service> (E.g. https://esignet.env.mosip.net)
+    ```
+5. Create certs folder in the same directory and create OIDC client. Add key in oidckeystore.p12 and copy this file under certs folder.
+   Refer [here](https://docs.inji.io/inji-wallet/inji-mobile/technical-overview/customization-overview/credential_providers) to create client
+   * Update client_id and client_alias as per onboarding in mimoto-issuers-config.json file.
+   * Update oidc_p12_password in docker-compose.yml to match the password set for the oidckeystore.p12 file.
+6. Refer to the [How to create Google Client Credentials](#how-to-create-google-client-credentials) section to create 
     Google client credentials.
    - Replace the placeholders in the `docker-compose.yml` file with the generated credentials:
 
@@ -30,17 +35,22 @@ Refer [here](https://docs.inji.io/inji-wallet/inji-mobile/technical-overview/cus
          - GOOGLE_OAUTH_CLIENT_ID=<your-client-id>
          - GOOGLE_OAUTH_CLIENT_SECRET=<your-client-secret>
 
-6. Start the services using docker-compose
-    - If you are running Mimoto using docker compose, then use the following command
-    ```bash
-        docker-compose up
-    ```
-    - If you are running Mimoto locally and the other services (like Datashare service) using Docker Compose, then use the following command to override the SHARE_DOMAIN property of Datashare service
-    ```bash
-       docker-compose -f docker-compose.yml -f docker-compose.local.yml up
-    ```
+7. Choose your setup for starting the services:
+   - **Starting all services via Docker Compose (including Mimoto):**
+   Run the following command to start the services
+   ```bash
+      docker-compose up
+   ```
+   - **Running Mimoto locally and other services like `datashare service` via Docker Compose:**
+   1.  In `docker-compose.yml`, update the `DATASHARE_DOMAIN` environment variable for the `Datashare service` to `localhost:8097`.
+   2.  Then, start your dependent services by running the following command
+   ```bash
+      docker-compose up # To start all services defined in docker-compose.yml
+      # OR
+      docker-compose up datashare other_service_name # To start specific services (replace with actual names)
+   ```
 
-7. Access Apis as
+8. Access Apis as
    * http://localhost:8099/v1/mimoto/allProperties
    * http://localhost:8099/v1/mimoto/issuers
    * http://localhost:8099/v1/mimoto/issuers/StayProtected

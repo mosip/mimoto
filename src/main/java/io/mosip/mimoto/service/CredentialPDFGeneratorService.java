@@ -56,7 +56,7 @@ public class CredentialPDFGeneratorService {
     @Value("${mosip.inji.qr.code.width:500}")
     Integer qrCodeWidth;
 
-    @Value("${mosip.inji.qr.data.size.limit:10000}")
+    @Value("${mosip.inji.qr.data.size.limit:4096}")
     Integer allowedQRDataSizeLimit;
 
     @Autowired
