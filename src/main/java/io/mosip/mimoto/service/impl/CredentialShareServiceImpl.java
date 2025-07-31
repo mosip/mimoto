@@ -104,12 +104,6 @@ public class CredentialShareServiceImpl implements CredentialShareService {
     @Autowired
     private PublisherClient<String, Object, HttpHeaders> pb;
 
-    @Value("${mosip.datashare.partner.id}")
-    private String partnerId;
-
-    @Value("${mosip.datashare.policy.id}")
-    private String policyId;
-
     @Value("#{'${mosip.mandatory-languages:}'.concat('${mosip.optional-languages:}')}")
     private String supportedLang;
 

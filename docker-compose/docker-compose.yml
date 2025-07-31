@@ -56,6 +56,7 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+
   mimoto-service:
     container_name: 'Mimoto-Service'
     image: 'mosipdev/mimoto:develop'
@@ -81,7 +82,6 @@ services:
       - ./config/mimoto-default.properties:/home/mosip/mimoto-default.properties
       - ./config/inji-default.properties:/home/mosip/inji-default.properties
       - ./config/mimoto-bootstrap.properties:/home/mosip/mimoto-bootstrap.properties
-      - ./config/inji-default.properties:/home/mosip/inji-default.properties
       - ./config/mimoto-issuers-config.json:/home/mosip/mimoto-issuers-config.json
       - ./config/mimoto-trusted-verifiers.json:/home/mosip/mimoto-trusted-verifiers.json
       - ./certs/oidckeystore.p12:/home/mosip/certs/oidckeystore.p12
