@@ -136,7 +136,7 @@ public class CredentialServiceTest {
         issuerDTO.setQr_code_type(QRCodeType.None);
 
         ByteArrayInputStream expectedPDFByteArray = generatePdfFromHTML();
-        Mockito.when(credentialUtilService.generatePdfForVerifiableCredentials(
+        Mockito.when(credentialUtilService.generatePdfForVerifiableCredential(
                 eq("CredentialType1"),
                 any(VCCredentialResponse.class),
                 eq(issuerDTO),

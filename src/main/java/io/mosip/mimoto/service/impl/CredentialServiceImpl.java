@@ -67,7 +67,7 @@ public class CredentialServiceImpl implements CredentialService {
 
 
     @Override
-    public ByteArrayInputStream downloadCredentialAsPDF(String issuerId, String credentialType, TokenResponseDTO response, String credentialValidity, String locale) throws Exception {
+    public ByteArrayInputStream downloadCredentialAsPDF(String issuerId, String credentialConfigurationId, TokenResponseDTO response, String credentialValidity, String locale) throws Exception {
         IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
         CredentialIssuerConfiguration credentialIssuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = new CredentialIssuerWellKnownResponse(
@@ -75,15 +75,15 @@ public class CredentialServiceImpl implements CredentialService {
                 credentialIssuerConfiguration.getAuthorizationServers(),
                 credentialIssuerConfiguration.getCredentialEndPoint(),
                 credentialIssuerConfiguration.getCredentialConfigurationsSupported());
-        CredentialsSupportedResponse credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported().get(credentialType);
-        VCCredentialRequest vcCredentialRequest = credentialRequestService.buildRequest(issuerDTO, credentialType, credentialIssuerWellKnownResponse, response.getC_nonce(), null, null, false);
+        CredentialsSupportedResponse credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported().get(credentialConfigurationId);
+        VCCredentialRequest vcCredentialRequest = credentialRequestService.buildRequest(issuerDTO, credentialConfigurationId, credentialIssuerWellKnownResponse, response.getC_nonce(), null, null, false);
 
         VCCredentialResponse vcCredentialResponse = downloadCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, response.getAccess_token());
 
-        boolean verificationStatus = verifyCredential(vcCredentialResponse, issuerId, credentialType);
+        boolean verificationStatus = verifyCredential(vcCredentialResponse, issuerId, credentialConfigurationId);
         if (verificationStatus) {
             String dataShareUrl = QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type()) ? dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse), credentialValidity) : "";
-            return credentialPDFGeneratorService.generatePdfForVerifiableCredentials(credentialType, vcCredentialResponse, issuerDTO, credentialsSupportedResponse, dataShareUrl, credentialValidity, locale);
+            return credentialPDFGeneratorService.generatePdfForVerifiableCredential(credentialConfigurationId, vcCredentialResponse, issuerDTO, credentialsSupportedResponse, dataShareUrl, credentialValidity, locale);
         }
             throw new VCVerificationException(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(),
                     SIGNATURE_VERIFICATION_EXCEPTION.getErrorMessage());
@@ -159,7 +159,7 @@ public class CredentialServiceImpl implements CredentialService {
         }
         if (StringUtils.isBlank(credentialConfigurationId)) {
             log.error("Invalid credential type: null or blank");
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Credential type cannot be null or blank");
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Credential configuration id cannot be null or blank");
         }
         if (StringUtils.isBlank(walletId)) {
             log.error("Invalid wallet ID: null or blank");
@@ -228,12 +228,12 @@ public class CredentialServiceImpl implements CredentialService {
     /**
      * Verifies credential signature.
      */
-    private boolean verifyCredential(VCCredentialResponse vcCredentialResponse, String issuerId, String credentialType)
+    private boolean verifyCredential(VCCredentialResponse vcCredentialResponse, String issuerId, String credentialConfigurationId)
             throws VCVerificationException {
         try {
             return credentialVerifierService.verify(vcCredentialResponse);
         } catch (VCVerificationException | JsonProcessingException e) {
-            log.error("Credential verification failed for issuerId: {}, credentialType: {}", issuerId, credentialType, e);
+            log.error("Credential verification failed for issuerId: {}, credentialConfigurationId: {}", issuerId, credentialConfigurationId, e);
             throw new VCVerificationException(
                     SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(),
                     "Credential verification failed");
@@ -267,14 +267,14 @@ public class CredentialServiceImpl implements CredentialService {
      * @param walletId            The wallet ID.
      * @param encryptedCredential The encrypted credential data.
      * @param issuerId            The issuer ID.
-     * @param credentialType      The credential type.
+     * @param credentialConfigurationId      The credential configuration id.
      * @return The stored VerifiableCredential.
      */
     private VerifiableCredential saveCredential(String walletId, String encryptedCredential, String issuerId,
-                                                String credentialType) throws CredentialProcessingException {
+                                                String credentialConfigurationId) throws CredentialProcessingException {
         CredentialMetadata credentialMetadata = new CredentialMetadata();
         credentialMetadata.setIssuerId(issuerId);
-        credentialMetadata.setCredentialType(credentialType);
+        credentialMetadata.setCredentialType(credentialConfigurationId);
 
         VerifiableCredential verifiableCredential = new VerifiableCredential();
         verifiableCredential.setId(UUID.randomUUID().toString());
@@ -285,7 +285,7 @@ public class CredentialServiceImpl implements CredentialService {
         try {
             return walletCredentialsRepository.save(verifiableCredential);
         } catch (Exception e) {
-            log.error("Failed to save credential for walletId: {}, issuerId: {}, credentialType: {}", walletId, issuerId, credentialType, e);
+            log.error("Failed to save credential for walletId: {}, issuerId: {}, credentialConfigurationId: {}", walletId, issuerId, credentialConfigurationId, e);
             throw new CredentialProcessingException(
                     CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(),
                     "Unable to save credential to database", e);

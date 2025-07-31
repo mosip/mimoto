@@ -129,7 +129,7 @@ class CredentialPDFGeneratorServiceTest {
     }
 
     @Test
-    void testGeneratePdfForVerifiableCredentials() throws Exception {
+    void testGeneratePdfForVerifiableCredential() throws Exception {
         when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
                 .thenReturn("<html><body>Test</body></html>");
         PresentationDefinitionDTO presentationDef = new PresentationDefinitionDTO();
@@ -138,7 +138,7 @@ class CredentialPDFGeneratorServiceTest {
         when(objectMapper.writeValueAsString(presentationDef))
                 .thenReturn("{\"presentation\":\"definition\"}");
 
-        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
                 "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
                 "https://example.com/share", "2025-12-31", "en");
 
@@ -158,7 +158,7 @@ class CredentialPDFGeneratorServiceTest {
             mocked.when(() -> Utilities.encodeToString(any(), anyString()))
                     .thenReturn("base64-encoded-qr");
 
-            ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
+            ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
                     "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
                     "", "", "en");
 
@@ -180,7 +180,7 @@ class CredentialPDFGeneratorServiceTest {
             mocked.when(() -> Utilities.encodeToString(any(), anyString()))
                     .thenReturn("base64-encoded-qr");
 
-            ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
+            ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
                     "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
                     "http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/test", "", "en");
 
@@ -207,7 +207,7 @@ class CredentialPDFGeneratorServiceTest {
         when(objectMapper.writeValueAsString(presentationDef))
                 .thenReturn("{\"presentation\":\"definition\"}");
 
-        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
                 "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
                 "https://example.com/share", "", "en");
 
@@ -228,7 +228,7 @@ class CredentialPDFGeneratorServiceTest {
         when(objectMapper.writeValueAsString(presentationDef))
                 .thenReturn("{\"presentation\":\"definition\"}");
 
-        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
                 "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
                 "https://example.com/share", "", "en");
 
@@ -251,7 +251,7 @@ class CredentialPDFGeneratorServiceTest {
             mocked.when(() -> Utilities.encodeToString(any(), anyString()))
                     .thenReturn("base64-encoded-qr");
 
-            ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
+            ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
                     "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
                     "https://example.com/share", "", "en");
 

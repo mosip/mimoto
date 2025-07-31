@@ -69,7 +69,7 @@ public class CredentialPDFGeneratorService {
     @Value("${mosip.inji.qr.data.size.limit:4096}")
     Integer allowedQRDataSizeLimit;
 
-    public ByteArrayInputStream generatePdfForVerifiableCredentials(String credentialType, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
+    public ByteArrayInputStream generatePdfForVerifiableCredential(String credentialConfigurationId, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
 
         // Get the appropriate processor based on format
         CredentialFormatHandler processor = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
@@ -84,7 +84,7 @@ public class CredentialPDFGeneratorService {
         Map<String, Object> data = getPdfResourceFromVcProperties(displayProperties, credentialsSupportedResponse,
                 vcCredentialResponse, issuerDTO, dataShareUrl, credentialValidity);
 
-        return renderVCInCredentialTemplate(data, issuerDTO.getIssuer_id(), credentialType);
+        return renderVCInCredentialTemplate(data, issuerDTO.getIssuer_id(), credentialConfigurationId);
     }
 
     private Map<String, Object> getPdfResourceFromVcProperties(
@@ -166,8 +166,8 @@ public class CredentialPDFGeneratorService {
         return val.toString();
     }
 
-    private ByteArrayInputStream renderVCInCredentialTemplate(Map<String, Object> data, String issuerId, String credentialType) {
-        String credentialTemplate = utilities.getCredentialSupportedTemplateString(issuerId, credentialType);
+    private ByteArrayInputStream renderVCInCredentialTemplate(Map<String, Object> data, String issuerId, String credentialConfigurationId) {
+        String credentialTemplate = utilities.getCredentialSupportedTemplateString(issuerId, credentialConfigurationId);
         Properties props = new Properties();
         props.setProperty("resource.loader", "class");
         props.setProperty("class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");

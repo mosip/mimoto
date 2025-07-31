@@ -249,7 +249,7 @@ public class WalletCredentialServiceTest {
 
         // Setup PDF stream
         ByteArrayInputStream pdfContent = new ByteArrayInputStream("PDF Content".getBytes());
-        when(credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
+        when(credentialPDFGeneratorService.generatePdfForVerifiableCredential(
                 eq(credentialType),
                 any(VCCredentialResponse.class),
                 eq(issuerDTO),
@@ -271,7 +271,7 @@ public class WalletCredentialServiceTest {
         verify(encryptionDecryptionUtil).decryptCredential("encryptedCredential", base64Key);
         verify(issuersService).getIssuerDetails(issuerId);
         verify(issuersService).getIssuerConfig(issuerId, credentialType);
-        verify(credentialPDFGeneratorService).generatePdfForVerifiableCredentials(
+        verify(credentialPDFGeneratorService).generatePdfForVerifiableCredential(
                 eq(credentialType),
                 any(VCCredentialResponse.class),
                 eq(issuerDTO),
@@ -417,7 +417,7 @@ public class WalletCredentialServiceTest {
         IssuerConfig issuerConfig = new IssuerConfig(new IssuerDTO(), new CredentialIssuerWellKnownResponse(), supportedResponse);
         when(issuersService.getIssuerConfig(issuerId, credentialType)).thenReturn(issuerConfig);
 
-        when(credentialPDFGeneratorService.generatePdfForVerifiableCredentials(any(), any(), any(), any(), any(), any(), any()))
+        when(credentialPDFGeneratorService.generatePdfForVerifiableCredential(any(), any(), any(), any(), any(), any(), any()))
                 .thenThrow(new RuntimeException("PDF error"));
 
         CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->

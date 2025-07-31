@@ -27,7 +27,7 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
     }
 
     @Override
-    public VCCredentialRequest buildCredentialRequest(VCCredentialRequestProof proof, CredentialsSupportedResponse credentialsSupportedResponse, String credentialType) {
+    public VCCredentialRequest buildCredentialRequest(VCCredentialRequestProof proof, CredentialsSupportedResponse credentialsSupportedResponse, String credentialConfigurationId) {
 
         List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
         if (credentialContext == null || credentialContext.isEmpty()) {

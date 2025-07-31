@@ -30,8 +30,8 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
 
 
     @Override
-    public VCCredentialRequest buildCredentialRequest(VCCredentialRequestProof proof, CredentialsSupportedResponse credentialsSupportedResponse, String credentialType) {
-        return VCCredentialRequest.builder().format(getSupportedFormat()).proof(proof).vct(credentialType).build();
+    public VCCredentialRequest buildCredentialRequest(VCCredentialRequestProof proof, CredentialsSupportedResponse credentialsSupportedResponse, String credentialConfigurationId) {
+        return VCCredentialRequest.builder().format(getSupportedFormat()).proof(proof).vct(credentialConfigurationId).build();
     }
 
     @Override

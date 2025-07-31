@@ -15,7 +15,7 @@ public interface CredentialFormatHandler {
     /**
      * Build format-specific fields in the credential request object
      */
-    VCCredentialRequest buildCredentialRequest(VCCredentialRequestProof proof, CredentialsSupportedResponse credentialsSupportedResponse, String credentialType);
+    VCCredentialRequest buildCredentialRequest(VCCredentialRequestProof proof, CredentialsSupportedResponse credentialsSupportedResponse, String credentialConfigurationId);
 
     /**
      * Extract credential subject properties from VC response

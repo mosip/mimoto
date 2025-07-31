@@ -177,7 +177,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
             // Generate PDF
             // keep the datashare url and credential validity as defaults in downloading VC as PDF as logged-in user
             // This is because generatePdfForVerifiableCredentials will be used by both logged-in and non-logged-in users
-            ByteArrayInputStream pdfStream = credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
+            ByteArrayInputStream pdfStream = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
                     credentialMetadata.getCredentialType(),
                     vcCredentialResponse,
                     issuerDTO,
