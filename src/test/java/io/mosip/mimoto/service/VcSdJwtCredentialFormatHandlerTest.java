@@ -352,7 +352,7 @@ class VcSdJwtCredentialFormatHandlerTest {
 
         // When
         VCCredentialRequest result = vcSdJwtCredentialFormatHandler.buildCredentialRequest(
-                proof, credentialsSupportedResponse, credentialType);
+                proof, credentialsSupportedResponse);
 
         // Then
         assertNotNull(result);
