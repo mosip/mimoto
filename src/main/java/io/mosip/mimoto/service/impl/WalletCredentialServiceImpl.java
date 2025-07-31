@@ -11,6 +11,7 @@ import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.model.CredentialMetadata;
+import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.model.VerifiableCredential;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.service.CredentialPDFGeneratorService;
@@ -45,25 +46,30 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     @Value("${mosip.inji.wallet.issuersWithSingleVcLimit:Mosip}")
     private String issuersWithSingleVcLimit;
 
+    @Value("${mosip.inji.wallet.vc.validity.count:-1}")
+    private String credentialValidity;
+
     private final WalletCredentialsRepository repository;
     private final IssuersService issuersService;
     private final CredentialService credentialService;
     private final ObjectMapper objectMapper;
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
     private final CredentialPDFGeneratorService credentialPDFGeneratorService;
+    private final DataShareServiceImpl dataShareService;
 
     @Autowired
     public WalletCredentialServiceImpl(WalletCredentialsRepository repository,
                                        IssuersService issuersService,
                                        CredentialService credentialService,
                                        ObjectMapper objectMapper,
-                                       EncryptionDecryptionUtil encryptionDecryptionUtil,CredentialPDFGeneratorService credentialPDFGeneratorService) {
+                                       EncryptionDecryptionUtil encryptionDecryptionUtil,CredentialPDFGeneratorService credentialPDFGeneratorService,DataShareServiceImpl dataShareService) {
         this.repository = repository;
         this.issuersService = issuersService;
         this.credentialService = credentialService;
         this.objectMapper = objectMapper;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.credentialPDFGeneratorService = credentialPDFGeneratorService;
+        this.dataShareService = dataShareService;
     }
 
     @Override
@@ -174,6 +180,9 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
                 throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Invalid credential type configuration");
             }
 
+            String dataShareUrl = QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type()) ? dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse), credentialValidity) : "";
+
+
             // Generate PDF
             // keep the datashare url and credential validity as defaults in downloading VC as PDF as logged-in user
             // This is because generatePdfForVerifiableCredentials will be used by both logged-in and non-logged-in users
@@ -182,8 +191,8 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
                     vcCredentialResponse,
                     issuerDTO,
                     credentialsSupportedResponse,
-                    "",
-                    "-1",
+                    dataShareUrl,
+                    credentialValidity,
                     locale
             );
 
