@@ -47,7 +47,7 @@ public class WalletValidator {
      */
     public void validateWalletName(String name) throws InvalidRequestException {
         log.debug("Validating Wallet name: {}", name);
-        if (name != null && !name.matches(nameRegex)) {
+        if (StringUtils.isBlank(name) || !name.matches(nameRegex)) {
             log.warn("Invalid Wallet name: {}", name);
             throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "Wallet name must be alphanumeric with allowed special characters");
         }
