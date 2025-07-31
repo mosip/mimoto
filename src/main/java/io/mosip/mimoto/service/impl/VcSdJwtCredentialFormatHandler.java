@@ -117,7 +117,7 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
     public Map<String, Object> extractClaimsFromSdJwt(String sdJwtString) {
         try {
             SDJWT sdJwt = SDJWT.parse(sdJwtString);
-            Map<String, Object> disclosedClaims = new HashMap<>();
+            Map<String, Object> claims = new HashMap<>();
 
             // Parse JWT payload
             String credentialJwt = sdJwt.getCredentialJwt();
@@ -128,11 +128,11 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
                     if (jwtPayload.containsKey("credentialSubject")) {
                         Object credentialSubject = jwtPayload.get("credentialSubject");
                         if (credentialSubject instanceof Map) {
-                            disclosedClaims.putAll((Map<String, Object>) credentialSubject);
+                            claims.putAll((Map<String, Object>) credentialSubject);
                         }
                     } else {
                         // No credentialSubject, put all claims at root level
-                        disclosedClaims.putAll(jwtPayload);
+                        claims.putAll(jwtPayload);
                     }
                 }
             }
@@ -157,11 +157,11 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
 
             // Remove standard JWT claims and SD-JWT metadata
             List<String> metadataKeys = Arrays.asList("iss", "sub", "aud", "exp", "nbf", "iat", "jti", "_sd", "_sd_alg");
-            metadataKeys.forEach(disclosedClaims::remove);
+            metadataKeys.forEach(claims::remove);
 
             // Separate credentialSubject if present
             Map<String, Object> result = new HashMap<>();
-            result.put("credentialSubject", disclosedClaims);
+            result.put("credentialSubject", claims);
             result.put("disclosures", disclosuresClaims);
 
             return result;

@@ -113,10 +113,10 @@ public class PresentationServiceImpl implements PresentationService {
     }
 
     public PresentationDefinitionDTO constructPresentationDefinition(VCCredentialResponse vcRes) {
-        String fmt = vcRes.getFormat();
+        String vcFormat = vcRes.getFormat();
         List<InputDescriptorDTO> inputDescriptors = new ArrayList<>();
 
-        if (CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(fmt)) {
+        if (CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(vcFormat)) {
             VCCredentialProperties ldp = objectMapper.convertValue(vcRes.getCredential(), VCCredentialProperties.class);
             String lastType = ldp.getType().get(ldp.getType().size() - 1);
             String proofType = Optional.ofNullable(ldp.getProof()).map(VCCredentialResponseProof::getType).orElse(null);
@@ -136,6 +136,8 @@ public class PresentationServiceImpl implements PresentationService {
                     .format(format)
                     .build());
 
+        } else {
+            throw new UnsupportedOperationException("We don't support constructing Presentation Definition for " + vcFormat + " format yet.");
         }
 
         return PresentationDefinitionDTO.builder()
