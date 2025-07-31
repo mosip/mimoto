@@ -1,16 +1,15 @@
 package io.mosip.mimoto.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mosip.mimoto.model.CredentialMetadata;
-import io.mosip.mimoto.model.VerifiableCredential;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.model.CredentialMetadata;
+import io.mosip.mimoto.model.VerifiableCredential;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.service.impl.WalletCredentialServiceImpl;
-import io.mosip.mimoto.util.CredentialProcessor;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +47,7 @@ public class WalletCredentialServiceTest {
     private ObjectMapper objectMapper;
 
     @Mock
-    private CredentialProcessor credentialProcessor;
+    private CredentialService credentialService;
 
     @Mock
     private CredentialPDFGeneratorService credentialPDFGeneratorService;
@@ -101,7 +100,7 @@ public class WalletCredentialServiceTest {
         expectedResponse.setCredentialId(credentialId);
 
         when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId)).thenReturn(false);
-        when(credentialProcessor.downloadCredentialAndStoreInDB(tokenResponse, credentialType, walletId, base64Key, mosipIssuerId, locale))
+        when(credentialService.downloadCredentialAndStoreInDB(tokenResponse, credentialType, walletId, base64Key, mosipIssuerId, locale))
                 .thenReturn(expectedResponse);
 
         VerifiableCredentialResponseDTO actualResponse = walletCredentialService.downloadVCAndStoreInDB(
@@ -109,7 +108,7 @@ public class WalletCredentialServiceTest {
 
         assertEquals(expectedResponse, actualResponse);
         verify(walletCredentialsRepository).existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId);
-        verify(credentialProcessor).downloadCredentialAndStoreInDB(tokenResponse, credentialType, walletId, base64Key, mosipIssuerId, locale);
+        verify(credentialService).downloadCredentialAndStoreInDB(tokenResponse, credentialType, walletId, base64Key, mosipIssuerId, locale);
     }
 
     @Test
@@ -122,7 +121,7 @@ public class WalletCredentialServiceTest {
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertEquals("credential_download_error --> Duplicate credential for issuer and type", exception.getMessage());
         verify(walletCredentialsRepository).existsByIssuerIdAndCredentialTypeAndWalletId("Mosip", credentialType, walletId);
-        verifyNoInteractions(credentialProcessor);
+        verifyNoInteractions(credentialService);
     }
 
     @Test
@@ -130,14 +129,14 @@ public class WalletCredentialServiceTest {
         VerifiableCredentialResponseDTO expectedResponse = new VerifiableCredentialResponseDTO();
         expectedResponse.setCredentialId(credentialId);
 
-        when(credentialProcessor.downloadCredentialAndStoreInDB(tokenResponse, credentialType, walletId, base64Key, issuerId, locale))
+        when(credentialService.downloadCredentialAndStoreInDB(tokenResponse, credentialType, walletId, base64Key, issuerId, locale))
                 .thenReturn(expectedResponse);
 
         VerifiableCredentialResponseDTO actualResponse = walletCredentialService.downloadVCAndStoreInDB(
                 issuerId, credentialType, tokenResponse, locale, walletId, base64Key);
 
         assertEquals(expectedResponse, actualResponse);
-        verify(credentialProcessor).downloadCredentialAndStoreInDB(tokenResponse, credentialType, walletId, base64Key, issuerId, locale);
+        verify(credentialService).downloadCredentialAndStoreInDB(tokenResponse, credentialType, walletId, base64Key, issuerId, locale);
     }
 
     @Test
@@ -145,7 +144,7 @@ public class WalletCredentialServiceTest {
         String mosipIssuerId = "Mosip"; // Use Mosip to trigger repository check
 
         when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId)).thenReturn(false);
-        when(credentialProcessor.downloadCredentialAndStoreInDB(any(), anyString(), anyString(), anyString(), anyString(), anyString()))
+        when(credentialService.downloadCredentialAndStoreInDB(any(), anyString(), anyString(), anyString(), anyString(), anyString()))
                 .thenThrow(new ExternalServiceUnavailableException("SERVICE_UNAVAILABLE", "Service unavailable"));
 
         ExternalServiceUnavailableException exception = assertThrows(ExternalServiceUnavailableException.class, () ->
@@ -154,7 +153,7 @@ public class WalletCredentialServiceTest {
         assertEquals("SERVICE_UNAVAILABLE", exception.getErrorCode());
         assertEquals("SERVICE_UNAVAILABLE --> Service unavailable", exception.getMessage());
         verify(walletCredentialsRepository).existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId);
-        verify(credentialProcessor).downloadCredentialAndStoreInDB(tokenResponse, credentialType, walletId, base64Key, mosipIssuerId, locale);
+        verify(credentialService).downloadCredentialAndStoreInDB(tokenResponse, credentialType, walletId, base64Key, mosipIssuerId, locale);
     }
 
     @Test
@@ -250,7 +249,7 @@ public class WalletCredentialServiceTest {
 
         // Setup PDF stream
         ByteArrayInputStream pdfContent = new ByteArrayInputStream("PDF Content".getBytes());
-        when(credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
+        when(credentialPDFGeneratorService.generatePdfForVerifiableCredential(
                 eq(credentialType),
                 any(VCCredentialResponse.class),
                 eq(issuerDTO),
@@ -272,7 +271,7 @@ public class WalletCredentialServiceTest {
         verify(encryptionDecryptionUtil).decryptCredential("encryptedCredential", base64Key);
         verify(issuersService).getIssuerDetails(issuerId);
         verify(issuersService).getIssuerConfig(issuerId, credentialType);
-        verify(credentialPDFGeneratorService).generatePdfForVerifiableCredentials(
+        verify(credentialPDFGeneratorService).generatePdfForVerifiableCredential(
                 eq(credentialType),
                 any(VCCredentialResponse.class),
                 eq(issuerDTO),
@@ -418,7 +417,7 @@ public class WalletCredentialServiceTest {
         IssuerConfig issuerConfig = new IssuerConfig(new IssuerDTO(), new CredentialIssuerWellKnownResponse(), supportedResponse);
         when(issuersService.getIssuerConfig(issuerId, credentialType)).thenReturn(issuerConfig);
 
-        when(credentialPDFGeneratorService.generatePdfForVerifiableCredentials(any(), any(), any(), any(), any(), any(), any()))
+        when(credentialPDFGeneratorService.generatePdfForVerifiableCredential(any(), any(), any(), any(), any(), any(), any()))
                 .thenThrow(new RuntimeException("PDF error"));
 
         CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
