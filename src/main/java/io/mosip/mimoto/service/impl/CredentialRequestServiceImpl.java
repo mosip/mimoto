@@ -1,10 +1,12 @@
 package io.mosip.mimoto.service.impl;
 
-import io.mosip.mimoto.model.ProofSigningKey;
+import io.mosip.mimoto.constant.SigningAlgorithm;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.*;
-import io.mosip.mimoto.constant.SigningAlgorithm;
+import io.mosip.mimoto.model.ProofSigningKey;
 import io.mosip.mimoto.repository.ProofSigningKeyRepository;
+import io.mosip.mimoto.service.CredentialFormatHandler;
+import io.mosip.mimoto.service.CredentialFormatHandlerFactory;
 import io.mosip.mimoto.service.CredentialRequestService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.util.JwtGeneratorUtil;
@@ -40,14 +42,18 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
     }
 
 
+    @Autowired
+    private CredentialFormatHandlerFactory credentialFormatHandlerFactory;
+
     @Override
     public VCCredentialRequest buildRequest(IssuerDTO issuerDTO,
+                                            String credentialConfigurationId,
                                             CredentialIssuerWellKnownResponse wellKnownResponse,
-                                            CredentialsSupportedResponse credentialsSupportedResponse,
                                             String cNonce,
                                             String walletId,
                                             String base64EncodedWalletKey,
                                             boolean isLoginFlow) throws Exception {
+        CredentialsSupportedResponse credentialsSupportedResponse = wellKnownResponse.getCredentialConfigurationsSupported().get(credentialConfigurationId);
 
         SigningAlgorithm signingAlgorithm = resolveAlgorithm(credentialsSupportedResponse);
 
@@ -60,22 +66,20 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
             jwt = JwtGeneratorUtil.generateJwt(signingAlgorithm, wellKnownResponse.getCredentialIssuer(), issuerDTO.getClient_id(), cNonce, keyPair);
         }
 
-        List<String> credentialContext = credentialsSupportedResponse.getCredentialDefinition().getContext();
-        if (credentialContext == null || credentialContext.isEmpty()) {
-            credentialContext = List.of("https://www.w3.org/2018/credentials/v1");
-        }
-
-        return VCCredentialRequest.builder()
-                .format(credentialsSupportedResponse.getFormat())
-                .proof(VCCredentialRequestProof.builder()
-                        .proofType(credentialsSupportedResponse.getProofTypesSupported().keySet().stream().findFirst().get())
-                        .jwt(jwt)
-                        .build())
-                .credentialDefinition(VCCredentialDefinition.builder()
-                        .type(credentialsSupportedResponse.getCredentialDefinition().getType())
-                        .context(credentialContext)
-                        .build())
-                .build();
+        String format = credentialsSupportedResponse.getFormat();
+        return credentialsSupportedResponse.getProofTypesSupported()
+                .keySet()
+                .stream()
+                .findFirst()
+                .map(proofType -> {
+                    VCCredentialRequestProof proof = VCCredentialRequestProof.builder()
+                            .proofType(proofType)
+                            .jwt(jwt)
+                            .build();
+                    CredentialFormatHandler handler = credentialFormatHandlerFactory.getHandler(format);
+                    return handler.buildCredentialRequest(proof, credentialsSupportedResponse, credentialConfigurationId);
+                })
+                .orElseThrow(() -> new IllegalArgumentException("No proof type available"));
     }
 
     private SigningAlgorithm resolveAlgorithm(CredentialsSupportedResponse credentialsSupportedResponse) {

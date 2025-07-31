@@ -6,8 +6,10 @@ import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
@@ -44,6 +46,8 @@ public class MimotoUtil extends AdminTestUtil {
 	private static String dobForSunBirdR = generateDobForSunBirdR();
 	private static String policyNumberForSunBirdR = generateRandomNumberString(9);
 	
+	public static List<String> testCasesInRunScope = new ArrayList<>();
+	
 	public static void setLogLevel() {
 		if (MimotoConfigManager.IsDebugEnabled())
 			logger.setLevel(Level.ALL);
@@ -75,14 +79,28 @@ public class MimotoUtil extends AdminTestUtil {
 		return testCaseDTO;
 	}
 	
+	public static boolean isValidJSONObject(String input) {
+        try {
+            new JSONObject(input);
+            return true;
+        } catch (JSONException e) {
+            return false;
+        }
+    }
+	
 	public static TestCaseDTO isTestCaseValidForTheExecution(TestCaseDTO testCaseDTO) {
 		String testCaseName = testCaseDTO.getTestCaseName();
+		currentTestCaseName = testCaseName;
 		
 		int indexof = testCaseName.indexOf("_");
 		String modifiedTestCaseName = testCaseName.substring(indexof + 1);
 		
 		addTestCaseDetailsToMap(modifiedTestCaseName, testCaseDTO.getUniqueIdentifier());
 		
+		if (!testCasesInRunScope.isEmpty()
+				&& testCasesInRunScope.contains(testCaseDTO.getUniqueIdentifier()) == false) {
+			throw new SkipException(GlobalConstants.NOT_IN_RUN_SCOPE_MESSAGE);
+		}		
 		
 		String endpoint = testCaseDTO.getEndPoint();
 		String inputJson = testCaseDTO.getInput();

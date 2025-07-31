@@ -1,22 +1,17 @@
 package io.mosip.mimoto.dto.mimoto;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class VCCredentialResponse {
-
-    @NotBlank
-    private String format;
+public class VerifiableCredentialResponse {
 
     @Valid
     @NotNull

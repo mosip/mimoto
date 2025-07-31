@@ -2,6 +2,7 @@ package io.mosip.mimoto.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
 import io.mosip.mimoto.exception.VPNotCreatedException;
@@ -39,7 +40,6 @@ public class PresentationServiceTest {
     @Before
     public void setup() throws JsonProcessingException {
         ReflectionTestUtils.setField(presentationService, "injiOvpRedirectURLPattern", "%s#vp_token=%s&presentation_submission=%s");
-        ReflectionTestUtils.setField(presentationService, "dataShareUrl", "test_resource");
         ReflectionTestUtils.setField(presentationService, "maximumResponseHeaderSize", 65536);
         when(objectMapper.writeValueAsString(any())).thenReturn("test-data");
     }
@@ -48,7 +48,10 @@ public class PresentationServiceTest {
     public void credentialProofMatchingWithVPRequest() throws Exception {
         VCCredentialResponse vcCredentialResponse = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
         PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
+
         when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
+        when(objectMapper.convertValue(eq(vcCredentialResponse.getCredential()), eq(VCCredentialProperties.class)))
+                .thenReturn((VCCredentialProperties) vcCredentialResponse.getCredential());
         String expectedRedirectUrl = "test_redirect_uri#vp_token=dGVzdC1kYXRh&presentation_submission=test-data";
 
         String actualRedirectUrl = presentationService.authorizePresentation(TestUtilities.getPresentationRequestDTO());
@@ -61,7 +64,8 @@ public class PresentationServiceTest {
         VCCredentialResponse vcCredentialResponse = TestUtilities.getVCCredentialResponseDTO("RSASignature2020");
         PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
         when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
-
+        when(objectMapper.convertValue(eq(vcCredentialResponse.getCredential()), eq(VCCredentialProperties.class)))
+                .thenReturn((VCCredentialProperties) vcCredentialResponse.getCredential());
         presentationService.authorizePresentation(TestUtilities.getPresentationRequestDTO());
     }
 }

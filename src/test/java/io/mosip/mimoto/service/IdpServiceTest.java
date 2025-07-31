@@ -5,6 +5,7 @@ import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.AuthorizationServerWellKnownResponse;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
 import io.mosip.mimoto.exception.IdpException;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.IssuerOnboardingException;
 import io.mosip.mimoto.service.impl.IdpServiceImpl;
 import io.mosip.mimoto.util.JoseUtil;
@@ -16,8 +17,10 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
@@ -138,6 +141,8 @@ public class IdpServiceTest {
         when(restTemplate.postForObject(eq("https://example.com/token"), any(HttpEntity.class), eq(TokenResponseDTO.class)))
                 .thenReturn(null);
 
+        params.put("code_verifier", "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk");
+
         IdpException ex = assertThrows(IdpException.class, () ->
                 idpService.getTokenResponse(params));
 
@@ -165,9 +170,42 @@ public class IdpServiceTest {
         when(restTemplate.postForObject(eq("https://example.com/token"), any(HttpEntity.class), eq(TokenResponseDTO.class)))
                 .thenReturn(tokenResponseDTO);
 
+        params.put("code_verifier", "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk");
+
         TokenResponseDTO response = idpService.getTokenResponse(params);
 
         assertNotNull(response);
         assertEquals(tokenResponseDTO, response);
+    }
+
+    @Test
+    public void shouldThrowInvalidRequestExceptionOnBadRequestFromTokenEndpoint() throws Exception {
+        params.put("issuer", "issuer123");
+
+        IssuerDTO mockIssuer = new IssuerDTO();
+        mockIssuer.setClient_id("client123");
+        mockIssuer.setClient_alias("clientAlias");
+
+        when(issuersService.getIssuerDetails("issuer123")).thenReturn(mockIssuer);
+        when(issuersService.getIssuerConfiguration("issuer123")).thenReturn(credentialIssuerConfiguration);
+        when(credentialIssuerConfiguration.getAuthorizationServerWellKnownResponse())
+                .thenReturn(authorizationServerWellKnownResponse);
+        when(authorizationServerWellKnownResponse.getTokenEndpoint())
+                .thenReturn("https://example.com/token");
+        when(joseUtil.getJWT(eq("client123"), any(), any(), eq("clientAlias"), any(), eq("https://example.com/token")))
+                .thenReturn("jwt-token");
+
+        HttpClientErrorException badRequestException = HttpClientErrorException.create(
+                HttpStatus.BAD_REQUEST, "Bad Request", null, null, null);
+
+        when(restTemplate.postForObject(eq("https://example.com/token"), any(HttpEntity.class), eq(TokenResponseDTO.class)))
+                .thenThrow(badRequestException);
+
+        params.put("code_verifier", "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk");
+
+        InvalidRequestException ex = assertThrows(InvalidRequestException.class, () ->
+                idpService.getTokenResponse(params));
+
+        assertEquals("invalid_request --> Request failed due to invalid input detected by an external service.", ex.getMessage());
     }
 }

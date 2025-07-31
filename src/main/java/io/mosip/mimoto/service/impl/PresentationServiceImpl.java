@@ -2,13 +2,14 @@ package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
+import io.mosip.mimoto.dto.mimoto.VCCredentialResponseProof;
 import io.mosip.mimoto.dto.openid.presentation.*;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
-import io.mosip.mimoto.util.RestApiClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,16 +30,10 @@ public class PresentationServiceImpl implements PresentationService {
     DataShareServiceImpl dataShareService;
 
     @Autowired
-    RestApiClient restApiClient;
-
-    @Autowired
     ObjectMapper objectMapper;
 
     @Value("${mosip.inji.ovp.redirect.url.pattern}")
     String injiOvpRedirectURLPattern;
-
-    @Value("${mosip.data.share.url}")
-    String dataShareUrl;
 
     @Value("${server.tomcat.max-http-response-header-size:65536}")
     Integer maximumResponseHeaderSize;
@@ -57,22 +52,31 @@ public class PresentationServiceImpl implements PresentationService {
                 .stream()
                 .findFirst()
                 .map(inputDescriptorDTO -> {
-                    boolean matchingProofTypes = inputDescriptorDTO.getFormat().get("ldpVc").get("proofTypes")
-                            .stream()
-                            .anyMatch(proofType -> vcCredentialResponse.getCredential().getProof().getType().equals(proofType));
-                    if (matchingProofTypes) {
-                        log.info("Started the Construction of VP token");
-                        try {
-                            VerifiablePresentationDTO verifiablePresentationDTO = constructVerifiablePresentationString(vcCredentialResponse.getCredential());
-                            String presentationSubmission = constructPresentationSubmission(verifiablePresentationDTO, presentationDefinitionDTO, inputDescriptorDTO);
-                            String vpToken = objectMapper.writeValueAsString(verifiablePresentationDTO);
-                            return String.format(injiOvpRedirectURLPattern,
-                                    presentationRequestDTO.getRedirectUri(),
-                                    Base64.getUrlEncoder().encodeToString(vpToken.getBytes(StandardCharsets.UTF_8)),
-                                    URLEncoder.encode(presentationSubmission, StandardCharsets.UTF_8));
-                        } catch (JsonProcessingException e) {
-                            throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
+
+                    if (CredentialFormat.LDP_VC.toString().equalsIgnoreCase(vcCredentialResponse.getFormat())) {
+                        VCCredentialProperties ldpCredential = objectMapper.convertValue(vcCredentialResponse.getCredential(), VCCredentialProperties.class);
+                        boolean matchingProofTypes = inputDescriptorDTO.getFormat().get("ldpVc").get("proofTypes")
+                                .stream()
+                                .anyMatch(proofType -> ldpCredential.getProof().getType().equals(proofType));
+
+                        if (matchingProofTypes) {
+                            log.info("Started the Construction of VP token");
+                            try {
+                                VerifiablePresentationDTO verifiablePresentationDTO = constructVerifiablePresentationString(ldpCredential);
+                                String presentationSubmission = constructPresentationSubmission(verifiablePresentationDTO, presentationDefinitionDTO, inputDescriptorDTO);
+                                String vpToken = objectMapper.writeValueAsString(verifiablePresentationDTO);
+                                return String.format(injiOvpRedirectURLPattern,
+                                        presentationRequestDTO.getRedirectUri(),
+                                        Base64.getUrlEncoder().encodeToString(vpToken.getBytes(StandardCharsets.UTF_8)),
+                                        URLEncoder.encode(presentationSubmission, StandardCharsets.UTF_8));
+                            } catch (JsonProcessingException e) {
+                                throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
+                            }
                         }
+                    } else if (CredentialFormat.VC_SD_JWT.getFormat().equalsIgnoreCase(vcCredentialResponse.getFormat())
+                            || CredentialFormat.DC_SD_JWT.getFormat().equalsIgnoreCase(vcCredentialResponse.getFormat())) {
+
+                        throw new UnsupportedOperationException("OnlineSharing is not supported for SD-JWT format yet.");
                     }
                     log.info("No Credentials Matched the VP request.");
                     throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
@@ -97,9 +101,9 @@ public class PresentationServiceImpl implements PresentationService {
         AtomicInteger atomicInteger = new AtomicInteger(0);
         List<SubmissionDescriptorDTO> submissionDescriptorDTOList = verifiablePresentationDTO.getVerifiableCredential()
                 .stream().map(verifiableCredential -> SubmissionDescriptorDTO.builder()
-                    .id(inputDescriptorDTO.getId())
-                    .format("ldp_vc")
-                    .path("$.verifiableCredential[" + atomicInteger.getAndIncrement() + "]").build()).collect(Collectors.toList());
+                        .id(inputDescriptorDTO.getId())
+                        .format(CredentialFormat.LDP_VC.getFormat())
+                        .path("$.verifiableCredential[" + atomicInteger.getAndIncrement() + "]").build()).collect(Collectors.toList());
 
         PresentationSubmissionDTO presentationSubmissionDTO = PresentationSubmissionDTO.builder()
                 .id(UUID.randomUUID().toString())
@@ -108,20 +112,37 @@ public class PresentationServiceImpl implements PresentationService {
         return objectMapper.writeValueAsString(presentationSubmissionDTO);
     }
 
-    public PresentationDefinitionDTO constructPresentationDefinition(VCCredentialResponse vcCredentialResponse){
-        FilterDTO filterDTO = FilterDTO.builder().type("String").pattern(vcCredentialResponse.getCredential().getType().getLast()).build();
-        FieldDTO fieldDTO = FieldDTO.builder().path(new String[]{"$.type"}).filter(filterDTO).build();
-        ConstraintsDTO constraintsDTO = ConstraintsDTO.builder().fields(new FieldDTO[]{fieldDTO}).build();
-        Map<String, List<String>> proofTypes = Map.of("proofTypes", Collections.singletonList(vcCredentialResponse.getCredential().getProof().getType()));
-        Map<String, Map<String, List<String>>> format = Map.of("ldpVc", proofTypes );
-        InputDescriptorDTO inputDescriptorDTO = InputDescriptorDTO.builder()
-                .id(UUID.randomUUID().toString())
-                .constraints(constraintsDTO)
-                .format(format).build();
+    public PresentationDefinitionDTO constructPresentationDefinition(VCCredentialResponse vcRes) {
+        String vcFormat = vcRes.getFormat();
+        List<InputDescriptorDTO> inputDescriptors = new ArrayList<>();
+
+        if (CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(vcFormat)) {
+            VCCredentialProperties ldp = objectMapper.convertValue(vcRes.getCredential(), VCCredentialProperties.class);
+            String lastType = ldp.getType().get(ldp.getType().size() - 1);
+            String proofType = Optional.ofNullable(ldp.getProof()).map(VCCredentialResponseProof::getType).orElse(null);
+
+            FieldDTO field = FieldDTO.builder()
+                    .path(new String[]{"$.type"})
+                    .filter(FilterDTO.builder().type("String").pattern(lastType).build())
+                    .build();
+
+            Map<String, Map<String, List<String>>> format = Map.of(
+                    "ldpVc", Map.of("proofTypes", List.of(proofType))
+            );
+
+            inputDescriptors.add(InputDescriptorDTO.builder()
+                    .id(UUID.randomUUID().toString())
+                    .constraints(ConstraintsDTO.builder().fields(new FieldDTO[]{ field }).build())
+                    .format(format)
+                    .build());
+
+        } else {
+            throw new UnsupportedOperationException("We don't support constructing Presentation Definition for " + vcFormat + " format yet.");
+        }
 
         return PresentationDefinitionDTO.builder()
-                .inputDescriptors(Collections.singletonList(inputDescriptorDTO))
-                .id(UUID.randomUUID().toString()).build();
+                .id(UUID.randomUUID().toString())
+                .inputDescriptors(inputDescriptors)
+                .build();
     }
-
 }

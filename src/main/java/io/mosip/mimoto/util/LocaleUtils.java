@@ -68,4 +68,11 @@ public class LocaleUtils {
                 .findFirst()
                 .orElse(displayDTOList.get(0)); // Return first display object if no match is found for the received locale
     }
+
+    public static boolean isValidLanguageCode(String code) {
+        return (code != null &&
+                code.length() == 2 &&
+                code.matches("[a-zA-Z]{2}") &&
+                java.util.Arrays.asList(Locale.getISOLanguages()).contains(code.toLowerCase()));
+    }
 }
