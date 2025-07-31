@@ -6,8 +6,10 @@ import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
@@ -43,7 +45,9 @@ public class MimotoUtil extends AdminTestUtil {
 	private static String fullNameForSunBirdR = generateFullNameForSunBirdR();
 	private static String dobForSunBirdR = generateDobForSunBirdR();
 	private static String policyNumberForSunBirdR = generateRandomNumberString(9);
-
+	
+	public static List<String> testCasesInRunScope = new ArrayList<>();
+	
 	public static void setLogLevel() {
 		if (MimotoConfigManager.IsDebugEnabled())
 			logger.setLevel(Level.ALL);
@@ -60,7 +64,7 @@ public class MimotoUtil extends AdminTestUtil {
 		logger.info("OTP Enabled value: " + otpEnabled);
 		return otpEnabled;
 	}
-
+	
 	public static TestCaseDTO changeContextURLByFlag(TestCaseDTO testCaseDTO) {
 		if (!(System.getenv("useOldContextURL") == null) && !(System.getenv("useOldContextURL").isBlank())
 				&& System.getenv("useOldContextURL").equalsIgnoreCase("true")) {
@@ -74,29 +78,43 @@ public class MimotoUtil extends AdminTestUtil {
 
 		return testCaseDTO;
 	}
-
+	
+	public static boolean isValidJSONObject(String input) {
+        try {
+            new JSONObject(input);
+            return true;
+        } catch (JSONException e) {
+            return false;
+        }
+    }
+	
 	public static TestCaseDTO isTestCaseValidForTheExecution(TestCaseDTO testCaseDTO) {
 		String testCaseName = testCaseDTO.getTestCaseName();
-
+		currentTestCaseName = testCaseName;
+		
 		int indexof = testCaseName.indexOf("_");
 		String modifiedTestCaseName = testCaseName.substring(indexof + 1);
-
+		
 		addTestCaseDetailsToMap(modifiedTestCaseName, testCaseDTO.getUniqueIdentifier());
-
-
+		
+		if (!testCasesInRunScope.isEmpty()
+				&& testCasesInRunScope.contains(testCaseDTO.getUniqueIdentifier()) == false) {
+			throw new SkipException(GlobalConstants.NOT_IN_RUN_SCOPE_MESSAGE);
+		}		
+		
 		String endpoint = testCaseDTO.getEndPoint();
 		String inputJson = testCaseDTO.getInput();
-
+		
 		//When the captcha is enabled we cannot execute the test case as we can not generate the captcha token
 		if (isCaptchaEnabled() == true) {
 			GlobalMethods.reportCaptchaStatus(GlobalConstants.CAPTCHA_ENABLED, true);
 			throw new SkipException(GlobalConstants.CAPTCHA_ENABLED_MESSAGE);
 		}
-
+		
 		if (MosipTestRunner.skipAll == true) {
 			throw new SkipException(GlobalConstants.PRE_REQUISITE_FAILED_MESSAGE);
 		}
-
+		
 		if (isOTPEnabled().equals("false")) {
 			if (testCaseDTO.getEndPoint().contains(GlobalConstants.SEND_OTP_ENDPOINT)
 					|| testCaseDTO.getInput().contains(GlobalConstants.SEND_OTP_ENDPOINT)
@@ -104,7 +122,7 @@ public class MimotoUtil extends AdminTestUtil {
 					|| (testCaseName.startsWith("Mimoto_Generate_") && endpoint.contains("/v1/mimoto/vid"))) {
 				throw new SkipException(GlobalConstants.OTP_FEATURE_NOT_SUPPORTED);
 			}
-
+			
 			if (inputJson.contains("_vid$")) {
 				inputJson = inputJson.replace("_vid$", "_VID$");
 				testCaseDTO.setInput(inputJson);
@@ -113,13 +131,13 @@ public class MimotoUtil extends AdminTestUtil {
 		if (isOTPEnabled().equals("true") && endpoint.contains("/idrepository/v1/vid")) {
 			throw new SkipException(GlobalConstants.FEATURE_NOT_SUPPORTED_MESSAGE);
 		}
-
+		
 		if (SkipTestCaseHandler.isTestCaseInSkippedList(testCaseName)) {
 			throw new SkipException(GlobalConstants.KNOWN_ISSUES);
 		}
 		return testCaseDTO;
 	}
-
+	
 	public static void dbCleanUp() {
 		DBManager.executeDBQueries(MimotoConfigManager.getKMDbUrl(), MimotoConfigManager.getKMDbUser(),
 				MimotoConfigManager.getKMDbPass(), MimotoConfigManager.getKMDbSchema(),
@@ -131,13 +149,13 @@ public class MimotoUtil extends AdminTestUtil {
 				MimotoConfigManager.getMasterDbPass(), MimotoConfigManager.getMasterDbSchema(),
 				getGlobalResourcePath() + "/" + "config/masterDataCertDataDeleteQueries.txt");
 	}
-
+	
 	public static String getOTPFromSMTP(String inputJson, TestCaseDTO testCaseDTO) {
 		String testCaseName = testCaseDTO.getTestCaseName();
 		JSONObject request = new JSONObject(inputJson);
 		String emailId = null;
 		String otp = null;
-
+		
 		if (testCaseName.contains("ESignet_AuthenticateUser") && request.has(GlobalConstants.REQUEST)) {
 			if (request.getJSONObject(GlobalConstants.REQUEST).has(GlobalConstants.CHALLENGELIST)) {
 				if (request.getJSONObject(GlobalConstants.REQUEST).getJSONArray(GlobalConstants.CHALLENGELIST)
@@ -148,11 +166,11 @@ public class MimotoUtil extends AdminTestUtil {
 								.getJSONObject(0).getString(GlobalConstants.CHALLENGE)
 								.endsWith(GlobalConstants.MAILINATOR_COM)
 								|| request.getJSONObject(GlobalConstants.REQUEST)
-								.getJSONArray(GlobalConstants.CHALLENGELIST).getJSONObject(0)
-								.getString(GlobalConstants.CHALLENGE).endsWith(GlobalConstants.MOSIP_NET)
+										.getJSONArray(GlobalConstants.CHALLENGELIST).getJSONObject(0)
+										.getString(GlobalConstants.CHALLENGE).endsWith(GlobalConstants.MOSIP_NET)
 								|| request.getJSONObject(GlobalConstants.REQUEST)
-								.getJSONArray(GlobalConstants.CHALLENGELIST).getJSONObject(0)
-								.getString(GlobalConstants.CHALLENGE).endsWith(GlobalConstants.OTP_AS_PHONE)) {
+										.getJSONArray(GlobalConstants.CHALLENGELIST).getJSONObject(0)
+										.getString(GlobalConstants.CHALLENGE).endsWith(GlobalConstants.OTP_AS_PHONE)) {
 							emailId = request.getJSONObject(GlobalConstants.REQUEST)
 									.getJSONArray(GlobalConstants.CHALLENGELIST).getJSONObject(0)
 									.getString(GlobalConstants.CHALLENGE);
@@ -171,19 +189,19 @@ public class MimotoUtil extends AdminTestUtil {
 				}
 			}
 		}
-
+		
 		return inputJson;
 	}
-
+	
 	public static String inputstringKeyWordHandeler(String jsonString, String testCaseName) {
 		if (jsonString.contains("$ID:")) {
 			jsonString = replaceIdWithAutogeneratedId(jsonString, "$ID:");
 		}
-
+		
 		if (jsonString.contains(GlobalConstants.TIMESTAMP)) {
 			jsonString = replaceKeywordValue(jsonString, GlobalConstants.TIMESTAMP, generateCurrentUTCTimeStamp());
 		}
-
+		
 		if (jsonString.contains("$UNIQUENONCEVALUEFORESIGNET$")) {
 			jsonString = replaceKeywordValue(jsonString, "$UNIQUENONCEVALUEFORESIGNET$",
 					String.valueOf(Calendar.getInstance().getTimeInMillis()));
@@ -199,23 +217,23 @@ public class MimotoUtil extends AdminTestUtil {
 			jsonString = replaceKeywordValue(jsonString, "$SUNBIRDINSURANCEAUTHFACTORTYPE$", valueToReplace);
 
 		}
-
+		
 		if (jsonString.contains("$GOOGLE_IDT_TOKEN$")) {
 			jsonString = replaceKeywordValue(jsonString, "$GOOGLE_IDT_TOKEN$", getGoogleIdToken());
 		}
-
+		
 		if (jsonString.contains("$POLICYNUMBERFORSUNBIRDRC$")) {
 			jsonString = replaceKeywordValue(jsonString, "$POLICYNUMBERFORSUNBIRDRC$", policyNumberForSunBirdR);
 		}
-
+		
 		if (jsonString.contains("$FULLNAMEFORSUNBIRDRC$")) {
 			jsonString = replaceKeywordValue(jsonString, "$FULLNAMEFORSUNBIRDRC$", fullNameForSunBirdR);
 		}
-
+		
 		if (jsonString.contains("$DOBFORSUNBIRDRC$")) {
 			jsonString = replaceKeywordValue(jsonString, "$DOBFORSUNBIRDRC$", dobForSunBirdR);
 		}
-
+		
 		if (jsonString.contains("$CHALLENGEVALUEFORSUNBIRDC$")) {
 
 			HashMap<String, String> mapForChallenge = new HashMap<String, String>();
@@ -228,17 +246,17 @@ public class MimotoUtil extends AdminTestUtil {
 
 			jsonString = replaceKeywordValue(jsonString, "$CHALLENGEVALUEFORSUNBIRDC$", challengeValue);
 		}
-
+		
 		if (jsonString.contains("$PUBLICKEYFORBINDING$")) {
 			jsonString = replaceKeywordValue(jsonString, "$PUBLICKEYFORBINDING$",
 					generatePublicKeyForMimoto());
 		}
-
+		
 		if (jsonString.contains("$INJIREDIRECTURI$")) {
 			jsonString = replaceKeywordValue(jsonString, "$INJIREDIRECTURI$",
 					ApplnURI.replace(GlobalConstants.API_INTERNAL, "injiweb") + "/redirect");
 		}
-
+		
 		if (jsonString.contains("$GETCLIENTIDFORMOSIPIDFROMMIMOTOACTUATOR$")) {
 			String clientIdSection = MimotoConfigManager.getproperty("mimoto-oidc-mosipid-partner-clientid");
 			jsonString = replaceKeywordWithValue(jsonString, "$GETCLIENTIDFORMOSIPIDFROMMIMOTOACTUATOR$",
@@ -248,11 +266,11 @@ public class MimotoUtil extends AdminTestUtil {
 			jsonString = replaceKeywordWithValue(jsonString, "$GETCLIENTIDFORINSURANCEFROMMIMOTOACTUATOR$",
 					getValueFromMimotoActuator("overrides", clientIdSection));
 		}
-
+		
 		return jsonString;
-
+		
 	}
-
+	
 	public static String replaceKeywordValue(String jsonString, String keyword, String value) {
 		if (value != null && !value.isEmpty())
 			return jsonString.replace(keyword, value);
@@ -265,7 +283,7 @@ public class MimotoUtil extends AdminTestUtil {
 
 		}
 	}
-
+	
 	public static String generatePublicKeyForMimoto() {
 
 		String vcString = "";
@@ -302,7 +320,7 @@ public class MimotoUtil extends AdminTestUtil {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 		return dob.format(formatter);
 	}
-
+	
 	public static JSONArray mimotoActuatorResponseArray = null;
 
 	public static String getValueFromMimotoActuator(String section, String key) {
@@ -382,4 +400,5 @@ public class MimotoUtil extends AdminTestUtil {
 		return idToken;
 
 	}
+
 }

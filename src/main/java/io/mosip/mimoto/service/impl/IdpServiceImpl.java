@@ -16,7 +16,11 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpStatus;
+
+import static io.mosip.mimoto.exception.ErrorConstants.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -76,16 +80,31 @@ public class IdpServiceImpl implements IdpService {
 
     @Override
     public TokenResponseDTO getTokenResponse(Map<String, String> params) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
-        String issuerId = params.get("issuer");
-        IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
-        CredentialIssuerConfiguration credentialIssuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
-        String tokenEndpoint = getTokenEndpoint(credentialIssuerConfiguration);
-        HttpEntity<MultiValueMap<String, String>> request = constructGetTokenRequest(params, issuerDTO, tokenEndpoint);
-        TokenResponseDTO response = restTemplate.postForObject(tokenEndpoint, request, TokenResponseDTO.class);
-        if (response == null) {
-            throw new IdpException("Exception occurred while performing the authorization");
+        try{
+            String issuerId = params.get("issuer");
+            String codeVerifier = params.get("code_verifier");
+            if (codeVerifier == null || !codeVerifier.matches("^[A-Za-z0-9\\-._~]{43,128}$")) {
+                throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Invalid code verifier.");
+            }
+
+            IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
+            CredentialIssuerConfiguration credentialIssuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
+            String tokenEndpoint = getTokenEndpoint(credentialIssuerConfiguration);
+            HttpEntity<MultiValueMap<String, String>> request = constructGetTokenRequest(params, issuerDTO, tokenEndpoint);
+            TokenResponseDTO response = restTemplate.postForObject(tokenEndpoint, request, TokenResponseDTO.class);
+            if (response == null) {
+                throw new IdpException("Exception occurred while performing the authorization");
+            }
+            return response;
+        } catch (InvalidIssuerIdException e) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Invalid issuer");
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Request failed due to invalid input detected by an external service.");
+            } else {
+                throw e;
+            }
         }
-        return response;
     }
 
 
