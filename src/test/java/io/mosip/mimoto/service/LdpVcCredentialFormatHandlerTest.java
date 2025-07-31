@@ -312,6 +312,7 @@ class LdpVcCredentialFormatHandlerTest {
         credentialDefinition.setType(types);
         credentialDefinition.setContext(context);
         credentialsSupportedResponse.setCredentialDefinition(credentialDefinition);
+        credentialsSupportedResponse.setVct("dd");
 
         String credentialType = "IdentityCredential";
         VCCredentialRequestProof proof = VCCredentialRequestProof.builder()
@@ -321,7 +322,7 @@ class LdpVcCredentialFormatHandlerTest {
 
         // When
         VCCredentialRequest result = ldpVcCredentialFormatHandler.buildCredentialRequest(
-                proof, credentialsSupportedResponse, credentialType);
+                proof, credentialsSupportedResponse);
 
         // Then
         assertNotNull(result);
@@ -349,7 +350,7 @@ class LdpVcCredentialFormatHandlerTest {
 
         // When
         VCCredentialRequest result = ldpVcCredentialFormatHandler.buildCredentialRequest(
-                proof, credentialsSupportedResponse, credentialType);
+                proof, credentialsSupportedResponse);
 
         // Then
         assertNotNull(result);
@@ -377,7 +378,7 @@ class LdpVcCredentialFormatHandlerTest {
 
         // When
         VCCredentialRequest result = ldpVcCredentialFormatHandler.buildCredentialRequest(
-                proof, credentialsSupportedResponse, credentialType);
+                proof, credentialsSupportedResponse);
 
         // Then
         assertNotNull(result);

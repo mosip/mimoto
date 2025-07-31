@@ -77,7 +77,7 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
                             .jwt(jwt)
                             .build();
                     CredentialFormatHandler handler = credentialFormatHandlerFactory.getHandler(format);
-                    return handler.buildCredentialRequest(proof, credentialsSupportedResponse, credentialConfigurationId);
+                    return handler.buildCredentialRequest(proof, credentialsSupportedResponse);
                 })
                 .orElseThrow(() -> new IllegalArgumentException("No proof type available"));
     }

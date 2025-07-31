@@ -55,4 +55,7 @@ public class CredentialsSupportedResponse {
 
     @Schema(description = "Order of the Credentials Subject Render")
     private List<String> order;
+
+    @Schema(description = "Identify the type or schema of the claims included")
+    private String vct;
 }
