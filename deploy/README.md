@@ -9,14 +9,14 @@
 
 * Execute redis install script
 ```
-cd redis
+cd deploy/redis
 ./install.sh
 ```
 ## Initialise pre-requisites
 ### [DB init](../db_scripts)
 * Update values file for postgres init [here](../db_scripts/init_values.yaml).
 ````
-   cd db_scripts
+   cd ../../db_scripts
   ./init_db.sh
 ```` 
 
@@ -34,7 +34,7 @@ cd ../partner-onboarder
 * Execute mimoto install script
 * Before installing Mimoto, please ensure that the database host and port are correctly configured in the [values.yaml](mimoto/values.yaml) file.
 ```
-cd mimoto
+cd ../deploy/mimoto
 ./install.sh
  ```
 * During the execution of the `install.sh` script, a prompt appears requesting information regarding the presence of a public domain and a valid SSL certificate on the server.
