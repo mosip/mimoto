@@ -7,7 +7,7 @@
 * Config server installation [steps](https://docs.inji.io/readme/setup/deploy#config-server-installation)
 * Artifactory installation [steps](https://github.com/mosip/artifactory-ref-impl/tree/v1.3.0-beta.2/deploy)
 
-* Execute redis install script
+* Redis installation
 ```
 cd deploy/redis
 ./install.sh
