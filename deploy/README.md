@@ -3,7 +3,7 @@
 ## Pre-requisites
 * inji-stack-config configmap [steps](https://docs.inji.io/readme/setup/deploy#pre-requisites)
 * Postgres installation [steps](https://github.com/mosip/mosip-infra/tree/v1.2.0.2/deployment/v3/external/postgres)
-* Config server secerts [steps](https://docs.inji.io/readme/setup/deploy#conf-secret-installation)
+* Config server secerts [steps](https://github.com/mosip/mosip-infra/tree/v1.2.0.2/deployment/v3/mosip/conf-secrets)
 * Config server installation [steps](https://docs.inji.io/readme/setup/deploy#config-server-installation)
 * Artifactory installation [steps](https://github.com/mosip/artifactory-ref-impl/tree/v1.3.0-beta.2/deploy)
 
