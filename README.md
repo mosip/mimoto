@@ -43,6 +43,7 @@ The project requires JDK 21, postgres, redis and google client credentials
   ```docker build -t <image-with-tag> .```
 * Use newly built docker image in docker-compose file
 
+## [Deployment in K8 cluster](deploy/README.md)
 
 ## Credits
 Credits listed [here](/Credits.md)

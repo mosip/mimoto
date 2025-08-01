@@ -1,11 +1,19 @@
+# mimoto
 
-# Install Onboarder
+## Pre-requisites
+* inji-stack-config configmap [steps](https://docs.inji.io/readme/setup/deploy#pre-requisites)
+* Postgres installation [steps](https://github.com/mosip/mosip-infra/tree/v1.2.0.2/deployment/v3/external/postgres)
+* Config server secerts [steps](https://docs.inji.io/readme/setup/deploy#conf-secret-installation)
+* Config server installation [steps](https://docs.inji.io/readme/setup/deploy#config-server-installation)
+* Artifactory installation [steps](https://github.com/mosip/artifactory-ref-impl/tree/v1.3.0-beta.2/deploy)
+
 
 * Execute redis install script
 ```
 cd redis
 ./install.sh
 ```
+## [Install Onboarder](../partner-onboarder)
 * Execute Onboarder install script
 ```
 cd ../partner-onboarder
@@ -15,7 +23,7 @@ cd ../partner-onboarder
 * Once the job is completed, log in to S3 / NFS and check the reports. There should not be any failures.
 * Note: If you are running the Onboarder in a separate INJI cluster, update the extraEnvVars section accordingly in [values.yaml](../partner-onboarder/values.yaml).
 
-# Install mimoto
+## Install mimoto
 * Execute mimoto install script
 * Before installing Mimoto, please ensure that the database host and port are correctly configured in the [values.yaml](mimoto/values.yaml) file.
 ```
@@ -27,6 +35,8 @@ cd mimoto
 * The init-container will proceed to download the server's self-signed SSL certificate and mount it to the specified location within the container's Java keystore (i.e., `cacerts`) file.
 * This particular functionality caters to scenarios where the script needs to be employed on a server utilizing self-signed SSL certificates.
 
-## For Onboarding new Issuer for VCI:
+### For Onboarding new Issuer for VCI:
 
 - create a folder "certs" in the root and a file "oidckeystore.p12" inside certs and store the keys as different aliases for every issuers. for more details refer [here](https://docs.inji.io/inji-wallet/inji-mobile/technical-overview/customization-overview/credential_providers)
+
+## [mimoto apitestrig](mimoto-apitestrig)
