@@ -7,12 +7,19 @@
 * Config server installation [steps](https://docs.inji.io/readme/setup/deploy#config-server-installation)
 * Artifactory installation [steps](https://github.com/mosip/artifactory-ref-impl/tree/v1.3.0-beta.2/deploy)
 
-
 * Execute redis install script
 ```
 cd redis
 ./install.sh
 ```
+## Initialise pre-requisites
+### [DB init](../db_scripts)
+* Update values file for postgres init [here](../db_scripts/init_values.yaml).
+````
+   cd db_scripts
+  ./init_db.sh
+```` 
+
 ## [Install Onboarder](../partner-onboarder)
 * Execute Onboarder install script
 ```
