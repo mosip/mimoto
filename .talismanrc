@@ -118,15 +118,15 @@ fileignoreconfig:
 - filename: src/test/resources/application-test.properties
   checksum: eff6c72dfdc2e0a2aa4e3ec9d520a1433189902467954d123bc562df095a43bd
 - filename: src/main/resources/application-local.properties
-  checksum: a1b9b7b86e8f0cd13e1b8daf700154c5d0b3247e0704d9d69cf5da4b29f1c5f6
+  checksum: 907a0fa64a31e900d1c01f60f6660489f3dd22e5c3074f7f159f8d1f46dbaa39
 - filename: docker-compose/config/mimoto-default.properties
-  checksum: 52fbe3efbd4e55aec6fc94e293c9e34599ee8cc66c45a9c033a72b7db8079dd7
+  checksum: 50a79aada61e290b465992e639ef3e919d8c8d76544c0bd81bb228fba96f4e65
 - filename: src/main/resources/application-default.properties
   checksum: 7f6395a9797fb780e14e9df5e637ff9ab3efefe662aff60414e936a716e59f4a
 - filename: docker-compose/config/mimoto-default.properties
   checksum: 5f8b6f56d1f8a5f068a2b9be8a64c3b6fb892c028c2da8b5118cf9b9ca7e2032
 - filename: README.md
-  checksum: 64ac1f74514fb9cff80eb14675e9f9d00cc59ca8b05bde8a3722728cd479f3cf
+  checksum: 5f2e3d249bfe75fb73f4bae07d94c0b6e177071d4e1ea42301c4730aed433df0
 - filename: docker-compose/README.md
-  checksum: fd5d16a6fc4bae3efbd90cefe2d8a0f09aeef24b0a332675dcdf1e0297c46e25
+  checksum: 626b48c452b3fbefbfa4caa0018ed909c43a6162eb56d905f43b3f6261ba2e7e
 version: ""
