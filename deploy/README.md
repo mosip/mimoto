@@ -16,7 +16,7 @@ cd deploy/redis
 ### [DB init](../db_scripts)
 * Update values file for postgres init [here](../db_scripts/init_values.yaml).
 ````
-   cd db_scripts
+   cd ../../db_scripts
   ./init_db.sh
 ```` 
 
