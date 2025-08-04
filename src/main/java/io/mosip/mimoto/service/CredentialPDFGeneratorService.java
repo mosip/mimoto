@@ -1,5 +1,7 @@
 package io.mosip.mimoto.service;
 
+import com.authlete.sd.Disclosure;
+import com.authlete.sd.SDJWT;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.zxing.BarcodeFormat;
@@ -11,6 +13,7 @@ import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerDisplayResponse;
 import io.mosip.mimoto.dto.mimoto.CredentialSupportedDisplayResponse;
@@ -37,6 +40,7 @@ import java.io.StringWriter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -111,12 +115,27 @@ public class CredentialPDFGeneratorService {
         String credentialSupportedType = firstDisplay != null ? firstDisplay.getName() : null;
 
         String face = extractFace(vcCredentialResponse);
+        Set<String> disclosures;
+        if (CredentialFormat.VC_SD_JWT.getFormat().equals(vcCredentialResponse.getFormat())) {
+            SDJWT sdjwt = SDJWT.parse((String) vcCredentialResponse.getCredential());
+            disclosures = sdjwt.getDisclosures().stream()
+                    .map(Disclosure::getClaimName)
+                    .collect(Collectors.toSet());
+        } else {
+            disclosures = new LinkedHashSet<>();
+        }
 
+        LinkedHashMap<String, Object> disclosuresProps = new LinkedHashMap<>();
         displayProperties.forEach((key, valueMap) -> valueMap.forEach((display, val) -> {
             String displayName = display.getName();
             String locale = display.getLocale();
             String strVal = formatValue(val, locale);
-            rowProperties.put(key, Map.of(displayName, strVal));
+            if (disclosures.contains(key)){
+                disclosuresProps.put(key, Map.of(displayName, strVal));
+            } else{
+                rowProperties.put(key, Map.of(displayName, strVal));
+            }
+
         }));
 
         String qrCodeImage = "";
@@ -130,6 +149,7 @@ public class CredentialPDFGeneratorService {
         data.put("credentialValidity", credentialValidity);
         data.put("logoUrl", issuerDTO.getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));
         data.put("rowProperties", rowProperties);
+        data.put("disclosures", disclosuresProps);
         data.put("textColor", textColor);
         data.put("backgroundColor", backgroundColor);
         data.put("backgroundImage", backgroundImage);
