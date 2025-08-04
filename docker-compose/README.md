@@ -17,14 +17,19 @@ This is the docker-compose setup to run mimoto which act as BFF for Inji mobile 
          - GOOGLE_OAUTH_CLIENT_ID=<your-client-id>
          - GOOGLE_OAUTH_CLIENT_SECRET=<your-client-secret>
    ```
+   
 2. Add identity providers as issuers in the `mimoto-issuers-config.json` file of [docker-compose config folder](config/mimoto-issuers-config.json). For each provider, create a corresponding object with its issuer-specific configuration. Refer to the [Issuers Configuration](#mimoto-issuers-configuration) section for details on how to structure this file and understand each field's purpose and what values need to be updated.
+
 3. Add or update the verifiers clientId, redirect and response Uris in `mimoto-trusted-verifiers.json` file of [docker-compose config folder](config/mimoto-trusted-verifiers.json) for Verifiable credential Online Sharing.
+
 4. Create certs folder in the same directory and create OIDC client. Add key in oidckeystore.p12 and copy this file under certs folder.
    Refer [here](https://docs.inji.io/inji-wallet/inji-mobile/technical-overview/customization-overview/credential_providers) to create client
    * Update client_id and client_alias as per onboarding in [mimoto-issuers-config.json](config/mimoto-issuers-config.json) file.
    * Update `oidc_p12_password` environment variable of Mimoto service in docker-compose.yml to match the password set for the oidckeystore.p12 file.
    * Mimoto uses this same keystore file (oidckeystore.p12) to store keys generated at service startup, which are essential for performing encryption and decryption operations through the KeyManager service.
+   
 5. To configure any Mobile Wallet specific configurations refer to the [Inji Mobile Wallet Configuration](#inji-mobile-wallet-configuration) section.
+
 6. Choose your setup for starting the services:
    - **Starting all services via Docker Compose (including Mimoto):**
    Run the following command to start the services
@@ -35,12 +40,24 @@ This is the docker-compose setup to run mimoto which act as BFF for Inji mobile 
    1.  In `docker-compose.yml`, update the `DATASHARE_DOMAIN` environment variable for the `Datashare service` to `localhost:8097`.
    2.  Then, start your dependent services by running the following command
    ```bash
-      docker-compose up # To start all services defined in docker-compose.yml
+      docker-compose up # Use this to comment inji web service and start all the other services defined in docker-compose.yml
       # OR
       docker-compose up datashare other_service_name # To start specific services (replace with actual names)
    ```
+   - Use **-d** to run the services in detached mode
+   
+7. To stop all the services, navigate to docker-compose folder and run the following command
+   ```bash
+   docker-compose down
+   ```
 
-7. Access Apis as
+8. To stop the specific service and remove it, run the following commands
+   ```bash
+   docker-compose stop <service_name> # To stop a specific service
+   docker-compose rm <service_name> # To remove a specific service
+   ```
+
+9. Access Apis as
    * http://localhost:8099/v1/mimoto/allProperties
    * http://localhost:8099/v1/mimoto/issuers
    * http://localhost:8099/v1/mimoto/issuers/StayProtected

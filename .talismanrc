@@ -126,5 +126,5 @@ fileignoreconfig:
 - filename: README.md
   checksum: faf968fa37234c6db0353ba05c396d3acc674ee52650f02966faca568f2afaf3
 - filename: docker-compose/README.md
-  checksum: ba41d1238ee58e5f1968010efad4c2a5a194dbfbbc681552d2493cc66324549f
+  checksum: efbcc3c9a2f26537513ea3546e3e7b3155258d7502e77c462a47bf9e38c1feef
 version: ""
