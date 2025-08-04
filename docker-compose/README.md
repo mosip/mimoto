@@ -42,7 +42,7 @@ This is the docker-compose setup to run mimoto which act as BFF for Inji mobile 
 
 7. Access Apis as
    * http://localhost:8099/v1/mimoto/allProperties
-   * http://localhost:8099/v1/mimoto/issuersx
+   * http://localhost:8099/v1/mimoto/issuers
    * http://localhost:8099/v1/mimoto/issuers/StayProtected
    * http://localhost:8099/v1/mimoto/issuers/StayProtected/well-known-proxy
 
