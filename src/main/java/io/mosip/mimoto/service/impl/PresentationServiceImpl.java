@@ -1,6 +1,5 @@
 package io.mosip.mimoto.service.impl;
 
-import com.authlete.sd.SDJWT;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
@@ -23,7 +22,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static io.mosip.mimoto.util.JwtUtils.*;
+import static io.mosip.mimoto.util.JwtUtils.extractJwtPayloadFromSdJwt;
+import static io.mosip.mimoto.util.JwtUtils.parseJwtHeader;
 
 @Slf4j
 @Service
