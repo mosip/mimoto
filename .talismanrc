@@ -72,7 +72,7 @@ fileignoreconfig:
 - filename: src/main/java/io/mosip/mimoto/util/JoseUtil.java
   checksum: b6123f66cb7dbe208cb8d5f8b4b664d742c918608ec0ad22dfa3ab27ab9ec32e
 - filename: docker-compose/docker-compose.yml
-  checksum: 855483e9076e58d8673b13e852f7725b890bbf9a877e79a7ba573d9a27a19762
+  checksum: 6c4765658ac673aeda9cdd4107776d0c706f63eff3543c8b82b2d84b061310cd
 - filename: src/test/java/io/mosip/mimoto/util/WalletValidatorTest.java
   checksum: 90dce7daa19f0eb9050194a3c77a88d449a83c337d9041bfdeb7bfded3bbd12c
 - filename: src/main/java/io/mosip/mimoto/exception/ErrorConstants.java
@@ -118,13 +118,11 @@ fileignoreconfig:
 - filename: src/test/resources/application-test.properties
   checksum: eff6c72dfdc2e0a2aa4e3ec9d520a1433189902467954d123bc562df095a43bd
 - filename: src/main/resources/application-local.properties
-  checksum: 907a0fa64a31e900d1c01f60f6660489f3dd22e5c3074f7f159f8d1f46dbaa39
+  checksum: 34912123b9623afcea04e5e6726d614dd20e67b1dd5e685fea92dce9077fa7be
 - filename: docker-compose/config/mimoto-default.properties
-  checksum: be35f6eb897ef07b6203b1f159fe533f569d2601d476bfc2467e7ad87e38573c
+  checksum: c47e16427653b2283bfd7e0edda74aad3171aa16e0cc7dd1f8d31934c269e678
 - filename: src/main/resources/application-default.properties
   checksum: 7f6395a9797fb780e14e9df5e637ff9ab3efefe662aff60414e936a716e59f4a
-- filename: docker-compose/config/mimoto-default.properties
-  checksum: 5f8b6f56d1f8a5f068a2b9be8a64c3b6fb892c028c2da8b5118cf9b9ca7e2032
 - filename: README.md
   checksum: faf968fa37234c6db0353ba05c396d3acc674ee52650f02966faca568f2afaf3
 - filename: docker-compose/README.md
