@@ -24,7 +24,7 @@ This is the docker-compose setup to run mimoto which act as BFF for Inji mobile 
 
 4. Create certs folder in the same directory and create OIDC client. Add key in oidckeystore.p12 and copy this file under certs folder.
    Refer [here](https://docs.inji.io/inji-wallet/inji-mobile/technical-overview/customization-overview/credential_providers) to create client
-   * Update client_id and client_alias as per onboarding in [mimoto-issuers-config.json](config/mimoto-issuers-config.json) file.
+   * Update **client_id** and **client_alias** as per onboarding in [mimoto-issuers-config.json](config/mimoto-issuers-config.json) file.
    * Update `oidc_p12_password` environment variable of Mimoto service in docker-compose.yml to match the password set for the oidckeystore.p12 file.
    * Mimoto uses this same keystore file (oidckeystore.p12) to store keys generated at service startup, which are essential for performing encryption and decryption operations through the KeyManager service.
    
@@ -44,17 +44,18 @@ This is the docker-compose setup to run mimoto which act as BFF for Inji mobile 
       # OR
       docker-compose up datashare other_service_name # To start specific services (replace with actual names)
    ```
-   - Use **-d** to run the services in detached mode
+   **Note:** Use the **-d** flag with docker-compose up to run the services in detached (background) mode.
    
 7. To stop all the services, navigate to docker-compose folder and run the following command
    ```bash
    docker-compose down
    ```
 
-8. To stop the specific service and remove it, run the following commands
+8. To stop a specific service (e.g., mimoto-service) and remove its container and image, run the following commands
    ```bash
-   docker-compose stop <service_name> # To stop a specific service
-   docker-compose rm <service_name> # To remove a specific service
+   docker-compose stop <service_name> # To stop a specific service container
+   docker-compose rm <service_name> # To remove a specific service container
+   docker rmi <image_name:tag> # To remove a specific service image
    ```
 
 9. Access Apis as

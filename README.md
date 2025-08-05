@@ -32,7 +32,7 @@ The project requires JDK 21, postgres, redis and google client credentials
     mosip.kernel.keymanager.hsm.config-path=<path to the keystore file>
     mosip.kernel.keymanager.hsm.keystore-pass=<your-keystore-password>
     ```
-   * Update client_id and client_alias for Issuer as per onboarding in [mimoto-issuers-config.json](src/main/resources/mimoto-issuers-config.json) file. 
+   * Update **client_id** and **client_alias** for Issuer as per onboarding in [mimoto-issuers-config.json](src/main/resources/mimoto-issuers-config.json) file. 
    * Mimoto uses this same keystore file (oidckeystore.p12) to store keys generated at service startup, which are essential for performing encryption and decryption operations through the KeyManager service. 
 6. To configure any Mobile Wallet specific configurations refer to the [Inji Mobile Wallet Configuration](docker-compose/README.md#inji-mobile-wallet-configuration) section.
 7. Run the SQLs using <db name>/deploy.sh script. from [db_scripts folder](db_scripts/inji_mimoto)

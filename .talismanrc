@@ -79,6 +79,8 @@ fileignoreconfig:
   checksum: 21e2e13d05f14c20274524b531447886ee6582e618197255f00a2fcef562213c
 - filename: src/test/java/io/mosip/mimoto/util/TestUtilities.java
   checksum: f916181b87d1388fa639267086a14dc5e5d7fcd4b27bd013919a46d8cebfa805
+- filename: src/main/java/io/mosip/mimoto/controller/WalletCredentialsController.java
+  checksum: c378e601f657a82ef59da49c01e3b9d39619a2aec143c71b8a269ab1aeb815a1
 - filename: src/main/java/io/mosip/mimoto/service/WalletUnlockService.java
   checksum: 4a67a6393ad6e70bb7c999c7e5dbf9187e765aaf2ff64f465d4344f58c05a00c
 - filename: src/test/java/io/mosip/mimoto/service/WalletUnlockServiceTest.java
@@ -124,7 +126,7 @@ fileignoreconfig:
 - filename: src/main/resources/application-default.properties
   checksum: 7f6395a9797fb780e14e9df5e637ff9ab3efefe662aff60414e936a716e59f4a
 - filename: README.md
-  checksum: faf968fa37234c6db0353ba05c396d3acc674ee52650f02966faca568f2afaf3
+  checksum: e22840730e24757a69a9be73d0f85c0ca33cfe1be89ce0d7817ce7fd9f2edef8
 - filename: docker-compose/README.md
-  checksum: efbcc3c9a2f26537513ea3546e3e7b3155258d7502e77c462a47bf9e38c1feef
+  checksum: 12ce1b00373c25b2fff44eb57bc3dd3cea3bfbaafca4c8af827cd9a5987b53db
 version: ""
