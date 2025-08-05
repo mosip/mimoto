@@ -1,7 +1,13 @@
-# mimoto
+# Deployment
 
 ## Pre-requisites
-* Cluster creation and configuration [steps](https://docs.inji.io/readme/setup/deploy)
+* Base infra setup
+   * Tool and utilities to be installed in local [steps](https://docs.inji.io/readme/setup/deploy#tools-and-utilities)
+   * System Requirements: Hardware, network and certificate requirements [steps](https://docs.inji.io/readme/setup/deploy#system-requirements)
+   * Wireguard Bastion Host [steps](https://docs.inji.io/readme/setup/deploy#wireguard)
+   * K8s Cluster setup [steps](https://docs.inji.io/readme/setup/deploy#k8-cluster-setup)
+   * Nginx setup and configuration [steps](https://docs.inji.io/readme/setup/deploy#nginx-for-inji-k8-cluster)
+   * K8s Cluster Configuration [steps](https://docs.inji.io/readme/setup/deploy#k8-cluster-configuration)
 * inji-stack-config configmap [steps](https://docs.inji.io/readme/setup/deploy#pre-requisites)
 * Postgres installation [steps](https://github.com/mosip/mosip-infra/tree/v1.2.0.2/deployment/v3/external/postgres)
 * Config server secerts [steps](https://github.com/mosip/mosip-infra/tree/v1.2.0.2/deployment/v3/mosip/conf-secrets)
