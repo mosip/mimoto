@@ -1,0 +1,64 @@
+package io.mosip.mimoto.util;
+
+import com.authlete.sd.SDJWT;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.Map;
+
+@Slf4j
+public class JwtUtils {
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    public static Map<String, Object> extractJwtPayloadFromSdJwt(String sdJwtString) {
+        try {
+            SDJWT sdJwt = SDJWT.parse(sdJwtString);
+            String credentialJwt = sdJwt.getCredentialJwt();
+            if (credentialJwt != null) {
+                return parseJwtPayload(credentialJwt);
+            }
+            log.warn("Credential JWT is null in parsed SD‑JWT");
+        } catch (Exception e) {
+            log.error("Failed to extract JWT payload from SD‑JWT: {}", e.getMessage(), e);
+        }
+        return Collections.emptyMap();
+    }
+
+    public static Map<String, Object> parseJwtPayload(String jwt) {
+        try {
+            String[] parts = jwt.split("\\.");
+            if (parts.length < 3) {
+                log.error("Invalid JWT format for payload parsing: {}", jwt);
+                return Collections.emptyMap();
+            }
+            String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+            return objectMapper.readValue(payloadJson, Map.class);
+        } catch (Exception e) {
+            log.error("Error parsing JWT payload", e);
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Extracts the JWT header as a Map.
+     */
+    public static Map<String, Object> parseJwtHeader(String jwt) {
+        try {
+            String[] parts = jwt.split("\\.");
+            if (parts.length < 3) {
+                log.warn("Invalid JWT format for header parsing: {}", jwt);
+                return Collections.emptyMap();
+            }
+            String headerJson = new String(Base64.getUrlDecoder().decode(parts[0]), StandardCharsets.UTF_8);
+            return objectMapper.readValue(headerJson, Map.class);
+        } catch (Exception e) {
+            log.error("Error parsing JWT header", e);
+            return Collections.emptyMap();
+        }
+    }
+}
+
