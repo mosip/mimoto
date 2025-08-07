@@ -58,9 +58,6 @@ class VcSdJwtCredentialFormatHandlerTest {
             when(mockSdJwt.getCredentialJwt()).thenReturn(sampleJwtString);
             when(mockSdJwt.getDisclosures()).thenReturn(new ArrayList<>());
 
-            Map<String, Object> jwtPayload = createSampleJwtPayload();
-            when(objectMapper.readValue(anyString(), eq(Map.class))).thenReturn(jwtPayload);
-
             Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
             assertNotNull(result);
@@ -110,9 +107,6 @@ class VcSdJwtCredentialFormatHandlerTest {
     @Test
     void extractCredentialClaimsWithCredentialSubjectShouldReturnCredentialSubject() throws JsonProcessingException {
         vcCredentialResponse.setCredential(sampleSdJwtString);
-        Map<String, Object> credentialSubject = new HashMap<>();
-        credentialSubject.put("firstName", "John");
-        credentialSubject.put("lastName", "Doe");
 
         try (MockedStatic<SDJWT> mockedSdJwt = mockStatic(SDJWT.class)) {
             SDJWT mockSdJwt = mock(SDJWT.class);
@@ -120,18 +114,12 @@ class VcSdJwtCredentialFormatHandlerTest {
             when(mockSdJwt.getCredentialJwt()).thenReturn(sampleJwtString);
             when(mockSdJwt.getDisclosures()).thenReturn(new ArrayList<>());
 
-            Map<String, Object> jwtPayload = new HashMap<>();
-            jwtPayload.put("credentialSubject", credentialSubject);
-            when(objectMapper.readValue(anyString(), eq(Map.class))).thenReturn(jwtPayload);
-
             Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
             assertNotNull(result);
             assertTrue(result.containsKey("credentialSubject"));
             Map<String, Object> subject = (Map<String, Object>) result.get("credentialSubject");
-            assertEquals(credentialSubject, subject);
-            assertEquals("John", subject.get("firstName"));
-            assertEquals("Doe", subject.get("lastName"));
+            assertEquals("John Doe", subject.get("name"));
         }
     }
 
@@ -149,9 +137,6 @@ class VcSdJwtCredentialFormatHandlerTest {
             when(mockSdJwt.getDisclosures()).thenReturn(disclosures);
             when(mockDisclosure.getClaimName()).thenReturn("disclosedClaim");
             when(mockDisclosure.getClaimValue()).thenReturn("disclosedValue");
-
-            Map<String, Object> jwtPayload = createSampleJwtPayload();
-            when(objectMapper.readValue(anyString(), eq(Map.class))).thenReturn(jwtPayload);
 
             Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 

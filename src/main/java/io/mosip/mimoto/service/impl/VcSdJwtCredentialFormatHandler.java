@@ -16,6 +16,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.mosip.mimoto.util.JwtUtils.parseJwtPayload;
+
 @Slf4j
 @Component("vc+sd-jwt")
 public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
@@ -83,7 +85,6 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
 
         if (convertedClaimsMap.isEmpty()) {
             log.warn("No display configuration found for SD-JWT format");
-            return displayProperties;
         }
 
         String resolvedLocale = LocaleUtils.resolveLocaleWithFallback(convertedClaimsMap, userLocale);
@@ -156,7 +157,7 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
             }
 
             // Remove standard JWT claims and SD-JWT metadata
-            List<String> metadataKeys = Arrays.asList("iss", "sub", "aud", "exp", "nbf", "iat", "jti", "_sd", "_sd_alg");
+            List<String> metadataKeys = Arrays.asList("vct", "cnf", "iss", "sub", "aud", "exp", "nbf", "iat", "jti", "_sd", "_sd_alg");
             metadataKeys.forEach(claims::remove);
 
             // Separate credentialSubject if present
@@ -172,22 +173,6 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
         } catch (Exception e) {
             log.error("Unexpected error processing SD-JWT", e);
             return Collections.emptyMap();
-        }
-    }
-
-    private Map<String, Object> parseJwtPayload(String jwt) {
-        try {
-            String[] parts = jwt.split("\\.");
-            if (parts.length < 3) {
-                log.error("Invalid JWT format");
-                return null;
-            }
-
-            String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-            return objectMapper.readValue(payloadJson, Map.class);
-        } catch (Exception e) {
-            log.error("Error parsing JWT payload", e);
-            return null;
         }
     }
 
