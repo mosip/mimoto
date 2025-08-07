@@ -82,10 +82,6 @@ public class IdpServiceImpl implements IdpService {
     public TokenResponseDTO getTokenResponse(Map<String, String> params) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException {
         try{
             String issuerId = params.get("issuer");
-            String codeVerifier = params.get("code_verifier");
-            if (codeVerifier == null || !codeVerifier.matches("^[A-Za-z0-9\\-._~]{43,128}$")) {
-                throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Invalid code verifier.");
-            }
 
             IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
             CredentialIssuerConfiguration credentialIssuerConfiguration = issuersService.getIssuerConfiguration(issuerId);
