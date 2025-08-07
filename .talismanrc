@@ -23,8 +23,10 @@ fileignoreconfig:
   checksum: 81b14da4f42f335cf6a3094489844962b92fc629c89691487558c71c3d44a915
 - filename: src/main/java/io/mosip/mimoto/controller/CredentialShareController.java
   checksum: 666c22ca63adb8770de901e220f8efeb5ec1d3f63064a58dea33ba49b8e15872
+- filename: src/main/java/io/mosip/mimoto/service/CredentialPDFGeneratorService.java
+  checksum: 1aabb69041c31bcfe04c89766759121bff7381df4c495384fd42ff6d47dc0fe1
 - filename: src/test/java/io/mosip/mimoto/service/CredentialPDFGeneratorServiceTest.java
-  checksum: b04c0ff467788706b21b1576db06f1482c5d1684744fb0e6c4236aa61037c8aa
+  checksum: 3349bda92b9e594f99bf0f0e79f7c52fb378c82384a8d3997986e85fb5ce1ec6
 - filename: src/main/java/io/mosip/mimoto/controller/IssuersController.java
   checksum: 856d860de2562fa019ac23bd724b84e1d67b834883b332c12415e6714de9bb05
 - filename: helm/mimoto/templates/deployment.yaml
@@ -46,7 +48,7 @@ fileignoreconfig:
 - filename: src/main/java/io/mosip/mimoto/exception/PlatformErrorMessages.java
   checksum: eddc1f3d44e8b8676c5c4ff6ed94ba9018f3a562d4e17908234704493ec6b35e
 - filename: src/main/java/io/mosip/mimoto/service/impl/CredentialShareServiceImpl.java
-  checksum: 4b17319b2ec9e41c943798700d7bf382281f1dd752246e635991f398a9bc9234
+  checksum: 0200972fc4feb033ab7949fe5f1d02c5ac03caa6fdc5b8559115fb884fc38276
 - filename: src/main/java/io/mosip/mimoto/util/RestApiClient.java
   checksum: 77b8afdefbb1f8ff56e140836e6713d150ac48f99c6778e43bc2854e5fcd4732
 - filename: src/main/java/io/mosip/mimoto/util/CryptoUtil.java
@@ -68,17 +70,17 @@ fileignoreconfig:
 - filename: helm/mimoto/values.yaml
   checksum: 894215a6578dd6f27e22df1554ee87bfc7ef0f579d03c805f30d976546dfee35
 - filename: src/main/java/io/mosip/mimoto/util/JoseUtil.java
-  checksum: 65c4d7f9d4f28e7e4e5376e4f6cdce8b49b485c3ea2ab214f72d018d5d73b6aa
-- filename: README.md
-  checksum: 1f5deaa63f65986c215dedc9adc6021b4d15dd4e475802013816b130373be3d0
+  checksum: b6123f66cb7dbe208cb8d5f8b4b664d742c918608ec0ad22dfa3ab27ab9ec32e
 - filename: docker-compose/docker-compose.yml
-  checksum: 857f5dcebdef810161b9ef09ad078c091c7d9969035bc45132975b296675dac9
+  checksum: 6c4765658ac673aeda9cdd4107776d0c706f63eff3543c8b82b2d84b061310cd
 - filename: src/test/java/io/mosip/mimoto/util/WalletValidatorTest.java
   checksum: 90dce7daa19f0eb9050194a3c77a88d449a83c337d9041bfdeb7bfded3bbd12c
 - filename: src/main/java/io/mosip/mimoto/exception/ErrorConstants.java
   checksum: 21e2e13d05f14c20274524b531447886ee6582e618197255f00a2fcef562213c
 - filename: src/test/java/io/mosip/mimoto/util/TestUtilities.java
   checksum: f916181b87d1388fa639267086a14dc5e5d7fcd4b27bd013919a46d8cebfa805
+- filename: src/main/java/io/mosip/mimoto/controller/WalletCredentialsController.java
+  checksum: c378e601f657a82ef59da49c01e3b9d39619a2aec143c71b8a269ab1aeb815a1
 - filename: src/main/java/io/mosip/mimoto/service/WalletUnlockService.java
   checksum: 4a67a6393ad6e70bb7c999c7e5dbf9187e765aaf2ff64f465d4344f58c05a00c
 - filename: src/test/java/io/mosip/mimoto/service/WalletUnlockServiceTest.java
@@ -113,10 +115,18 @@ fileignoreconfig:
   checksum: c669189f60e8fa5f0cb47d3c7cbb4ab34d87afbb6fb4de65b7eb06c691a41034
 - filename: src/main/java/io/mosip/mimoto/constant/SigningAlgorithm.java
   checksum: fcb462b4baec6db1aa48c16fad923dc7a20407aa072efeb3879c236e7a4d74fe
+- filename: api-test/src/main/resources/config/IDRepo.properties
+  checksum: dfdffc817362f6c6067a5c2ce5db9c6759faebaf754590deea307bbb71e81381
 - filename: src/test/resources/application-test.properties
-  checksum: ef0f61c5a977aef0e7c71d5c4761805654eb7abbd44affa3814bec924cbc340a
-- filename: docker-compose/config/mimoto-default.properties
-  checksum: 8f930ada726909cf0ad4e1112d8b4cca7b7eae7268f8e6b1abe38cb5f739d24c
+  checksum: eff6c72dfdc2e0a2aa4e3ec9d520a1433189902467954d123bc562df095a43bd
 - filename: src/main/resources/application-local.properties
-  checksum: 11e815832a44edfd9ba5499bed2e9037ae694eb8ce9968e1798b848d436e9871
+  checksum: 34912123b9623afcea04e5e6726d614dd20e67b1dd5e685fea92dce9077fa7be
+- filename: docker-compose/config/mimoto-default.properties
+  checksum: c47e16427653b2283bfd7e0edda74aad3171aa16e0cc7dd1f8d31934c269e678
+- filename: src/main/resources/application-default.properties
+  checksum: 7f6395a9797fb780e14e9df5e637ff9ab3efefe662aff60414e936a716e59f4a
+- filename: README.md
+  checksum: e774036bc8cf0bf82ca5bc0a4cd8b3501616b3309764f18a13cb4d9013b404af
+- filename: docker-compose/README.md
+  checksum: 3290aef321dbbd1adeec634076e865d2d7f8058e4cc8d483afc416c7f82ae966
 version: ""
