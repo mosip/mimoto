@@ -174,6 +174,10 @@ public class WalletCredentialsController {
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
             @RequestHeader(value = "Accept-Language", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             HttpSession httpSession) throws InvalidRequestException {
+        if (!LocaleUtils.isValidLanguageCode(locale)) {
+            log.info("Invalid Accept-Language header. Input was: {} ", locale);
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Locale must be a valid 2-letter code");
+        }
 
         validateWalletId(httpSession, walletId);
         String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
