@@ -126,7 +126,7 @@ fileignoreconfig:
 - filename: src/main/resources/application-default.properties
   checksum: 7f6395a9797fb780e14e9df5e637ff9ab3efefe662aff60414e936a716e59f4a
 - filename: README.md
-  checksum: e22840730e24757a69a9be73d0f85c0ca33cfe1be89ce0d7817ce7fd9f2edef8
+  checksum: e774036bc8cf0bf82ca5bc0a4cd8b3501616b3309764f18a13cb4d9013b404af
 - filename: docker-compose/README.md
-  checksum: 4c7f2f6fe367e482f65edb5fb661d89a18d3aaf9dd46ab10c129f6bc9afaf1d8
+  checksum: 3290aef321dbbd1adeec634076e865d2d7f8058e4cc8d483afc416c7f82ae966
 version: ""
