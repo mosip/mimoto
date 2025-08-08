@@ -1,5 +1,6 @@
 package io.mosip.mimoto.dto.openid.presentation;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,4 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ConstraintsDTO {
     FieldDTO[] fields;
+
+    @JsonProperty("limit_disclosure")
+    private String limitDisclosure;
 }

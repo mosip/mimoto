@@ -5,6 +5,7 @@ import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.repository.ProofSigningKeyRepository;
 import io.mosip.mimoto.service.impl.CredentialRequestServiceImpl;
+import io.mosip.mimoto.service.impl.LdpVcCredentialFormatHandler;
 import io.mosip.mimoto.util.*;
 import org.junit.After;
 import org.junit.Before;
@@ -21,8 +22,11 @@ import org.mockito.ArgumentCaptor;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {CredentialRequestServiceImpl.class})
@@ -37,6 +41,9 @@ public class CredentialRequestServiceTest {
     @MockBean
     private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
+    @MockBean
+    private CredentialFormatHandlerFactory credentialFormatHandlerFactory;
+
     private final MockedStatic<KeyGenerationUtil> keyGenerationUtilMockedStatic = Mockito.mockStatic(KeyGenerationUtil.class, Mockito.withSettings().defaultAnswer(Mockito.CALLS_REAL_METHODS));
 
     IssuerDTO issuerDTO;
@@ -46,6 +53,7 @@ public class CredentialRequestServiceTest {
     public void setUp() {
         issuerId = "issuer1";
         issuerDTO = getIssuerConfigDTO(issuerId);
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(new LdpVcCredentialFormatHandler());
     }
 
     @After
@@ -62,11 +70,14 @@ public class CredentialRequestServiceTest {
 
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         issuerWellKnownResponse.setCredentialIssuer("https://example-issuer.com");
+        issuerWellKnownResponse.setCredentialConfigurationsSupported(
+                Map.of("CredentialType1", credentialsSupportedResponse)
+        );
 
         VCCredentialRequest result = credentialRequestServiceImpl.buildRequest(
                 issuerDTO,
+                "CredentialType1",
                 issuerWellKnownResponse,
-                credentialsSupportedResponse,
                 "test-cnonce",
                 "walletId",
                 "walletKey",
@@ -86,10 +97,13 @@ public class CredentialRequestServiceTest {
 
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         issuerWellKnownResponse.setCredentialIssuer("https://example-issuer.com");
+        issuerWellKnownResponse.setCredentialConfigurationsSupported(
+                Map.of("CredentialType1", credentialsSupportedResponse)
+        );
         VCCredentialRequest result = credentialRequestServiceImpl.buildRequest(
                 issuerDTO,
+                "CredentialType1",
                 issuerWellKnownResponse,
-                credentialsSupportedResponse,
                 "test-cnonce",
                 "walletId",
                 "walletKey",
@@ -110,11 +124,14 @@ public class CredentialRequestServiceTest {
 
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         issuerWellKnownResponse.setCredentialIssuer("https://example-issuer.com");
+        issuerWellKnownResponse.setCredentialConfigurationsSupported(
+                Map.of("CredentialType1", credentialsSupportedResponse)
+        );
 
         VCCredentialRequest result = credentialRequestServiceImpl.buildRequest(
                 issuerDTO,
+                "CredentialType1",
                 issuerWellKnownResponse,
-                credentialsSupportedResponse,
                 "test-cnonce",
                 "walletId",
                 "walletKey",
@@ -130,13 +147,16 @@ public class CredentialRequestServiceTest {
         CredentialsSupportedResponse credentialsSupportedResponse = getCredentialSupportedResponse("CredentialType1");
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         issuerWellKnownResponse.setCredentialIssuer("https://example-issuer.com");
+        issuerWellKnownResponse.setCredentialConfigurationsSupported(
+                Map.of("CredentialType1", credentialsSupportedResponse)
+        );
         credentialsSupportedResponse.getProofTypesSupported().put("jwt", null);
 
 
         credentialRequestServiceImpl.buildRequest(
                 issuerDTO,
+                "CredentialType1",
                 issuerWellKnownResponse,
-                credentialsSupportedResponse,
                 "test-cnonce",
                 "walletId",
                 "walletKey",
@@ -155,14 +175,17 @@ public class CredentialRequestServiceTest {
         CredentialsSupportedResponse credentialsSupportedResponse = getCredentialSupportedResponse("CredentialType1");
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         issuerWellKnownResponse.setCredentialIssuer("https://example-issuer.com");
+        issuerWellKnownResponse.setCredentialConfigurationsSupported(
+                Map.of("CredentialType1", credentialsSupportedResponse)
+        );
         ProofTypesSupported proofTypesSupported = new ProofTypesSupported();
         proofTypesSupported.setProofSigningAlgValuesSupported(Collections.emptyList());
         credentialsSupportedResponse.getProofTypesSupported().put("jwt", proofTypesSupported);
 
         credentialRequestServiceImpl.buildRequest(
                 issuerDTO,
+                "CredentialType1",
                 issuerWellKnownResponse,
-                credentialsSupportedResponse,
                 "test-cnonce",
                 "walletId",
                 "walletKey",
@@ -181,13 +204,16 @@ public class CredentialRequestServiceTest {
         CredentialsSupportedResponse credentialsSupportedResponse = getCredentialSupportedResponse("CredentialType1");
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         issuerWellKnownResponse.setCredentialIssuer("https://example-issuer.com");
+        issuerWellKnownResponse.setCredentialConfigurationsSupported(
+                Map.of("CredentialType1", credentialsSupportedResponse)
+        );
         credentialsSupportedResponse.getProofTypesSupported().get("jwt").setProofSigningAlgValuesSupported(List.of("es256k"));
 
 
         credentialRequestServiceImpl.buildRequest(
                 issuerDTO,
+                "CredentialType1",
                 issuerWellKnownResponse,
-                credentialsSupportedResponse,
                 "test-cnonce",
                 "walletId",
                 "walletKey",
@@ -206,13 +232,16 @@ public class CredentialRequestServiceTest {
         CredentialsSupportedResponse credentialsSupportedResponse = getCredentialSupportedResponse("CredentialType1");
         CredentialIssuerWellKnownResponse issuerWellKnownResponse = new CredentialIssuerWellKnownResponse();
         issuerWellKnownResponse.setCredentialIssuer("https://example-issuer.com");
+        issuerWellKnownResponse.setCredentialConfigurationsSupported(
+                Map.of("CredentialType1", credentialsSupportedResponse)
+        );
         credentialsSupportedResponse.getProofTypesSupported().get("jwt").setProofSigningAlgValuesSupported(List.of("ps256"));
 
 
         credentialRequestServiceImpl.buildRequest(
                 issuerDTO,
+                "CredentialType1",
                 issuerWellKnownResponse,
-                credentialsSupportedResponse,
                 "test-cnonce",
                 "walletId",
                 "walletKey",

@@ -11,6 +11,8 @@ import io.mosip.vercred.vcverifier.data.VerificationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
 @Service
 public class CredentialVerifierServiceImpl implements CredentialVerifierService {
 
@@ -21,8 +23,8 @@ public class CredentialVerifierServiceImpl implements CredentialVerifierService 
     private CredentialsVerifier credentialsVerifier;
 
     public boolean verify(VCCredentialResponse response) throws JsonProcessingException, VCVerificationException {
-        String credentialString = objectMapper.writeValueAsString(response.getCredential());
-        VerificationResult result = credentialsVerifier.verify(credentialString, CredentialFormat.LDP_VC);
+        String credentialString = response.getCredential() instanceof String ? (String) response.getCredential() : objectMapper.writeValueAsString(response.getCredential());
+        VerificationResult result = credentialsVerifier.verify(credentialString, Objects.requireNonNull(CredentialFormat.Companion.fromValue(response.getFormat())));
         if (!result.getVerificationStatus()) {
             throw new VCVerificationException(result.getVerificationErrorCode().toLowerCase(), result.getVerificationMessage());
         }

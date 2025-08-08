@@ -144,7 +144,7 @@
         <dependency>
             <groupId>io.mosip</groupId>
             <artifactId>vcverifier-jar</artifactId>
-            <version>1.3.0-rc1</version>
+            <version>1.4.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -502,6 +502,11 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
             <version>3.9.13</version>
+        </dependency>
+        <dependency>
+            <groupId>com.authlete</groupId>
+            <artifactId>sd-jwt</artifactId>
+            <version>1.5</version>
         </dependency>
     </dependencies>
 

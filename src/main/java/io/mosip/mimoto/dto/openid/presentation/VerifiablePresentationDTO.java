@@ -24,5 +24,5 @@ public class VerifiablePresentationDTO {
     @NotEmpty
     private List<@NotBlank String> type;
 
-    List<VCCredentialProperties> verifiableCredential;
+    List<Object> verifiableCredential;
 }

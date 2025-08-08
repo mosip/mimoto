@@ -10,6 +10,7 @@ import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.service.IdpService;
+import io.mosip.mimoto.util.LocaleUtils;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.mimoto.util.WalletUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static io.mosip.mimoto.exception.ErrorConstants.CREDENTIAL_DOWNLOAD_EXCEPTION;
+import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
 import static io.mosip.mimoto.util.WalletUtil.validateWalletId;
 
 /**
@@ -110,7 +112,9 @@ public class WalletCredentialsController {
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
             @RequestBody @Valid VerifiableCredentialRequestDTO verifiableCredentialRequest,
             HttpSession httpSession) throws InvalidRequestException {
-
+        if (!LocaleUtils.isValidLanguageCode(locale)) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Locale must be a valid 2-letter code");
+        }
         validateWalletId(httpSession, walletId);
         String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);
 
@@ -170,6 +174,10 @@ public class WalletCredentialsController {
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
             @RequestHeader(value = "Accept-Language", defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
             HttpSession httpSession) throws InvalidRequestException {
+        if (!LocaleUtils.isValidLanguageCode(locale)) {
+            log.info("Invalid Accept-Language header. Input was: {} ", locale);
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Locale must be a valid 2-letter code");
+        }
 
         validateWalletId(httpSession, walletId);
         String base64EncodedWalletKey = WalletUtil.getSessionWalletKey(httpSession);

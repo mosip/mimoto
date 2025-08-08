@@ -36,7 +36,6 @@ public class CredentialSupportedDisplayResponse {
     @SerializedName("background_image")
     @Expose
     @Valid
-    @NotNull
     @Schema(description = "Background Image  of the Supported Credential")
     BackgroundImageDTO backgroundImage;
 

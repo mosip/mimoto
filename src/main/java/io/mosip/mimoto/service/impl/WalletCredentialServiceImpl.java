@@ -2,8 +2,6 @@ package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mosip.mimoto.model.CredentialMetadata;
-import io.mosip.mimoto.model.VerifiableCredential;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
@@ -12,11 +10,14 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.model.CredentialMetadata;
+import io.mosip.mimoto.model.QRCodeType;
+import io.mosip.mimoto.model.VerifiableCredential;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.service.CredentialPDFGeneratorService;
+import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.WalletCredentialService;
-import io.mosip.mimoto.util.CredentialProcessor;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -45,25 +46,30 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     @Value("${mosip.inji.wallet.issuersWithSingleVcLimit:Mosip}")
     private String issuersWithSingleVcLimit;
 
+    @Value("${mosip.inji.wallet.vc.validity.count:-1}")
+    private String credentialValidity;
+
     private final WalletCredentialsRepository repository;
     private final IssuersService issuersService;
-    private final CredentialProcessor credentialProcessor;
+    private final CredentialService credentialService;
     private final ObjectMapper objectMapper;
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
     private final CredentialPDFGeneratorService credentialPDFGeneratorService;
+    private final DataShareServiceImpl dataShareService;
 
     @Autowired
     public WalletCredentialServiceImpl(WalletCredentialsRepository repository,
                                        IssuersService issuersService,
-                                       CredentialProcessor credentialProcessor,
+                                       CredentialService credentialService,
                                        ObjectMapper objectMapper,
-                                       EncryptionDecryptionUtil encryptionDecryptionUtil,CredentialPDFGeneratorService credentialPDFGeneratorService) {
+                                       EncryptionDecryptionUtil encryptionDecryptionUtil,CredentialPDFGeneratorService credentialPDFGeneratorService,DataShareServiceImpl dataShareService) {
         this.repository = repository;
         this.issuersService = issuersService;
-        this.credentialProcessor = credentialProcessor;
+        this.credentialService = credentialService;
         this.objectMapper = objectMapper;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.credentialPDFGeneratorService = credentialPDFGeneratorService;
+        this.dataShareService = dataShareService;
     }
 
     @Override
@@ -84,8 +90,8 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
 
         VerifiableCredentialResponseDTO credential;
 
-            credential = credentialProcessor.downloadCredentialAndStoreInDB(
-                    tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale);
+        credential = credentialService.downloadCredentialAndStoreInDB(
+                tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale);
 
         log.debug("Credential stored successfully: {}", credential.getCredentialId());
         return credential;
@@ -103,7 +109,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
             IssuerConfig issuerConfig = null;
             try {
                 issuerConfig = issuersService.getIssuerConfig(issuerId, credential.getCredentialMetadata().getCredentialType());
-            } catch (ApiNotAccessibleException  e) {
+            } catch (InvalidIssuerIdException | ApiNotAccessibleException  e) {
                 log.error("Failed to fetch issuer details for issuerId: {}", issuerId, e);
             }
             return VerifiableCredentialResponseDTO.fromIssuerConfig(issuerConfig, locale, credential.getId());
@@ -169,21 +175,24 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
 
             // Find credentials supported response for the credential type
             CredentialsSupportedResponse credentialsSupportedResponse = issuerConfig.getCredentialsSupportedResponse();
-            if (credentialsSupportedResponse == null || !credentialsSupportedResponse.getCredentialDefinition().getType().containsAll(vcCredentialResponse.getCredential().getType())) {
+            if (credentialsSupportedResponse == null ) {
                 log.error("Credentials supported response not found for credentialType: {}", credentialMetadata.getCredentialType());
                 throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Invalid credential type configuration");
             }
 
+            String dataShareUrl = QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type()) ? dataShareService.storeDataInDataShare(objectMapper.writeValueAsString(vcCredentialResponse), credentialValidity) : "";
+
+
             // Generate PDF
             // keep the datashare url and credential validity as defaults in downloading VC as PDF as logged-in user
             // This is because generatePdfForVerifiableCredentials will be used by both logged-in and non-logged-in users
-            ByteArrayInputStream pdfStream = credentialPDFGeneratorService.generatePdfForVerifiableCredentials(
+            ByteArrayInputStream pdfStream = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
                     credentialMetadata.getCredentialType(),
                     vcCredentialResponse,
                     issuerDTO,
                     credentialsSupportedResponse,
-                    "",
-                    "-1",
+                    dataShareUrl,
+                    credentialValidity,
                     locale
             );
 
