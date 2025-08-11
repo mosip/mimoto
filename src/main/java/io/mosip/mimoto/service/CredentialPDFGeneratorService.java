@@ -206,17 +206,13 @@ public class CredentialPDFGeneratorService {
         String mergedHtml = writer.toString();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-        PageSize customPageSize = new PageSize(PageSize.A4.getWidth(), 2000);
         PdfWriter pdfwriter = new PdfWriter(outputStream);
-        PdfDocument pdfDocument = new PdfDocument(pdfwriter);
-        pdfDocument.setDefaultPageSize(customPageSize);
 
         DefaultFontProvider defaultFont = new DefaultFontProvider(true, false, false);
         ConverterProperties converterProperties = new ConverterProperties();
         converterProperties.setFontProvider(defaultFont);
 
-        HtmlConverter.convertToPdf(mergedHtml, pdfDocument, converterProperties);
-        pdfDocument.close();
+        HtmlConverter.convertToPdf(mergedHtml, pdfwriter, converterProperties);
         return new ByteArrayInputStream(outputStream.toByteArray());
     }
 
