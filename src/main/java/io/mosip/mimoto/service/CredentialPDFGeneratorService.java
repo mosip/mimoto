@@ -155,7 +155,6 @@ public class CredentialPDFGeneratorService {
         data.put("credentialValidity", credentialValidity);
         data.put("logoUrl", issuerDTO.getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));
         data.put("rowProperties", rowProperties);
-        data.put("credentialFormat", vcCredentialResponse.getFormat());
         data.put("disclosures", disclosuresProps);
         data.put("textColor", textColor);
         data.put("backgroundColor", backgroundColor);
