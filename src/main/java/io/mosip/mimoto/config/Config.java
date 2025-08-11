@@ -1,10 +1,8 @@
 package io.mosip.mimoto.config;
 
-import io.mosip.mimoto.exception.OAuth2AuthenticationException;
 import io.mosip.mimoto.security.oauth2.CustomOAuth2UserService;
 import io.mosip.mimoto.security.oauth2.OAuth2AuthenticationFailureHandler;
 import io.mosip.mimoto.security.oauth2.OAuth2AuthenticationSuccessHandler;
-import io.mosip.mimoto.service.LogoutService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +28,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
 import static io.mosip.mimoto.exception.ErrorConstants.LOGIN_SESSION_INVALIDATE_EXCEPTION;
 
 @Configuration
@@ -56,9 +55,6 @@ public class Config {
 
     @Value("${mosip.inji.web.url}")
     private String injiWebUrl;
-
-    @Autowired
-    private LogoutService logoutService;
 
     @Bean
     @ConfigurationProperties(prefix = "mosip.inji")
@@ -121,14 +117,15 @@ public class Config {
 
     private void configureLogout(HttpSecurity http, SessionRepository<?> sessionRepository) throws Exception {
         http.logout(logout -> logout
-                .invalidateHttpSession(false)
-                .clearAuthentication(false)
                 .logoutUrl("/logout")
                 .logoutSuccessHandler((request, response, authentication) -> {
-                    try {
-                        logoutService.handleLogout(request, response, sessionRepository);
-                    } catch (OAuth2AuthenticationException e) {
-                        response.setStatus(e.getStatus().value());
+                    // If authentication is not null, it was a valid logout.
+                    if (authentication != null) {
+                        response.setStatus(HttpStatus.OK.value());
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"status\":\"success\", \"message\":\"Logout successful\"}");
+                    } else {
+                        response.setStatus(HttpStatus.NOT_FOUND.value());
                         response.setContentType("application/json");
                         String jsonResponse = String.format("{\"errors\":[{\"errorCode\":\"%s\",\"errorMessage\":\"%s\"}]}",
                                 LOGIN_SESSION_INVALIDATE_EXCEPTION.getErrorCode(),
@@ -136,7 +133,6 @@ public class Config {
                         response.getWriter().write(jsonResponse);
                     }
                 })
-                .clearAuthentication(true)
         );
     }
 
