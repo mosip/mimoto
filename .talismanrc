@@ -22,11 +22,11 @@ fileignoreconfig:
 - filename: docs/images/id_pass_logo.svg
   checksum: 81b14da4f42f335cf6a3094489844962b92fc629c89691487558c71c3d44a915
 - filename: src/main/java/io/mosip/mimoto/service/impl/CredentialServiceImpl.java
-  checksum: 6a44320dbb3e6757fbe741cdf4815f8f8cc883b714a1f8d6a91902b434c59e0f
+  checksum: 7ab013a914678f87c513a7d5d9ff772552b1583c80a758bfbdcc7a7b835a62b7
 - filename: src/main/java/io/mosip/mimoto/controller/CredentialShareController.java
   checksum: 666c22ca63adb8770de901e220f8efeb5ec1d3f63064a58dea33ba49b8e15872
 - filename: src/main/java/io/mosip/mimoto/service/CredentialPDFGeneratorService.java
-  checksum: 848170de203fec6e083c2f61676159e18ca749ba2178a12abcea2564a9eb2dee
+  checksum: 8b08fd40f58384b135c25a8f6ef699d4ed2f146ca59b9e84f1e76e3faf6f250e
 - filename: src/test/java/io/mosip/mimoto/service/CredentialPDFGeneratorServiceTest.java
   checksum: 3349bda92b9e594f99bf0f0e79f7c52fb378c82384a8d3997986e85fb5ce1ec6
 - filename: src/main/java/io/mosip/mimoto/controller/IssuersController.java

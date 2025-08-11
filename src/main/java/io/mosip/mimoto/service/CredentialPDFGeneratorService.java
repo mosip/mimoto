@@ -42,8 +42,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.itextpdf.kernel.geom.PageSize;
-import com.itextpdf.kernel.pdf.PdfDocument;
 import java.util.Map;
 import java.util.Properties;
 
@@ -207,11 +205,9 @@ public class CredentialPDFGeneratorService {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         PdfWriter pdfwriter = new PdfWriter(outputStream);
-
         DefaultFontProvider defaultFont = new DefaultFontProvider(true, false, false);
         ConverterProperties converterProperties = new ConverterProperties();
         converterProperties.setFontProvider(defaultFont);
-
         HtmlConverter.convertToPdf(mergedHtml, pdfwriter, converterProperties);
         return new ByteArrayInputStream(outputStream.toByteArray());
     }
