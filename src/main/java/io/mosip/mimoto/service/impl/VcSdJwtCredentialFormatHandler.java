@@ -8,6 +8,7 @@ import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.service.CredentialFormatHandler;
 import io.mosip.mimoto.util.LocaleUtils;
+import static io.mosip.mimoto.util.IssuerConfigUtil.camelToTitleCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -96,6 +97,24 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
                         .findFirst()
                         .ifPresent(display -> localizedDisplayMap.put(key, display));
             });
+        }
+
+        // fallback for missing display properties from issuer well-known
+        Set<String> credentialFields = filteredCredentialProperties.keySet();
+        Set<String> missingDisplayFields = new HashSet<>(credentialFields);
+        missingDisplayFields.removeAll(localizedDisplayMap.keySet());
+        // remove metadata fields that are not part of the display properties
+        missingDisplayFields.remove("id");
+
+        // Generate fallbacks for fields without well-known display properties
+        for (String missingField : missingDisplayFields) {
+            String displayName = camelToTitleCase(missingField);
+
+            CredentialIssuerDisplayResponse fallbackDisplay = new CredentialIssuerDisplayResponse();
+            fallbackDisplay.setName(displayName);
+            fallbackDisplay.setLocale(resolvedLocale != null ? resolvedLocale : "en");
+
+            localizedDisplayMap.put(missingField, fallbackDisplay);
         }
 
         List<String> orderedKeys = credentialsSupportedResponse.getOrder();

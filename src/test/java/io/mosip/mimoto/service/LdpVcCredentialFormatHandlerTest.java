@@ -204,7 +204,13 @@ class LdpVcCredentialFormatHandlerTest {
 
             // Then
             assertNotNull(result);
-            assertTrue(result.isEmpty());
+            assertEquals(1, result.size()); // Should generate fallback for firstName
+            assertTrue(result.containsKey("firstName"));
+
+            // Verify fallback display properties with default "en" locale
+            CredentialIssuerDisplayResponse display = result.get("firstName").keySet().iterator().next();
+            assertEquals("First Name", display.getName());
+            assertEquals("en", display.getLocale());
         }
     }
 
@@ -417,5 +423,66 @@ class LdpVcCredentialFormatHandlerTest {
         config.put("lastName", lastNameDto);
 
         return config;
+    }
+
+    private Map<String, CredentialDisplayResponseDto> createCredentialSubjectConfigForFullName() {
+        Map<String, CredentialDisplayResponseDto> config = new LinkedHashMap<>();
+
+        // Create fullName display config only
+        CredentialDisplayResponseDto fullNameDto = new CredentialDisplayResponseDto();
+        CredentialIssuerDisplayResponse fullNameDisplay = new CredentialIssuerDisplayResponse();
+        fullNameDisplay.setName("Full Name");
+        fullNameDisplay.setLocale("en");
+        fullNameDto.setDisplay(List.of(fullNameDisplay));
+        config.put("fullName", fullNameDto);
+
+        return config;
+    }
+
+    @Test
+    void loadDisplayPropertiesFromWellknownWithFullNameScenario() {
+        // Given - only fullName has wellknown config, others need fallbacks
+        Map<String, Object> credentialProperties = new HashMap<>();
+        credentialProperties.put("fullName", "John Doe");
+        credentialProperties.put("dob", "1990-01-01");          // Missing
+        credentialProperties.put("mobile", "123-456-7890");     // Missing
+
+        // Only fullName has wellknown display config
+        Map<String, CredentialDisplayResponseDto> credentialSubjectConfig = createCredentialSubjectConfigForFullName();
+        credentialDefinition.setCredentialSubject(credentialSubjectConfig);
+        credentialsSupportedResponse.setCredentialDefinition(credentialDefinition);
+
+        try (MockedStatic<LocaleUtils> mockedLocaleUtils = mockStatic(LocaleUtils.class)) {
+            mockedLocaleUtils.when(() -> LocaleUtils.resolveLocaleWithFallback(any(), eq("en")))
+                    .thenReturn("en");
+            mockedLocaleUtils.when(() -> LocaleUtils.matchesLocale("en", "en"))
+                    .thenReturn(true);
+
+            // When
+            LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> result =
+                    ldpVcCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
+                            credentialProperties, credentialsSupportedResponse, "en");
+
+            // Then
+            assertNotNull(result);
+            assertEquals(3, result.size()); // All 3 fields should be present
+
+            // Verify wellknown field is preserved
+            assertTrue(result.containsKey("fullName"));
+            CredentialIssuerDisplayResponse fullNameDisplay = result.get("fullName").keySet().iterator().next();
+            assertEquals("Full Name", fullNameDisplay.getName()); // From wellknown
+
+            // Verify fallback fields are generated
+            assertTrue(result.containsKey("dob"));
+            assertTrue(result.containsKey("mobile"));
+
+            CredentialIssuerDisplayResponse dobDisplay = result.get("dob").keySet().iterator().next();
+            assertEquals("Dob", dobDisplay.getName()); // Generated fallback
+            assertEquals("en", dobDisplay.getLocale());
+
+            CredentialIssuerDisplayResponse mobileDisplay = result.get("mobile").keySet().iterator().next();
+            assertEquals("Mobile", mobileDisplay.getName()); // Generated fallback
+            assertEquals("en", mobileDisplay.getLocale());
+        }
     }
 }
