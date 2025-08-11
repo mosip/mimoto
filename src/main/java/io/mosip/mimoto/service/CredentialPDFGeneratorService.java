@@ -42,6 +42,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.itextpdf.kernel.geom.PageSize;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import java.util.Map;
+import java.util.Properties;
+
 @Slf4j
 @Service
 public class CredentialPDFGeneratorService {
@@ -125,13 +130,14 @@ public class CredentialPDFGeneratorService {
             disclosures = new LinkedHashSet<>();
         }
 
-        LinkedHashMap<String, Object> disclosuresProps = new LinkedHashMap<>();
+        LinkedHashMap<String, String> disclosuresProps = new LinkedHashMap<>();
         displayProperties.forEach((key, valueMap) -> valueMap.forEach((display, val) -> {
             String displayName = display.getName();
             String locale = display.getLocale();
             String strVal = formatValue(val, locale);
             if (disclosures.contains(key)){
-                disclosuresProps.put(key, Map.of(displayName, strVal));
+                disclosuresProps.put(key, displayName);
+                rowProperties.put(key, Map.of(displayName, strVal));
             } else{
                 rowProperties.put(key, Map.of(displayName, strVal));
             }
@@ -149,6 +155,7 @@ public class CredentialPDFGeneratorService {
         data.put("credentialValidity", credentialValidity);
         data.put("logoUrl", issuerDTO.getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));
         data.put("rowProperties", rowProperties);
+        data.put("credentialFormat", vcCredentialResponse.getFormat());
         data.put("disclosures", disclosuresProps);
         data.put("textColor", textColor);
         data.put("backgroundColor", backgroundColor);
@@ -200,11 +207,17 @@ public class CredentialPDFGeneratorService {
         String mergedHtml = writer.toString();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
+        PageSize customPageSize = new PageSize(PageSize.A4.getWidth(), 2000);
         PdfWriter pdfwriter = new PdfWriter(outputStream);
+        PdfDocument pdfDocument = new PdfDocument(pdfwriter);
+        pdfDocument.setDefaultPageSize(customPageSize);
+
         DefaultFontProvider defaultFont = new DefaultFontProvider(true, false, false);
         ConverterProperties converterProperties = new ConverterProperties();
         converterProperties.setFontProvider(defaultFont);
-        HtmlConverter.convertToPdf(mergedHtml, pdfwriter, converterProperties);
+
+        HtmlConverter.convertToPdf(mergedHtml, pdfDocument, converterProperties);
+        pdfDocument.close();
         return new ByteArrayInputStream(outputStream.toByteArray());
     }
 
