@@ -122,13 +122,13 @@ fileignoreconfig:
 - filename: src/test/resources/application-test.properties
   checksum: eff6c72dfdc2e0a2aa4e3ec9d520a1433189902467954d123bc562df095a43bd
 - filename: src/main/resources/application-local.properties
-  checksum: 34912123b9623afcea04e5e6726d614dd20e67b1dd5e685fea92dce9077fa7be
+  checksum: 710840f8a4882efd00d9b830e8faf0e5c2bf3fec206f6a32b9a7eb32b0812d33
 - filename: docker-compose/config/mimoto-default.properties
   checksum: c47e16427653b2283bfd7e0edda74aad3171aa16e0cc7dd1f8d31934c269e678
 - filename: src/main/resources/application-default.properties
-  checksum: a162be88ce8ff6bba833387cd4cb00af7684be95e92b6ab82187c843eeb3a626
+  checksum: 26a265483610a7dc8bb585ae464be4c21eff6cfdfb95c589b622a59d3abf9520
 - filename: README.md
-  checksum: e774036bc8cf0bf82ca5bc0a4cd8b3501616b3309764f18a13cb4d9013b404af
+  checksum: 188f941967422d00ce7941e769f7735d65d7ad2d810e47a291680a1c99c3a3d1
 - filename: docker-compose/README.md
   checksum: 3290aef321dbbd1adeec634076e865d2d7f8058e4cc8d483afc416c7f82ae966
 - filename: src/test/java/io/mosip/mimoto/service/VcSdJwtCredentialFormatHandlerTest.java
