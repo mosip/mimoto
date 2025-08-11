@@ -131,4 +131,6 @@ fileignoreconfig:
   checksum: e774036bc8cf0bf82ca5bc0a4cd8b3501616b3309764f18a13cb4d9013b404af
 - filename: docker-compose/README.md
   checksum: 3290aef321dbbd1adeec634076e865d2d7f8058e4cc8d483afc416c7f82ae966
+- filename: src/test/java/io/mosip/mimoto/service/VcSdJwtCredentialFormatHandlerTest.java
+  checksum: e91aa11aa049453a3a7cd542386dbb813f5c868678f68d6bd71af92149e0d5db
 version: ""

@@ -2,7 +2,6 @@ package io.mosip.mimoto.service;
 
 import com.authlete.sd.Disclosure;
 import com.authlete.sd.SDJWT;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.mimoto.*;
@@ -281,6 +280,7 @@ class VcSdJwtCredentialFormatHandlerTest {
         // Given
         Map<String, Object> credentialProperties = new HashMap<>();
         credentialProperties.put("firstName", "John");
+        credentialProperties.put("UINValue", "12345");
 
         credentialsSupportedResponse.setClaims(null);
 
@@ -291,27 +291,36 @@ class VcSdJwtCredentialFormatHandlerTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(1, result.size());
+        assertEquals(2, result.size());
         assertTrue(result.containsKey("firstName"));
+        assertTrue(result.containsKey("UINValue"));
 
-        // Check that fallback display was created
+        // Check that fallback display for "firstName"
         Map<CredentialIssuerDisplayResponse, Object> displayMap = result.get("firstName");
         CredentialIssuerDisplayResponse display = displayMap.keySet().iterator().next();
-        assertEquals("First Name", display.getName()); // convertKeyToLabel should convert camelCase
+        assertEquals("First Name", display.getName()); // convertKeyToLabel should convert camelCase to Pascal Case
         assertEquals("en", display.getLocale());
         assertEquals("John", displayMap.get(display));
+
+        // Check fallback display for "UINValue"
+        Map<CredentialIssuerDisplayResponse, Object> uinValueDisplayMap = result.get("UINValue");
+        CredentialIssuerDisplayResponse uinValueDisplay = uinValueDisplayMap.keySet().iterator().next();
+        assertEquals("Uin Value", uinValueDisplay.getName()); // convertKeyToLabel should convert camelCase to Pascal Case
+        assertEquals("en", uinValueDisplay.getLocale());
+        assertEquals("12345", uinValueDisplayMap.get(uinValueDisplay));
+
     }
 
     @Test
     void loadDisplayPropertiesFromWellknownWithNullResolvedLocaleShouldUseConvertedLabel() {
         // Given
         Map<String, Object> credentialProperties = new HashMap<>();
-        credentialProperties.put("name", "John Doe");
+        credentialProperties.put("firstName", "John Doe");
 
         Map<String, Object> claims = createSampleClaims();
         credentialsSupportedResponse.setClaims(claims);
 
-        CredentialDisplayResponseDto nameDto = createCredentialDisplayResponseDto("Name", "en");
+        CredentialDisplayResponseDto nameDto = createCredentialDisplayResponseDto("firstName", "en");
         when(objectMapper.convertValue(any(), eq(CredentialDisplayResponseDto.class)))
                 .thenReturn(nameDto);
 
@@ -327,12 +336,12 @@ class VcSdJwtCredentialFormatHandlerTest {
             // Then
             assertNotNull(result);
             assertEquals(1, result.size());
-            assertTrue(result.containsKey("name"));
+            assertTrue(result.containsKey("firstName"));
 
             // Check that fallback display was created
-            Map<CredentialIssuerDisplayResponse, Object> displayMap = result.get("name");
+            Map<CredentialIssuerDisplayResponse, Object> displayMap = result.get("firstName");
             CredentialIssuerDisplayResponse display = displayMap.keySet().iterator().next();
-            assertEquals("Name", display.getName());
+            assertEquals("First Name", display.getName());
             assertEquals("en", display.getLocale());
         }
     }
@@ -371,6 +380,49 @@ class VcSdJwtCredentialFormatHandlerTest {
             List<String> keyOrder = new ArrayList<>(result.keySet());
             assertEquals("age", keyOrder.get(0));
             assertEquals("name", keyOrder.get(1));
+        }
+    }
+
+    @Test
+    void loadDisplayPropertiesFromWellknownWithCustomOrderShouldRespectOrderAndAppendAdditionalFieldsNotPresentInWellknownClaimsAtEnd() {
+        // Given
+        Map<String, Object> credentialProperties = new HashMap<>();
+        credentialProperties.put("name", "John Doe");
+        credentialProperties.put("age", 30);
+        credentialProperties.put("dob", "1990-01-01"); // Additional field not present in well-known claims
+        credentialProperties.put("email", "xyz@gmail.com"); // Additional field not present in well-known claims
+
+        Map<String, Object> claims = createSampleClaims();
+        credentialsSupportedResponse.setClaims(claims);
+        credentialsSupportedResponse.setOrder(Arrays.asList("age", "name")); // Custom order
+
+        CredentialDisplayResponseDto nameDto = createCredentialDisplayResponseDto("Name", "en");
+        CredentialDisplayResponseDto ageDto = createCredentialDisplayResponseDto("Age", "en");
+        CredentialDisplayResponseDto dobDto = createCredentialDisplayResponseDto("DOB", "en");
+        CredentialDisplayResponseDto emailDto = createCredentialDisplayResponseDto("Email", "en");
+
+        when(objectMapper.convertValue(any(), eq(CredentialDisplayResponseDto.class)))
+                .thenReturn(nameDto, dobDto, emailDto, ageDto);
+
+        try (MockedStatic<LocaleUtils> mockedLocaleUtils = mockStatic(LocaleUtils.class)) {
+            mockedLocaleUtils.when(() -> LocaleUtils.resolveLocaleWithFallback(any(), eq("en")))
+                    .thenReturn("en");
+            mockedLocaleUtils.when(() -> LocaleUtils.matchesLocale(eq("en"), eq("en")))
+                    .thenReturn(true);
+
+            // When
+            LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> result =
+                    vcSdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
+                            credentialProperties, credentialsSupportedResponse, "en");
+
+            // Then
+            assertNotNull(result);
+            assertEquals(4, result.size());
+            List<String> keyOrder = new ArrayList<>(result.keySet());
+            assertEquals("age", keyOrder.get(0));
+            assertEquals("name", keyOrder.get(1));
+            assertEquals("dob", keyOrder.get(2)); // Additional field should be appended at the end
+            assertEquals("email", keyOrder.get(3)); // Additional field should be appended at the end
         }
     }
 
