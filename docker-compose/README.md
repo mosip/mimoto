@@ -30,7 +30,6 @@ This is the docker-compose setup to run mimoto which act as BFF for Inji mobile 
    * Set the `oidc_p12_password` environment variable in the Mimoto service configuration inside docker-compose.yml to match the password used for the **oidckeystore.p12** file. 
    * Mimoto also uses this same keystore file (oidckeystore.p12) to store keys generated at service startup, which are essential for performing encryption and decryption operations through the KeyManager service.
 
-
 5. To configure any Mobile Wallet specific configurations refer to the [Inji Mobile Wallet Configuration](#inji-mobile-wallet-configuration) section.
 
 6. Choose your setup for starting the services:
