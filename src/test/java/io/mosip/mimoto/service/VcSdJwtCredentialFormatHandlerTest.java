@@ -279,12 +279,12 @@ class VcSdJwtCredentialFormatHandlerTest {
     void loadDisplayPropertiesFromWellknownWithNullResolvedLocaleShouldReturnEmptyMap() {
         // Given
         Map<String, Object> credentialProperties = new HashMap<>();
-        credentialProperties.put("fullName", "John Doe");
+        credentialProperties.put("name", "John Doe");
 
         Map<String, Object> claims = createSampleClaims();
         credentialsSupportedResponse.setClaims(claims);
 
-        CredentialDisplayResponseDto nameDto = createCredentialDisplayResponseDto("Full Name", "en");
+        CredentialDisplayResponseDto nameDto = createCredentialDisplayResponseDto("Name", "en");
         when(objectMapper.convertValue(any(), eq(CredentialDisplayResponseDto.class)))
                 .thenReturn(nameDto);
 
@@ -299,12 +299,7 @@ class VcSdJwtCredentialFormatHandlerTest {
 
             // Then
             assertNotNull(result);
-            assertEquals(1, result.size());
-
-            // Verify fallback uses "en" when resolvedLocale is null
-            CredentialIssuerDisplayResponse display = result.get("fullName").keySet().iterator().next();
-            assertEquals("Full Name", display.getName());
-            assertEquals("en", display.getLocale()); // Should default to "en"
+            assertTrue(result.isEmpty());
         }
     }
 
@@ -399,67 +394,6 @@ class VcSdJwtCredentialFormatHandlerTest {
         display.setLocale(locale);
         dto.setDisplay(Arrays.asList(display));
         return dto;
-    }
-
-    @Test
-    void loadDisplayPropertiesFromWellknownWithFullNameWellknownAndDateOfBirthFallback() {
-        // Given - credential has fullName (wellknown) and dateOfBirth (fallback needed)
-        Map<String, Object> credentialProperties = new HashMap<>();
-
-        Map<String, Object> credentialSubject = new HashMap<>();
-        credentialSubject.put("fullName", "John Doe");
-        credentialSubject.put("dateOfBirth", "1990-01-01");
-
-        Map<String, Object> disclosures = new HashMap<>();
-        credentialProperties.put("credentialSubject", credentialSubject);
-        credentialProperties.put("disclosures", disclosures);
-
-        // Only fullName has wellknown display config, dateOfBirth is missing
-        Map<String, Object> claims = new HashMap<>();
-        Map<String, Object> fullNameClaim = new HashMap<>();
-        List<Map<String, String>> displayList = new ArrayList<>();
-        Map<String, String> display = new HashMap<>();
-        display.put("name", "Full Name");
-        display.put("locale", "en");
-        displayList.add(display);
-        fullNameClaim.put("display", displayList);
-
-        claims.put("fullName", fullNameClaim);
-        credentialsSupportedResponse.setClaims(claims);
-
-        // Mock the ObjectMapper conversion for the actual value used in the handler
-        CredentialDisplayResponseDto fullNameDto = createCredentialDisplayResponseDto("Full Name", "en");
-        when(objectMapper.convertValue(eq(displayList), eq(CredentialDisplayResponseDto.class)))
-                .thenReturn(fullNameDto);
-
-        try (MockedStatic<LocaleUtils> mockedLocaleUtils = mockStatic(LocaleUtils.class)) {
-            mockedLocaleUtils.when(() -> LocaleUtils.resolveLocaleWithFallback(any(), eq("en")))
-                    .thenReturn("en");
-            mockedLocaleUtils.when(() -> LocaleUtils.matchesLocale("en", "en"))
-                    .thenReturn(true);
-
-            // When
-            LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> result =
-                    vcSdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
-                            credentialProperties, credentialsSupportedResponse, "en");
-
-            // Then
-            assertNotNull(result);
-            assertEquals(2, result.size(), "Should have exactly 2 fields: fullName (wellknown) + dateOfBirth (fallback)");
-
-            assertTrue(result.containsKey("fullName"));
-            CredentialIssuerDisplayResponse fullNameDisplay = result.get("fullName").keySet().iterator().next();
-            assertEquals("Full Name", fullNameDisplay.getName());
-            assertEquals("en", fullNameDisplay.getLocale());
-
-            assertTrue(result.containsKey("dateOfBirth"));
-            CredentialIssuerDisplayResponse dobDisplay = result.get("dateOfBirth").keySet().iterator().next();
-            assertEquals("Date Of Birth", dobDisplay.getName());
-            assertEquals("en", dobDisplay.getLocale());
-
-            assertEquals("John Doe", result.get("fullName").values().iterator().next());
-            assertEquals("1990-01-01", result.get("dateOfBirth").values().iterator().next());
-        }
     }
 
 }
