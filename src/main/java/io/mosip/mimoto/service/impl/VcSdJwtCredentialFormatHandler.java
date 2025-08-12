@@ -16,6 +16,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.mosip.mimoto.util.JwtUtils.parseJwtPayload;
+
 @Slf4j
 @Component("vc+sd-jwt")
 public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
@@ -52,22 +54,6 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
 
         LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProperties = new LinkedHashMap<>();
 
-        // Remove "credentialSubject" and "disclosures" from credentialProperties
-        Map<String, Object> filteredCredentialProperties = new HashMap<>();
-
-        credentialProperties.forEach((outerKey, outerValue) -> {
-            if (outerValue instanceof Map) {
-                Map<?, ?> innerMap = (Map<?, ?>) outerValue;
-                for (Map.Entry<?, ?> innerEntry : innerMap.entrySet()) {
-                    if (innerEntry.getKey() instanceof String) {
-                        filteredCredentialProperties.put((String) innerEntry.getKey(), innerEntry.getValue());
-                    }
-                }
-            } else {
-                filteredCredentialProperties.put(outerKey, outerValue);
-            }
-        });
-
         // Extract raw claims and convert to DTOs
         Map<String, Object> rawClaims = Optional.ofNullable(credentialsSupportedResponse.getClaims())
                 .map(map -> (map.size() == 1 && map.values().iterator().next() instanceof Map)
@@ -83,7 +69,6 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
 
         if (convertedClaimsMap.isEmpty()) {
             log.warn("No display configuration found for SD-JWT format");
-            return displayProperties;
         }
 
         String resolvedLocale = LocaleUtils.resolveLocaleWithFallback(convertedClaimsMap, userLocale);
@@ -98,21 +83,38 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
             });
         }
 
-        List<String> orderedKeys = credentialsSupportedResponse.getOrder();
-        List<String> fieldKeys = (orderedKeys != null && !orderedKeys.isEmpty())
-                ? orderedKeys
-                : new ArrayList<>(localizedDisplayMap.keySet());
+        // Start with ordered fields
+        Set<String> orderedKeys = Optional.ofNullable(credentialsSupportedResponse.getOrder())
+                .map(LinkedHashSet::new) // preserve order
+                .orElse(new LinkedHashSet<>());
 
-        for (String key : fieldKeys) {
-            CredentialIssuerDisplayResponse display = localizedDisplayMap.get(key);
-            Object value = filteredCredentialProperties.get(key);
-            if (display != null && value != null) {
-                displayProperties.put(key, Map.of(display, value));
+        // Add remaining keys from credentialProperties that are not already in orderedKeys
+        for (String key : credentialProperties.keySet()) {
+            orderedKeys.add(key); // Set ensures no duplicates
+        }
+
+        for (String key : orderedKeys) {
+            Object value = credentialProperties.get(key);
+            if (value == null) {
+                continue; // Skip fields without a value
             }
+
+            CredentialIssuerDisplayResponse display = localizedDisplayMap.get(key);
+
+            // Fallback if not found in metadata
+            if (display == null) {
+                display = new CredentialIssuerDisplayResponse();
+                display.setName(convertKeyToLabel(key));
+                display.setLocale("en");
+            }
+
+            displayProperties.put(key, Map.of(display, value));
         }
 
         return displayProperties;
     }
+
+
 
     public Map<String, Object> extractClaimsFromSdJwt(String sdJwtString) {
         try {
@@ -139,7 +141,6 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
 
             // Add disclosures
             List<Disclosure> disclosures = sdJwt.getDisclosures();
-            Map<String, Object> disclosuresClaims = new HashMap<>();
             if (disclosures != null && !disclosures.isEmpty()) {
                 for (Disclosure disclosure : disclosures) {
                     try {
@@ -147,7 +148,7 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
                         Object claimValue = disclosure.getClaimValue();
 
                         if (claimName != null && claimValue != null) {
-                            disclosuresClaims.put(claimName, claimValue);
+                            claims.put(claimName, claimValue); // Add directly to claims
                         }
                     } catch (Exception e) {
                         log.warn("Failed to process disclosure: {}", e.getMessage());
@@ -156,15 +157,11 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
             }
 
             // Remove standard JWT claims and SD-JWT metadata
-            List<String> metadataKeys = Arrays.asList("iss", "sub", "aud", "exp", "nbf", "iat", "jti", "_sd", "_sd_alg");
+            List<String> metadataKeys = Arrays.asList("vct", "cnf", "iss", "sub", "aud", "exp", "nbf", "iat", "jti", "_sd", "_sd_alg");
             metadataKeys.forEach(claims::remove);
 
-            // Separate credentialSubject if present
-            Map<String, Object> result = new HashMap<>();
-            result.put("credentialSubject", claims);
-            result.put("disclosures", disclosuresClaims);
-
-            return result;
+            // Return claims directly as result
+            return claims;
 
         } catch (IllegalArgumentException e) {
             log.error("Error parsing SD-JWT with Authlete library: {}", e.getMessage(), e);
@@ -175,20 +172,30 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
         }
     }
 
-    private Map<String, Object> parseJwtPayload(String jwt) {
-        try {
-            String[] parts = jwt.split("\\.");
-            if (parts.length < 3) {
-                log.error("Invalid JWT format");
-                return null;
-            }
+    private String convertKeyToLabel(String key) {
+        if (key == null || key.isEmpty()) return key;
 
-            String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-            return objectMapper.readValue(payloadJson, Map.class);
-        } catch (Exception e) {
-            log.error("Error parsing JWT payload", e);
-            return null;
+        // Add space before capital letters
+        String withSpaces = key.replaceAll("([a-z])([A-Z])", "$1 $2")
+                .replaceAll("([A-Z]+)([A-Z][a-z])", "$1 $2");
+
+        // Capitalize each word
+        String[] words = withSpaces.split(" ");
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < words.length; i++) {
+            if (!words[i].isEmpty()) {
+                result.append(capitalize(words[i]));
+                if (i < words.length - 1) {
+                    result.append(" ");
+                }
+            }
         }
+
+        return result.toString();
     }
 
+    private String capitalize(String word) {
+        return word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase();
+    }
 }

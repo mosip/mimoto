@@ -2,11 +2,11 @@ package io.mosip.mimoto.service;
 
 import com.authlete.sd.Disclosure;
 import com.authlete.sd.SDJWT;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.service.impl.VcSdJwtCredentialFormatHandler;
+import io.mosip.mimoto.util.JwtUtils;
 import io.mosip.mimoto.util.LocaleUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,30 +49,74 @@ class VcSdJwtCredentialFormatHandlerTest {
     }
 
     @Test
-    void extractCredentialClaimsWithStringCredentialShouldReturnClaims() throws JsonProcessingException {
+    void extractCredentialClaimsWithStringCredentialShouldReturnClaims() {
         vcCredentialResponse.setCredential(sampleSdJwtString);
 
-        try (MockedStatic<SDJWT> mockedSdJwt = mockStatic(SDJWT.class)) {
+        try (MockedStatic<SDJWT> mockedSdJwt = mockStatic(SDJWT.class);
+             MockedStatic<JwtUtils> mockedJwtUtils = mockStatic(JwtUtils.class)) {
+
             SDJWT mockSdJwt = mock(SDJWT.class);
             mockedSdJwt.when(() -> SDJWT.parse(sampleSdJwtString)).thenReturn(mockSdJwt);
             when(mockSdJwt.getCredentialJwt()).thenReturn(sampleJwtString);
             when(mockSdJwt.getDisclosures()).thenReturn(new ArrayList<>());
 
-            Map<String, Object> jwtPayload = createSampleJwtPayload();
-            when(objectMapper.readValue(anyString(), eq(Map.class))).thenReturn(jwtPayload);
+            // Mock JWT payload with credentialSubject
+            Map<String, Object> jwtPayload = new HashMap<>();
+            Map<String, Object> credentialSubject = new HashMap<>();
+            credentialSubject.put("name", "John Doe");
+            credentialSubject.put("admin", true);
+            jwtPayload.put("credentialSubject", credentialSubject);
+            jwtPayload.put("iss", "https://example.com");
+            jwtPayload.put("sub", "1234567890");
+            jwtPayload.put("iat", 1516239022);
+
+            mockedJwtUtils.when(() -> JwtUtils.parseJwtPayload(sampleJwtString))
+                    .thenReturn(jwtPayload);
 
             Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
             assertNotNull(result);
-            assertTrue(result.containsKey("credentialSubject"));
-            Map<String, Object> subject = (Map<String, Object>) result.get("credentialSubject");
-            assertEquals("John Doe", subject.get("name"));
-            assertEquals(true, subject.get("admin"));
-            assertFalse(subject.containsKey("iss"));
-            assertFalse(subject.containsKey("sub"));
-            assertFalse(subject.containsKey("iat"));
-            assertTrue(result.containsKey("disclosures"));
-            assertTrue(((Map<?, ?>) result.get("disclosures")).isEmpty());
+            assertEquals("John Doe", result.get("name"));
+            assertEquals(true, result.get("admin"));
+            // Metadata fields should be removed
+            assertFalse(result.containsKey("iss"));
+            assertFalse(result.containsKey("sub"));
+            assertFalse(result.containsKey("iat"));
+        }
+    }
+
+    @Test
+    void extractCredentialClaimsWithoutCredentialSubjectShouldReturnAllClaims() {
+        vcCredentialResponse.setCredential(sampleSdJwtString);
+
+        try (MockedStatic<SDJWT> mockedSdJwt = mockStatic(SDJWT.class);
+             MockedStatic<JwtUtils> mockedJwtUtils = mockStatic(JwtUtils.class)) {
+
+            SDJWT mockSdJwt = mock(SDJWT.class);
+            mockedSdJwt.when(() -> SDJWT.parse(sampleSdJwtString)).thenReturn(mockSdJwt);
+            when(mockSdJwt.getCredentialJwt()).thenReturn(sampleJwtString);
+            when(mockSdJwt.getDisclosures()).thenReturn(new ArrayList<>());
+
+            // Mock JWT payload without credentialSubject
+            Map<String, Object> jwtPayload = new HashMap<>();
+            jwtPayload.put("name", "John Doe");
+            jwtPayload.put("admin", true);
+            jwtPayload.put("iss", "https://example.com");
+            jwtPayload.put("sub", "1234567890");
+            jwtPayload.put("iat", 1516239022);
+
+            mockedJwtUtils.when(() -> JwtUtils.parseJwtPayload(sampleJwtString))
+                    .thenReturn(jwtPayload);
+
+            Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
+
+            assertNotNull(result);
+            assertEquals("John Doe", result.get("name"));
+            assertEquals(true, result.get("admin"));
+            // Metadata fields should be removed
+            assertFalse(result.containsKey("iss"));
+            assertFalse(result.containsKey("sub"));
+            assertFalse(result.containsKey("iat"));
         }
     }
 
@@ -108,38 +152,12 @@ class VcSdJwtCredentialFormatHandlerTest {
     }
 
     @Test
-    void extractCredentialClaimsWithCredentialSubjectShouldReturnCredentialSubject() throws JsonProcessingException {
-        vcCredentialResponse.setCredential(sampleSdJwtString);
-        Map<String, Object> credentialSubject = new HashMap<>();
-        credentialSubject.put("firstName", "John");
-        credentialSubject.put("lastName", "Doe");
-
-        try (MockedStatic<SDJWT> mockedSdJwt = mockStatic(SDJWT.class)) {
-            SDJWT mockSdJwt = mock(SDJWT.class);
-            mockedSdJwt.when(() -> SDJWT.parse(sampleSdJwtString)).thenReturn(mockSdJwt);
-            when(mockSdJwt.getCredentialJwt()).thenReturn(sampleJwtString);
-            when(mockSdJwt.getDisclosures()).thenReturn(new ArrayList<>());
-
-            Map<String, Object> jwtPayload = new HashMap<>();
-            jwtPayload.put("credentialSubject", credentialSubject);
-            when(objectMapper.readValue(anyString(), eq(Map.class))).thenReturn(jwtPayload);
-
-            Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
-
-            assertNotNull(result);
-            assertTrue(result.containsKey("credentialSubject"));
-            Map<String, Object> subject = (Map<String, Object>) result.get("credentialSubject");
-            assertEquals(credentialSubject, subject);
-            assertEquals("John", subject.get("firstName"));
-            assertEquals("Doe", subject.get("lastName"));
-        }
-    }
-
-    @Test
-    void extractCredentialClaimsWithDisclosuresShouldIncludeDisclosedClaims() throws JsonProcessingException {
+    void extractCredentialClaimsWithDisclosuresShouldIncludeDisclosedClaims() {
         vcCredentialResponse.setCredential(sampleSdJwtString);
 
-        try (MockedStatic<SDJWT> mockedSdJwt = mockStatic(SDJWT.class)) {
+        try (MockedStatic<SDJWT> mockedSdJwt = mockStatic(SDJWT.class);
+             MockedStatic<JwtUtils> mockedJwtUtils = mockStatic(JwtUtils.class)) {
+
             SDJWT mockSdJwt = mock(SDJWT.class);
             Disclosure mockDisclosure = mock(Disclosure.class);
             List<Disclosure> disclosures = Arrays.asList(mockDisclosure);
@@ -150,21 +168,23 @@ class VcSdJwtCredentialFormatHandlerTest {
             when(mockDisclosure.getClaimName()).thenReturn("disclosedClaim");
             when(mockDisclosure.getClaimValue()).thenReturn("disclosedValue");
 
-            Map<String, Object> jwtPayload = createSampleJwtPayload();
-            when(objectMapper.readValue(anyString(), eq(Map.class))).thenReturn(jwtPayload);
+            // Mock JWT payload
+            Map<String, Object> jwtPayload = new HashMap<>();
+            jwtPayload.put("name", "John Doe");
+            jwtPayload.put("iss", "https://example.com");
+
+            mockedJwtUtils.when(() -> JwtUtils.parseJwtPayload(sampleJwtString))
+                    .thenReturn(jwtPayload);
 
             Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
             assertNotNull(result);
-            assertTrue(result.containsKey("credentialSubject"));
-            Map<String, Object> subject = (Map<String, Object>) result.get("credentialSubject");
-            assertEquals("John Doe", subject.get("name"));
-            assertTrue(result.containsKey("disclosures"));
-            Map<String, Object> disclosuresMap = (Map<String, Object>) result.get("disclosures");
-            assertEquals("disclosedValue", disclosuresMap.get("disclosedClaim"));
+            assertEquals("John Doe", result.get("name"));
+            assertEquals("disclosedValue", result.get("disclosedClaim"));
+            // Metadata fields should be removed
+            assertFalse(result.containsKey("iss"));
         }
     }
-
 
     @Test
     void extractCredentialClaimsWithNullCredentialJwtShouldHandleGracefully() {
@@ -179,11 +199,7 @@ class VcSdJwtCredentialFormatHandlerTest {
             Map<String, Object> result = vcSdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
             assertNotNull(result);
-            // Both credentialSubject and disclosures should be empty maps
-            assertTrue(result.containsKey("credentialSubject"));
-            assertTrue(((Map<?, ?>) result.get("credentialSubject")).isEmpty());
-            assertTrue(result.containsKey("disclosures"));
-            assertTrue(((Map<?, ?>) result.get("disclosures")).isEmpty());
+            assertTrue(result.isEmpty());
         }
     }
 
@@ -260,9 +276,12 @@ class VcSdJwtCredentialFormatHandlerTest {
     }
 
     @Test
-    void loadDisplayPropertiesFromWellknownWithNullClaimsShouldReturnEmptyMap() {
+    void loadDisplayPropertiesFromWellknownWithNullClaimsShouldUseConvertedLabel() {
         // Given
         Map<String, Object> credentialProperties = new HashMap<>();
+        credentialProperties.put("firstName", "John");
+        credentialProperties.put("UINValue", "12345");
+
         credentialsSupportedResponse.setClaims(null);
 
         // When
@@ -272,19 +291,36 @@ class VcSdJwtCredentialFormatHandlerTest {
 
         // Then
         assertNotNull(result);
-        assertTrue(result.isEmpty());
+        assertEquals(2, result.size());
+        assertTrue(result.containsKey("firstName"));
+        assertTrue(result.containsKey("UINValue"));
+
+        // Check that fallback display for "firstName"
+        Map<CredentialIssuerDisplayResponse, Object> displayMap = result.get("firstName");
+        CredentialIssuerDisplayResponse display = displayMap.keySet().iterator().next();
+        assertEquals("First Name", display.getName()); // convertKeyToLabel should convert camelCase to Pascal Case
+        assertEquals("en", display.getLocale());
+        assertEquals("John", displayMap.get(display));
+
+        // Check fallback display for "UINValue"
+        Map<CredentialIssuerDisplayResponse, Object> uinValueDisplayMap = result.get("UINValue");
+        CredentialIssuerDisplayResponse uinValueDisplay = uinValueDisplayMap.keySet().iterator().next();
+        assertEquals("Uin Value", uinValueDisplay.getName()); // convertKeyToLabel should convert camelCase to Pascal Case
+        assertEquals("en", uinValueDisplay.getLocale());
+        assertEquals("12345", uinValueDisplayMap.get(uinValueDisplay));
+
     }
 
     @Test
-    void loadDisplayPropertiesFromWellknownWithNullResolvedLocaleShouldReturnEmptyMap() {
+    void loadDisplayPropertiesFromWellknownWithNullResolvedLocaleShouldUseConvertedLabel() {
         // Given
         Map<String, Object> credentialProperties = new HashMap<>();
-        credentialProperties.put("name", "John Doe");
+        credentialProperties.put("firstName", "John Doe");
 
         Map<String, Object> claims = createSampleClaims();
         credentialsSupportedResponse.setClaims(claims);
 
-        CredentialDisplayResponseDto nameDto = createCredentialDisplayResponseDto("Name", "en");
+        CredentialDisplayResponseDto nameDto = createCredentialDisplayResponseDto("firstName", "en");
         when(objectMapper.convertValue(any(), eq(CredentialDisplayResponseDto.class)))
                 .thenReturn(nameDto);
 
@@ -299,7 +335,14 @@ class VcSdJwtCredentialFormatHandlerTest {
 
             // Then
             assertNotNull(result);
-            assertTrue(result.isEmpty());
+            assertEquals(1, result.size());
+            assertTrue(result.containsKey("firstName"));
+
+            // Check that fallback display was created
+            Map<CredentialIssuerDisplayResponse, Object> displayMap = result.get("firstName");
+            CredentialIssuerDisplayResponse display = displayMap.keySet().iterator().next();
+            assertEquals("First Name", display.getName());
+            assertEquals("en", display.getLocale());
         }
     }
 
@@ -341,14 +384,57 @@ class VcSdJwtCredentialFormatHandlerTest {
     }
 
     @Test
-    void buildCredentialRequestShouldSetVctAndReturnBuiltRequest() {
+    void loadDisplayPropertiesFromWellknownWithCustomOrderShouldRespectOrderAndAppendAdditionalFieldsNotPresentInWellknownClaimsAtEnd() {
         // Given
-        VCCredentialRequest.VCCredentialRequestBuilder builder = VCCredentialRequest.builder();
+        Map<String, Object> credentialProperties = new HashMap<>();
+        credentialProperties.put("name", "John Doe");
+        credentialProperties.put("age", 30);
+        credentialProperties.put("dob", "1990-01-01"); // Additional field not present in well-known claims
+        credentialProperties.put("email", "xyz@gmail.com"); // Additional field not present in well-known claims
+
+        Map<String, Object> claims = createSampleClaims();
+        credentialsSupportedResponse.setClaims(claims);
+        credentialsSupportedResponse.setOrder(Arrays.asList("age", "name")); // Custom order
+
+        CredentialDisplayResponseDto nameDto = createCredentialDisplayResponseDto("Name", "en");
+        CredentialDisplayResponseDto ageDto = createCredentialDisplayResponseDto("Age", "en");
+        CredentialDisplayResponseDto dobDto = createCredentialDisplayResponseDto("DOB", "en");
+        CredentialDisplayResponseDto emailDto = createCredentialDisplayResponseDto("Email", "en");
+
+        when(objectMapper.convertValue(any(), eq(CredentialDisplayResponseDto.class)))
+                .thenReturn(nameDto, dobDto, emailDto, ageDto);
+
+        try (MockedStatic<LocaleUtils> mockedLocaleUtils = mockStatic(LocaleUtils.class)) {
+            mockedLocaleUtils.when(() -> LocaleUtils.resolveLocaleWithFallback(any(), eq("en")))
+                    .thenReturn("en");
+            mockedLocaleUtils.when(() -> LocaleUtils.matchesLocale(eq("en"), eq("en")))
+                    .thenReturn(true);
+
+            // When
+            LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> result =
+                    vcSdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(
+                            credentialProperties, credentialsSupportedResponse, "en");
+
+            // Then
+            assertNotNull(result);
+            assertEquals(4, result.size());
+            List<String> keyOrder = new ArrayList<>(result.keySet());
+            assertEquals("age", keyOrder.get(0));
+            assertEquals("name", keyOrder.get(1));
+            assertEquals("dob", keyOrder.get(2)); // Additional field should be appended at the end
+            assertEquals("email", keyOrder.get(3)); // Additional field should be appended at the end
+        }
+    }
+
+    @Test
+    void buildCredentialRequestShouldReturnBuiltRequest() {
+        // Given
         VCCredentialRequestProof proof = VCCredentialRequestProof.builder()
-                .proofType("jwt")  // or whatever proof type you expect
+                .proofType("jwt")
                 .jwt("sample.jwt.token")
                 .build();
-        String credentialType = "IdentityCredential";
+
+        credentialsSupportedResponse.setVct("IdentityCredential");
 
         // When
         VCCredentialRequest result = vcSdJwtCredentialFormatHandler.buildCredentialRequest(
@@ -356,8 +442,9 @@ class VcSdJwtCredentialFormatHandlerTest {
 
         // Then
         assertNotNull(result);
-        // Note: We can't directly verify the vct value as it's set on the builder,
-        // but we can verify that a built request is returned
+        assertEquals(CredentialFormat.VC_SD_JWT.getFormat(), result.getFormat());
+        assertEquals(proof, result.getProof());
+        assertEquals("IdentityCredential", result.getVct());
     }
 
     @Test
@@ -370,16 +457,6 @@ class VcSdJwtCredentialFormatHandlerTest {
     }
 
     // Helper methods
-    private Map<String, Object> createSampleJwtPayload() {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("iss", "https://example.com");
-        payload.put("sub", "1234567890");
-        payload.put("name", "John Doe");
-        payload.put("admin", true);
-        payload.put("iat", 1516239022);
-        return payload;
-    }
-
     private Map<String, Object> createSampleClaims() {
         Map<String, Object> claims = new HashMap<>();
         claims.put("name", new HashMap<>());
