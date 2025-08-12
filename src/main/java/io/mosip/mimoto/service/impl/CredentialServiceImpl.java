@@ -77,6 +77,7 @@ public class CredentialServiceImpl implements CredentialService {
         log.debug("VC Credential Response is -> " + vcCredentialResponse);
         if (vcCredentialResponse == null)
             throw new InvalidCredentialResourceException("VC Credential Issue API not accessible");
+        vcCredentialResponse.setFormat(vcCredentialRequest.getFormat());
         return vcCredentialResponse;
     }
 
