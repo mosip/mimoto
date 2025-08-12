@@ -124,7 +124,7 @@ fileignoreconfig:
 - filename: src/main/resources/application-local.properties
   checksum: 5717e53660b035685f610e443e30e0ebbf77b24015873ffd2b9f1866d24d2b90
 - filename: docker-compose/config/mimoto-default.properties
-  checksum: c47e16427653b2283bfd7e0edda74aad3171aa16e0cc7dd1f8d31934c269e678
+  checksum: 56073d92f55c371ad84f1493bdfc3771a70c49147db6a83bb1d74f6013aef714
 - filename: README.md
   checksum: e774036bc8cf0bf82ca5bc0a4cd8b3501616b3309764f18a13cb4d9013b404af
 - filename: docker-compose/README.md
