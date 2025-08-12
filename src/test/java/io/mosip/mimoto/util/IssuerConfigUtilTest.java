@@ -127,55 +127,55 @@ public class IssuerConfigUtilTest {
     }
 
     @Test
-    public void testCamelToTitleCase_NullInput() {
+    public void testCamelToTitleCaseNullInput() {
         String result = issuersConfigUtil.camelToTitleCase(null);
         assertNull(result);
     }
 
     @Test
-    public void testCamelToTitleCase_EmptyInput() {
+    public void testCamelToTitleCaseEmptyInput() {
         String result = issuersConfigUtil.camelToTitleCase("");
         assertEquals("", result);
     }
 
     @Test
-    public void testCamelToTitleCase_SingleWord() {
+    public void testCamelToTitleCaseSingleWord() {
         String result = issuersConfigUtil.camelToTitleCase("name");
         assertEquals("Name", result);
     }
 
     @Test
-    public void testCamelToTitleCase_CamelCase() {
+    public void testCamelToTitleCaseCamelCase() {
         String result = issuersConfigUtil.camelToTitleCase("firstName");
         assertEquals("First Name", result);
     }
 
     @Test
-    public void testCamelToTitleCase_MultipleCamelCase() {
+    public void testCamelToTitleCaseMultipleCamelCase() {
         String result = issuersConfigUtil.camelToTitleCase("firstNameAndLastName");
         assertEquals("First Name And Last Name", result);
     }
 
     @Test
-    public void testCamelToTitleCase_WithAcronym() {
+    public void testCamelToTitleCaseWithAcronym() {
         String result = issuersConfigUtil.camelToTitleCase("PRACondition");
         assertEquals("PRA Condition", result);
     }
 
     @Test
-    public void testCamelToTitleCase_AcronymAtEnd() {
+    public void testCamelToTitleCaseAcronymAtEnd() {
         String result = issuersConfigUtil.camelToTitleCase("conditionPRA");
         assertEquals("Condition PRA", result);
     }
 
     @Test
-    public void testCamelToTitleCase_AllUppercase() {
+    public void testCamelToTitleCaseAllUppercase() {
         String result = issuersConfigUtil.camelToTitleCase("URL");
         assertEquals("URL", result);
     }
 
     @Test
-    public void testCamelToTitleCase_MixedCase() {
+    public void testCamelToTitleCaseMixedCase() {
         String result = issuersConfigUtil.camelToTitleCase("pinFor");
         assertEquals("Pin For", result);
     }
