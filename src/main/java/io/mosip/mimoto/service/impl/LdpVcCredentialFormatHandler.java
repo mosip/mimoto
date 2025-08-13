@@ -44,6 +44,29 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
         return (Map<String, Object>) credential.getCredentialSubject();
     }
 
+    private void addFallbackDisplayProperties(
+            Map<String, Object> credentialProperties,
+            LinkedHashMap<String, CredentialIssuerDisplayResponse> localizedDisplayMap,
+            String resolvedLocale) {
+        // fallback for missing display properties from issuer well-known
+        Set<String> credentialFields = credentialProperties.keySet();
+        Set<String> missingDisplayFields = new HashSet<>(credentialFields);
+        missingDisplayFields.removeAll(localizedDisplayMap.keySet());
+        // remove metadata fields that are not part of the display properties
+        missingDisplayFields.remove("id");
+
+        // Generate fallbacks for fields without well-known display properties
+        for (String missingField : missingDisplayFields) {
+            String displayName = camelToTitleCase(missingField);
+
+            CredentialIssuerDisplayResponse fallbackDisplay = new CredentialIssuerDisplayResponse();
+            fallbackDisplay.setName(displayName);
+            fallbackDisplay.setLocale(resolvedLocale != null ? resolvedLocale : "en");
+
+            localizedDisplayMap.put(missingField, fallbackDisplay);
+        }
+    }
+
     @Override
     public LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> loadDisplayPropertiesFromWellknown(
             Map<String, Object> credentialProperties,
@@ -81,23 +104,7 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
             });
         }
 
-        // fallback for missing display properties from issuer well-known
-        Set<String> credentialFields = credentialProperties.keySet();
-        Set<String> missingDisplayFields = new HashSet<>(credentialFields);
-        missingDisplayFields.removeAll(localizedDisplayMap.keySet());
-        // remove metadata fields that are not part of the display properties
-        missingDisplayFields.remove("id");
-
-        // Generate fallbacks for fields without well-known display properties
-        for (String missingField : missingDisplayFields) {
-            String displayName = camelToTitleCase(missingField);
-
-            CredentialIssuerDisplayResponse fallbackDisplay = new CredentialIssuerDisplayResponse();
-            fallbackDisplay.setName(displayName);
-            fallbackDisplay.setLocale(resolvedLocale != null ? resolvedLocale : "en");
-
-            localizedDisplayMap.put(missingField, fallbackDisplay);
-        }
+        addFallbackDisplayProperties(credentialProperties, localizedDisplayMap, resolvedLocale);
 
         List<String> fieldKeys = (orderedKeys != null && !orderedKeys.isEmpty())
                 ? orderedKeys

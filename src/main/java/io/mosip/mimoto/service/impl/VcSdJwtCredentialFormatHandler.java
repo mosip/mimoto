@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.mosip.mimoto.util.IssuerConfigUtil.camelToTitleCase;
 import static io.mosip.mimoto.util.JwtUtils.parseJwtPayload;
 
 @Slf4j
@@ -104,7 +105,7 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
             // Fallback if not found in metadata
             if (display == null) {
                 display = new CredentialIssuerDisplayResponse();
-                display.setName(convertKeyToLabel(key));
+                display.setName(camelToTitleCase(key));
                 display.setLocale("en");
             }
 
