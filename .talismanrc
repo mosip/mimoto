@@ -24,7 +24,7 @@ fileignoreconfig:
 - filename: src/main/java/io/mosip/mimoto/controller/CredentialShareController.java
   checksum: 666c22ca63adb8770de901e220f8efeb5ec1d3f63064a58dea33ba49b8e15872
 - filename: src/main/java/io/mosip/mimoto/service/CredentialPDFGeneratorService.java
-  checksum: 1aabb69041c31bcfe04c89766759121bff7381df4c495384fd42ff6d47dc0fe1
+  checksum: 4ed9e188c7dbf07b18eecc3051fb48e8b72072af9963d19972d70b609ebe8045
 - filename: src/test/java/io/mosip/mimoto/service/CredentialPDFGeneratorServiceTest.java
   checksum: 3349bda92b9e594f99bf0f0e79f7c52fb378c82384a8d3997986e85fb5ce1ec6
 - filename: src/main/java/io/mosip/mimoto/controller/IssuersController.java
@@ -122,11 +122,15 @@ fileignoreconfig:
 - filename: src/main/resources/application-default.properties
   checksum: e0d8dd498f739097e67111bdfd4ac4cdf9ddab9b77c2ffca42aecc3e09a4ebc8
 - filename: src/main/resources/application-local.properties
-  checksum: 710840f8a4882efd00d9b830e8faf0e5c2bf3fec206f6a32b9a7eb32b0812d33
+  checksum: 5717e53660b035685f610e443e30e0ebbf77b24015873ffd2b9f1866d24d2b90
 - filename: docker-compose/config/mimoto-default.properties
-  checksum: c47e16427653b2283bfd7e0edda74aad3171aa16e0cc7dd1f8d31934c269e678
+  checksum: 56073d92f55c371ad84f1493bdfc3771a70c49147db6a83bb1d74f6013aef714
 - filename: README.md
   checksum: e774036bc8cf0bf82ca5bc0a4cd8b3501616b3309764f18a13cb4d9013b404af
 - filename: docker-compose/README.md
-  checksum: 3290aef321dbbd1adeec634076e865d2d7f8058e4cc8d483afc416c7f82ae966
+  checksum: f70385d1be6b7945df1afac0890bdce5ecceb63cdba08bdd3f760f40f843c630
+- filename: src/main/java/io/mosip/mimoto/service/impl/VcSdJwtCredentialFormatHandler.java
+  checksum: 425cb4066c02d93572b1db02099532465479e7f4c94c3684c5d46a063352631d
+- filename: src/test/java/io/mosip/mimoto/service/VcSdJwtCredentialFormatHandlerTest.java
+  checksum: e91aa11aa049453a3a7cd542386dbb813f5c868678f68d6bd71af92149e0d5db
 version: ""
