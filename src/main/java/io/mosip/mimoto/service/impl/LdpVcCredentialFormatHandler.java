@@ -61,7 +61,7 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
 
             CredentialIssuerDisplayResponse fallbackDisplay = new CredentialIssuerDisplayResponse();
             fallbackDisplay.setName(displayName);
-            fallbackDisplay.setLocale(resolvedLocale != null ? resolvedLocale : "en");
+            fallbackDisplay.setLocale("en");
 
             localizedDisplayMap.put(missingField, fallbackDisplay);
         }
