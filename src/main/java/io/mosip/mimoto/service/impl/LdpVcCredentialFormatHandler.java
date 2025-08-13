@@ -5,14 +5,12 @@ import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.service.CredentialFormatHandler;
 import io.mosip.mimoto.util.LocaleUtils;
+import static io.mosip.mimoto.util.IssuerConfigUtil.camelToTitleCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Component("ldp_vc")
@@ -44,6 +42,29 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
     public Map<String, Object> extractCredentialClaims(VCCredentialResponse vcCredentialResponse) {
         VCCredentialProperties credential = objectMapper.convertValue(vcCredentialResponse.getCredential(), VCCredentialProperties.class);
         return (Map<String, Object>) credential.getCredentialSubject();
+    }
+
+    private void addFallbackDisplayProperties(
+            Map<String, Object> credentialProperties,
+            LinkedHashMap<String, CredentialIssuerDisplayResponse> localizedDisplayMap,
+            String resolvedLocale) {
+        // fallback for missing display properties from issuer well-known
+        Set<String> credentialFields = credentialProperties.keySet();
+        Set<String> missingDisplayFields = new HashSet<>(credentialFields);
+        missingDisplayFields.removeAll(localizedDisplayMap.keySet());
+        // remove metadata fields that are not part of the display properties
+        missingDisplayFields.remove("id");
+
+        // Generate fallbacks for fields without well-known display properties
+        for (String missingField : missingDisplayFields) {
+            String displayName = camelToTitleCase(missingField);
+
+            CredentialIssuerDisplayResponse fallbackDisplay = new CredentialIssuerDisplayResponse();
+            fallbackDisplay.setName(displayName);
+            fallbackDisplay.setLocale("en");
+
+            localizedDisplayMap.put(missingField, fallbackDisplay);
+        }
     }
 
     @Override
@@ -82,6 +103,8 @@ public class LdpVcCredentialFormatHandler implements CredentialFormatHandler {
                         .ifPresent(display -> localizedDisplayMap.put(key, display));
             });
         }
+
+        addFallbackDisplayProperties(credentialProperties, localizedDisplayMap, resolvedLocale);
 
         List<String> fieldKeys = (orderedKeys != null && !orderedKeys.isEmpty())
                 ? orderedKeys

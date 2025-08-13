@@ -2,8 +2,7 @@ package io.mosip.mimoto.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mosip.mimoto.dto.mimoto.AuthorizationServerWellKnownResponse;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
+import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
@@ -35,6 +34,32 @@ public class IssuerConfigUtil {
     @Autowired
     private Validator validator;
 
+    public static String camelToTitleCase(String input) {
+        if (input == null || input.isEmpty()) return input;
+
+        // Insert space before:
+        // 1. Lowercase followed by uppercase (e.g., pinFor -> pin For)
+        // 2. Acronym followed by normal word (e.g., PRACondition -> PRA Condition)
+        String result = input.replaceAll("(?<=[a-z])(?=[A-Z])|(?<=[A-Z]{2,})(?=[A-Z][a-z])", " ");
+
+        // Capitalize first letter of each word, preserve acronyms
+        String[] words = result.split(" ");
+        StringBuilder finalResult = new StringBuilder();
+
+        for (String word : words) {
+            if (word.matches("[A-Z]{2,}")) {
+                // Acronym (all uppercase, length >= 2)
+                finalResult.append(word);
+            } else {
+                // Capitalize normally
+                finalResult.append(Character.toUpperCase(word.charAt(0)))
+                        .append(word.substring(1));
+            }
+            finalResult.append(" ");
+        }
+
+        return finalResult.toString().trim();
+    }
 
     @Cacheable(value = "issuerWellknown", key = "#p0")
     public CredentialIssuerWellKnownResponse getIssuerWellknown(String credentialIssuerHost) throws ApiNotAccessibleException, IOException, InvalidWellknownResponseException {

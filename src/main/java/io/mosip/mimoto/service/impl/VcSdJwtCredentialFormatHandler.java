@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.mosip.mimoto.util.IssuerConfigUtil.camelToTitleCase;
 import static io.mosip.mimoto.util.JwtUtils.parseJwtPayload;
 
 @Slf4j
@@ -104,7 +105,7 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
             // Fallback if not found in metadata
             if (display == null) {
                 display = new CredentialIssuerDisplayResponse();
-                display.setName(convertKeyToLabel(key));
+                display.setName(camelToTitleCase(key));
                 display.setLocale("en");
             }
 
@@ -170,32 +171,5 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
             log.error("Unexpected error processing SD-JWT", e);
             return Collections.emptyMap();
         }
-    }
-
-    private String convertKeyToLabel(String key) {
-        if (key == null || key.isEmpty()) return key;
-
-        // Add space before capital letters
-        String withSpaces = key.replaceAll("([a-z])([A-Z])", "$1 $2")
-                .replaceAll("([A-Z]+)([A-Z][a-z])", "$1 $2");
-
-        // Capitalize each word
-        String[] words = withSpaces.split(" ");
-        StringBuilder result = new StringBuilder();
-
-        for (int i = 0; i < words.length; i++) {
-            if (!words[i].isEmpty()) {
-                result.append(capitalize(words[i]));
-                if (i < words.length - 1) {
-                    result.append(" ");
-                }
-            }
-        }
-
-        return result.toString();
-    }
-
-    private String capitalize(String word) {
-        return word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase();
     }
 }

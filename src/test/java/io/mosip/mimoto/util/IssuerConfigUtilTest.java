@@ -19,8 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import static io.mosip.mimoto.util.TestUtilities.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -125,6 +124,60 @@ public class IssuerConfigUtilTest {
 
         assertEquals("RESIDENT-APP-026 --> Api not accessible failure", actualException.getMessage());
         verify(restApiClient, times(1)).getApi(issuerWellKnownUrl, String.class);
+    }
+
+    @Test
+    public void testCamelToTitleCaseNullInput() {
+        String result = issuersConfigUtil.camelToTitleCase(null);
+        assertNull(result);
+    }
+
+    @Test
+    public void testCamelToTitleCaseEmptyInput() {
+        String result = issuersConfigUtil.camelToTitleCase("");
+        assertEquals("", result);
+    }
+
+    @Test
+    public void testCamelToTitleCaseSingleWord() {
+        String result = issuersConfigUtil.camelToTitleCase("name");
+        assertEquals("Name", result);
+    }
+
+    @Test
+    public void testCamelToTitleCaseCamelCase() {
+        String result = issuersConfigUtil.camelToTitleCase("firstName");
+        assertEquals("First Name", result);
+    }
+
+    @Test
+    public void testCamelToTitleCaseMultipleCamelCase() {
+        String result = issuersConfigUtil.camelToTitleCase("firstNameAndLastName");
+        assertEquals("First Name And Last Name", result);
+    }
+
+    @Test
+    public void testCamelToTitleCaseWithAcronym() {
+        String result = issuersConfigUtil.camelToTitleCase("PRACondition");
+        assertEquals("PRA Condition", result);
+    }
+
+    @Test
+    public void testCamelToTitleCaseAcronymAtEnd() {
+        String result = issuersConfigUtil.camelToTitleCase("conditionPRA");
+        assertEquals("Condition PRA", result);
+    }
+
+    @Test
+    public void testCamelToTitleCaseAllUppercase() {
+        String result = issuersConfigUtil.camelToTitleCase("URL");
+        assertEquals("URL", result);
+    }
+
+    @Test
+    public void testCamelToTitleCaseMixedCase() {
+        String result = issuersConfigUtil.camelToTitleCase("pinFor");
+        assertEquals("Pin For", result);
     }
 
 }
