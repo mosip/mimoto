@@ -20,6 +20,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.ByteArrayInputStream;
@@ -31,9 +33,11 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class CredentialPDFGeneratorServiceTest {
 
     @Mock private ObjectMapper objectMapper;
@@ -257,5 +261,67 @@ class CredentialPDFGeneratorServiceTest {
 
             assertNotNull(result);
         }
+    }
+
+    @Test
+    void testFormatValueWithMapContainingValue() {
+        Map<String, Object> mapWithValue = Map.of("value", "test-value");
+        String result = ReflectionTestUtils.invokeMethod(credentialPDFGeneratorService, "formatValue", mapWithValue, "en");
+        assertEquals("test-value", result);
+    }
+
+    @Test
+    void testFormatValueWithMapWithoutValue() {
+        Map<String, Object> mapWithoutValue = Map.of("other", "data");
+        String result = ReflectionTestUtils.invokeMethod(credentialPDFGeneratorService, "formatValue", mapWithoutValue, "en");
+        assertEquals("", result);
+    }
+
+    @Test
+    void testFormatValueWithEmptyList() {
+        List<String> emptyList = List.of();
+        String result = ReflectionTestUtils.invokeMethod(credentialPDFGeneratorService, "formatValue", emptyList, "en");
+        assertEquals("", result);
+    }
+
+    @Test
+    void testFormatValueWithStringList() {
+        List<String> stringList = List.of("Java", "Spring", "Boot");
+        String result = ReflectionTestUtils.invokeMethod(credentialPDFGeneratorService, "formatValue", stringList, "en");
+        assertEquals("Java, Spring, Boot", result);
+    }
+
+    @Test
+    void testFormatValueWithMapListMatchingLocale() {
+        List<Map<String, Object>> mapList = List.of(
+                Map.of("language", "en", "value", "English Value"),
+                Map.of("language", "fr", "value", "French Value")
+        );
+        String result = ReflectionTestUtils.invokeMethod(credentialPDFGeneratorService, "formatValue", mapList, "en");
+        assertEquals("English Value", result);
+    }
+
+    @Test
+    void testFormatValueWithMapListNoMatchingLocale() {
+        List<Map<String, Object>> mapList = List.of(
+                Map.of("language", "fr", "value", "French Value"),
+                Map.of("language", "de", "value", "German Value")
+        );
+        String result = ReflectionTestUtils.invokeMethod(credentialPDFGeneratorService, "formatValue", mapList, "en");
+        assertEquals("", result);
+    }
+
+    @Test
+    void testFormatValueWithSimpleString() {
+        String simpleValue = "simple-string";
+        String result = ReflectionTestUtils.invokeMethod(credentialPDFGeneratorService, "formatValue", simpleValue, "en");
+        assertEquals("simple-string", result);
+    }
+
+    @Test
+    void testFormatValueWithNumber() {
+        Integer numberValue = 42;
+        String result = ReflectionTestUtils.invokeMethod(credentialPDFGeneratorService, "formatValue", numberValue, "en");
+        assertEquals("42", result);
     }
 }
