@@ -26,8 +26,8 @@ public class CredentialDefinitionResponseDto {
     @Schema(description = "Credential Subject of the VC")
     private Map<@NotEmpty String, @Valid CredentialDisplayResponseDto> credentialSubject;
 
-    @SerializedName("context")
-    @JsonProperty("context")
+    @SerializedName("@context")
+    @JsonProperty("@context")
     @Schema(description = "context of the Credential Definition")
     private List<@NotEmpty String> context;
 }
