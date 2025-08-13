@@ -305,7 +305,7 @@ class VcSdJwtCredentialFormatHandlerTest {
         // Check fallback display for "UINValue"
         Map<CredentialIssuerDisplayResponse, Object> uinValueDisplayMap = result.get("UINValue");
         CredentialIssuerDisplayResponse uinValueDisplay = uinValueDisplayMap.keySet().iterator().next();
-        assertEquals("Uin Value", uinValueDisplay.getName()); // convertKeyToLabel should convert camelCase to Pascal Case
+        assertEquals("UIN Value", uinValueDisplay.getName()); // convertKeyToLabel should convert camelCase to Pascal Case
         assertEquals("en", uinValueDisplay.getLocale());
         assertEquals("12345", uinValueDisplayMap.get(uinValueDisplay));
 
