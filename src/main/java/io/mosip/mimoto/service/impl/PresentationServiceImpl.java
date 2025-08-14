@@ -116,11 +116,17 @@ public class PresentationServiceImpl implements PresentationService {
                 URLEncoder.encode(presentationSubmission, StandardCharsets.UTF_8));
     }
 
-    private VerifiablePresentationDTO constructVerifiablePresentationString(VCCredentialProperties vcCredentialProperties) throws JsonProcessingException {
+    private VerifiablePresentationDTO constructVerifiablePresentationString(VCCredentialProperties vcCredentialProperties) {
+        Object context = vcCredentialProperties.getContext();
+
+        List<Object> contextList = (context instanceof List<?> list)
+                ? (List<Object>) list
+                : List.of(context);
+
         return VerifiablePresentationDTO.builder()
                 .verifiableCredential(Collections.singletonList(vcCredentialProperties))
                 .type(Collections.singletonList("VerifiablePresentation"))
-                .context(Collections.singletonList(vcCredentialProperties.getContext()))
+                .context(contextList)
                 .build();
     }
 
