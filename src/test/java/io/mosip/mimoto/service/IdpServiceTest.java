@@ -1,6 +1,7 @@
 package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dto.IssuerDTO;
+import io.mosip.mimoto.dto.VerifiableCredentialRequestDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.AuthorizationServerWellKnownResponse;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
@@ -207,5 +208,35 @@ public class IdpServiceTest {
                 idpService.getTokenResponse(params));
 
         assertEquals("invalid_request --> Request failed due to invalid input detected by an external service.", ex.getMessage());
+    }
+
+    @Test
+    public void shouldReturnTokenResponseForVerifiableCredentialRequestDTO() throws Exception {
+        VerifiableCredentialRequestDTO requestDTO = new VerifiableCredentialRequestDTO();
+        requestDTO.setCode("sampleCode");
+        requestDTO.setRedirectUri("https://myapp.com/callback");
+        requestDTO.setGrantType("authorization_code");
+        requestDTO.setCodeVerifier("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk");
+        requestDTO.setIssuer("issuer123");
+
+        IssuerDTO mockIssuer = new IssuerDTO();
+        mockIssuer.setClient_id("client123");
+        mockIssuer.setClient_alias("clientAlias");
+
+        when(issuersService.getIssuerDetails("issuer123")).thenReturn(mockIssuer);
+        when(issuersService.getIssuerConfiguration("issuer123")).thenReturn(credentialIssuerConfiguration);
+        when(credentialIssuerConfiguration.getAuthorizationServerWellKnownResponse())
+                .thenReturn(authorizationServerWellKnownResponse);
+        when(authorizationServerWellKnownResponse.getTokenEndpoint())
+                .thenReturn("https://example.com/token");
+        when(joseUtil.getJWT(eq("client123"), any(), any(), eq("clientAlias"), any(), eq("https://example.com/token")))
+                .thenReturn("jwt-token");
+        when(restTemplate.postForObject(eq("https://example.com/token"), any(HttpEntity.class), eq(TokenResponseDTO.class)))
+                .thenReturn(tokenResponseDTO);
+
+        TokenResponseDTO response = idpService.getTokenResponse(requestDTO);
+
+        assertNotNull(response);
+        assertEquals(tokenResponseDTO, response);
     }
 }

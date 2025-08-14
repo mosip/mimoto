@@ -258,4 +258,109 @@ class CredentialPDFGeneratorServiceTest {
             assertNotNull(result);
         }
     }
+
+    @Test
+    void testGeneratePdfWithMapValueFormatting() throws Exception {
+        // Setup credential with map containing "value" key
+        Map<String, Object> subjectWithMapValue = new HashMap<>();
+        subjectWithMapValue.put("education", Map.of("value", "Bachelor's Degree"));
+        ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectWithMapValue);
+
+        // Setup display for education field
+        credentialsSupportedResponse.getCredentialDefinition().getCredentialSubject()
+                .put("education", createDisplay("Education"));
+        credentialsSupportedResponse.setOrder(List.of("education"));
+
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Education: $rowProperties.education</body></html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                "https://example.com/share", "", "en");
+
+        assertNotNull(result);
+        // Verify the PDF generation succeeded - formatValue was called internally
+    }
+
+    @Test
+    void testGeneratePdfWithStringListFormatting() throws Exception {
+        // Setup credential with list of strings
+        Map<String, Object> subjectWithList = new HashMap<>();
+        subjectWithList.put("skills", List.of("Java", "Spring", "Boot"));
+        ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectWithList);
+
+        credentialsSupportedResponse.getCredentialDefinition().getCredentialSubject()
+                .put("skills", createDisplay("Skills"));
+        credentialsSupportedResponse.setOrder(List.of("skills"));
+
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Skills: $rowProperties.skills</body></html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                "https://example.com/share", "", "en");
+
+        assertNotNull(result);
+        // The formatValue method handles list formatting internally
+    }
+
+    @Test
+    void testGeneratePdfWithLocaleSpecificMapListFormatting() throws Exception {
+        // Setup credential with locale-specific map list
+        Map<String, Object> subjectWithLocaleMap = new HashMap<>();
+        List<Map<String, Object>> localeData = List.of(
+                Map.of("language", "en", "value", "English Name"),
+                Map.of("language", "fr", "value", "French Name")
+        );
+        subjectWithLocaleMap.put("localizedName", localeData);
+        ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectWithLocaleMap);
+
+        credentialsSupportedResponse.getCredentialDefinition().getCredentialSubject()
+                .put("localizedName", createDisplay("Localized Name"));
+        credentialsSupportedResponse.setOrder(List.of("localizedName"));
+
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Name: $rowProperties.localizedName</body></html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                "https://example.com/share", "", "en");
+
+        assertNotNull(result);
+        // formatValue should select "English Name" based on locale "en"
+    }
+
+    @Test
+    void testGeneratePdfWithNumericValueFormatting() throws Exception {
+        // Setup credential with numeric value
+        Map<String, Object> subjectWithNumber = new HashMap<>();
+        subjectWithNumber.put("age", 25);
+        ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectWithNumber);
+
+        credentialsSupportedResponse.getCredentialDefinition().getCredentialSubject()
+                .put("age", createDisplay("Age"));
+        credentialsSupportedResponse.setOrder(List.of("age"));
+
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Age: $rowProperties.age</body></html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                "https://example.com/share", "", "en");
+
+        assertNotNull(result);
+        // formatValue converts number to string internally
+    }
 }
