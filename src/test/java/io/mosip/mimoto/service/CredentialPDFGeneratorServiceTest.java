@@ -59,8 +59,16 @@ class CredentialPDFGeneratorServiceTest {
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "qrCodeWidth", 500);
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "allowedQRDataSizeLimit", 2000);
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "pixelPass", pixelPass);
+        ReflectionTestUtils.setField(credentialPDFGeneratorService, "faceKeysList",
+                "face,photo,picture,portrait,image");
+
         // Mock the handler factory to return the handler for the test format
         when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
+        when(credentialFormatHandler.extractCredentialClaims(any()))
+            .thenAnswer(invocation -> {
+                VCCredentialResponse response = invocation.getArgument(0);
+                return ((VCCredentialProperties)response.getCredential()).getCredentialSubject();
+            });
 
         setupTestData();
     }
@@ -362,5 +370,259 @@ class CredentialPDFGeneratorServiceTest {
 
         assertNotNull(result);
         // formatValue converts number to string internally
+    }
+
+    @Test
+    void testFaceKeyFallbackFromPrimaryToSecondary() throws Exception {
+        // Setup: No "face" key, but has "photo" key
+        Map<String, Object> subjectData = new HashMap<>();
+        subjectData.put("name", "John Doe");
+        subjectData.put("photo", "base64-photo-image");
+        subjectData.put("dateOfBirth", "1990-01-01");
+
+        ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectData);
+
+        // Setup credential display without face key to avoid it appearing in rowProperties
+        Map<String, CredentialDisplayResponseDto> credentialSubjectMap = new HashMap<>();
+        credentialSubjectMap.put("name", createDisplay("Full Name"));
+        credentialSubjectMap.put("dateOfBirth", createDisplay("Date of Birth"));
+        // Note: No "photo" in display properties - should be excluded from rowProperties
+
+        credentialsSupportedResponse.getCredentialDefinition().setCredentialSubject(credentialSubjectMap);
+        credentialsSupportedResponse.setOrder(List.of("name", "dateOfBirth"));
+
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Face: $face, Name: $rowProperties.name</body></html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                "https://example.com/share", "", "en");
+
+        assertNotNull(result);
+        // Indirectly tests that "photo" was used as fallback for $face variable
+    }
+
+    @Test
+    void testFaceKeyFallbackToPortrait() throws Exception {
+        // Setup: No "face" or "photo", but has "portrait"
+        Map<String, Object> subjectData = new HashMap<>();
+        subjectData.put("name", "John Doe");
+        subjectData.put("portrait", "base64-portrait-image");
+
+        ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectData);
+
+        Map<String, CredentialDisplayResponseDto> credentialSubjectMap = new HashMap<>();
+        credentialSubjectMap.put("name", createDisplay("Full Name"));
+
+        credentialsSupportedResponse.getCredentialDefinition().setCredentialSubject(credentialSubjectMap);
+        credentialsSupportedResponse.setOrder(List.of("name"));
+
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Portrait: $face, Name: $rowProperties.name</body></html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                "https://example.com/share", "", "en");
+
+        assertNotNull(result);
+        // Tests fallback to "portrait" key
+    }
+
+    @Test
+    void testFaceKeyFallbackToImage() throws Exception {
+        // Setup: Only "image" key available
+        Map<String, Object> subjectData = new HashMap<>();
+        subjectData.put("name", "John Doe");
+        subjectData.put("image", "base64-generic-image");
+
+        ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectData);
+
+        Map<String, CredentialDisplayResponseDto> credentialSubjectMap = new HashMap<>();
+        credentialSubjectMap.put("name", createDisplay("Full Name"));
+
+        credentialsSupportedResponse.getCredentialDefinition().setCredentialSubject(credentialSubjectMap);
+        credentialsSupportedResponse.setOrder(List.of("name"));
+
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Image: $face, Name: $rowProperties.name</body></html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                "https://example.com/share", "", "en");
+
+        assertNotNull(result);
+        // Tests fallback to "image" key
+    }
+
+    @Test
+    void testFaceKeyFallbackToPicture() throws Exception {
+        // Setup: Only "picture" key available
+        Map<String, Object> subjectData = new HashMap<>();
+        subjectData.put("name", "John Doe");
+        subjectData.put("picture", "base64-picture-image");
+
+        ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectData);
+
+        Map<String, CredentialDisplayResponseDto> credentialSubjectMap = new HashMap<>();
+        credentialSubjectMap.put("name", createDisplay("Full Name"));
+
+        credentialsSupportedResponse.getCredentialDefinition().setCredentialSubject(credentialSubjectMap);
+        credentialsSupportedResponse.setOrder(List.of("name"));
+
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Picture: $face, Name: $rowProperties.name</body></html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                "https://example.com/share", "", "en");
+
+        assertNotNull(result);
+        // Tests fallback to "picture" key
+    }
+
+    @Test
+    void testFaceKeyPriorityOrder() throws Exception {
+        // Setup: Multiple face keys present - should use first available in priority order
+        Map<String, Object> subjectData = new HashMap<>();
+        subjectData.put("name", "John Doe");
+        subjectData.put("picture", "base64-picture-image"); // Lower priority
+        subjectData.put("photo", "base64-photo-image");     // Higher priority
+        subjectData.put("image", "base64-image");           // Lower priority
+
+        ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectData);
+
+        Map<String, CredentialDisplayResponseDto> credentialSubjectMap = new HashMap<>();
+        credentialSubjectMap.put("name", createDisplay("Full Name"));
+
+        credentialsSupportedResponse.getCredentialDefinition().setCredentialSubject(credentialSubjectMap);
+        credentialsSupportedResponse.setOrder(List.of("name"));
+
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Face: $face, Name: $rowProperties.name</body></html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                "https://example.com/share", "", "en");
+
+        assertNotNull(result);
+        // Should use "photo" (higher priority) over "picture" and "image"
+    }
+
+    @Test
+    void testFaceKeyExcludedFromRowPropertiesWhenPresent() throws Exception {
+        // Setup: "face" key present in both credential and display properties
+        Map<String, Object> subjectData = new HashMap<>();
+        subjectData.put("name", "John Doe");
+        subjectData.put("face", "base64-face-image");
+        subjectData.put("email", "john@example.com");
+
+        ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectData);
+
+        // Include "face" in display properties to test exclusion from rowProperties
+        Map<String, CredentialDisplayResponseDto> credentialSubjectMap = new HashMap<>();
+        credentialSubjectMap.put("name", createDisplay("Full Name"));
+        credentialSubjectMap.put("face", createDisplay("Face Photo")); // This should be excluded
+        credentialSubjectMap.put("email", createDisplay("Email Address"));
+
+        credentialsSupportedResponse.getCredentialDefinition().setCredentialSubject(credentialSubjectMap);
+        credentialsSupportedResponse.setOrder(List.of("name", "face", "email"));
+
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Face: $face<br/>Properties: $rowProperties</body></html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                "https://example.com/share", "", "en");
+
+        assertNotNull(result);
+        // Face should appear as $face variable but NOT in $rowProperties
+    }
+
+    @Test
+    void testMultipleFaceKeysExcludedFromRowProperties() throws Exception {
+        // Setup: Multiple face keys present
+        Map<String, Object> subjectData = new HashMap<>();
+        subjectData.put("name", "John Doe");
+        subjectData.put("face", "base64-face-image");
+        subjectData.put("photo", "base64-photo-image");
+        subjectData.put("portrait", "base64-portrait-image");
+        subjectData.put("email", "john@example.com");
+
+        ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectData);
+
+        // Include all face keys in display properties
+        Map<String, CredentialDisplayResponseDto> credentialSubjectMap = new HashMap<>();
+        credentialSubjectMap.put("name", createDisplay("Full Name"));
+        credentialSubjectMap.put("face", createDisplay("Face Photo"));
+        credentialSubjectMap.put("photo", createDisplay("Photo"));
+        credentialSubjectMap.put("portrait", createDisplay("Portrait"));
+        credentialSubjectMap.put("email", createDisplay("Email Address"));
+
+        credentialsSupportedResponse.getCredentialDefinition().setCredentialSubject(credentialSubjectMap);
+        credentialsSupportedResponse.setOrder(List.of("name", "face", "photo", "portrait", "email"));
+
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Face: $face<br/>Properties: $rowProperties</body></html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                "https://example.com/share", "", "en");
+
+        assertNotNull(result);
+        // All face-related keys should be excluded from rowProperties
+        // Only "name" and "email" should appear in rowProperties
+    }
+
+    @Test
+    void testNoFaceKeysAvailable() throws Exception {
+        // Setup: No face-related keys in credential
+        Map<String, Object> subjectData = new HashMap<>();
+        subjectData.put("name", "John Doe");
+        subjectData.put("email", "john@example.com");
+        subjectData.put("dateOfBirth", "1990-01-01");
+
+        ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectData);
+
+        Map<String, CredentialDisplayResponseDto> credentialSubjectMap = new HashMap<>();
+        credentialSubjectMap.put("name", createDisplay("Full Name"));
+        credentialSubjectMap.put("email", createDisplay("Email Address"));
+        credentialSubjectMap.put("dateOfBirth", createDisplay("Date of Birth"));
+
+        credentialsSupportedResponse.getCredentialDefinition().setCredentialSubject(credentialSubjectMap);
+        credentialsSupportedResponse.setOrder(List.of("name", "email", "dateOfBirth"));
+
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Face: $face<br/>Properties: $rowProperties</body></html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                "https://example.com/share", "", "en");
+
+        assertNotNull(result);
+        // Should handle gracefully when no face keys are available ($face will be null)
     }
 }

@@ -76,6 +76,9 @@ public class CredentialPDFGeneratorService {
     @Value("${mosip.inji.qr.data.size.limit:4096}")
     Integer allowedQRDataSizeLimit;
 
+    @Value("${mosip.inji.face.keys:face,photo,picture,portrait,image}")
+    private String faceKeysList;
+
     public ByteArrayInputStream generatePdfForVerifiableCredential(String credentialConfigurationId, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
 
         // Get the appropriate processor based on format
@@ -118,6 +121,10 @@ public class CredentialPDFGeneratorService {
         String credentialSupportedType = firstDisplay != null ? firstDisplay.getName() : null;
 
         String face = extractFace(vcCredentialResponse);
+        // Get configured face keys to exclude from row properties
+        List<String> faceKeys = Arrays.asList(faceKeysList.split(","));
+        Set<String> faceKeySet = faceKeys.stream().map(String::trim).collect(Collectors.toSet());
+
         Set<String> disclosures;
         if (CredentialFormat.VC_SD_JWT.getFormat().equals(vcCredentialResponse.getFormat())) {
             SDJWT sdjwt = SDJWT.parse((String) vcCredentialResponse.getCredential());
@@ -129,18 +136,25 @@ public class CredentialPDFGeneratorService {
         }
 
         LinkedHashMap<String, String> disclosuresProps = new LinkedHashMap<>();
-        displayProperties.forEach((key, valueMap) -> valueMap.forEach((display, val) -> {
-            String displayName = display.getName();
-            String locale = display.getLocale();
-            String strVal = formatValue(val, locale);
-            if (disclosures.contains(key)){
-                disclosuresProps.put(key, displayName);
-                rowProperties.put(key, Map.of(displayName, strVal));
-            } else{
-                rowProperties.put(key, Map.of(displayName, strVal));
-            }
+        displayProperties.forEach((key, valueMap) -> {
+            boolean isFaceKey = faceKeySet.contains(key.trim());
 
-        }));
+            valueMap.forEach((display, val) -> {
+                String displayName = display.getName();
+                String locale = display.getLocale();
+                String strVal = formatValue(val, locale);
+                if (disclosures.contains(key)) {
+                    disclosuresProps.put(key, displayName);
+                    if (!isFaceKey) {
+                        rowProperties.put(key, Map.of(displayName, strVal));
+                    }
+                } else {
+                    if (!isFaceKey) {
+                        rowProperties.put(key, Map.of(displayName, strVal));
+                    }
+                }
+            });
+        });
 
         String qrCodeImage = "";
         if (QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type())) {
@@ -166,8 +180,18 @@ public class CredentialPDFGeneratorService {
         // Use the appropriate credentialFormatHandler to extract credential properties
         CredentialFormatHandler credentialFormatHandler = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
         Map<String, Object> credentialSubject = credentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
-        Object face = credentialSubject.get("face");
-        return face != null ? face.toString() : null;
+
+        // handling face extraction based on configured keys
+        List<String> faceKeys = Arrays.asList(faceKeysList.split(","));
+        for (String faceKey : faceKeys) {
+            String trimmedKey = faceKey.trim();
+            Object faceValue = credentialSubject.get(trimmedKey);
+            if (faceValue != null && !faceValue.toString().isEmpty()) {
+                log.debug("Found face data using key: '{}'", trimmedKey);
+                return faceValue.toString();
+            }
+        }
+        return null;
     }
 
     private String formatValue(Object val, String locale) {
