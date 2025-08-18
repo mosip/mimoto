@@ -7,7 +7,7 @@ if [ $# -ge 1 ]; then
 fi
 
 NS=injiweb
-CHART_VERSION=0.18.0-develop
+CHART_VERSION=0.18.1
 KEYGEN_CHART_VERSION=1.3.0-beta.2
 
 echo "Create $NS namespace"
