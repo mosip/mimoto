@@ -45,9 +45,23 @@ classDiagram
         +getSupportedFormats() Set
     }
     
+    class VcSdJwtCredentialFormatHandler {
+        +getSupportedFormat() String
+        +buildCredentialRequest(...) VCCredentialRequest
+        +extractCredentialClaims(...) Map
+        +loadDisplayPropertiesFromWellknown(...) LinkedHashMap
+    }
+    
+    class LdpVCCredentialFormatHandler {
+        +getSupportedFormat() String
+        +buildCredentialRequest(...) VCCredentialRequest
+        +extractCredentialClaims(...) Map
+        +loadDisplayPropertiesFromWellknown(...) LinkedHashMap
+    }
+    
     CredentialFormatHandlerFactory --> CredentialFormatHandler : manages
-    note for CredentialFormatHandler : See existing implementations:\n- VcSdJwtCredentialFormatHandler\n- LdpVCCredentialFormatHandler
-```
+    CredentialFormatHandler <|.. VcSdJwtCredentialFormatHandler : implements
+    CredentialFormatHandler <|.. LdpVCCredentialFormatHandler : implements```
 
 ## Implementation Guide
 
