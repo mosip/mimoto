@@ -125,9 +125,6 @@ public class CredentialPDFGeneratorService {
         String face = selectedFace.face();
         String selectedFaceKey = selectedFace.key();
 
-        // Get configured face keys to exclude from row properties
-        Set<String> faceKeySet = Arrays.stream(faceImageLookupKeys.split(",")).map(String::trim).collect(Collectors.toSet());
-
         Set<String> disclosures;
         if (CredentialFormat.VC_SD_JWT.getFormat().equals(vcCredentialResponse.getFormat())) {
             SDJWT sdjwt = SDJWT.parse((String) vcCredentialResponse.getCredential());
