@@ -49,7 +49,7 @@ import java.util.Properties;
 @Service
 public class CredentialPDFGeneratorService {
 
-    public record FaceResult(String face, String selectedFaceKey) {}
+    private record SelectedFace(String key, String face) {}
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -121,9 +121,9 @@ public class CredentialPDFGeneratorService {
         String textColor = firstDisplay != null ? firstDisplay.getTextColor() : null;
         String credentialSupportedType = firstDisplay != null ? firstDisplay.getName() : null;
 
-        FaceResult faceResult = extractFace(vcCredentialResponse);
-        String face = faceResult.face();
-        String selectedFaceKey = faceResult.selectedFaceKey();
+        SelectedFace selectedFace = extractFace(vcCredentialResponse);
+        String face = selectedFace.face();
+        String selectedFaceKey = selectedFace.key();
         // Get configured face keys to exclude from row properties
         Set<String> faceKeySet = Arrays.stream(faceImageLookupKeys.split(",")).map(String::trim).collect(Collectors.toSet());
 
@@ -174,7 +174,7 @@ public class CredentialPDFGeneratorService {
         return data;
     }
 
-    private FaceResult extractFace(VCCredentialResponse vcCredentialResponse) {
+    private SelectedFace extractFace(VCCredentialResponse vcCredentialResponse) {
         // Use the appropriate credentialFormatHandler to extract credential properties
         CredentialFormatHandler credentialFormatHandler = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
         Map<String, Object> credentialSubject = credentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
@@ -187,10 +187,10 @@ public class CredentialPDFGeneratorService {
             if (faceValue != null && !faceValue.toString().isEmpty()) {
                 log.debug("Found face data using key: '{}'", trimmedKey);
                 // Return the trimmedKey directly
-                return new FaceResult(faceValue.toString(), trimmedKey);
+                return new SelectedFace(trimmedKey, faceValue.toString());
             }
         }
-        return new FaceResult(null, null);
+        return new SelectedFace(null, null);
     }
 
     private String formatValue(Object val, String locale) {
