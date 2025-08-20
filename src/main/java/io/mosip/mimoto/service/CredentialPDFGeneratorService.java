@@ -49,6 +49,8 @@ import java.util.Properties;
 @Service
 public class CredentialPDFGeneratorService {
 
+    public record FaceResult(String face, String selectedFaceKey) {}
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -119,9 +121,9 @@ public class CredentialPDFGeneratorService {
         String textColor = firstDisplay != null ? firstDisplay.getTextColor() : null;
         String credentialSupportedType = firstDisplay != null ? firstDisplay.getName() : null;
 
-        String[] faceResult = extractFace(vcCredentialResponse);
-        String face = faceResult[0];
-        String selectedFaceKey = faceResult[1];
+        FaceResult faceResult = extractFace(vcCredentialResponse);
+        String face = faceResult.face();
+        String selectedFaceKey = faceResult.selectedFaceKey();
         // Get configured face keys to exclude from row properties
         Set<String> faceKeySet = Arrays.stream(faceImageLookupKeys.split(",")).map(String::trim).collect(Collectors.toSet());
 
@@ -172,7 +174,7 @@ public class CredentialPDFGeneratorService {
         return data;
     }
 
-    private String[] extractFace(VCCredentialResponse vcCredentialResponse) {
+    private FaceResult extractFace(VCCredentialResponse vcCredentialResponse) {
         // Use the appropriate credentialFormatHandler to extract credential properties
         CredentialFormatHandler credentialFormatHandler = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
         Map<String, Object> credentialSubject = credentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
@@ -185,10 +187,10 @@ public class CredentialPDFGeneratorService {
             if (faceValue != null && !faceValue.toString().isEmpty()) {
                 log.debug("Found face data using key: '{}'", trimmedKey);
                 // Return the trimmedKey directly
-                return new String[]{faceValue.toString(), trimmedKey};
+                return new FaceResult(faceValue.toString(), trimmedKey);
             }
         }
-        return new String[]{null, null};
+        return new FaceResult(null, null);
     }
 
     private String formatValue(Object val, String locale) {
