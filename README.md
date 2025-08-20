@@ -15,18 +15,7 @@ The project requires JDK 21, postgres and google client credentials
    spring.datasource.username=
    spring.datasource.password=
    ```
-   
-2. Install Redis or any other cache provider only if you want to store the application data or HTTP sessions in that specific provider instead of the default Caffeine cache when running Mimoto through the IDE or in Docker.
-   * To use a specific provider, update the relevant properties and add the corresponding configuration in application-local.properties (for IDE) or mimoto-default.properties (for Docker).
-   **Example for Redis:**
-   ```properties
-     spring.session.store-type=redis  #To store HTTP sessions in Redis
-     spring.cache.type=redis  #To store application data in Redis
-   ```
-   * Add the required redis configurations in [application-local.properties](src/main/resources/application-local.properties) similar to those added in [application-default.properties](src/main/resources/application-default.properties) file. Refer to the properties starting with `spring.data.redis` and `spring.session.redis`.
-   * When running in Docker, ensure the corresponding Docker image/service is either included in your docker-compose.yml file or the required image is pulled on your machine and running.
-
-3. Refer to the [How to create Google Client Credentials](docker-compose/README.md#how-to-create-google-client-credentials) section to create
+2. Refer to the [How to create Google Client Credentials](docker-compose/README.md#how-to-create-google-client-credentials) section to create
    Google client credentials and update below properties in `application-local.properties`.
     ``` 
     spring.security.oauth2.client.registration.google.client-id=
