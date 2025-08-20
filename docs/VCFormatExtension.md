@@ -16,12 +16,13 @@ Mimoto uses a pluggable handler architecture to support multiple Verifiable Cred
 sequenceDiagram
     participant User as Client App
     participant Mimoto as Mimoto BFF
-    participant Issuer as Credential Issuer
     participant Handler as Format Handler
+    participant Issuer as Credential Issuer
+    
 
     User->>Mimoto: Request Credential (format specified)
     Mimoto->>Handler: Select handler by format
-    Handler->>Mimoto: Configure request for format
+    Handler->>Mimoto: Build Credential request for format
     Mimoto->>Issuer: Request credential
     Issuer-->>Mimoto: Return credential
     Mimoto->>Handler: Extract claims & display properties
@@ -42,7 +43,6 @@ classDiagram
     
     class CredentialFormatHandlerFactory {
         +getHandler(String format) CredentialFormatHandler
-        +getSupportedFormats() Set
     }
     
     class VcSdJwtCredentialFormatHandler {
@@ -67,10 +67,10 @@ classDiagram
 
 ### 1. Study Existing Handlers
 
-Before implementing, review existing handlers in the codebase:
+Before implementing, check existing handlers in the codebase:
 
-- **LDP VC Handler**: [`LdpVCCredentialFormatHandler.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/service/credentialformatter/LdpVCCredentialFormatHandler.java)
-- **Handler Interface**: [`CredentialFormatHandler.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/service/credentialformatter/CredentialFormatHandler.java)
+- **LDP VC Handler**: [`LdpVCCredentialFormatHandler.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/service/impl/LdpVcCredentialFormatHandler.java)
+- **Handler Interface**: [`CredentialFormatHandler.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/service/CredentialFormatHandler.java)
 
 ### 2. Implement Your Handler
 
@@ -95,13 +95,13 @@ public class SDJWTCredentialFormatHandler implements CredentialFormatHandler {
 
 Your handler will be auto-discovered by Spring. The factory automatically injects all handlers:
 
-**Reference**: [`CredentialFormatHandlerFactory.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/service/credentialformatter/CredentialFormatHandlerFactory.java)
+**Reference**: [`CredentialFormatHandlerFactory.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/service/CredentialFormatHandlerFactory.java)
 
 ### 4. Update Models (if needed)
 
 For format-specific fields, update:
-- **Request Model**: [`VCCredentialRequest.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/dto/openid4vci/VCCredentialRequest.java)
-- **Response Model**: [`VCCredentialResponse.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/dto/openid4vci/VCCredentialResponse.java)
+- **Request Model**: [`VCCredentialRequest.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/dto/mimoto/VCCredentialRequest.java)
+- **Response Model**: [`VCCredentialResponse.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/dto/mimoto/VCCredentialResponse.java)
 
 ### 5. Services Using Handlers
 
