@@ -67,12 +67,12 @@ classDiagram
 
 ### 1. Study Existing Handlers
 
-Before implementing, check existing handlers in the codebase:
+Before starting the implementation, check existing handlers implementation
 
 - **LDP VC Handler**: [`LdpVCCredentialFormatHandler.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/service/impl/LdpVcCredentialFormatHandler.java)
 - **Handler Interface**: [`CredentialFormatHandler.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/service/CredentialFormatHandler.java)
 
-### 2. Implement Your Handler
+### 2. Implement New Handler
 
 Create a new handler class implementing `CredentialFormatHandler`:
 
@@ -93,7 +93,7 @@ public class SDJWTCredentialFormatHandler implements CredentialFormatHandler {
 
 ### 3. Handler Registration
 
-Your handler will be auto-discovered by Spring. The factory automatically injects all handlers:
+New handler will be auto-discovered by Spring. The factory automatically injects all handlers:
 
 **Reference**: [`CredentialFormatHandlerFactory.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/service/CredentialFormatHandlerFactory.java)
 
