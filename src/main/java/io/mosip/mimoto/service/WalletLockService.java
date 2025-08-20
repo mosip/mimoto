@@ -5,14 +5,14 @@ import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
 import io.mosip.mimoto.model.WalletLockStatus;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
-public class WalletLockManager {
+@Service
+public class WalletLockService {
     private final WalletPasscodeConfig walletPasscodeConfig;
     private static final int MINUTES_TO_MILLIS = 60 * 1000;
 
-    public WalletLockManager(WalletPasscodeConfig walletPasscodeConfig) {
+    public WalletLockService(WalletPasscodeConfig walletPasscodeConfig) {
         this.walletPasscodeConfig = walletPasscodeConfig;
     }
 

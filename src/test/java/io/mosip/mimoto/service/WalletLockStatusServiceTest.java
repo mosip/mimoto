@@ -7,6 +7,7 @@ import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.model.WalletMetadata;
 import io.mosip.mimoto.model.WalletLockStatus;
 import io.mosip.mimoto.util.TestUtilities;
+import io.mosip.mimoto.util.WalletLockStatusUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @RunWith(SpringRunner.class)
 public class WalletLockStatusServiceTest {
 
-    private final WalletLockStatusService walletStatusService = new WalletLockStatusService();
     private Wallet wallet;
 
     @Before
@@ -34,7 +34,7 @@ public class WalletLockStatusServiceTest {
     public void testGetWalletStatusShouldReturnWalletStatus() {
         wallet.getWalletMetadata().setLockStatus(WalletLockStatus.TEMPORARILY_LOCKED);
 
-        WalletLockStatus status = walletStatusService.getWalletLockStatus(wallet);
+        WalletLockStatus status = WalletLockStatusUtils.getWalletLockStatus(wallet);
 
         assertEquals(WalletLockStatus.TEMPORARILY_LOCKED, status);
     }
@@ -43,7 +43,7 @@ public class WalletLockStatusServiceTest {
     public void testGetErrorBasedOnWalletLockStatusShouldReturnErrorObjForPermanentlyLockedWallet() {
         wallet.getWalletMetadata().setLockStatus(WalletLockStatus.PERMANENTLY_LOCKED);
 
-        ErrorDTO errorDTO = walletStatusService.getErrorBasedOnWalletLockStatus(wallet);
+        ErrorDTO errorDTO = WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet);
 
         assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), errorDTO.getErrorCode());
         assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage(), errorDTO.getErrorMessage());
@@ -53,7 +53,7 @@ public class WalletLockStatusServiceTest {
     public void testGetErrorBasedOnWalletLockStatusShouldReturnErrorObjForTemporarilyLockedWallet() {
         wallet.getWalletMetadata().setLockStatus(WalletLockStatus.TEMPORARILY_LOCKED);
 
-        ErrorDTO errorDTO = walletStatusService.getErrorBasedOnWalletLockStatus(wallet);
+        ErrorDTO errorDTO = WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet);
 
         assertEquals(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorCode(), errorDTO.getErrorCode());
         assertEquals(ErrorConstants.WALLET_TEMPORARILY_LOCKED.getErrorMessage(), errorDTO.getErrorMessage());
@@ -63,7 +63,7 @@ public class WalletLockStatusServiceTest {
     public void testGetErrorBasedOnWalletLockStatusShouldReturnErrorObjWhenOnlyOneAttemptLeftBeforePermanentLockout() {
         wallet.getWalletMetadata().setLockStatus(WalletLockStatus.LAST_ATTEMPT_BEFORE_LOCKOUT);
 
-        ErrorDTO errorDTO = walletStatusService.getErrorBasedOnWalletLockStatus(wallet);
+        ErrorDTO errorDTO = WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet);
 
         assertEquals(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), errorDTO.getErrorCode());
         assertEquals(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage(), errorDTO.getErrorMessage());
