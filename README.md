@@ -17,7 +17,7 @@ The project requires JDK 21, postgres, redis and google client credentials
    spring.redis.password=
    ```
 2. Refer to the [How to create Google Client Credentials](docker-compose/README.md#how-to-create-google-client-credentials) section to create
-   Google client credentials and update below properties in `application-default.properties`.
+   Google client credentials and update below properties in `application-local.properties`.
     ``` 
     spring.security.oauth2.client.registration.google.client-id=
     spring.security.oauth2.client.registration.google.client-secret=
