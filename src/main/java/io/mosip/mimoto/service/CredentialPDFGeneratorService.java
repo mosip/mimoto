@@ -124,6 +124,7 @@ public class CredentialPDFGeneratorService {
         SelectedFace selectedFace = extractFace(vcCredentialResponse);
         String face = selectedFace.face();
         String selectedFaceKey = selectedFace.key();
+
         // Get configured face keys to exclude from row properties
         Set<String> faceKeySet = Arrays.stream(faceImageLookupKeys.split(",")).map(String::trim).collect(Collectors.toSet());
 
