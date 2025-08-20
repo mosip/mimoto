@@ -79,10 +79,7 @@ public class CredentialPDFGeneratorService {
     @Value("${mosip.injiweb.vc.subject.face.keys.order:image,face,photo,picture,portrait}")
     private String faceImageLookupKeys;
 
-    private String selectedFaceKey = "";
-
     public ByteArrayInputStream generatePdfForVerifiableCredential(String credentialConfigurationId, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
-
         // Get the appropriate processor based on format
         CredentialFormatHandler processor = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
 
@@ -122,10 +119,11 @@ public class CredentialPDFGeneratorService {
         String textColor = firstDisplay != null ? firstDisplay.getTextColor() : null;
         String credentialSupportedType = firstDisplay != null ? firstDisplay.getName() : null;
 
-        String face = extractFace(vcCredentialResponse);
+        String[] faceResult = extractFace(vcCredentialResponse);
+        String face = faceResult[0];
+        String selectedFaceKey = faceResult[1];
         // Get configured face keys to exclude from row properties
-        List<String> faceKeys = Arrays.asList(faceImageLookupKeys.split(","));
-        Set<String> faceKeySet = faceKeys.stream().map(String::trim).collect(Collectors.toSet());
+        Set<String> faceKeySet = Arrays.stream(faceImageLookupKeys.split(",")).map(String::trim).collect(Collectors.toSet());
 
         Set<String> disclosures;
         if (CredentialFormat.VC_SD_JWT.getFormat().equals(vcCredentialResponse.getFormat())) {
@@ -139,7 +137,7 @@ public class CredentialPDFGeneratorService {
 
         LinkedHashMap<String, String> disclosuresProps = new LinkedHashMap<>();
         displayProperties.forEach((key, valueMap) -> {
-            boolean isFaceKey = key.trim().equals(this.selectedFaceKey);
+            boolean isFaceKey = key.trim().equals(selectedFaceKey);
 
             valueMap.forEach((display, val) -> {
                 String displayName = display.getName();
@@ -147,13 +145,9 @@ public class CredentialPDFGeneratorService {
                 String strVal = formatValue(val, locale);
                 if (disclosures.contains(key)) {
                     disclosuresProps.put(key, displayName);
-                    if (!isFaceKey) {
-                        rowProperties.put(key, Map.of(displayName, strVal));
-                    }
-                } else {
-                    if (!isFaceKey) {
-                        rowProperties.put(key, Map.of(displayName, strVal));
-                    }
+                }
+                if (!isFaceKey) {
+                    rowProperties.put(key, Map.of(displayName, strVal));
                 }
             });
         });
@@ -178,10 +172,7 @@ public class CredentialPDFGeneratorService {
         return data;
     }
 
-    private String extractFace(VCCredentialResponse vcCredentialResponse) {
-        // Reset the selected face key
-        this.selectedFaceKey = "";
-
+    private String[] extractFace(VCCredentialResponse vcCredentialResponse) {
         // Use the appropriate credentialFormatHandler to extract credential properties
         CredentialFormatHandler credentialFormatHandler = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
         Map<String, Object> credentialSubject = credentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
@@ -193,12 +184,11 @@ public class CredentialPDFGeneratorService {
             Object faceValue = credentialSubject.get(trimmedKey);
             if (faceValue != null && !faceValue.toString().isEmpty()) {
                 log.debug("Found face data using key: '{}'", trimmedKey);
-                // Store the selected key
-                this.selectedFaceKey = trimmedKey;
-                return faceValue.toString();
+                // Return the trimmedKey directly
+                return new String[]{faceValue.toString(), trimmedKey};
             }
         }
-        return null;
+        return new String[]{null, null};
     }
 
     private String formatValue(Object val, String locale) {
