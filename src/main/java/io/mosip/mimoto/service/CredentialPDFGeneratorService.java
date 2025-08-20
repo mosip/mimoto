@@ -140,7 +140,7 @@ public class CredentialPDFGeneratorService {
 
         LinkedHashMap<String, String> disclosuresProps = new LinkedHashMap<>();
         displayProperties.forEach((key, valueMap) -> {
-            boolean isFaceKey = key.trim().equals(selectedFaceKey);
+            boolean isFaceKey = selectedFaceKey != null && key.trim().equals(selectedFaceKey);
 
             valueMap.forEach((display, val) -> {
                 String displayName = display.getName();
