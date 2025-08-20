@@ -21,6 +21,29 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
+/**
+ * Cache configuration for the application.
+ *
+ * Two cache manager beans are provided:
+ *
+ * 1. CaffeineCacheManager – used when 'spring.cache.type=caffeine'.
+ *    This cache manager is created explicitly in this configuration class and
+ *    allows us to customize the Caffeine configuration (e.g. per-cache TTLs, size).
+ *
+ * 2. RedisCacheManager – used when 'spring.cache.type=redis'.
+ *    This bean is created only when the Redis cache type is configured and
+ *    gives us full control over the Redis cache configuration (value serializer,
+ *    per-cache TTLs, etc.).
+ *
+ * If 'spring.cache.type' is not set, Spring Boot will auto-detect the cache
+ * provider based on the libraries on the classpath (e.g. Caffeine or Redis), or
+ * fall back to the SimpleCacheManager (in-memory ConcurrentHashMap) if no cache
+ * library is available.
+ *
+ * NOTE: If 'spring.cache.type' is set to an invalid or unsupported value,
+ * the application will fail to start. Spring Boot does not fall back to a
+ * default cache manager in that case.
+ */
 @Configuration
 @EnableCaching
 @Slf4j
@@ -52,7 +75,7 @@ public class CacheConfig {
     @Bean
     @ConditionalOnProperty(name = "spring.cache.type", havingValue = "caffeine")
     public CacheManager caffeineCacheManager() {
-        log.info("Initializing Caffeine cache provider");
+        log.info("******* Initializing Caffeine cache provider *******");
 
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
         cacheManager.registerCustomCache(ISSUER_WELLKNOWN_CACHE, createCaffeineCacheConfig(issuerWellknownExpiryTimeInMin).build());
@@ -73,8 +96,7 @@ public class CacheConfig {
     @Bean
     @ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis")
     public RedisCacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
-        log.info("inside redis cache config:: {}", defaultCacheExpiryTimeInMin);
-        log.info("Initializing Redis cache provider");
+        log.info("******* Initializing Redis cache provider *********");
         GenericJackson2JsonRedisSerializer jacksonSerializer = new GenericJackson2JsonRedisSerializer();
 
         // Default config
