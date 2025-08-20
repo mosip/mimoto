@@ -59,8 +59,8 @@ class CredentialPDFGeneratorServiceTest {
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "qrCodeWidth", 500);
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "allowedQRDataSizeLimit", 2000);
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "pixelPass", pixelPass);
-        ReflectionTestUtils.setField(credentialPDFGeneratorService, "faceKeysList",
-                "face,photo,picture,portrait,image");
+        ReflectionTestUtils.setField(credentialPDFGeneratorService, "faceImageLookupKeys",
+                "image,face,photo,picture,portrait");
 
         // Mock the handler factory to return the handler for the test format
         when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
@@ -498,16 +498,20 @@ class CredentialPDFGeneratorServiceTest {
         Map<String, Object> subjectData = new HashMap<>();
         subjectData.put("name", "John Doe");
         subjectData.put("picture", "base64-picture-image"); // Lower priority
-        subjectData.put("photo", "base64-photo-image");     // Higher priority
-        subjectData.put("image", "base64-image");           // Lower priority
+        subjectData.put("photo", "base64-photo-image");     // Lower priority
+        subjectData.put("image", "base64-image");           // HIGHEST priority now
 
         ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectData);
 
         Map<String, CredentialDisplayResponseDto> credentialSubjectMap = new HashMap<>();
         credentialSubjectMap.put("name", createDisplay("Full Name"));
+        // Include all face keys in display to test that only "image" gets excluded
+        credentialSubjectMap.put("picture", createDisplay("Picture"));
+        credentialSubjectMap.put("photo", createDisplay("Photo"));
+        credentialSubjectMap.put("image", createDisplay("Image")); // Should be excluded (used for $face)
 
         credentialsSupportedResponse.getCredentialDefinition().setCredentialSubject(credentialSubjectMap);
-        credentialsSupportedResponse.setOrder(List.of("name"));
+        credentialsSupportedResponse.setOrder(List.of("name", "picture", "photo", "image"));
 
         when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
                 .thenReturn("<html><body>Face: $face, Name: $rowProperties.name</body></html>");
@@ -520,27 +524,34 @@ class CredentialPDFGeneratorServiceTest {
                 "https://example.com/share", "", "en");
 
         assertNotNull(result);
-        // Should use "photo" (higher priority) over "picture" and "image"
+        // Should use "image" (highest priority) over "photo" and "picture"
+        // Only "image" should be excluded from rowProperties, "photo" and "picture" should appear
     }
 
     @Test
-    void testFaceKeyExcludedFromRowPropertiesWhenPresent() throws Exception {
-        // Setup: "face" key present in both credential and display properties
+    void testOnlySelectedFaceKeyExcludedFromRowProperties() throws Exception {
+        // Setup: Multiple face keys - only the selected one ("image") should be excluded from rowProperties
         Map<String, Object> subjectData = new HashMap<>();
         subjectData.put("name", "John Doe");
-        subjectData.put("face", "base64-face-image");
+        subjectData.put("image", "base64-image");           // Highest priority - will be selected for $face
+        subjectData.put("face", "base64-face-image");       // Should appear in rowProperties
+        subjectData.put("photo", "base64-photo-image");     // Should appear in rowProperties
+        subjectData.put("portrait", "base64-portrait-image"); // Should appear in rowProperties
         subjectData.put("email", "john@example.com");
 
         ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(subjectData);
 
-        // Include "face" in display properties to test exclusion from rowProperties
+        // Include all face keys in display properties
         Map<String, CredentialDisplayResponseDto> credentialSubjectMap = new HashMap<>();
         credentialSubjectMap.put("name", createDisplay("Full Name"));
-        credentialSubjectMap.put("face", createDisplay("Face Photo")); // This should be excluded
+        credentialSubjectMap.put("image", createDisplay("Image"));        // Should be excluded (used for $face)
+        credentialSubjectMap.put("face", createDisplay("Face Photo"));    // Should appear in rowProperties
+        credentialSubjectMap.put("photo", createDisplay("Photo"));        // Should appear in rowProperties
+        credentialSubjectMap.put("portrait", createDisplay("Portrait"));  // Should appear in rowProperties
         credentialSubjectMap.put("email", createDisplay("Email Address"));
 
         credentialsSupportedResponse.getCredentialDefinition().setCredentialSubject(credentialSubjectMap);
-        credentialsSupportedResponse.setOrder(List.of("name", "face", "email"));
+        credentialsSupportedResponse.setOrder(List.of("name", "image", "face", "photo", "portrait", "email"));
 
         when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
                 .thenReturn("<html><body>Face: $face<br/>Properties: $rowProperties</body></html>");
@@ -553,7 +564,7 @@ class CredentialPDFGeneratorServiceTest {
                 "https://example.com/share", "", "en");
 
         assertNotNull(result);
-        // Face should appear as $face variable but NOT in $rowProperties
+        // Only "image" should be excluded from rowProperties. "face", "photo" and "portrait" should appear in rowProperties
     }
 
     @Test

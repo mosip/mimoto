@@ -76,8 +76,10 @@ public class CredentialPDFGeneratorService {
     @Value("${mosip.inji.qr.data.size.limit:4096}")
     Integer allowedQRDataSizeLimit;
 
-    @Value("${mosip.inji.face.keys:face,photo,picture,portrait,image}")
-    private String faceKeysList;
+    @Value("${mosip.injiweb.vc.subject.face.keys.order:image,face,photo,picture,portrait}")
+    private String faceImageLookupKeys;
+
+    private String selectedFaceKey = "";
 
     public ByteArrayInputStream generatePdfForVerifiableCredential(String credentialConfigurationId, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
 
@@ -122,7 +124,7 @@ public class CredentialPDFGeneratorService {
 
         String face = extractFace(vcCredentialResponse);
         // Get configured face keys to exclude from row properties
-        List<String> faceKeys = Arrays.asList(faceKeysList.split(","));
+        List<String> faceKeys = Arrays.asList(faceImageLookupKeys.split(","));
         Set<String> faceKeySet = faceKeys.stream().map(String::trim).collect(Collectors.toSet());
 
         Set<String> disclosures;
@@ -137,7 +139,7 @@ public class CredentialPDFGeneratorService {
 
         LinkedHashMap<String, String> disclosuresProps = new LinkedHashMap<>();
         displayProperties.forEach((key, valueMap) -> {
-            boolean isFaceKey = faceKeySet.contains(key.trim());
+            boolean isFaceKey = key.trim().equals(this.selectedFaceKey);
 
             valueMap.forEach((display, val) -> {
                 String displayName = display.getName();
@@ -177,17 +179,22 @@ public class CredentialPDFGeneratorService {
     }
 
     private String extractFace(VCCredentialResponse vcCredentialResponse) {
+        // Reset the selected face key
+        this.selectedFaceKey = "";
+
         // Use the appropriate credentialFormatHandler to extract credential properties
         CredentialFormatHandler credentialFormatHandler = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
         Map<String, Object> credentialSubject = credentialFormatHandler.extractCredentialClaims(vcCredentialResponse);
 
         // handling face extraction based on configured keys
-        List<String> faceKeys = Arrays.asList(faceKeysList.split(","));
+        List<String> faceKeys = Arrays.asList(faceImageLookupKeys.split(","));
         for (String faceKey : faceKeys) {
             String trimmedKey = faceKey.trim();
             Object faceValue = credentialSubject.get(trimmedKey);
             if (faceValue != null && !faceValue.toString().isEmpty()) {
                 log.debug("Found face data using key: '{}'", trimmedKey);
+                // Store the selected key
+                this.selectedFaceKey = trimmedKey;
                 return faceValue.toString();
             }
         }
