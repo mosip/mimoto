@@ -145,6 +145,7 @@ public class CredentialPDFGeneratorService {
                 String strVal = formatValue(val, locale);
                 if (disclosures.contains(key)) {
                     disclosuresProps.put(key, displayName);
+                    strVal = maskValue(strVal);
                 }
                 if (!isFaceKey) {
                     rowProperties.put(key, Map.of(displayName, strVal));
@@ -253,6 +254,13 @@ public class CredentialPDFGeneratorService {
         BitMatrix bitMatrix = qrCodeWriter.encode(qrData, BarcodeFormat.QR_CODE, qrCodeWidth, qrCodeHeight);
         BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
         return Utilities.encodeToString(qrImage, "png");
+    }
+
+    private String maskValue(String value) {
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+        return "X".repeat(value.length());
     }
 }
 
