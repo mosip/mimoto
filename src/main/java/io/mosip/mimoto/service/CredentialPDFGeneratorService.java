@@ -51,8 +51,6 @@ public class CredentialPDFGeneratorService {
 
     private record SelectedFace(String key, String face) {}
 
-    private static final Random RANDOM = new Random();
-
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -262,8 +260,8 @@ public class CredentialPDFGeneratorService {
         if (value == null || value.isEmpty()) {
             return value;
         }
-        // random mask of length between 5 and 30 characters
-        return "X".repeat(RANDOM.nextInt(26) + 5);
+        // mask of length 20 or less
+        return "X".repeat(Math.min(value.length(), 20));
     }
 }
 
