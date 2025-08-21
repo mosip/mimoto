@@ -126,7 +126,7 @@ fileignoreconfig:
 - filename: docker-compose/config/mimoto-default.properties
   checksum: 58587aca80389a6d42538f2daa7b787597d434e222f5e9f3b49587cbd190716d
 - filename: README.md
-  checksum: b34212191bc6c294b9c5360ebab142b29f4a842b0a46e425825a2c2da9e587e8
+  checksum: c58208bc32cad049704692d0108009241599f9aa1742e69c47f5af56c1a77ada
 - filename: docker-compose/README.md
   checksum: f70385d1be6b7945df1afac0890bdce5ecceb63cdba08bdd3f760f40f843c630
 - filename: src/main/java/io/mosip/mimoto/service/impl/VcSdJwtCredentialFormatHandler.java
