@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {WalletPasscodeConfigTest.class, WalletLockService.class})
 @TestPropertySource(locations = "classpath:application-test.properties")
-public class WalletLockManagerTest {
+public class WalletLockServiceTest {
 
     @Autowired
     private WalletLockService walletLockService;

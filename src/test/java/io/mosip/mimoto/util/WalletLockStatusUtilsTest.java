@@ -1,4 +1,4 @@
-package io.mosip.mimoto.service;
+package io.mosip.mimoto.util;
 
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.exception.ErrorConstants;
@@ -18,7 +18,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @RunWith(SpringRunner.class)
-public class WalletLockStatusServiceTest {
+public class WalletLockStatusUtilsTest {
 
     private Wallet wallet;
 
