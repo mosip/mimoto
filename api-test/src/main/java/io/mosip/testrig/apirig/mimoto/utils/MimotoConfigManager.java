@@ -36,6 +36,10 @@ public class MimotoConfigManager extends ConfigManager{
 	public static String getSunbirdBaseURL() {
 		return MimotoUtil.getValueFromMimotoActuator("overrides", "mosip.sunbird.url");
 	}
+
+	public static int getMaxFailedAttemptsAllowedPerCycle() {
+		return Integer.parseInt(MimotoUtil.getValueFromMimotoActuator("https://github.com/mosip/inji-config/mimoto-default.properties", "wallet.passcode.maxFailedAttemptsAllowedPerCycle"));
+	}
 	
 	public static String getEsignetBaseUrl() {
 		String esignetBaseUrl = null;
