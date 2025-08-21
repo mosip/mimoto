@@ -127,16 +127,7 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
             if (credentialJwt != null) {
                 Map<String, Object> jwtPayload = parseJwtPayload(credentialJwt);
                 if (jwtPayload != null) {
-                    // Check if 'credentialSubject' is present
-                    if (jwtPayload.containsKey("credentialSubject")) {
-                        Object credentialSubject = jwtPayload.get("credentialSubject");
-                        if (credentialSubject instanceof Map) {
-                            claims.putAll((Map<String, Object>) credentialSubject);
-                        }
-                    } else {
-                        // No credentialSubject, put all claims at root level
-                        claims.putAll(jwtPayload);
-                    }
+                    claims.putAll(jwtPayload);
                 }
             }
 

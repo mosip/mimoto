@@ -7,6 +7,7 @@ import io.mosip.mimoto.model.Wallet;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.model.WalletLockStatus;
 import io.mosip.mimoto.repository.WalletRepository;
+import io.mosip.mimoto.util.WalletLockStatusUtils;
 import io.mosip.mimoto.util.WalletUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,24 +16,22 @@ import org.springframework.stereotype.Service;
 @Service
 public class WalletUnlockService {
     private final WalletUtil walletUtil;
-    private final WalletLockManager walletLockManager;
-    private final WalletLockStatusService walletLockStatusService;
+    private final WalletLockService walletLockService;
 
     private final WalletRepository walletRepository;
 
-    public WalletUnlockService(WalletUtil walletUtil, WalletLockManager walletLockManager, WalletLockStatusService walletLockStatusService, WalletRepository walletRepository) {
+    public WalletUnlockService(WalletUtil walletUtil, WalletLockService walletLockService, WalletRepository walletRepository) {
         this.walletUtil = walletUtil;
-        this.walletLockManager = walletLockManager;
-        this.walletLockStatusService = walletLockStatusService;
+        this.walletLockService = walletLockService;
         this.walletRepository = walletRepository;
     }
 
     public String handleUnlock(Wallet wallet, String pin) throws InvalidRequestException {
-        wallet = walletLockManager.resetTemporaryLockIfExpired(wallet);
+        wallet = walletLockService.resetTemporaryLockIfExpired(wallet);
         throwExceptionIfWalletIsLocked(wallet);
         try {
             String decryptedWalletKey = walletUtil.decryptWalletKey(wallet.getWalletKey(), pin);
-            wallet = walletLockManager.resetLockState(wallet);
+            wallet = walletLockService.resetLockState(wallet);
             walletRepository.save(wallet);
             return decryptedWalletKey;
         } catch (InvalidRequestException ex) {
@@ -44,9 +43,9 @@ public class WalletUnlockService {
 
     private void handleFailedUnlock(Wallet wallet) {
         try {
-            wallet = walletLockManager.enforceLockCyclePolicy(wallet);
+            wallet = walletLockService.enforceLockCyclePolicy(wallet);
             throwExceptionIfLastAttemptLeftForUnlock(wallet);
-            wallet = walletLockManager.resetTemporaryLockIfExpired(wallet);
+            wallet = walletLockService.resetTemporaryLockIfExpired(wallet);
             throwExceptionIfWalletIsLocked(wallet);
             walletRepository.save(wallet);
         } catch (Exception ex) {
@@ -56,7 +55,7 @@ public class WalletUnlockService {
     }
 
     private void throwExceptionIfWalletIsLocked(Wallet wallet) throws WalletLockedException {
-        ErrorDTO errorDTO = walletLockStatusService.getErrorBasedOnWalletLockStatus(wallet);
+        ErrorDTO errorDTO = WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet);
 
         if (errorDTO != null) {
             String errorCode = errorDTO.getErrorCode();
@@ -67,7 +66,7 @@ public class WalletUnlockService {
     }
 
     private void throwExceptionIfLastAttemptLeftForUnlock(Wallet wallet) throws InvalidRequestException {
-        ErrorDTO errorDTO = walletLockStatusService.getErrorBasedOnWalletLockStatus(wallet);
+        ErrorDTO errorDTO = WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet);
 
         if (errorDTO != null) {
             String errorCode = errorDTO.getErrorCode();
