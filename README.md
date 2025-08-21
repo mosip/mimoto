@@ -33,7 +33,9 @@ The project requires JDK 21, postgres and google client credentials
     spring.security.oauth2.client.registration.google.client-secret=
     ```
 4. Add identity providers as issuers in the `mimoto-issuers-config.json` file of [resources folder](src/main/resources/mimoto-issuers-config.json). For each provider, create a corresponding object with its issuer-specific configuration. Refer to the [Issuers Configuration](docker-compose/README.md#mimoto-issuers-configuration) section for details on how to structure this file and understand each field's purpose and what values need to be updated.
+
 5. Add or update the verifiers clientId, redirect and response Uris in `mimoto-trusted-verifiers.json` file of [resources folder](src/main/resources/mimoto-trusted-verifiers.json) for Verifiable credential Online Sharing.
+
 6. Keystore(oidckeystore.p12) Configuration:
    In the root directory, create a certs folder and generate an OIDC client. Add the onboard client’s key to the oidckeystore.p12 file and place this file inside the certs folder.
    Refer to the [official documentation](https://docs.inji.io/inji-wallet/inji-mobile/technical-overview/customization-overview/credential_providers) for guidance on how to create the **oidckeystore.p12** file and add the OIDC client key to it.
@@ -50,14 +52,17 @@ The project requires JDK 21, postgres and google client credentials
    * Mimoto also uses this same keystore file (oidckeystore.p12) to store keys generated at service startup, which are essential for performing encryption and decryption operations through the KeyManager service.
 
 7. To configure any Mobile Wallet specific configurations refer to the [Inji Mobile Wallet Configuration](docker-compose/README.md#inji-mobile-wallet-configuration) section.
+
 8. Run the SQLs using <db name>/deploy.sh script. from [db_scripts folder](db_scripts/inji_mimoto)
    ```
    ./deploy.sh deploy.properties
    ```
+   
 9. Build the jar
     ```
     mvn clean install -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true
     ```
+   
 10. Run following command 
     ```
     mvn spring-boot:run -Dspring.profiles.active=local
