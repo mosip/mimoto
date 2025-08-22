@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Getter
 @Setter
-@Component
 @ConfigurationProperties(prefix = "wallet.passcode")
 public class WalletPasscodeConfig {
     private long retryBlockedUntil = 30000;
