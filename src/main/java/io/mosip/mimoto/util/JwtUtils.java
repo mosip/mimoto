@@ -3,6 +3,7 @@ package io.mosip.mimoto.util;
 import com.authlete.sd.SDJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -15,17 +16,12 @@ public class JwtUtils {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static Map<String, Object> extractJwtPayloadFromSdJwt(String sdJwtString) {
-        try {
-            SDJWT sdJwt = SDJWT.parse(sdJwtString);
-            String credentialJwt = sdJwt.getCredentialJwt();
-            if (credentialJwt != null) {
-                return parseJwtPayload(credentialJwt);
-            }
-            log.warn("Credential JWT is null in parsed SD‑JWT");
-        } catch (Exception e) {
-            log.error("Failed to extract JWT payload from SD‑JWT: {}", e.getMessage(), e);
+        if (StringUtils.isBlank(sdJwtString)) {
+            return null;
+        } else {
+            String[] elements = sdJwtString.split("~", -1);
+            return parseJwtPayload(elements[0]);
         }
-        return Collections.emptyMap();
     }
 
     public static Map<String, Object> parseJwtPayload(String jwt) {
