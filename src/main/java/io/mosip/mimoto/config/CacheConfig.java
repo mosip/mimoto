@@ -26,9 +26,9 @@ import org.springframework.data.redis.serializer.RedisSerializer;
  *
  * Two cache manager beans are provided:
  *
- * 1. CaffeineCacheManager – used when 'spring.cache.type=caffeine'.
- *    This cache manager is created explicitly in this configuration class and
- *    allows us to customize the Caffeine configuration (e.g. per-cache TTLs, size).
+ * 1. CaffeineCacheManager bean – used when 'spring.cache.type=caffeine'.
+ *    This bean is created explicitly in this configuration class and
+ *    allows customization of the Caffeine configuration (e.g., per-cache TTLs).
  *
  * 2. RedisCacheManager – used when 'spring.cache.type=redis'.
  *    This bean is created only when the Redis cache type is configured and
