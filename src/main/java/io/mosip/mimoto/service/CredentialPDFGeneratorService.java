@@ -26,6 +26,7 @@ import io.mosip.mimoto.util.LocaleUtils;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -167,12 +168,10 @@ public class CredentialPDFGeneratorService {
         }
 
         // is sd-jwt and has disclosures
-        boolean isSdJwtWithDisclosures = CredentialFormat.VC_SD_JWT.getFormat().equals(vcCredentialResponse.getFormat()) && disclosures != null && !disclosures.isEmpty();
-        boolean showUnmaskedDisclosureNote = isSdJwtWithDisclosures && !maskDisclosures;
-        boolean showMaskedDisclosureNote   = isSdJwtWithDisclosures && maskDisclosures;
+        boolean isSdJwtWithDisclosures = CredentialFormat.VC_SD_JWT.getFormat().equals(vcCredentialResponse.getFormat()) && CollectionUtils.isNotEmpty(disclosures);
 
-        data.put("showUnmaskedDisclosureNote", showUnmaskedDisclosureNote);
-        data.put("showMaskedDisclosureNote", showMaskedDisclosureNote);
+        data.put("isMaskedOn", maskDisclosures);
+        data.put("isSdJwtWithDisclosures", isSdJwtWithDisclosures);
         data.put("qrCodeImage", qrCodeImage);
         data.put("credentialValidity", credentialValidity);
         data.put("logoUrl", issuerDTO.getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));
