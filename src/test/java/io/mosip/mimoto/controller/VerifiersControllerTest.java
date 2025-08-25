@@ -18,6 +18,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -71,4 +73,54 @@ public class VerifiersControllerTest {
                 .andExpect(jsonPath("$.response.verifiers").isArray())
                 .andExpect(jsonPath("$.response.verifiers").isEmpty());
     }
+
+    @Test
+    public void shouldIncludeClientMetadataWhenClientMetadataIsPresentInTrustedVerifiers() throws Exception {
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("client_name", "Test-Verifier");
+
+        VerifierDTO verifierDTO = VerifierDTO.builder()
+                .clientId("test-clientId")
+                .redirectUris(Collections.singletonList("https://test-redirectUri"))
+                .responseUris(Collections.singletonList("https://test-responseUri"))
+                .jwksUri("https://test/.well-known/jwks.json")
+                .allowUnsignedRequest(true)
+                .build();
+
+        VerifiersDTO trustedVerifiers = VerifiersDTO.builder()
+                .verifiers(Collections.singletonList(verifierDTO)).build();
+
+        Mockito.when(verifierService.getTrustedVerifiers())
+                .thenReturn(trustedVerifiers);
+
+        mockMvc.perform(get("/verifiers").accept(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response.verifiers[0].allow_unsigned_request").value(true))
+                .andExpect(jsonPath("$.response.verifiers[0].client_id").value("test-clientId"))
+                .andExpect(jsonPath("$.response.verifiers[0].jwks_uri").value("https://test/.well-known/jwks.json"));
+    }
+
+    @Test
+    public void shouldReturnEmptyClientMetadataWhenClientMetadataIsEmptyInTrustedVerifiers() throws Exception {
+        VerifierDTO verifierDTO = VerifierDTO.builder()
+                .clientId("test-clientId")
+                .redirectUris(Collections.singletonList("https://test-redirectUri"))
+                .responseUris(Collections.singletonList("https://test-responseUri"))
+                .jwksUri("https://test/.well-known/jwks.json")
+                .build();
+
+        VerifiersDTO trustedVerifiers = VerifiersDTO.builder()
+                .verifiers(Collections.singletonList(verifierDTO)).build();
+
+        Mockito.when(verifierService.getTrustedVerifiers())
+                .thenReturn(trustedVerifiers);
+
+        mockMvc.perform(get("/verifiers").accept(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response.verifiers[0].allow_unsigned_request").value(false))
+                .andExpect(jsonPath("$.response.verifiers[0].jwks_uri").isString())
+                .andExpect(jsonPath("$.response.verifiers[0].jwks_uri").value("https://test/.well-known/jwks.json"));
+    }
+
+
 }
