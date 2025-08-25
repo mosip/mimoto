@@ -1,5 +1,6 @@
 package io.mosip.mimoto.dto.openid;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -25,5 +27,10 @@ public class VerifierDTO {
     @JsonProperty("response_uris")
     @Schema(description = "Response URIs of the Verifier")
     List<String> responseUris;
+
+    @JsonProperty("client_metadata")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Schema(description = "Metadata of the Verifier")
+    Map<String,?> clientMetadata;
 }
 
