@@ -153,7 +153,7 @@ public class CredentialPDFGeneratorService {
                         strVal = utilities.maskValue(strVal);
                     }
                 }
-                if (!isFaceKey && displayName != null && strVal != null) {
+                if (!isFaceKey && displayName != null) {
                     rowProperties.put(key, Map.of(displayName, strVal));
                 }
             });
@@ -166,6 +166,8 @@ public class CredentialPDFGeneratorService {
             qrCodeImage = constructQRCodeWithVCData(vcCredentialResponse);
         }
 
+        boolean showUnmarkedDisclosureNote = CredentialFormat.VC_SD_JWT.getFormat().equals(vcCredentialResponse.getFormat()) && disclosures != null && !disclosures.isEmpty() && !maskDisclosures;
+        data.put("showUnmarkedDisclosureNote", showUnmarkedDisclosureNote);
         data.put("qrCodeImage", qrCodeImage);
         data.put("credentialValidity", credentialValidity);
         data.put("logoUrl", issuerDTO.getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));
