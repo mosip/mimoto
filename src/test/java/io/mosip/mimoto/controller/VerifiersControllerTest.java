@@ -18,6 +18,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -71,4 +73,51 @@ public class VerifiersControllerTest {
                 .andExpect(jsonPath("$.response.verifiers").isArray())
                 .andExpect(jsonPath("$.response.verifiers").isEmpty());
     }
+
+    @Test
+    public void shouldIncludeClientMetadataWhenClientMetadataIsPresentInTrustedVerifiers() throws Exception {
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("client_name", "Test-Verifier");
+
+        VerifierDTO verifierDTO = VerifierDTO.builder()
+                .clientId("test-clientId")
+                .redirectUris(Collections.singletonList("https://test-redirectUri"))
+                .responseUris(Collections.singletonList("https://test-responseUri"))
+                .clientMetadata(metadata)
+                .build();
+
+        VerifiersDTO trustedVerifiers = VerifiersDTO.builder()
+                .verifiers(Collections.singletonList(verifierDTO)).build();
+
+        Mockito.when(verifierService.getTrustedVerifiers())
+                .thenReturn(trustedVerifiers);
+
+        mockMvc.perform(get("/verifiers").accept(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response.verifiers[0].client_id").value("test-clientId"))
+                .andExpect(jsonPath("$.response.verifiers[0].client_metadata.client_name").value("Test-Verifier"));
+    }
+
+    @Test
+    public void shouldReturnEmptyClientMetadataWhenClientMetadataIsEmptyInTrustedVerifiers() throws Exception {
+        VerifierDTO verifierDTO = VerifierDTO.builder()
+                .clientId("test-clientId")
+                .redirectUris(Collections.singletonList("https://test-redirectUri"))
+                .responseUris(Collections.singletonList("https://test-responseUri"))
+                .clientMetadata(Collections.emptyMap())
+                .build();
+
+        VerifiersDTO trustedVerifiers = VerifiersDTO.builder()
+                .verifiers(Collections.singletonList(verifierDTO)).build();
+
+        Mockito.when(verifierService.getTrustedVerifiers())
+                .thenReturn(trustedVerifiers);
+
+        mockMvc.perform(get("/verifiers").accept(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response.verifiers[0].client_metadata").isMap())
+                .andExpect(jsonPath("$.response.verifiers[0].client_metadata").isEmpty());
+    }
+
+
 }
