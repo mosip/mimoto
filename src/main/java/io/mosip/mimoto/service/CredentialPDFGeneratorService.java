@@ -82,6 +82,9 @@ public class CredentialPDFGeneratorService {
     @Value("${mosip.injiweb.vc.subject.face.keys.order:image,face,photo,picture,portrait}")
     private String faceImageLookupKeys;
 
+    @Value("${mosip.injiweb.mask.disclosures:true}")
+    private boolean maskDisclosures;
+
     public ByteArrayInputStream generatePdfForVerifiableCredential(String credentialConfigurationId, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
         // Get the appropriate processor based on format
         CredentialFormatHandler processor = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
@@ -146,7 +149,9 @@ public class CredentialPDFGeneratorService {
                 String strVal = formatValue(val, locale);
                 if (disclosures.contains(key)) {
                     disclosuresProps.put(key, displayName);
-                    strVal = maskValue(strVal);
+                    if (maskDisclosures) {
+                        strVal = utilities.maskValue(strVal);
+                    }
                 }
                 if (!isFaceKey && displayName != null && strVal != null) {
                     rowProperties.put(key, Map.of(displayName, strVal));
@@ -255,14 +260,6 @@ public class CredentialPDFGeneratorService {
         BitMatrix bitMatrix = qrCodeWriter.encode(qrData, BarcodeFormat.QR_CODE, qrCodeWidth, qrCodeHeight);
         BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
         return Utilities.encodeToString(qrImage, "png");
-    }
-
-    private String maskValue(String value) {
-        if (StringUtils.isEmpty(value)) {
-            return value;
-        }
-        // mask of length 20 or less
-        return "X".repeat(Math.min(value.length(), 20));
     }
 }
 
