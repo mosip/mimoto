@@ -166,8 +166,13 @@ public class CredentialPDFGeneratorService {
             qrCodeImage = constructQRCodeWithVCData(vcCredentialResponse);
         }
 
-        boolean showUnmarkedDisclosureNote = CredentialFormat.VC_SD_JWT.getFormat().equals(vcCredentialResponse.getFormat()) && disclosures != null && !disclosures.isEmpty() && !maskDisclosures;
-        data.put("showUnmarkedDisclosureNote", showUnmarkedDisclosureNote);
+        // is sd-jwt and has disclosures
+        boolean isSdJwtWithDisclosures = CredentialFormat.VC_SD_JWT.getFormat().equals(vcCredentialResponse.getFormat()) && disclosures != null && !disclosures.isEmpty();
+        boolean showUnmaskedDisclosureNote = isSdJwtWithDisclosures && !maskDisclosures;
+        boolean showMaskedDisclosureNote   = isSdJwtWithDisclosures && maskDisclosures;
+
+        data.put("showUnmaskedDisclosureNote", showUnmaskedDisclosureNote);
+        data.put("showMaskedDisclosureNote", showMaskedDisclosureNote);
         data.put("qrCodeImage", qrCodeImage);
         data.put("credentialValidity", credentialValidity);
         data.put("logoUrl", issuerDTO.getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));
