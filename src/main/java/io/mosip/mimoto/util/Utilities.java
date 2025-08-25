@@ -280,4 +280,12 @@ public class Utilities {
         ErrorDTO errorDTO = new ErrorDTO(errorCode, errorMessage);
         return Lists.newArrayList(errorDTO);
     }
+
+    public static String maskValue(String value) {
+        if (StringUtils.isEmpty(value)) {
+            return value;
+        }
+        // mask of length 20 or less
+        return "X".repeat(Math.min(value.length(), 20));
+    }
 }
