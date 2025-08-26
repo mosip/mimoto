@@ -9,6 +9,7 @@ This repository contains source code for backend service of Inji Mobile and Inji
 
 ## Build & run (for developers)
 The project requires JDK 21, postgres and google client credentials
+
 ### without docker-compose Build & install
 1. Install pgadmin and update application-default.properties file with values
    ```properties
@@ -64,7 +65,7 @@ The project requires JDK 21, postgres and google client credentials
     mvn spring-boot:run -Dspring.profiles.active=local
     ```
 
-### Cache Providers Setup Guide
+## Cache Providers Setup Guide
 
 To use Redis (or any other cache provider), the service must be **running** and **accessible to Mimoto**. Both services (cache provider and Mimoto) must be on the same Docker network.  
 This can be done by adding them to a shared network in your `docker-compose.yml` file, or by using the following commands if they are running separately.
@@ -81,7 +82,7 @@ This can be done by adding them to a shared network in your `docker-compose.yml`
       docker network create redis-net # Create a new network for the service and replace redis-net with your preferred network name
       docker run -d --network redis-net --name redis -p 6379:6379 redis:alpine # Run Redis on this new network, assigning it the hostname 'redis'
       docker network connect redis-net mimoto-service # Ensure Mimoto service is running and connect it to the same network as redis by running this commands. Replace the mimoto-service with actual name of Mimoto service
-      docker restart mimoto-service
+      docker restart mimoto-service # Restart Mimoto service to apply network changes
       ```
 
    - **Running Redis with Docker and starting Mimoto through the IDE:**
