@@ -78,23 +78,36 @@ This can be done by adding them to a shared network in your `docker-compose.yml`
 
 1. **Ensure Redis Service is Available and Connected:**
 
-   - **Using Docker Compose:** Include the Redis service directly in your docker-compose.yml. Docker Compose will automatically place both services on a shared network.
+   - **Using Docker Compose:** You can run Redis alongside Mimoto by adding the below lines in docker-compose.yml. Docker Compose ensures both services run on the same network automatically.
+        1. Add the Redis service under the services section:
+            ```yaml
+             redis:
+               image: redis:alpine
+               container_name: 'redis'
+               ports:
+                 - "6379:6379"
+               volumes:
+                 - redis-data:/data
+             ```
+        2. Make Redis a dependency for the Mimoto service:
+            ```yaml
+             mimoto-service:
+               depends_on:
+                 - redis
+            ```
+        3. Add Redis data volume in the volumes section:
+            ```yaml
+             volumes:
+               redis-data:
+            ```
 
-   - **Using Docker CLI:** If you are running the services(Redis and Mimoto) separately using docker, use the following commands to create and connect them to a shared network.
-     ```bash   
-      docker pull redis:alpine # Pull the Redis image if not already available
-      docker network create redis-net # Create a new network for the service and replace redis-net with your preferred network name
-      docker run -d --network redis-net --name redis -p 6379:6379 redis:alpine # Run Redis on this new network, assigning it the hostname 'redis'
-      docker network connect redis-net mimoto-service # Ensure Mimoto service is running and connect it to the same network as redis by running this commands. Replace the mimoto-service with actual name of Mimoto service
-      docker restart mimoto-service # Restart Mimoto service to apply network changes
-      ```
-
-   - **Running Redis with Docker and starting Mimoto through the IDE:**
+   - **Or, run Redis using Docker while starting Mimoto through your IDE:**
       - Use the following Docker command to start the Redis service and expose it on the default port 6379. Make sure this port is accessible from your local machine.
-     ```bash
-     docker run -d --name redis-server -p 6379:6379 redis:alpine
-     ```
-      - Start Mimoto normally, following the instructions in steps 9 and 10.
+        ```bash
+        docker pull redis:alpine # Pull the Redis image if not already available
+        docker run -d --name redis -p 6379:6379 redis:alpine  # Start a Redis container named 'redis' and expose it on port 6379
+        ```
+      - Start Mimoto normally, following the instructions mentioned in [Build & run (for developers) section](#build--run-for-developers).
 
 2. **Update the following properties** in
    - [application-local.properties](src/main/resources/application-local.properties) *(when running through IDE)*, or
@@ -104,7 +117,7 @@ This can be done by adding them to a shared network in your `docker-compose.yml`
     spring.cache.type=redis           # Store application data in Redis
     ```
 
-3. **Add the required Redis configurations** in
+3. **Add and update the required Redis configurations** in
    - [application-local.properties](src/main/resources/application-local.properties) or
    - [mimoto-default.properties](docker-compose/config/mimoto-default.properties), similar to those in the [application-default.properties](src/main/resources/application-default.properties) file.  
      Look for properties starting with:
