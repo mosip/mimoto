@@ -152,6 +152,7 @@ public class MosipTestRunner {
 		
 		BaseTestCase.currentModule = BaseTestCase.runContext + "mimoto";
 		BaseTestCase.certsForModule = BaseTestCase.currentModule;
+		BaseTestCase.initializePMSDetails();
 		MimotoUtil.dbCleanUp();
 		BaseTestCase.otpListener = new OTPListener();
 		BaseTestCase.otpListener.run();
