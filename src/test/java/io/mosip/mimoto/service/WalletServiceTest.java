@@ -13,11 +13,13 @@ import io.mosip.mimoto.exception.UnauthorizedAccessException;
 import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.service.impl.WalletServiceImpl;
 import io.mosip.mimoto.util.TestUtilities;
+import io.mosip.mimoto.util.WalletLockStatusUtils;
 import io.mosip.mimoto.util.WalletUtil;
 import io.mosip.mimoto.util.WalletValidator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,10 +51,7 @@ public class WalletServiceTest {
     private WalletUnlockService walletUnlockService;
 
     @MockBean
-    private WalletLockStatusService walletStatusService;
-
-    @MockBean
-    private WalletLockManager walletLockManager;
+    private WalletLockService walletLockService;
 
     @Autowired
     private WalletServiceImpl walletService;
@@ -289,22 +288,25 @@ public class WalletServiceTest {
 
         List<Wallet> mockWallets = List.of(wallet1, wallet2);
 
-        when(walletLockManager.resetTemporaryLockIfExpired(wallet1)).thenReturn(wallet1);
-        when(walletLockManager.resetTemporaryLockIfExpired(wallet2)).thenReturn(wallet2);
-        when(walletStatusService.getWalletLockStatus(wallet1)).thenReturn(WalletLockStatus.TEMPORARILY_LOCKED);
-        when(walletStatusService.getWalletLockStatus(wallet2)).thenReturn(null);
+        when(walletLockService.resetTemporaryLockIfExpired(wallet1)).thenReturn(wallet1);
+        when(walletLockService.resetTemporaryLockIfExpired(wallet2)).thenReturn(wallet2);
         when(walletRepository.findWalletByUserId(userId)).thenReturn(mockWallets);
 
-        List<WalletDetailsResponseDto> result = walletService.getWallets(userId);
+        try (MockedStatic<WalletLockStatusUtils> mockedStatic = mockStatic(WalletLockStatusUtils.class)) {
+            mockedStatic.when(() -> WalletLockStatusUtils.getWalletLockStatus(wallet1)).thenReturn(WalletLockStatus.TEMPORARILY_LOCKED);
+            mockedStatic.when(() -> WalletLockStatusUtils.getWalletLockStatus(wallet2)).thenReturn(null);
 
-        verify(walletRepository).findWalletByUserId(userId);
-        assertEquals(mockWallets.size(), result.size());
-        for (int i = 0; i < mockWallets.size(); i++) {
-            Wallet expectedWallet = mockWallets.get(i);
+            List<WalletDetailsResponseDto> result = walletService.getWallets(userId);
 
-            assertEquals(expectedWallet.getId(), result.get(i).getWalletId());
-            assertEquals(expectedWallet.getWalletMetadata().getName(), result.get(i).getWalletName());
-            assertEquals(expectedWallet.getWalletMetadata().getLockStatus(), result.get(i).getWalletStatus());
+            verify(walletRepository).findWalletByUserId(userId);
+            assertEquals(mockWallets.size(), result.size());
+            for (int i = 0; i < mockWallets.size(); i++) {
+                Wallet expectedWallet = mockWallets.get(i);
+
+                assertEquals(expectedWallet.getId(), result.get(i).getWalletId());
+                assertEquals(expectedWallet.getWalletMetadata().getName(), result.get(i).getWalletName());
+                assertEquals(expectedWallet.getWalletMetadata().getLockStatus(), result.get(i).getWalletStatus());
+            }
         }
     }
 
