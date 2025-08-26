@@ -26,6 +26,7 @@ import io.mosip.mimoto.util.LocaleUtils;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +76,9 @@ public class CredentialPDFGeneratorService {
 
     @Value("${mosip.inji.qr.data.size.limit:4096}")
     Integer allowedQRDataSizeLimit;
+
+    @Value("${mosip.injiweb.mask.disclosures:true}")
+    private boolean maskDisclosures;
 
     public ByteArrayInputStream generatePdfForVerifiableCredential(String credentialConfigurationId, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
 
@@ -135,10 +139,11 @@ public class CredentialPDFGeneratorService {
             String strVal = formatValue(val, locale);
             if (disclosures.contains(key)){
                 disclosuresProps.put(key, displayName);
-                rowProperties.put(key, Map.of(displayName, strVal));
-            } else{
-                rowProperties.put(key, Map.of(displayName, strVal));
+                if (maskDisclosures && CredentialFormat.VC_SD_JWT.getFormat().equals(vcCredentialResponse.getFormat())) {
+                    strVal = utilities.maskValue(strVal);
+                }
             }
+            rowProperties.put(key, Map.of(displayName, strVal));
 
         }));
 
@@ -149,6 +154,11 @@ public class CredentialPDFGeneratorService {
             qrCodeImage = constructQRCodeWithVCData(vcCredentialResponse);
         }
 
+        // is sd-jwt and has disclosures
+        boolean isSdJwtWithDisclosures = CredentialFormat.VC_SD_JWT.getFormat().equals(vcCredentialResponse.getFormat()) && CollectionUtils.isNotEmpty(disclosures);
+
+        data.put("isMaskedOn", maskDisclosures);
+        data.put("isSdJwtWithDisclosures", isSdJwtWithDisclosures);
         data.put("qrCodeImage", qrCodeImage);
         data.put("credentialValidity", credentialValidity);
         data.put("logoUrl", issuerDTO.getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));
