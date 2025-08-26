@@ -12,4 +12,4 @@ databases:
         name: postgres-postgresql
         key: postgres-password
     dml: 1
-    branch: v0.19.x
+    branch: 0.19.x
