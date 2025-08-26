@@ -18,48 +18,9 @@ The project requires JDK 21, postgres and google client credentials
 
 2. **Configuring Cache Providers:**
 
-   By default, **Mimoto** uses the **Caffeine** cache provider when running through Docker with the provided [docker-compose.yml](docker-compose/docker-compose.yml).  
+   By default, **Mimoto** uses the **Caffeine** cache provider when running through Docker with the provided [docker-compose.yml](docker-compose/docker-compose.yml) or when running through the IDE.  
    You only need to install and configure **Redis** (or any other cache provider) if you want to store **application data** or **HTTP sessions** outside of Caffeine.  
-   This requires ensuring the service is running and is accessible to Mimoto.
-
-   To enable this, both services(Cache provider service and Mimoto) must be on the same Docker network. This can be achieved by adding them to a shared network in your docker-compose.yml file, or by using the following commands if they are running separately.
-
-   **Example: Using Redis as Cache Provider**
-
-   1. **Ensure Redis Service is Available and Connected:**
-      
-      **Using Docker Compose:** Include the Redis service directly in your docker-compose.yml. Docker Compose will automatically place both services on a shared network.
-      
-      **Using Docker CLI:** If you are running the services(Redis and Mimoto) separately using docker, use the following commands to create and connect them to a shared network.
-      ```bash   
-      docker pull redis:alpine # Pull the Redis image if not already available
-      docker network create redis-net # Create a new network for the service and replace redis-net with your preferred network name
-      docker run -d --network redis-net --name redis -p 6379:6379 redis:alpine # Run Redis on this new network, assigning it the hostname 'redis'
-      docker network connect redis-net mimoto-service # Ensure Mimoto service is running and connect it to the same network as redis by running this commands. Replace the mimoto-service with actual name of Mimoto service
-      docker restart mimoto-service
-      ```
-
-      **Running Redis with Docker and starting Mimoto through the IDE:**
-      - Use the following Docker command to start the Redis service and expose it on the default port 6379. Make sure this port is accessible from your local machine.
-      ```bash
-      docker run -d --name redis-server -p 6379:6379 redis:alpine
-      ```
-      - Start Mimoto normally, following the instructions in steps 9 and 10.
-      
-   2.  **Update the following properties** in
-       - [application-local.properties](src/main/resources/application-local.properties) *(when running through IDE)*, or
-       - [mimoto-default.properties](docker-compose/config/mimoto-default.properties) *(when running through Docker)*:
-       ```properties
-       spring.session.store-type=redis   # Store HTTP sessions in Redis
-       spring.cache.type=redis           # Store application data in Redis
-       ```
-       
-   3. **Add the required Redis configurations** in
-      - [application-local.properties](src/main/resources/application-local.properties) or
-      - [mimoto-default.properties](docker-compose/config/mimoto-default.properties), similar to those in the [application-default.properties](src/main/resources/application-default.properties) file.  
-      Look for properties starting with:
-      - `spring.data.redis.*`
-      - `spring.session.redis.*`
+   For detailed setup instructions (including running Redis with Docker CLI and updating configuration), see the [Cache Providers Setup Guide](#cache-providers-setup-guide) section.
       
 3. Refer to the [How to create Google Client Credentials](docker-compose/README.md#how-to-create-google-client-credentials) section to create
    Google client credentials and update below properties in `application-local.properties`.
@@ -102,6 +63,47 @@ The project requires JDK 21, postgres and google client credentials
     ```
     mvn spring-boot:run -Dspring.profiles.active=local
     ```
+### Cache Providers Setup Guide
+
+To use Redis (or any other cache provider), the service must be **running** and **accessible to Mimoto**. Both services (cache provider and Mimoto) must be on the same Docker network.  
+This can be done by adding them to a shared network in your `docker-compose.yml` file, or by using the following commands if they are running separately.
+
+**Example: Using Redis as Cache Provider**
+
+1. **Ensure Redis Service is Available and Connected:**
+
+   - **Using Docker Compose:** Include the Redis service directly in your docker-compose.yml. Docker Compose will automatically place both services on a shared network.
+
+   - **Using Docker CLI:** If you are running the services(Redis and Mimoto) separately using docker, use the following commands to create and connect them to a shared network.
+     ```bash   
+      docker pull redis:alpine # Pull the Redis image if not already available
+      docker network create redis-net # Create a new network for the service and replace redis-net with your preferred network name
+      docker run -d --network redis-net --name redis -p 6379:6379 redis:alpine # Run Redis on this new network, assigning it the hostname 'redis'
+      docker network connect redis-net mimoto-service # Ensure Mimoto service is running and connect it to the same network as redis by running this commands. Replace the mimoto-service with actual name of Mimoto service
+      docker restart mimoto-service
+      ```
+
+   - **Running Redis with Docker and starting Mimoto through the IDE:**
+      - Use the following Docker command to start the Redis service and expose it on the default port 6379. Make sure this port is accessible from your local machine.
+     ```bash
+     docker run -d --name redis-server -p 6379:6379 redis:alpine
+     ```
+      - Start Mimoto normally, following the instructions in steps 9 and 10.
+
+2. **Update the following properties** in
+   - [application-local.properties](src/main/resources/application-local.properties) *(when running through IDE)*, or
+   - [mimoto-default.properties](docker-compose/config/mimoto-default.properties) *(when running through Docker)*:
+    ```properties
+    spring.session.store-type=redis   # Store HTTP sessions in Redis
+    spring.cache.type=redis           # Store application data in Redis
+    ```
+
+3. **Add the required Redis configurations** in
+   - [application-local.properties](src/main/resources/application-local.properties) or
+   - [mimoto-default.properties](docker-compose/config/mimoto-default.properties), similar to those in the [application-default.properties](src/main/resources/application-default.properties) file.  
+     Look for properties starting with:
+   - `spring.data.redis.*`
+   - `spring.session.redis.*`
 
 ### with docker-compose
 1. To simplify running mimoto in local for developers we have added [Docker Compose Setup](docker-compose/README.md). This docker-compose includes mimoto service and nginx service to server static data.
@@ -111,8 +113,8 @@ The project requires JDK 21, postgres and google client credentials
 * Build docker image by running the below command in the directory where Dockerfile is present, use any image tag
   ```docker build -t <image-with-tag> .```
 * Use newly built docker image in docker-compose file
-
+   
 ## [Deployment in K8 cluster](deploy/README.md)
-
+   
 ## Credits
 Credits listed [here](/Credits.md)
