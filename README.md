@@ -63,6 +63,7 @@ The project requires JDK 21, postgres and google client credentials
     ```
     mvn spring-boot:run -Dspring.profiles.active=local
     ```
+
 ### Cache Providers Setup Guide
 
 To use Redis (or any other cache provider), the service must be **running** and **accessible to Mimoto**. Both services (cache provider and Mimoto) must be on the same Docker network.  
