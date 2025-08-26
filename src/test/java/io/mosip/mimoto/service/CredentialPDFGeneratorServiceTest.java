@@ -1,6 +1,8 @@
 
 package io.mosip.mimoto.service;
 
+import com.authlete.sd.Disclosure;
+import com.authlete.sd.SDJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.dto.BackgroundImageDTO;
 import io.mosip.mimoto.dto.DisplayDTO;
@@ -11,6 +13,7 @@ import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.model.QRCodeType;
 import io.mosip.mimoto.service.impl.LdpVcCredentialFormatHandler;
 import io.mosip.mimoto.service.impl.PresentationServiceImpl;
+import io.mosip.mimoto.service.impl.VcSdJwtCredentialFormatHandler;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,10 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,6 +45,9 @@ class CredentialPDFGeneratorServiceTest {
     @Mock
     private LdpVcCredentialFormatHandler credentialFormatHandler;
 
+    @Mock
+    private VcSdJwtCredentialFormatHandler sdJwtCredentialFormatHandler;
+
     @InjectMocks
     private CredentialPDFGeneratorService credentialPDFGeneratorService;
 
@@ -61,14 +64,6 @@ class CredentialPDFGeneratorServiceTest {
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "pixelPass", pixelPass);
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "faceImageLookupKeys",
                 "image,face,photo,picture,portrait");
-
-        // Mock the handler factory to return the handler for the test format
-        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
-        when(credentialFormatHandler.extractCredentialClaims(any()))
-            .thenAnswer(invocation -> {
-                VCCredentialResponse response = invocation.getArgument(0);
-                return ((VCCredentialProperties)response.getCredential()).getCredentialSubject();
-            });
 
         setupTestData();
     }
@@ -138,6 +133,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testGeneratePdfForVerifiableCredential() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
                 .thenReturn("<html><body>Test</body></html>");
         PresentationDefinitionDTO presentationDef = new PresentationDefinitionDTO();
@@ -155,6 +151,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testGeneratePdfForEmbeddedVCQR() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         issuerDTO.setQr_code_type(QRCodeType.EmbeddedVC);
         when(objectMapper.writeValueAsString(any())).thenReturn("{\"credential\":\"data\"}");
         when(pixelPass.generateQRData(anyString(), anyString())).thenReturn("generated-qr-data");
@@ -178,6 +175,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testGeneratePdfShouldGeneratePresentationDefinitionForOnlineSharingQrTypeWithNonEmptyDataShareUrl() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         issuerDTO.setQr_code_type(QRCodeType.OnlineSharing);
         when(objectMapper.writeValueAsString(any())).thenReturn("{\"credential\":\"data\"}");
         when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
@@ -200,6 +198,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testHandleMapWithListValue() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         Map<String, Object> skills = new HashMap<>();
         skills.put("skills", List.of("Java", "Spring"));
         ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(skills);
@@ -224,6 +223,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testNullFaceImageHandling() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         Map<String, Object> mutableSubject = new HashMap<>(((VCCredentialProperties)vcCredentialResponse.getCredential()).getCredentialSubject());
         mutableSubject.remove("face");
         ((VCCredentialProperties)vcCredentialResponse.getCredential()).setCredentialSubject(mutableSubject);
@@ -245,6 +245,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testGeneratePdfWithNullOrder() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         credentialsSupportedResponse.setOrder(null);
         when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
                 .thenReturn("<html><body>Test</body></html>");
@@ -269,6 +270,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testGeneratePdfWithMapValueFormatting() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         // Setup credential with map containing "value" key
         Map<String, Object> subjectWithMapValue = new HashMap<>();
         subjectWithMapValue.put("education", Map.of("value", "Bachelor's Degree"));
@@ -295,6 +297,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testGeneratePdfWithStringListFormatting() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         // Setup credential with list of strings
         Map<String, Object> subjectWithList = new HashMap<>();
         subjectWithList.put("skills", List.of("Java", "Spring", "Boot"));
@@ -320,6 +323,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testGeneratePdfWithLocaleSpecificMapListFormatting() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         // Setup credential with locale-specific map list
         Map<String, Object> subjectWithLocaleMap = new HashMap<>();
         List<Map<String, Object>> localeData = List.of(
@@ -349,6 +353,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testGeneratePdfWithNumericValueFormatting() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         // Setup credential with numeric value
         Map<String, Object> subjectWithNumber = new HashMap<>();
         subjectWithNumber.put("age", 25);
@@ -374,6 +379,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testFaceKeyFallbackFromPrimaryToSecondary() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         // Setup: No "face" key, but has "photo" key
         Map<String, Object> subjectData = new HashMap<>();
         subjectData.put("name", "John Doe");
@@ -407,6 +413,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testFaceKeyFallbackToPortrait() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         // Setup: No "face" or "photo", but has "portrait"
         Map<String, Object> subjectData = new HashMap<>();
         subjectData.put("name", "John Doe");
@@ -436,6 +443,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testFaceKeyFallbackToImage() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         // Setup: Only "image" key available
         Map<String, Object> subjectData = new HashMap<>();
         subjectData.put("name", "John Doe");
@@ -465,6 +473,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testFaceKeyFallbackToPicture() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         // Setup: Only "picture" key available
         Map<String, Object> subjectData = new HashMap<>();
         subjectData.put("name", "John Doe");
@@ -494,6 +503,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testFaceKeyPriorityOrder() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         // Setup: Multiple face keys present - should use first available in priority order
         Map<String, Object> subjectData = new HashMap<>();
         subjectData.put("name", "John Doe");
@@ -530,6 +540,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testOnlySelectedFaceKeyExcludedFromRowProperties() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         // Setup: Multiple face keys - only the selected one ("image") should be excluded from rowProperties
         Map<String, Object> subjectData = new HashMap<>();
         subjectData.put("name", "John Doe");
@@ -569,6 +580,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testMultipleFaceKeysExcludedFromRowProperties() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         // Setup: Multiple face keys present
         Map<String, Object> subjectData = new HashMap<>();
         subjectData.put("name", "John Doe");
@@ -607,6 +619,7 @@ class CredentialPDFGeneratorServiceTest {
 
     @Test
     void testNoFaceKeysAvailable() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
         // Setup: No face-related keys in credential
         Map<String, Object> subjectData = new HashMap<>();
         subjectData.put("name", "John Doe");
@@ -635,5 +648,106 @@ class CredentialPDFGeneratorServiceTest {
 
         assertNotNull(result);
         // Should handle gracefully when no face keys are available ($face will be null)
+    }
+
+    @Test
+    void testMaskingForSelectivelyDisclosableClaimsAndNonMaskedFieldsInSDJWT() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("vc+sd-jwt")).thenReturn(sdJwtCredentialFormatHandler);
+        vcCredentialResponse.setFormat("vc+sd-jwt");
+        String mockSDJWTString = "eyJ0eXAiOiJ2YytzZC1qd3QiLCJhbGciOiJFUzI1NiJ9.eyJfc2QiOlsiaGFzaDEiLCJoYXNoMiJdfQ.signature~disclosure1~disclosure2";
+        vcCredentialResponse.setCredential(mockSDJWTString);
+
+        try (MockedStatic<SDJWT> mockedSDJWT = mockStatic(SDJWT.class)) {
+            SDJWT mockSDJWT = mock(SDJWT.class);
+
+            mockedSDJWT.when(() -> SDJWT.parse(mockSDJWTString)).thenReturn(mockSDJWT);
+
+            // Only name and age are selectively disclosable (will be masked)
+            Disclosure nameDisclosure = mock(Disclosure.class);
+            when(nameDisclosure.getClaimName()).thenReturn("name");
+
+            Disclosure ageDisclosure = mock(Disclosure.class);
+            when(ageDisclosure.getClaimName()).thenReturn("age");
+
+            when(mockSDJWT.getDisclosures()).thenReturn(List.of(nameDisclosure, ageDisclosure));
+
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("name", "John Doe");        // Will be masked
+            claims.put("age", "30");              // Will be masked
+            claims.put("email", "john@example.com"); // Not masked (not in disclosures)
+            claims.put("country", "USA");         // Not masked (not in disclosures)
+
+            when(sdJwtCredentialFormatHandler.extractCredentialClaims(vcCredentialResponse))
+                    .thenReturn(claims);
+
+            // Use LinkedHashMap instead of HashMap
+            LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProps = new LinkedHashMap<>();
+            displayProps.put("name", Map.of(createDisplayResponse("Full Name", "en"), "John Doe"));
+            displayProps.put("age", Map.of(createDisplayResponse("Age", "en"), "30"));
+            displayProps.put("email", Map.of(createDisplayResponse("Email", "en"), "john@example.com"));
+            displayProps.put("country", Map.of(createDisplayResponse("Country", "en"), "USA"));
+
+            when(sdJwtCredentialFormatHandler.loadDisplayPropertiesFromWellknown(any(), any(), anyString()))
+                    .thenReturn(displayProps);
+
+            when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                    .thenReturn("<html>Test Template</html>");
+            when(presentationService.constructPresentationDefinition(any()))
+                    .thenReturn(new PresentationDefinitionDTO());
+            when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+            ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                    "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                    "https://example.com/share", "", "en");
+
+            assertNotNull(result);
+            mockedSDJWT.verify(() -> SDJWT.parse(mockSDJWTString));
+            // This test verifies that:
+            // - Fields with disclosures (name, age) are masked with maskedClaims
+            // - Fields without disclosures (email, country) are shown normally
+        }
+    }
+
+    @Test
+    void testNoMaskingForLdpFormat() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
+        // Setup LDP-VC format (not SD-JWT)
+        vcCredentialResponse.setFormat("ldp_vc");
+
+        // This test uses the LDP-VC handler (already set up in @BeforeEach)
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("name", "John Doe");
+        claims.put("age", "30");
+
+        // Use the specific LDP-VC handler
+        when(credentialFormatHandler.extractCredentialClaims(vcCredentialResponse))
+                .thenReturn(claims);
+
+        // Use LinkedHashMap instead of HashMap
+        LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> displayProps = new LinkedHashMap<>();
+        displayProps.put("name", Map.of(createDisplayResponse("Full Name", "en"), "John Doe"));
+        displayProps.put("age", Map.of(createDisplayResponse("Age", "en"), "30"));
+
+        when(credentialFormatHandler.loadDisplayPropertiesFromWellknown(any(), any(), anyString()))
+                .thenReturn(displayProps);
+
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html>Test Template</html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+        when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+
+        ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                "https://example.com/share", "", "en");
+
+        assertNotNull(result);
+    }
+
+    private CredentialIssuerDisplayResponse createDisplayResponse(String name, String locale) {
+        CredentialIssuerDisplayResponse response = new CredentialIssuerDisplayResponse();
+        response.setName(name);
+        response.setLocale(locale);
+        return response;
     }
 }
