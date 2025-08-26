@@ -5,6 +5,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.introspect.Annotated;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.cache.CacheManagerCustomizer;
@@ -106,7 +112,6 @@ public class CacheConfig {
         };
     }
 
-
     /**
      * This method defines a RedisCacheManagerBuilderCustomizer bean to customize the
      * auto-configured RedisCacheManager. It registers per-cache configurations.
@@ -119,15 +124,43 @@ public class CacheConfig {
     @ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis")
     public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer() {
         log.info("******* Customizing Redis cache provider *********");
-        GenericJackson2JsonRedisSerializer jacksonSerializer = new GenericJackson2JsonRedisSerializer();
 
         return builder -> {
-            // Default config for the Redis cache manager
+            // Create the custom ObjectMapper
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.findAndRegisterModules();
+            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+            // Allow WRITE_ONLY fields to be serialized and stored in cache (by default they are ignored)
+            objectMapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
+                @Override
+                public JsonProperty.Access findPropertyAccess(Annotated annotated) {
+                    JsonProperty.Access access = super.findPropertyAccess(annotated);
+                    if (access == JsonProperty.Access.WRITE_ONLY) {
+                        return JsonProperty.Access.AUTO;
+                    }
+                    return access;
+                }
+            });
+
+            // Enable type info in JSON so polymorphic/non-final objects can be deserialized correctly
+            objectMapper.activateDefaultTyping(
+                    objectMapper.getPolymorphicTypeValidator(),
+                    ObjectMapper.DefaultTyping.NON_FINAL,
+                    JsonTypeInfo.As.PROPERTY
+            );
+
+            // Serializer instance (previously separate bean)
+            GenericJackson2JsonRedisSerializer customJacksonSerializer =
+                    new GenericJackson2JsonRedisSerializer(objectMapper);
+
+            // Default cache config
             RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
-                    .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(jacksonSerializer))
+                    .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(customJacksonSerializer))
                     .entryTtl(Duration.ofMinutes(defaultCacheExpiryTimeInMin))
                     .disableCachingNullValues();
 
+            // Per-cache configs
             Map<String, RedisCacheConfiguration> cacheConfigurations = Map.of(
                     ISSUER_WELLKNOWN_CACHE, createRedisConfigWithTtl(defaultCacheConfig, issuerWellknownExpiryTimeInMin),
                     ISSUERS_CONFIG_CACHE, createRedisConfigWithTtl(defaultCacheConfig, issuersConfigExpiryTimeInMin),
