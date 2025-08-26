@@ -3,53 +3,53 @@ modules:
     enabled: true
     image:
       repository: mosipqa/apitest-mimoto
-      tag: develop
+      tag: 0.19.0
       pullPolicy: Always
   masterdata:
     enabled: false
     image:
       repository: mosipqa/apitest-masterdata
-      tag: develop
+      tag: 0.19.0
       pullPolicy: Always
   prereg:
     enabled: false
     image:
       repository: mosipqa/apitest-prereg
-      tag: develop
+      tag: 0.19.0
       pullPolicy: Always
   idrepo:
     enabled: false
     image:
       repository: mosipqa/apitest-idrepo
-      tag: develop
+      tag: 0.19.0
       pullPolicy: Always
   partner:
     enabled: false
     image:
       repository: mosipqa/apitest-partner
-      tag: develop
+      tag: 0.19.0
       pullPolicy: Always
   resident:
     enabled: false
     image:
       repository: mosipqa/apitest-resident
-      tag: develop
+      tag: 0.19.0
       pullPolicy: Always
   auth:
     enabled: false
     image:
       repository: mosipqa/apitest-auth
-      tag: develop
+      tag: 0.19.0
       pullPolicy: Always
   esignet:
     enabled: false
     image:
       repository: mosipqa/apitest-esignet
-      tag: develop
+      tag: 0.19.0
       pullPolicy: Always
   pms:
     enabled: false
     image:
       repository: mosipqa/apitest-pms
-      tag: develop
+      tag: 0.19.0
       pullPolicy: Always
