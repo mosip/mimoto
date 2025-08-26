@@ -124,6 +124,11 @@ This can be done by adding them to a shared network in your `docker-compose.yml`
    - `spring.data.redis.*`
    - `spring.session.redis.*`
 
+4. **Check the cached data of the redis by running the following command:**
+    ```bash
+    docker exec -it redis redis-cli
+   ```
+
 ### with docker-compose
 1. To simplify running mimoto in local for developers we have added [Docker Compose Setup](docker-compose/README.md). This docker-compose includes mimoto service and nginx service to server static data.
 2. Follow the below steps to use custom build image in docker-compose
