@@ -106,7 +106,6 @@ public class CacheConfig {
         };
     }
 
-
     /**
      * This method defines a RedisCacheManagerBuilderCustomizer bean to customize the
      * auto-configured RedisCacheManager. It registers per-cache configurations.
@@ -128,6 +127,7 @@ public class CacheConfig {
                     .entryTtl(Duration.ofMinutes(defaultCacheExpiryTimeInMin))
                     .disableCachingNullValues();
 
+            // Per-cache configs
             Map<String, RedisCacheConfiguration> cacheConfigurations = Map.of(
                     ISSUER_WELLKNOWN_CACHE, createRedisConfigWithTtl(defaultCacheConfig, issuerWellknownExpiryTimeInMin),
                     ISSUERS_CONFIG_CACHE, createRedisConfigWithTtl(defaultCacheConfig, issuersConfigExpiryTimeInMin),
