@@ -4,6 +4,7 @@ import com.authlete.sd.Disclosure;
 import com.authlete.sd.SDJWT;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
@@ -27,12 +28,12 @@ import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import io.mosip.injivcrenderer.InjiVcRenderer;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -68,6 +69,9 @@ public class CredentialPDFGeneratorService {
     @Autowired
     private CredentialFormatHandlerFactory credentialFormatHandlerFactory;
 
+    @Autowired
+    private InjiVcRenderer injiVcRenderer;
+
     @Value("${mosip.inji.ovp.qrdata.pattern}")
     private String ovpQRDataPattern;
 
@@ -87,6 +91,11 @@ public class CredentialPDFGeneratorService {
     private boolean maskDisclosures;
 
     public ByteArrayInputStream generatePdfForVerifiableCredential(String credentialConfigurationId, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
+        ByteArrayInputStream renderedVcStream = renderVcWithInjiRender(vcCredentialResponse);
+        if (renderedVcStream != null) {
+            return renderedVcStream;
+        }
+
         // Get the appropriate processor based on format
         CredentialFormatHandler processor = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
 
@@ -274,6 +283,62 @@ public class CredentialPDFGeneratorService {
         BitMatrix bitMatrix = qrCodeWriter.encode(qrData, BarcodeFormat.QR_CODE, qrCodeWidth, qrCodeHeight);
         BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
         return Utilities.encodeToString(qrImage, "png");
+    }
+
+    private ByteArrayInputStream renderVcWithInjiRender(VCCredentialResponse vcCredentialResponse) throws JsonProcessingException {
+        // Parsing renderMethod with strict typing
+        if (vcCredentialResponse.getCredential() == null) {
+            return null;
+        }
+        // Convert VCCredentialResponse.credential to JSON string
+        String vcJson = objectMapper.writeValueAsString(vcCredentialResponse.getCredential());
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> credentialMap = objectMapper.convertValue(vcCredentialResponse.getCredential(),
+                new TypeReference<Map<String, Object>>() {});
+        List<Map<String, Object>> renderMethod = objectMapper.convertValue(credentialMap.get("renderMethod"),
+                new TypeReference<List<Map<String, Object>>>() {});
+
+        if (CollectionUtils.isEmpty(renderMethod)) {
+            return null;
+        }
+
+        // Process first render method (assuming it's the primary one)
+        Map<String, Object> method = renderMethod.getFirst();
+        String renderSuite = (String) method.get("renderSuite");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> template = (Map<String, Object>) method.get("template");
+
+        if (template != null && "svg-mustache".equals(renderSuite)) {
+            List<String> svgImage = injiVcRenderer.renderSvg(vcJson);
+            return convertSvgToPdf(svgImage);
+        }
+        return null;
+    }
+
+    private ByteArrayInputStream convertSvgToPdf(List<String> svgImage) {
+        if (CollectionUtils.isEmpty(svgImage)) {
+            return null;
+        }
+
+        // considering only first svg from the list
+        String svgContent = String.join("\n", svgImage.getFirst());
+
+        // Convert SVG to PDF
+        try (ByteArrayOutputStream pdfOutputStream = new ByteArrayOutputStream();
+             PdfWriter pdfWriter = new PdfWriter(pdfOutputStream)) {
+
+            String html = "<html><body>" + svgContent + "</body></html>";
+            ConverterProperties converterProperties = new ConverterProperties();
+            converterProperties.setFontProvider(new DefaultFontProvider(true, false, false));
+            HtmlConverter.convertToPdf(html, pdfWriter, converterProperties);
+
+            return new ByteArrayInputStream(pdfOutputStream.toByteArray());
+        } catch (IOException e) {
+            log.error("Error converting SVG to PDF: {}", e.getMessage());
+            throw new RuntimeException("Failed to convert SVG to PDF", e);
+        }
     }
 }
 
