@@ -4,6 +4,7 @@ import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationVerifierDTO;
 import io.mosip.mimoto.dto.openid.VerifierDTO;
 import io.mosip.mimoto.dto.openid.VerifiersDTO;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.service.OpenID4VPService;
 import io.mosip.mimoto.service.VerifierService;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import io.mosip.openID4VP.OpenID4VP;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,8 +31,9 @@ public class OpenID4VPServiceImpl implements OpenID4VPService {
         String presentationId = generatePresentationId();
         AuthorizationRequest authorizationRequest = authenticateVerifier(presentationId, urlEncodedVPAuthorizationRequest, getPreRegisteredVerifiers());
         VerifiablePresentationVerifierDTO verifiablePresentationVerifierDTO = createVPResponseVerifierDTO(authorizationRequest, walletId);
+        VerifiablePresentationSessionData verifiablePresentationSessionData = new VerifiablePresentationSessionData(authorizationRequest, Instant.now());
 
-        return new VerifiablePresentationResponseDTO(presentationId, verifiablePresentationVerifierDTO);
+        return new VerifiablePresentationResponseDTO(presentationId, verifiablePresentationVerifierDTO, verifiablePresentationSessionData);
     }
 
     private String generatePresentationId() {
