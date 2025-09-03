@@ -190,14 +190,22 @@ public class CredentialPDFGeneratorService {
                 return String.join(", ", (List<String>) list);
             } else if (list.getFirst() instanceof Map<?, ?>) {
                 return list.stream()
+                        .filter(Objects::nonNull)
                         .map(item -> (Map<?, ?>) item)
-                        .filter(m -> LocaleUtils.matchesLocale(m.get("language").toString(), locale))
-                        .map(m -> m.get("value").toString())
+                        .filter(m -> {
+                            Object lang = m.get("language");  // Safely get language
+                            return lang != null && LocaleUtils.matchesLocale(lang.toString(), locale);
+                        })
+                        .map(m -> {
+                            Object value = m.get("value");  // Safely get value
+                            return value != null ? value.toString() : null;
+                        })
+                        .filter(Objects::nonNull)
                         .findFirst()
                         .orElse("");
             }
         }
-        return val.toString();
+        return val != null ? val.toString() : "";
     }
 
     private ByteArrayInputStream renderVCInCredentialTemplate(Map<String, Object> data, String issuerId, String credentialConfigurationId) {
