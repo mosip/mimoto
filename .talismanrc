@@ -133,4 +133,8 @@ fileignoreconfig:
   checksum: 425cb4066c02d93572b1db02099532465479e7f4c94c3684c5d46a063352631d
 - filename: src/test/java/io/mosip/mimoto/service/VcSdJwtCredentialFormatHandlerTest.java
   checksum: e91aa11aa049453a3a7cd542386dbb813f5c868678f68d6bd71af92149e0d5db
+- filename: db_scripts/inji_mimoto/ddl.sql
+  checksum: 781b2f4be76597455a7768453a71d26ee3fe62e7c3fd5d3e7c490ac9122c8a5f
+- filename: db_scripts/inji_mimoto/ddl/mimoto-trusted-verifiers.sql
+  checksum: bbb73e09a9669a8bf78a30b1a72ffdcdffee3f3eb92c5f39ffb5f6ae37e748d2
 version: ""
