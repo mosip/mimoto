@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.util.Optional;
 
@@ -47,6 +48,7 @@ public class VerifierServiceImpl implements VerifierService {
 
     private final Logger logger = LoggerFactory.getLogger(VerifierServiceImpl.class);
 
+    @Cacheable(value = "preRegisteredTrustedVerifiersCache", key = "'preRegisteredTrustedVerifiers'")
     public VerifiersDTO getTrustedVerifiers() throws ApiNotAccessibleException, JsonProcessingException {
         String trustedVerifiersJsonValue = utilities.getTrustedVerifiersJsonValue();
         if (trustedVerifiersJsonValue == null) {
@@ -84,7 +86,7 @@ public class VerifierServiceImpl implements VerifierService {
     }
 
     @Override
-    public boolean doesVerifierExistInDB(String verifierId, String walletId) {
+    public boolean isVerifierTrustedByWallet(String verifierId, String walletId) {
         return verifierRepository.existsByWalletIdAndVerifierId(walletId, verifierId);
     }
 }
