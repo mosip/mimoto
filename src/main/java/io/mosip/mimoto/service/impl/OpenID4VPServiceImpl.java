@@ -27,8 +27,7 @@ public class OpenID4VPServiceImpl implements OpenID4VPService {
     private OpenID4VP openID4VP;
 
     @Override
-    public VerifiablePresentationResponseDTO handleVPAuthorizationRequest(String urlEncodedVPAuthorizationRequest, String walletId)
-            throws ApiNotAccessibleException, IOException {
+    public VerifiablePresentationResponseDTO handleVPAuthorizationRequest(String urlEncodedVPAuthorizationRequest, String walletId) throws ApiNotAccessibleException, IOException {
         String presentationId = UUID.randomUUID().toString();
 
         //Initialize OpenID4VP instance with presentationId as traceability id for each new Verifiable Presentation request

@@ -3,6 +3,7 @@ package io.mosip.mimoto.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.hibernate.validator.constraints.URL;
 
 @Data
 @AllArgsConstructor
@@ -14,6 +15,7 @@ public class VerifiablePresentationVerifierDTO {
     @Schema(description = "Name of the Verifier")
     private String name;
 
+    @URL
     @Schema(description = "Logo URL of the Verifier")
     private String logo;
 
@@ -23,6 +25,7 @@ public class VerifiablePresentationVerifierDTO {
     @Schema(description = "Indicates if the Verifier is pre-registered with the wallet")
     private boolean isPreregisteredWithWallet;
 
+    @URL
     @Schema(description = "Redirect URI used to redirect the User back to the Verifier after the presentation is completed")
     private String redirectUri;
 }
