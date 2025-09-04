@@ -106,7 +106,7 @@ fileignoreconfig:
 - filename: docs/WalletUnlockProcess.md
   checksum: d172beb5aeef1037d70d2f83f034e6ec5e4ea69c6150ec6a25c9139c799b7879
 - filename: docs/api-documentation-openapi.json
-  checksum: cba4477ac4ab5b748ca5bfc4ad235bf07e334792df9b8c0b77785301351c2f4b
+  checksum: da64851bf25f582280d50d78d8aefc6d12cb3a0d7fc6cdc0676962c9a297b1ea
 - filename: src/main/java/io/mosip/mimoto/util/JwtGeneratorUtil.java
   checksum: c8533dd38f79879119ba2895afca75d60e9704d5a0df4a0e79bc3b9292bd0d38
 - filename: src/main/java/io/mosip/mimoto/service/impl/CredentialRequestServiceImpl.java
@@ -120,11 +120,11 @@ fileignoreconfig:
 - filename: src/test/resources/application-test.properties
   checksum: eff6c72dfdc2e0a2aa4e3ec9d520a1433189902467954d123bc562df095a43bd
 - filename: src/main/resources/application-default.properties
-  checksum: b8a1f2eb85b23a1706f0d6f73d9416f2e337aa0e5b155728f16b81fca468591c
+  checksum: 05110c9a04d4b8013c15d4c9294ebe589f00d1917be3e9b9f40996974c6cba3a
 - filename: src/main/resources/application-local.properties
   checksum: 9f28cff2323b911e29d62510e11e68662fde473adb96dff0cc65409d80c6d828
 - filename: docker-compose/config/mimoto-default.properties
-  checksum: fc10e892f9bc2a220b7f5cd3e5ea606d650b8a43b4c430d19d20ce7ecc5cd33d
+  checksum: 7fefcbd53ef6f34696c96be682dbb0d2d5535cea337d3ccb60f85a9cb9805cd1
 - filename: README.md
   checksum: a22d46c4cf0c09d3a2a3665400118c2b919158ddbf6c20773955b2c7c72bb91f
 - filename: docker-compose/README.md
@@ -138,5 +138,9 @@ fileignoreconfig:
 - filename: db_scripts/inji_mimoto/ddl/mimoto-trusted-verifiers.sql
   checksum: bbb73e09a9669a8bf78a30b1a72ffdcdffee3f3eb92c5f39ffb5f6ae37e748d2
 - filename: src/main/java/io/mosip/mimoto/controller/OpenID4VPController.java
-  checksum: c7b82c51a4c6f026d573746926ab32a15e6e1eda2db0a9c91982fca3dc2d2a01
+  checksum: de23725777a84caf1fee9fb964277cede4dcb49bfdb4f36befad02f55317e8d3
+- filename: src/main/java/io/mosip/mimoto/service/impl/VerifierServiceImpl.java
+  checksum: f759d32102e0effd9b65280d6da937100b1b459bbfd56f9c15e77686ad40b8b9
+- filename: src/main/java/io/mosip/mimoto/service/impl/SessionManager.java
+  checksum: 1eec94575084127dcfdd832087ddcf79e8a652f1e500ece042c070b67f6bacfb
 version: ""

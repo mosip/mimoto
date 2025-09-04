@@ -4018,13 +4018,15 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/x-www-form-urlencoded": {
+                        "application/json": {
                             "schema": {
-                                "type": "string"
+                                "$ref": "#/components/schemas/VerifiablePresentationAuthorizationRequest"
                             },
                             "examples": {
                                 "Verifier Verifiable Presentation Authorization Request": {
-                                    "value": "client_id=mock-client&presentation_definition_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fpresentation_definition_uri&response_type=vp_token&response_mode=direct_post&nonce=NHgLcWlae745DpfJbUyfdg%253D%253D&response_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response&state=pcmxBfvdPEcjFObgt%252BLekA%253D%253D"
+                                    "value": {
+                                        "authorizationRequestUrl": "client_id=mock-client&presentation_definition_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fpresentation_definition_uri&response_type=vp_token&response_mode=direct_post&nonce=NHgLcWlae745DpfJbUyfdg%253D%253D&response_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response&state=pcmxBfvdPEcjFObgt%252BLekA%253D%253D"
+                                    }
                                 }
                             }
                         }
@@ -4043,11 +4045,11 @@
                                         "value": {
                                             "presentationId": "123e4567-e89b-12d3-a456-426614174000",
                                             "verifier": {
-                                                "clientId": "mock-client",
-                                                "clientName": "Requester name",
-                                                "logoUri": "https://api.collab.mosip.net/inji/verifier-logo.png",
-                                                "isVerifierTrustedByWallet": true,
-                                                "isVerifierPreRegisteredWithWallet": true,
+                                                "id": "mock-client",
+                                                "name": "Requester name",
+                                                "logo": "https://api.collab.mosip.net/inji/verifier-logo.png",
+                                                "isTrusted": true,
+                                                "isPreregisteredWithWallet": true,
                                                 "redirectUri": "https://injiverify.collab.mosip.net/redirect"
                                             }
                                         }
@@ -4409,6 +4411,18 @@
                         "nullable": true
                     }
                 }
+            },
+            "VerifiablePresentationAuthorizationRequest": {
+                "type": "object",
+                "properties": {
+                    "authorizationRequestUrl": {
+                        "type": "string",
+                        "description": "The complete authorization request URL received from the Verifier"
+                    }
+                },
+                "required": [
+                    "authorizationRequestUrl"
+                ]
             },
             "VerifiablePresentationResponseDTO": {
                 "type": "object",

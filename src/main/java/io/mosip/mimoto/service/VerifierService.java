@@ -12,5 +12,5 @@ public interface VerifierService {
     Optional<VerifierDTO> getVerifierByClientId(String clientId) throws ApiNotAccessibleException, IOException;
     void validateVerifier(String clientId, String redirectUri) throws ApiNotAccessibleException, JsonProcessingException;
     VerifiersDTO getTrustedVerifiers() throws ApiNotAccessibleException, IOException;
-    boolean doesVerifierExistInDB(String verifierId, String walletId);
+    boolean isVerifierTrustedByWallet(String verifierId, String walletId);
 }
