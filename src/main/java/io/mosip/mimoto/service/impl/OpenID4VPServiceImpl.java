@@ -3,7 +3,6 @@ package io.mosip.mimoto.service.impl;
 import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationVerifierDTO;
 import io.mosip.mimoto.dto.openid.VerifierDTO;
-import io.mosip.mimoto.dto.openid.VerifiersDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.service.OpenID4VPService;
@@ -25,32 +24,28 @@ public class OpenID4VPServiceImpl implements OpenID4VPService {
     @Autowired
     private VerifierService verifierService;
 
+    private OpenID4VP openID4VP;
+
     @Override
     public VerifiablePresentationResponseDTO handleVPAuthorizationRequest(String urlEncodedVPAuthorizationRequest, String walletId)
             throws ApiNotAccessibleException, IOException {
-        String presentationId = generatePresentationId();
-        AuthorizationRequest authorizationRequest = authenticateVerifier(presentationId, urlEncodedVPAuthorizationRequest, getPreRegisteredVerifiers());
+        String presentationId = UUID.randomUUID().toString();
+
+        //Initialize OpenID4VP instance with presentationId as traceability id for each new Verifiable Presentation request
+        this.openID4VP = new OpenID4VP(presentationId);
+
+        AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, getPreRegisteredVerifiers());
         VerifiablePresentationVerifierDTO verifiablePresentationVerifierDTO = createVPResponseVerifierDTO(authorizationRequest, walletId);
         VerifiablePresentationSessionData verifiablePresentationSessionData = new VerifiablePresentationSessionData(authorizationRequest, Instant.now());
 
         return new VerifiablePresentationResponseDTO(presentationId, verifiablePresentationVerifierDTO, verifiablePresentationSessionData);
     }
 
-    private String generatePresentationId() {
-        return UUID.randomUUID().toString();
-    }
-
     private List<Verifier> getPreRegisteredVerifiers() throws ApiNotAccessibleException, IOException {
-        VerifiersDTO preRegisteredVerifiers = verifierService.getTrustedVerifiers();
-        return preRegisteredVerifiers.getVerifiers().stream()
+
+        return verifierService.getTrustedVerifiers().getVerifiers().stream()
                 .map(verifierDTO -> new Verifier(verifierDTO.getClientId(), verifierDTO.getResponseUris()))
                 .toList();
-    }
-
-    private AuthorizationRequest authenticateVerifier(String presentationId, String urlEncodedVPAuthorizationRequest,
-                                                      List<Verifier> trustedVerifiers) {
-        OpenID4VP openID4VP = new OpenID4VP(presentationId);
-        return openID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, trustedVerifiers);
     }
 
     private VerifiablePresentationVerifierDTO createVPResponseVerifierDTO(AuthorizationRequest authorizationRequest, String walletId) throws ApiNotAccessibleException, IOException {
@@ -60,11 +55,12 @@ public class OpenID4VPServiceImpl implements OpenID4VPService {
 
         boolean isVerifierTrustedByWallet = verifierService.doesVerifierExistInDB(authorizationRequest.getClientId(), walletId);
 
-        assert authorizationRequest.getClientMetadata() != null;
         return new VerifiablePresentationVerifierDTO(
                 authorizationRequest.getClientId(),
-                authorizationRequest.getClientMetadata().getClientName(),
-                authorizationRequest.getClientMetadata().getLogoUri(),
+                authorizationRequest.getClientMetadata() != null && authorizationRequest.getClientMetadata().getClientName() != null
+                        ? authorizationRequest.getClientMetadata().getClientName()
+                        : authorizationRequest.getClientId(),
+                authorizationRequest.getClientMetadata() != null ? authorizationRequest.getClientMetadata().getLogoUri() : null,
                 isVerifierTrustedByWallet,
                 isVerifierPreRegisteredWithWallet,
                 authorizationRequest.getRedirectUri()

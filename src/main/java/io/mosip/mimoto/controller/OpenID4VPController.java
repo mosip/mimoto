@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,7 +31,7 @@ public class OpenID4VPController {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public ResponseEntity<VerifiablePresentationResponseDTO> handleVPAuthorizationRequest(@PathVariable("walletId") String walletId, HttpSession httpSession, @RequestBody String urlEncodedVPAuthorizationRequest) throws ApiNotAccessibleException, IOException {
         String sessionWalletId = (String) httpSession.getAttribute(SessionKeys.WALLET_ID);
         if (sessionWalletId != null) {
