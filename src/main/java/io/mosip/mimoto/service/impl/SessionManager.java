@@ -27,7 +27,7 @@ public class SessionManager {
         session.setAttribute(SessionKeys.USER_ID, userId);
     }
 
-    public void storePresentationSessionDataInSession(HttpSession httpSession, VerifiablePresentationSessionData sessionData, String presentationId) throws JsonProcessingException {
+    public void storePresentationSessionDataInSession(HttpSession httpSession, VerifiablePresentationSessionData sessionData, String presentationId, String walletId) {
         Map<String, String> presentations = (Map<String, String>) httpSession.getAttribute("presentations");
 
         if (presentations == null) {
@@ -38,8 +38,9 @@ public class SessionManager {
         presentations.computeIfAbsent(presentationId, id -> {
             try {
                 Map<String, Object> vpSessionData = new HashMap<>();
-                vpSessionData.put("authorizationRequest", sessionData.getAuthorizationRequest());
                 vpSessionData.put("createdAt", sessionData.getCreatedAt().toString());
+                vpSessionData.put("openID4VP", objectMapper.writeValueAsString(sessionData.getOpenID4VP()));
+                vpSessionData.put("walletId", walletId);
 
                 return objectMapper.writeValueAsString(vpSessionData);
             } catch (JsonProcessingException e) {
@@ -47,7 +48,7 @@ public class SessionManager {
             }
         });
 
-        // Store the updated map in the session
+        // Store the updated presentations map in the session
         httpSession.setAttribute("presentations", presentations);
     }
 }

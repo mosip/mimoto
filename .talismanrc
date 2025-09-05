@@ -138,9 +138,9 @@ fileignoreconfig:
 - filename: db_scripts/inji_mimoto/ddl/mimoto-trusted-verifiers.sql
   checksum: bbb73e09a9669a8bf78a30b1a72ffdcdffee3f3eb92c5f39ffb5f6ae37e748d2
 - filename: src/main/java/io/mosip/mimoto/controller/OpenID4VPController.java
-  checksum: de23725777a84caf1fee9fb964277cede4dcb49bfdb4f36befad02f55317e8d3
+  checksum: eef302db396aa1d46d128ef7422d5aeb00c9173af32f61effdf31a0762ddff83
 - filename: src/main/java/io/mosip/mimoto/service/impl/VerifierServiceImpl.java
   checksum: f759d32102e0effd9b65280d6da937100b1b459bbfd56f9c15e77686ad40b8b9
 - filename: src/main/java/io/mosip/mimoto/service/impl/SessionManager.java
-  checksum: 1eec94575084127dcfdd832087ddcf79e8a652f1e500ece042c070b67f6bacfb
+  checksum: a10d8f3df2df16f0fc6e7bfc2bcab304249a02b673ade43c0211a0920e46fc4c
 version: ""

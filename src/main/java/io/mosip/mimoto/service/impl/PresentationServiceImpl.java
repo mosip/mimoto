@@ -48,8 +48,6 @@ public class PresentationServiceImpl implements PresentationService {
     @Autowired
     private VerifierService verifierService;
 
-    private OpenID4VP openID4VP;
-
     @Value("${mosip.inji.ovp.redirect.url.pattern}")
     String injiOvpRedirectURLPattern;
 
@@ -61,12 +59,12 @@ public class PresentationServiceImpl implements PresentationService {
         String presentationId = UUID.randomUUID().toString();
 
         //Initialize OpenID4VP instance with presentationId as traceability id for each new Verifiable Presentation request
-        this.openID4VP = new OpenID4VP(presentationId);
+        OpenID4VP openID4VP = new OpenID4VP(presentationId);
 
         List<Verifier> preRegisteredVerifiers = getPreRegisteredVerifiers();
         AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers);
         VerifiablePresentationVerifierDTO verifiablePresentationVerifierDTO = createVPResponseVerifierDTO(preRegisteredVerifiers, authorizationRequest, walletId);
-        VerifiablePresentationSessionData verifiablePresentationSessionData = new VerifiablePresentationSessionData(authorizationRequest, Instant.now());
+        VerifiablePresentationSessionData verifiablePresentationSessionData = new VerifiablePresentationSessionData(openID4VP, Instant.now());
 
         return new VerifiablePresentationResponseDTO(presentationId, verifiablePresentationVerifierDTO, verifiablePresentationSessionData);
     }
