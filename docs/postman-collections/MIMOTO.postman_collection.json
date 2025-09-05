@@ -430,6 +430,63 @@
 			]
 		},
 		{
+			"name": "Wallet OpenID4VP",
+			"item": [
+				{
+					"name": "Create Presentation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Store the response body in a variable",
+									"let presentationResponse = pm.response.json();",
+									"",
+									"// Parse the response body to extract the presentationId",
+									"let presentationId = presentationResponse.presentationId;",
+									"",
+									"pm.environment.set(\"presentationId\", presentationId);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"authorizationRequestUrl\": \"{{verifierAuthorizationRequestUrl}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HOST}}/wallets/{{walletId}}/presentations",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"wallets",
+								"{{walletId}}",
+								"presentations"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Users",
 			"item": [
 				{

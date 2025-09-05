@@ -7,6 +7,7 @@ import io.mosip.mimoto.dto.openid.VerifiersDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidVerifierException;
+import io.mosip.mimoto.repository.VerifierRepository;
 import io.mosip.mimoto.service.VerifierService;
 import io.mosip.mimoto.util.Utilities;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.util.Optional;
 
@@ -33,6 +35,9 @@ public class VerifierServiceImpl implements VerifierService {
     @Autowired
     ObjectMapper objectMapper;
 
+    @Autowired
+    private VerifierRepository verifierRepository;
+
     private static final PathMatcher pathMatcher;
     private static final UrlValidator urlValidator;
 
@@ -43,6 +48,7 @@ public class VerifierServiceImpl implements VerifierService {
 
     private final Logger logger = LoggerFactory.getLogger(VerifierServiceImpl.class);
 
+    @Cacheable(value = "preRegisteredTrustedVerifiersCache", key = "'preRegisteredTrustedVerifiers'")
     public VerifiersDTO getTrustedVerifiers() throws ApiNotAccessibleException, JsonProcessingException {
         String trustedVerifiersJsonValue = utilities.getTrustedVerifiersJsonValue();
         if (trustedVerifiersJsonValue == null) {
@@ -77,5 +83,10 @@ public class VerifierServiceImpl implements VerifierService {
                         ErrorConstants.INVALID_CLIENT.getErrorMessage());
             }
         );
+    }
+
+    @Override
+    public boolean isVerifierTrustedByWallet(String verifierId, String walletId) {
+        return verifierRepository.existsByWalletIdAndVerifierId(walletId, verifierId);
     }
 }

@@ -50,6 +50,7 @@ public class CacheConfig {
     private static final String ISSUER_WELLKNOWN_CACHE = "issuerWellknown";
     private static final String ISSUERS_CONFIG_CACHE   = "issuersConfig";
     private static final String AUTH_SERVER_WELLKNOWN_CACHE = "authServerWellknown";
+    private static final String PRE_REGISTERED_TRUSTED_VERIFIERS_CACHE = "preRegisteredTrustedVerifiers";
 
     @Value("${cache.credential-issuer.wellknown.expiry-time-in-min:60}")
     private Long issuerWellknownExpiryTimeInMin;
@@ -59,6 +60,9 @@ public class CacheConfig {
 
     @Value("${cache.credential-issuer.authserver-wellknown.expiry-time-in-min:60}")
     private Long authServerWellknownExpiryTimeInMin;
+
+    @Value("${cache.pre-registered-trusted-verifiers.expiry-time-in-min:60}")
+    private Long preRegisteredTrustedVerifiersExpiryTimeInMin;
 
     @Value("${cache.default.expiry-time-in-min:60}")
     private long defaultCacheExpiryTimeInMin;
@@ -101,6 +105,10 @@ public class CacheConfig {
                     AUTH_SERVER_WELLKNOWN_CACHE,
                     createCaffeineCacheConfig(authServerWellknownExpiryTimeInMin).build()
             );
+            cacheManager.registerCustomCache(
+                    PRE_REGISTERED_TRUSTED_VERIFIERS_CACHE,
+                    createCaffeineCacheConfig(preRegisteredTrustedVerifiersExpiryTimeInMin).build()
+            );
             // Set the default Caffeine config for any other caches
             cacheManager.setCaffeine(createCaffeineCacheConfig(null));
         };
@@ -131,7 +139,8 @@ public class CacheConfig {
             Map<String, RedisCacheConfiguration> cacheConfigurations = Map.of(
                     ISSUER_WELLKNOWN_CACHE, createRedisConfigWithTtl(defaultCacheConfig, issuerWellknownExpiryTimeInMin),
                     ISSUERS_CONFIG_CACHE, createRedisConfigWithTtl(defaultCacheConfig, issuersConfigExpiryTimeInMin),
-                    AUTH_SERVER_WELLKNOWN_CACHE, createRedisConfigWithTtl(defaultCacheConfig, authServerWellknownExpiryTimeInMin)
+                    AUTH_SERVER_WELLKNOWN_CACHE, createRedisConfigWithTtl(defaultCacheConfig, authServerWellknownExpiryTimeInMin),
+                    PRE_REGISTERED_TRUSTED_VERIFIERS_CACHE, createRedisConfigWithTtl(defaultCacheConfig, preRegisteredTrustedVerifiersExpiryTimeInMin)
             );
 
             // Apply default and per-cache configurations

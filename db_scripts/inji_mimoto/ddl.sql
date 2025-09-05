@@ -8,3 +8,4 @@
 \ir ddl/mimoto-wallet.sql
 \ir ddl/mimoto-proof_signing_keys.sql
 \ir ddl/mimoto-verifiable_credentials.sql
+\ir ddl/mimoto-trusted-verifiers.sql
