@@ -84,7 +84,7 @@ public class OpenID4VPController {
                 WalletUtil.validateWalletId(httpSession, walletId);
             }
             VerifiablePresentationResponseDTO verifiablePresentationResponseDTO = presentationService.handleVPAuthorizationRequest(vpAuthorizationRequest.getAuthorizationRequestUrl(), walletId);
-            sessionManager.storePresentationSessionDataInSession(httpSession, verifiablePresentationResponseDTO.getVerifiablePresentationSessionData(), verifiablePresentationResponseDTO.getPresentationId());
+            sessionManager.storePresentationSessionDataInSession(httpSession, verifiablePresentationResponseDTO.getVerifiablePresentationSessionData(), verifiablePresentationResponseDTO.getPresentationId(), walletId);
 
             return ResponseEntity.status(HttpStatus.OK).body(verifiablePresentationResponseDTO);
         } catch (OpenID4VPExceptions exception) {
