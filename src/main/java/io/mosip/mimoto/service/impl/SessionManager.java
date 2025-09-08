@@ -39,7 +39,7 @@ public class SessionManager {
             try {
                 Map<String, Object> vpSessionData = new HashMap<>();
                 vpSessionData.put("createdAt", sessionData.getCreatedAt().toString());
-                vpSessionData.put("openID4VP", objectMapper.writeValueAsString(sessionData.getOpenID4VP()));
+                vpSessionData.put("openID4VPInstance", objectMapper.writeValueAsString(sessionData.getOpenID4VP()));
                 vpSessionData.put("walletId", walletId);
 
                 return objectMapper.writeValueAsString(vpSessionData);

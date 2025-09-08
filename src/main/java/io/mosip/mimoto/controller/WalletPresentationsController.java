@@ -34,7 +34,7 @@ import static io.mosip.mimoto.exception.ErrorConstants.WALLET_CREATE_VP_EXCEPTIO
 @Slf4j
 @RestController
 @RequestMapping("/wallets/{walletId}/presentations")
-public class OpenID4VPController {
+public class WalletPresentationsController {
 
     @Autowired
     private PresentationService presentationService;
