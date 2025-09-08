@@ -30,32 +30,15 @@ The project requires JDK 21, postgres and google client credentials
 
 3. **Configuring Postgres Database:**
    1. **Ensure Postgres Service is Available and Connected**
-      - **Using Docker Compose:** You can run Postgres alongside Mimoto by adding the below lines in docker-compose.yml:
-        1. Add the Postgres service under the services section:
-           ```yaml
-              postgres:
-              image: 'postgres:latest'
-              environment:
-                 POSTGRES_USER: postgres
-                 POSTGRES_PASSWORD: postgres
-              ports:
-                 - "5432:5432"
-              volumes:
-                 - postgres-data:/var/lib/postgresql/data
-                 - ./mimoto_init.sql:/docker-entrypoint-initdb.d/mimoto_init.sql
+      - **Using Local Postgres Installation:** If you have Postgres installed locally, run the database initialization scripts:
+           ```bash
+           cd db_scripts/inji_mimoto
+           ./deploy.sh deploy.properties
            ```
-        2. Make Postgres a dependency for the Mimoto service:
-           ```yaml
-            mimoto-service:
-              depends_on:
-                - postgres
-           ```
-        3. Add Postgres data volume in the volumes section:
-           ```yaml
-           volumes:
-             postgres-data:
-           ```
-     
+        * If needed, update the database connection properties in [application-local.properties](src/main/resources/application-local.properties) with your local Postgres credentials.
+      
+      - **Using Docker Compose:** If you don't have postgres setup in your local you can run Postgres along with Mimoto by using the `postgres` service in [docker-compose.yml](docker-compose/docker-compose.yml).
+
       - **Or, run Postgres using Docker while starting Mimoto through your IDE:**
          * Use the following Docker command to start the Postgres service and expose it on the default port 5432. Make sure this port is accessible from your local machine.
             ```bash
