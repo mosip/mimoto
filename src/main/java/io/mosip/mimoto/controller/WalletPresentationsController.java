@@ -45,9 +45,9 @@ public class WalletPresentationsController {
     /**
      * Processes the Verifiable Presentation Authorization Request for a specific wallet.
      *
-     * @param walletId                    The unique identifier of the wallet.
-     * @param httpSession                 The HTTP session containing wallet details such as wallet ID.
-     * @param vpAuthorizationRequest      The Verifiable Presentation Authorization Request parameters.
+     * @param walletId               The unique identifier of the wallet.
+     * @param httpSession            The HTTP session containing wallet details such as wallet ID.
+     * @param vpAuthorizationRequest The Verifiable Presentation Authorization Request parameters.
      * @return The processed Verifiable Presentation details, including information about the verifier.
      */
     @Operation(summary = "Processes Verifiable Presentation Authorization Request and provides details about the verifier and presentation.", description = "This API is secured using session-based authentication. Upon receiving a request, the session is first retrieved using the session ID extracted from the Cookie header to authenticate the user. Once authenticated, the API processes the received Verifiable Presentation Authorization Request from the Verifier for a specific wallet. It validates the session, verifies the authenticity of the request, and checks if the Verifier is pre-registered and trusted by the wallet. If all validations pass, the API returns a response containing the presentation details; otherwise, an appropriate error response is returned.", operationId = "processVPAuthorizationRequest", security = @SecurityRequirement(name = "SessionAuth"), parameters = {
@@ -79,10 +79,8 @@ public class WalletPresentationsController {
     @PostMapping
     public ResponseEntity<VerifiablePresentationResponseDTO> handleVPAuthorizationRequest(@PathVariable("walletId") String walletId, HttpSession httpSession, @RequestBody VerifiablePresentationAuthorizationRequest vpAuthorizationRequest) {
         try {
-            String sessionWalletId = (String) httpSession.getAttribute(SessionKeys.WALLET_ID);
-            if (sessionWalletId != null) {
-                WalletUtil.validateWalletId(httpSession, walletId);
-            }
+            WalletUtil.validateWalletId(httpSession, walletId);
+
             VerifiablePresentationResponseDTO verifiablePresentationResponseDTO = presentationService.handleVPAuthorizationRequest(vpAuthorizationRequest.getAuthorizationRequestUrl(), walletId);
             sessionManager.storePresentationSessionDataInSession(httpSession, verifiablePresentationResponseDTO.getVerifiablePresentationSessionData(), verifiablePresentationResponseDTO.getPresentationId(), walletId);
 
