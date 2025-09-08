@@ -10,10 +10,11 @@ import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.WalletLockedException;
 import io.mosip.mimoto.repository.WalletRepository;
 import io.mosip.mimoto.util.TestUtilities;
+import io.mosip.mimoto.util.WalletLockStatusUtils;
 import io.mosip.mimoto.util.WalletUtil;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -35,10 +36,7 @@ class WalletUnlockServiceTest {
     private WalletUtil walletUtil;
 
     @MockBean
-    private WalletLockManager walletLockManager;
-
-    @MockBean
-    private WalletLockStatusService walletLockStatusService;
+    private WalletLockService walletLockService;
 
     @MockBean
     private WalletRepository walletRepository;
@@ -68,108 +66,124 @@ class WalletUnlockServiceTest {
 
     @Test
     void shouldUnlockWalletSuccessfullyAndReturnDecryptedWalletKeyWhenValidPinIsProvided() throws InvalidRequestException {
-        when(walletLockManager.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet);
-        when(walletLockStatusService.getErrorBasedOnWalletLockStatus(wallet)).thenReturn(null);
+        when(walletLockService.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet);
         when(walletUtil.decryptWalletKey(encryptedWalletKey, walletPin)).thenReturn(decryptedWalletKey);
 
-        String result = walletUnlockService.handleUnlock(wallet, walletPin);
+        try (MockedStatic<WalletLockStatusUtils> mockedStatic = mockStatic(WalletLockStatusUtils.class)) {
+            mockedStatic.when(() -> WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet)).thenReturn(null);
 
-        assertEquals(decryptedWalletKey, result);
-        verify(walletLockStatusService, times(1)).getErrorBasedOnWalletLockStatus(wallet);
-        verify(walletUtil).decryptWalletKey(encryptedWalletKey, walletPin);
-        verify(walletLockManager).resetTemporaryLockIfExpired(wallet);
-        verify(walletLockManager).resetLockState(wallet);
+            String result = walletUnlockService.handleUnlock(wallet, walletPin);
+
+            assertEquals(decryptedWalletKey, result);
+            mockedStatic.verify(() -> WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet), times(1));
+            verify(walletUtil).decryptWalletKey(encryptedWalletKey, walletPin);
+            verify(walletLockService).resetTemporaryLockIfExpired(wallet);
+            verify(walletLockService).resetLockState(wallet);
+        }
     }
 
     @Test
     void shouldThrowExceptionAndHandleUnlockFailureWhenInvalidPinIsProvided() throws InvalidRequestException {
         String invalidPin = "12345678";
-        when(walletLockManager.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet).thenReturn(wallet);
-        when(walletLockManager.enforceLockCyclePolicy(wallet)).thenReturn(wallet);
-        when(walletLockStatusService.getErrorBasedOnWalletLockStatus(wallet)).thenReturn(null);
+        when(walletLockService.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet).thenReturn(wallet);
+        when(walletLockService.enforceLockCyclePolicy(wallet)).thenReturn(wallet);
         when(walletUtil.decryptWalletKey(encryptedWalletKey, invalidPin))
                 .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_PIN.getErrorCode(), "Invalid PIN"));
 
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-                walletUnlockService.handleUnlock(wallet, invalidPin));
+        try (MockedStatic<WalletLockStatusUtils> mockedStatic = mockStatic(WalletLockStatusUtils.class)) {
+            mockedStatic.when(() -> WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet)).thenReturn(null);
 
-        assertEquals(ErrorConstants.INVALID_PIN.getErrorCode(), exception.getErrorCode());
-        assertEquals("invalid_pin --> Invalid PIN", exception.getMessage());
+            InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+                    walletUnlockService.handleUnlock(wallet, invalidPin));
 
-        verify(walletUtil).decryptWalletKey(encryptedWalletKey, invalidPin);
-        verify(walletLockManager).enforceLockCyclePolicy(wallet);
-        verify(walletLockStatusService, times(3)).getErrorBasedOnWalletLockStatus(wallet);
-        verify(walletLockManager,times(2)).resetTemporaryLockIfExpired(wallet);
-        verify(walletLockManager, never()).resetLockState(wallet);
-        verify(walletRepository, times(1)).save(wallet);
+            assertEquals(ErrorConstants.INVALID_PIN.getErrorCode(), exception.getErrorCode());
+            assertEquals("invalid_pin --> Invalid PIN", exception.getMessage());
+
+            verify(walletUtil).decryptWalletKey(encryptedWalletKey, invalidPin);
+            verify(walletLockService).enforceLockCyclePolicy(wallet);
+            mockedStatic.verify(() -> WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet), times(3));
+            verify(walletLockService, times(2)).resetTemporaryLockIfExpired(wallet);
+            verify(walletLockService, never()).resetLockState(wallet);
+            verify(walletRepository, times(1)).save(wallet);
+        }
     }
 
     @Test
     void shouldThrowExceptionWhenWalletIsLockedPermanentlyAfterValidatingInvalidPin() throws InvalidRequestException {
         String invalidPin = "12345678";
-        when(walletLockManager.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet).thenReturn(wallet);
+        when(walletLockService.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet).thenReturn(wallet);
         when(walletUtil.decryptWalletKey(encryptedWalletKey, invalidPin))
                 .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_PIN.getErrorCode(), "Invalid PIN"));
-        when(walletLockManager.enforceLockCyclePolicy(wallet)).thenReturn(wallet);
-        when(walletLockStatusService.getErrorBasedOnWalletLockStatus(wallet))
-                .thenReturn(null)
-                .thenReturn(null)
-                .thenReturn(new ErrorDTO(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage()));
-        String expectedErrorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
+        when(walletLockService.enforceLockCyclePolicy(wallet)).thenReturn(wallet);
 
-        WalletLockedException exception = assertThrows(WalletLockedException.class, () ->
-                walletUnlockService.handleUnlock(wallet, invalidPin));
+        try (MockedStatic<WalletLockStatusUtils> mockedStatic = mockStatic(WalletLockStatusUtils.class)) {
+            mockedStatic.when(() -> WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet))
+                    .thenReturn(null)
+                    .thenReturn(null)
+                    .thenReturn(new ErrorDTO(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage()));
+            String expectedErrorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
 
-        assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), exception.getErrorCode());
-        assertEquals(expectedErrorMessage, exception.getMessage());
+            WalletLockedException exception = assertThrows(WalletLockedException.class, () ->
+                    walletUnlockService.handleUnlock(wallet, invalidPin));
 
-        verify(walletUtil).decryptWalletKey(encryptedWalletKey, invalidPin);
-        verify(walletLockManager).enforceLockCyclePolicy(wallet);
-        verify(walletLockManager,times(2)).resetTemporaryLockIfExpired(wallet);
-        verify(walletLockStatusService, times(3)).getErrorBasedOnWalletLockStatus(wallet);
-        verify(walletLockManager, never()).resetLockState(wallet);
-        verify(walletRepository, times(1)).save(wallet);
+            assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), exception.getErrorCode());
+            assertEquals(expectedErrorMessage, exception.getMessage());
+
+            verify(walletUtil).decryptWalletKey(encryptedWalletKey, invalidPin);
+            verify(walletLockService).enforceLockCyclePolicy(wallet);
+            verify(walletLockService, times(2)).resetTemporaryLockIfExpired(wallet);
+            mockedStatic.verify(() -> WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet), times(3));
+            verify(walletLockService, never()).resetLockState(wallet);
+            verify(walletRepository, times(1)).save(wallet);
+        }
     }
 
     @Test
     void shouldThrowExceptionWhenOnlyOneAttemptIsLeftBeforePermanentLockoutAfterValidatingInvalidPin() throws InvalidRequestException {
         String invalidPin = "12345678";
-        when(walletLockManager.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet).thenReturn(wallet);
+        when(walletLockService.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet).thenReturn(wallet);
         when(walletUtil.decryptWalletKey(encryptedWalletKey, invalidPin))
                 .thenThrow(new InvalidRequestException(ErrorConstants.INVALID_PIN.getErrorCode(), "Invalid PIN"));
-        when(walletLockStatusService.getErrorBasedOnWalletLockStatus(wallet))
-                .thenReturn(null)
-                .thenReturn(new ErrorDTO(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage()));
-        when(walletLockManager.enforceLockCyclePolicy(wallet)).thenReturn(wallet);
-        String expectedErrorMessage = ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode() + " --> " + ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage();
+        when(walletLockService.enforceLockCyclePolicy(wallet)).thenReturn(wallet);
 
-        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-                walletUnlockService.handleUnlock(wallet, invalidPin));
+        try (MockedStatic<WalletLockStatusUtils> mockedStatic = mockStatic(WalletLockStatusUtils.class)) {
+            mockedStatic.when(() -> WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet))
+                    .thenReturn(null)
+                    .thenReturn(new ErrorDTO(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage()));
+            String expectedErrorMessage = ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode() + " --> " + ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorMessage();
 
-        assertEquals(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), exception.getErrorCode());
-        assertEquals(expectedErrorMessage, exception.getMessage());
+            InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+                    walletUnlockService.handleUnlock(wallet, invalidPin));
 
-        verify(walletUtil).decryptWalletKey(encryptedWalletKey, invalidPin);
-        verify(walletLockManager).enforceLockCyclePolicy(wallet);
-        verify(walletLockManager, times(1)).resetTemporaryLockIfExpired(wallet);
-        verify(walletLockStatusService, times(2)).getErrorBasedOnWalletLockStatus(wallet);
-        verify(walletLockManager, never()).resetLockState(wallet);
-        verify(walletRepository, times(1)).save(wallet);
+            assertEquals(ErrorConstants.WALLET_LAST_ATTEMPT_BEFORE_LOCKOUT.getErrorCode(), exception.getErrorCode());
+            assertEquals(expectedErrorMessage, exception.getMessage());
+
+            verify(walletUtil).decryptWalletKey(encryptedWalletKey, invalidPin);
+            verify(walletLockService).enforceLockCyclePolicy(wallet);
+            verify(walletLockService, times(1)).resetTemporaryLockIfExpired(wallet);
+            mockedStatic.verify(() -> WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet), times(2));
+            verify(walletLockService, never()).resetLockState(wallet);
+            verify(walletRepository, times(1)).save(wallet);
+        }
     }
 
     @Test
     void shouldThrowExceptionImmediatelyWhenUnlockingWalletIsAlreadyLockedPermanently() throws InvalidRequestException {
-        when(walletLockManager.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet);
-        when(walletLockStatusService.getErrorBasedOnWalletLockStatus(wallet)).thenReturn(new ErrorDTO(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage()));
-        String expectedErrorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
+        when(walletLockService.resetTemporaryLockIfExpired(wallet)).thenReturn(wallet);
 
-        WalletLockedException exception = assertThrows(WalletLockedException.class, () ->
-                walletUnlockService.handleUnlock(wallet, walletPin));
+        try (MockedStatic<WalletLockStatusUtils> mockedStatic = mockStatic(WalletLockStatusUtils.class)) {
+            mockedStatic.when(() -> WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet))
+                    .thenReturn(new ErrorDTO(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage()));
+            String expectedErrorMessage = ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode() + " --> " + ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorMessage();
 
-        assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), exception.getErrorCode());
-        assertEquals(expectedErrorMessage, exception.getMessage());
+            WalletLockedException exception = assertThrows(WalletLockedException.class, () ->
+                    walletUnlockService.handleUnlock(wallet, walletPin));
 
-        verify(walletLockManager,times(1)).resetTemporaryLockIfExpired(wallet);
-        verify(walletLockStatusService, times(1)).getErrorBasedOnWalletLockStatus(wallet);
+            assertEquals(ErrorConstants.WALLET_PERMANENTLY_LOCKED.getErrorCode(), exception.getErrorCode());
+            assertEquals(expectedErrorMessage, exception.getMessage());
+
+            verify(walletLockService, times(1)).resetTemporaryLockIfExpired(wallet);
+            mockedStatic.verify(() -> WalletLockStatusUtils.getErrorBasedOnWalletLockStatus(wallet), times(1));
+        }
     }
 }

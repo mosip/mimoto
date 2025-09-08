@@ -26,6 +26,8 @@ import io.mosip.mimoto.util.LocaleUtils;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,6 +82,9 @@ public class CredentialPDFGeneratorService {
 
     @Value("${mosip.injiweb.vc.subject.face.keys.order:image,face,photo,picture,portrait}")
     private String faceImageLookupKeys;
+
+    @Value("${mosip.injiweb.mask.disclosures:true}")
+    private boolean maskDisclosures;
 
     public ByteArrayInputStream generatePdfForVerifiableCredential(String credentialConfigurationId, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
         // Get the appropriate processor based on format
@@ -145,8 +150,11 @@ public class CredentialPDFGeneratorService {
                 String strVal = formatValue(val, locale);
                 if (disclosures.contains(key)) {
                     disclosuresProps.put(key, displayName);
+                    if (maskDisclosures) {
+                        strVal = utilities.maskValue(strVal);
+                    }
                 }
-                if (!isFaceKey) {
+                if (!isFaceKey && displayName != null) {
                     rowProperties.put(key, Map.of(displayName, strVal));
                 }
             });
@@ -159,6 +167,11 @@ public class CredentialPDFGeneratorService {
             qrCodeImage = constructQRCodeWithVCData(vcCredentialResponse);
         }
 
+        // is sd-jwt and has disclosures
+        boolean isSdJwtWithDisclosures = CredentialFormat.VC_SD_JWT.getFormat().equals(vcCredentialResponse.getFormat()) && CollectionUtils.isNotEmpty(disclosures);
+
+        data.put("isMaskedOn", maskDisclosures);
+        data.put("isSdJwtWithDisclosures", isSdJwtWithDisclosures);
         data.put("qrCodeImage", qrCodeImage);
         data.put("credentialValidity", credentialValidity);
         data.put("logoUrl", issuerDTO.getDisplay().stream().map(d -> d.getLogo().getUrl()).findFirst().orElse(""));
@@ -201,14 +214,22 @@ public class CredentialPDFGeneratorService {
                 return String.join(", ", (List<String>) list);
             } else if (list.getFirst() instanceof Map<?, ?>) {
                 return list.stream()
+                        .filter(Objects::nonNull)
                         .map(item -> (Map<?, ?>) item)
-                        .filter(m -> LocaleUtils.matchesLocale(m.get("language").toString(), locale))
-                        .map(m -> m.get("value").toString())
+                        .filter(m -> {
+                            Object lang = m.get("language");  // Safely get language
+                            return lang != null && LocaleUtils.matchesLocale(lang.toString(), locale);
+                        })
+                        .map(m -> {
+                            Object value = m.get("value");  // Safely get value
+                            return value != null ? value.toString() : null;
+                        })
+                        .filter(Objects::nonNull)
                         .findFirst()
                         .orElse("");
             }
         }
-        return val.toString();
+        return val != null ? val.toString() : "";
     }
 
     private ByteArrayInputStream renderVCInCredentialTemplate(Map<String, Object> data, String issuerId, String credentialConfigurationId) {

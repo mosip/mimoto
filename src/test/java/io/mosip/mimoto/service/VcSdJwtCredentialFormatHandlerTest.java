@@ -62,10 +62,8 @@ class VcSdJwtCredentialFormatHandlerTest {
 
             // Mock JWT payload with credentialSubject
             Map<String, Object> jwtPayload = new HashMap<>();
-            Map<String, Object> credentialSubject = new HashMap<>();
-            credentialSubject.put("name", "John Doe");
-            credentialSubject.put("admin", true);
-            jwtPayload.put("credentialSubject", credentialSubject);
+            jwtPayload.put("name", "John Doe");
+            jwtPayload.put("admin", true);
             jwtPayload.put("iss", "https://example.com");
             jwtPayload.put("sub", "1234567890");
             jwtPayload.put("iat", 1516239022);

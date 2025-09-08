@@ -32,7 +32,7 @@ public class AuthorizationServerWellKnownResponse {
     @NotBlank
     @URL
     @SerializedName("token_endpoint")
-    @JsonProperty(value = "token_endpoint", access = JsonProperty.Access.WRITE_ONLY)
+    @JsonProperty(value = "token_endpoint")
     @Schema(description = "Endpoint for getting the token from the authorization server")
     private String tokenEndpoint;
 }
