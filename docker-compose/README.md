@@ -40,11 +40,12 @@ This is the docker-compose setup to run mimoto which act as BFF for Inji mobile 
    ```
    - **Running Mimoto in IDE and other services like `datashare service` via Docker Compose:**
    1.  In `docker-compose.yml`, update the `DATASHARE_DOMAIN` environment variable for the `Datashare service` to `localhost:8097`.
-   2.  Then, start your dependent services by running the following command
+   2. Ensure that the `mimoto-service` service (or) any other service is commented out in the `docker-compose.yml` file which you will be running locally.
+   3. Then, start your dependent services by running the following command
    ```bash
-      docker-compose up # Use this to comment inji web service and start all the other services defined in docker-compose.yml
+      docker-compose up # Use this to start all the services defined in docker-compose.yml
       # OR
-      docker-compose up datashare other_service_name # To start specific services (replace with actual names)
+      docker-compose up datashare postgres other_service_name # To start specific services (replace with actual names from docker-compose.yml)
    ```
    **Note:** Use the **-d** flag with docker-compose up to run the services in detached (background) mode.
    
