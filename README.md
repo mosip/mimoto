@@ -27,17 +27,58 @@ The project requires JDK 21, postgres and google client credentials
 
    For detailed setup instructions (including running Redis with Docker CLI and updating configuration), see the [Cache Providers Setup Guide](#cache-providers-setup-guide) section.
       
-3. Refer to the [How to create Google Client Credentials](docker-compose/README.md#how-to-create-google-client-credentials) section to create
+
+3. **Configuring Postgres Database:**
+   1. **Ensure Postgres Service is Available and Connected**
+      - **Using Local Postgres Installation:** If you have Postgres installed locally, run the database initialization scripts:
+           ```bash
+           cd db_scripts/inji_mimoto
+           ./deploy.sh deploy.properties
+           ```
+        * If needed, update the database connection properties in [application-local.properties](src/main/resources/application-local.properties) with your local Postgres credentials.
+      
+      - **Using Docker Compose:** If you don't have postgres setup in your local you can run Postgres along with Mimoto by using the `postgres` service in [docker-compose.yml](docker-compose/docker-compose.yml).
+
+      - **Or, run Postgres using Docker while starting Mimoto through your IDE:**
+         * Use the following Docker command to start the Postgres service and expose it on the default port 5432. Make sure this port is accessible from your local machine.
+            ```bash
+                docker pull postgres:latest  # Pull the Postgres image if not already available
+                docker run -d --name postgres \
+                -e POSTGRES_USER=postgres \
+                -e POSTGRES_PASSWORD=postgres \
+                -e POSTGRES_DB=inji_mimoto \
+                -p 5432:5432 \
+                postgres:latest
+            ```
+         * Start Mimoto normally, following the instructions mentioned in [Build & run (for developers) section](#build--run-for-developers).
+   2. **Update the following properties** in
+    - [application-local.properties](src/main/resources/application-local.properties) *(when running through IDE)*, or
+    - [mimoto-default.properties](docker-compose/config/mimoto-default.properties) *(when running through Docker)*:
+   
+      **Look for properties starting with:**
+   - `spring.datasource.*`
+   - `spring.datasource.*`
+   - `mosip.mimoto.database.*`
+   3. **Check data in postgres by using the following commands**
+      ```bash
+      docker exec -it postgres psql -U postgres -d inji_mimoto # connect to container
+      
+      \dt mimoto.* # to see all tables in mimoto schema
+      
+      SELECT * FROM mimoto.<table_name>; # to see data in a table
+      ```
+
+4. Refer to the [How to create Google Client Credentials](docker-compose/README.md#how-to-create-google-client-credentials) section to create
    Google client credentials and update below properties in `application-local.properties`.
     ``` 
     spring.security.oauth2.client.registration.google.client-id=
     spring.security.oauth2.client.registration.google.client-secret=
     ```
-4. Add identity providers as issuers in the `mimoto-issuers-config.json` file of [resources folder](src/main/resources/mimoto-issuers-config.json). For each provider, create a corresponding object with its issuer-specific configuration. Refer to the [Issuers Configuration](docker-compose/README.md#mimoto-issuers-configuration) section for details on how to structure this file and understand each field's purpose and what values need to be updated.
+5. Add identity providers as issuers in the `mimoto-issuers-config.json` file of [resources folder](src/main/resources/mimoto-issuers-config.json). For each provider, create a corresponding object with its issuer-specific configuration. Refer to the [Issuers Configuration](docker-compose/README.md#mimoto-issuers-configuration) section for details on how to structure this file and understand each field's purpose and what values need to be updated.
 
-5. Add or update the verifiers clientId, redirect and response Uris in `mimoto-trusted-verifiers.json` file of [resources folder](src/main/resources/mimoto-trusted-verifiers.json) for Verifiable credential Online Sharing.
+6. Add or update the verifiers clientId, redirect and response Uris in `mimoto-trusted-verifiers.json` file of [resources folder](src/main/resources/mimoto-trusted-verifiers.json) for Verifiable credential Online Sharing.
 
-6. Keystore(oidckeystore.p12) Configuration:
+7. Keystore(oidckeystore.p12) Configuration:
    In the root directory, create a certs folder and generate an OIDC client. Add the onboard client’s key to the oidckeystore.p12 file and place this file inside the certs folder.
    Refer to the [official documentation](https://docs.inji.io/inji-wallet/inji-mobile/technical-overview/customization-overview/credential_providers) for guidance on how to create the **oidckeystore.p12** file and add the OIDC client key to it.
    * The **oidckeystore.p12** file stores keys and certificates, each identified by an alias (e.g., mpartner-default-mimoto-insurance-oidc). Mimoto uses this alias to find the correct entry and access the corresponding private key during the authentication flow.
@@ -52,19 +93,19 @@ The project requires JDK 21, postgres and google client credentials
     ```
    * Mimoto also uses this same keystore file (oidckeystore.p12) to store keys generated at service startup, which are essential for performing encryption and decryption operations through the KeyManager service.
 
-7. To configure any Mobile Wallet specific configurations refer to the [Inji Mobile Wallet Configuration](docker-compose/README.md#inji-mobile-wallet-configuration) section.
+8. To configure any Mobile Wallet specific configurations refer to the [Inji Mobile Wallet Configuration](docker-compose/README.md#inji-mobile-wallet-configuration) section.
 
-8. Run the SQLs using <db name>/deploy.sh script. from [db_scripts folder](db_scripts/inji_mimoto)
+9. Run the SQLs using <db name>/deploy.sh script. from [db_scripts folder](db_scripts/inji_mimoto)
    ```
    ./deploy.sh deploy.properties
    ```
 
-9. Build the jar
+10. Build the jar
     ```
     mvn clean install -Dgpg.skip=true -Dmaven.javadoc.skip=true -DskipTests=true
     ```
 
-10. Run following command
+11. Run following command
     ```
     mvn spring-boot:run -Dspring.profiles.active=local
     ```
