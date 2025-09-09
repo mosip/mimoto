@@ -3,13 +3,22 @@ package io.mosip.mimoto.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
+import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
+import io.mosip.mimoto.dto.VerifiablePresentationVerifierDTO;
 import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponseProof;
 import io.mosip.mimoto.dto.openid.presentation.*;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
+import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
+import io.mosip.mimoto.service.VerifierService;
+import io.mosip.openID4VP.OpenID4VP;
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
+import io.mosip.openID4VP.authorizationRequest.Verifier;
+import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata;
 import io.mosip.mimoto.util.RestApiClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -40,11 +50,65 @@ public class PresentationServiceImpl implements PresentationService {
     @Autowired
     private RestApiClient restApiClient;
 
+    @Autowired
+    private VerifierService verifierService;
+
+    @Autowired
+    private OpenID4VPFactory openID4VPFactory;
+
     @Value("${mosip.inji.ovp.redirect.url.pattern}")
     private String injiOvpRedirectURLPattern;
 
     @Value("${server.tomcat.max-http-response-header-size:65536}")
     private Integer maximumResponseHeaderSize;
+
+    @Override
+    public VerifiablePresentationResponseDTO handleVPAuthorizationRequest(String urlEncodedVPAuthorizationRequest, String walletId) throws ApiNotAccessibleException, IOException {
+        String presentationId = UUID.randomUUID().toString();
+
+        //Initialize OpenID4VP instance with presentationId as traceability id for each new Verifiable Presentation request
+        OpenID4VP openID4VP = openID4VPFactory.create(presentationId);
+
+        List<Verifier> preRegisteredVerifiers = getPreRegisteredVerifiers();
+        AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers);
+        VerifiablePresentationVerifierDTO verifiablePresentationVerifierDTO = createVPResponseVerifierDTO(preRegisteredVerifiers, authorizationRequest, walletId);
+        VerifiablePresentationSessionData verifiablePresentationSessionData = new VerifiablePresentationSessionData(openID4VP, Instant.now());
+
+        return new VerifiablePresentationResponseDTO(presentationId, verifiablePresentationVerifierDTO, verifiablePresentationSessionData);
+    }
+
+    private VerifiablePresentationVerifierDTO createVPResponseVerifierDTO(List<Verifier> preRegisteredVerifiers, AuthorizationRequest authorizationRequest, String walletId) throws ApiNotAccessibleException, IOException {
+
+        boolean isVerifierPreRegisteredWithWallet = preRegisteredVerifiers.stream().map(
+                Verifier::getClientId).toList().contains(authorizationRequest.getClientId());
+
+        boolean isVerifierTrustedByWallet = verifierService.isVerifierTrustedByWallet(authorizationRequest.getClientId(), walletId);
+
+        String clientName = Optional.ofNullable(authorizationRequest.getClientMetadata())
+                .map(ClientMetadata::getClientName)
+                .filter(name -> !name.isBlank())
+                .orElse(authorizationRequest.getClientId());
+
+        String logo = Optional.ofNullable(authorizationRequest.getClientMetadata())
+                .map(ClientMetadata::getLogoUri)
+                .orElse(null);
+
+        return new VerifiablePresentationVerifierDTO(
+                authorizationRequest.getClientId(),
+                clientName,
+                logo,
+                isVerifierTrustedByWallet,
+                isVerifierPreRegisteredWithWallet,
+                authorizationRequest.getRedirectUri()
+        );
+    }
+
+    private List<Verifier> getPreRegisteredVerifiers() throws ApiNotAccessibleException, IOException {
+
+        return verifierService.getTrustedVerifiers().getVerifiers().stream()
+                .map(verifierDTO -> new Verifier(verifierDTO.getClientId(), verifierDTO.getResponseUris()))
+                .toList();
+    }
 
     @Override
     public String authorizePresentation(PresentationRequestDTO presentationRequestDTO) throws IOException {

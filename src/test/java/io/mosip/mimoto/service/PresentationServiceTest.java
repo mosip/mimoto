@@ -3,19 +3,24 @@ package io.mosip.mimoto.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
+import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponseProof;
+import io.mosip.mimoto.dto.openid.VerifierDTO;
+import io.mosip.mimoto.dto.openid.VerifiersDTO;
 import io.mosip.mimoto.dto.openid.presentation.InputDescriptorDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.impl.DataShareServiceImpl;
+import io.mosip.mimoto.service.impl.OpenID4VPFactory;
 import io.mosip.mimoto.service.impl.PresentationServiceImpl;
-import io.mosip.mimoto.service.impl.VerifierServiceImpl;
 import io.mosip.mimoto.util.JwtUtils;
 import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.TestUtilities;
+import io.mosip.openID4VP.OpenID4VP;
+import io.mosip.openID4VP.authorizationRequest.Verifier;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,9 +31,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.time.Instant;
+import java.util.*;
 
 import static io.mosip.mimoto.util.JwtUtils.parseJwtHeader;
 import static org.junit.Assert.assertEquals;
@@ -37,12 +41,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static io.mosip.mimoto.util.TestUtilities.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PresentationServiceTest {
     @Mock
-    VerifierService verifierService = new VerifierServiceImpl();
-
+    VerifierService verifierService;
     @Mock
     DataShareServiceImpl dataShareService;
 
@@ -50,16 +54,48 @@ public class PresentationServiceTest {
     ObjectMapper objectMapper;
 
     @Mock
+    private OpenID4VPFactory openID4VPFactory;
+
+    @Mock
     RestApiClient restApiClient;
 
     @InjectMocks
     PresentationServiceImpl presentationService;
+
+    String walletId, clientId, urlEncodedVPAuthorizationRequest;
+    VerifiersDTO verifiersDTO;
+    VerifierDTO verifierDTO;
+    List<Verifier> preRegisteredVerifiers;
+    UUID fixedUuid;
+    Instant fixedInstant;
 
     @Before
     public void setup() throws JsonProcessingException {
         ReflectionTestUtils.setField(presentationService, "injiOvpRedirectURLPattern", "%s#vp_token=%s&presentation_submission=%s");
         ReflectionTestUtils.setField(presentationService, "maximumResponseHeaderSize", 65536);
         when(objectMapper.writeValueAsString(any())).thenReturn("test-data");
+
+        // Setup for Wallet presentation tests
+        walletId = "wallet-123";
+        clientId = "test-clientId";
+        urlEncodedVPAuthorizationRequest =
+                "client_id=test-clientId&presentation_definition_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fpresentation_definition_uri&response_type=vp_token&response_mode=direct_post&nonce=NHgLcWlae745DpfJbUyfdg%253D%253D&response_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response&state=pcmxBfvdPEcjFObgt%252BLekA%253D%253D";
+
+        verifierDTO = new VerifierDTO(
+                clientId,
+                List.of("redirect-uri"),
+                List.of("https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response"),
+                null,
+                false
+        );
+        verifiersDTO = new VerifiersDTO();
+        verifiersDTO.setVerifiers(List.of(verifierDTO));
+        preRegisteredVerifiers = List.of(
+                new Verifier(verifierDTO.getClientId(), verifierDTO.getResponseUris())
+        );
+
+        fixedUuid = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        fixedInstant = Instant.parse("2025-09-08T12:34:56Z");
     }
 
     @Test
@@ -167,6 +203,82 @@ public class PresentationServiceTest {
             assertNotNull(result);
             assertEquals(1, result.getInputDescriptors().size());
             assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("vc+sd-jwt"));
+        }
+    }
+
+    @Test
+    public void testHandleVPAuthorizationRequest_successful() throws Exception {
+        try (MockedStatic<UUID> mockedStatic = mockStatic(UUID.class);
+             MockedStatic<Instant> mockedInstant = mockStatic(Instant.class)) {
+
+            mockedStatic.when(UUID::randomUUID).thenReturn(fixedUuid);
+            mockedInstant.when(Instant::now).thenReturn(fixedInstant);
+
+            when(verifierService.getTrustedVerifiers()).thenReturn(verifiersDTO);
+            when(verifierService.isVerifierTrustedByWallet(clientId, walletId)).thenReturn(true);
+
+            OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+            when(openID4VPFactory.create(anyString())).thenReturn(mockOpenID4VP);
+            when(mockOpenID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers))
+                    .thenReturn(getPresentationAuthorizationRequest(clientId, "https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response"));
+
+            VerifiablePresentationResponseDTO expectedPresentationResponseDTO = getVerifiablePresentationResponseDTO("test-clientId", "test-clientId", null, true, true, "https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response", mockOpenID4VP, fixedInstant);
+
+            VerifiablePresentationResponseDTO actualPresentationResponseDTO =
+                    presentationService.handleVPAuthorizationRequest(urlEncodedVPAuthorizationRequest, walletId);
+
+            assertEquals(expectedPresentationResponseDTO, actualPresentationResponseDTO);
+        }
+    }
+
+    @Test
+    public void testHandleVPAuthorizationRequest_untrustedVerifier() throws Exception {
+        try (MockedStatic<UUID> mockedStatic = mockStatic(UUID.class);
+             MockedStatic<Instant> mockedInstant = mockStatic(Instant.class)) {
+
+            mockedStatic.when(UUID::randomUUID).thenReturn(fixedUuid);
+            mockedInstant.when(Instant::now).thenReturn(fixedInstant);
+
+            when(verifierService.getTrustedVerifiers()).thenReturn(verifiersDTO);
+            when(verifierService.isVerifierTrustedByWallet(clientId, walletId)).thenReturn(false);
+
+            OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+            when(openID4VPFactory.create(anyString())).thenReturn(mockOpenID4VP);
+            when(mockOpenID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers))
+                    .thenReturn(getPresentationAuthorizationRequest(clientId, "https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response"));
+
+            VerifiablePresentationResponseDTO expectedPresentationResponseDTO = getVerifiablePresentationResponseDTO("test-clientId", "test-clientId", null, false, true, "https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response", mockOpenID4VP, fixedInstant);
+
+            VerifiablePresentationResponseDTO actualPresentationResponseDTO =
+                    presentationService.handleVPAuthorizationRequest(urlEncodedVPAuthorizationRequest, walletId);
+
+            assertEquals(expectedPresentationResponseDTO, actualPresentationResponseDTO);
+        }
+    }
+
+    @Test
+    public void testHandleVPAuthorizationRequest_verifierNotPreRegisteredWithWallet() throws Exception {
+        clientId = "unknown-clientId";
+        try (MockedStatic<UUID> mockedStatic = mockStatic(UUID.class);
+             MockedStatic<Instant> mockedInstant = mockStatic(Instant.class)) {
+
+            mockedStatic.when(UUID::randomUUID).thenReturn(fixedUuid);
+            mockedInstant.when(Instant::now).thenReturn(fixedInstant);
+
+            when(verifierService.getTrustedVerifiers()).thenReturn(verifiersDTO);
+            when(verifierService.isVerifierTrustedByWallet(clientId, walletId)).thenReturn(false);
+
+            OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+            when(openID4VPFactory.create(anyString())).thenReturn(mockOpenID4VP);
+            when(mockOpenID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers))
+                    .thenReturn(getPresentationAuthorizationRequest(clientId, "https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response"));
+
+            VerifiablePresentationResponseDTO expectedPresentationResponseDTO = getVerifiablePresentationResponseDTO("unknown-clientId", "unknown-clientId", null, false, false, "https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response", mockOpenID4VP, fixedInstant);
+
+            VerifiablePresentationResponseDTO actualPresentationResponseDTO =
+                    presentationService.handleVPAuthorizationRequest(urlEncodedVPAuthorizationRequest, walletId);
+
+            assertEquals(expectedPresentationResponseDTO, actualPresentationResponseDTO);
         }
     }
 

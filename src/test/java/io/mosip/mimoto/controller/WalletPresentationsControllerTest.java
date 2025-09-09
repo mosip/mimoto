@@ -1,0 +1,155 @@
+package io.mosip.mimoto.controller;
+
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import io.mosip.mimoto.dto.VerifiablePresentationAuthorizationRequest;
+import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
+import io.mosip.mimoto.dto.VerifiablePresentationVerifierDTO;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
+import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.service.PresentationService;
+import io.mosip.mimoto.service.impl.SessionManager;
+import io.mosip.mimoto.util.GlobalExceptionHandler;
+import io.mosip.openID4VP.OpenID4VP;
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions;
+import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+
+import java.time.Instant;
+import java.util.List;
+
+
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {WalletPresentationsController.class, GlobalExceptionHandler.class})
+@AutoConfigureMockMvc(addFilters = false)
+@EnableWebMvc
+@Slf4j
+public class WalletPresentationsControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private ObjectMapper objectMapper;
+
+    @MockBean
+    private PresentationService presentationService;
+
+    @Mock
+    private HttpSession httpSession;
+
+    @MockBean
+    private SessionManager sessionManager;
+
+    private final String walletId = "wallet123";
+    private final String walletKey = "encodedKey";
+
+    private VerifiablePresentationSessionData presentationSessionData;
+    private VerifiablePresentationVerifierDTO presentationVerifierDTO;
+    private VerifiablePresentationResponseDTO presentationResponseDTO;
+
+    @Before
+    public void setup() {
+        MockitoAnnotations.openMocks(this);
+        presentationSessionData = new VerifiablePresentationSessionData(new OpenID4VP("presentationId123"), Instant.now());
+        presentationVerifierDTO = new VerifiablePresentationVerifierDTO("mock-client", "verifier123", "https://veriifer-logo.png", false, true, "https://verifier-redirect");
+        presentationResponseDTO = new VerifiablePresentationResponseDTO("presentationId-123", presentationVerifierDTO, presentationSessionData);
+
+        when(httpSession.getAttribute("wallet_id")).thenReturn(walletId);
+        when(httpSession.getAttribute("wallet_key")).thenReturn(walletKey);
+    }
+
+    @Test
+    public void testCreatePresentationSuccess() throws Exception {
+        String authorizationRequestUrl = "client_id=mock-client&presentation_definition_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fpresentation_definition_uri&response_type=vp_token&response_mode=direct_post&nonce=NHgLcWlae745DpfJbUyfdg%253D%253D&response_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response&state=pcmxBfvdPEcjFObgt%252BLekA%253D%253D";
+        VerifiablePresentationAuthorizationRequest authorizationRequest = new VerifiablePresentationAuthorizationRequest();
+        authorizationRequest.setAuthorizationRequestUrl(authorizationRequestUrl);
+        when(presentationService.handleVPAuthorizationRequest(authorizationRequest.getAuthorizationRequestUrl(), walletId)).thenReturn(presentationResponseDTO);
+        String expectedResponse = new ObjectMapper().writeValueAsString(presentationResponseDTO);
+
+        mockMvc.perform(post("/wallets/{walletId}/presentations", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(authorizationRequest))
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(result -> {
+                    String actualResponse = result.getResponse().getContentAsString();
+                    assertEquals(expectedResponse, actualResponse, "The response does not match the expected output");
+                });
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenBadAuthorizationRequestIsReceivedFromVerifier() throws Exception {
+        String authorizationRequestUrl = "presentation_definition_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fpresentation_definition_uri&response_type=vp_token&response_mode=direct_post&nonce=NHgLcWlae745DpfJbUyfdg%253D%253D&response_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response&state=pcmxBfvdPEcjFObgt%252BLekA%253D%253D";
+        VerifiablePresentationAuthorizationRequest authorizationRequest = new VerifiablePresentationAuthorizationRequest();
+        authorizationRequest.setAuthorizationRequestUrl(authorizationRequestUrl);
+        when(presentationService.handleVPAuthorizationRequest(authorizationRequest.getAuthorizationRequestUrl(), walletId)).thenThrow(new OpenID4VPExceptions.MissingInput(List.of("client_id"), "client_id request param is Missing", "AuthorizationRequest"));
+
+        mockMvc.perform(post("/wallets/{walletId}/presentations", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(authorizationRequest))
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("Missing Input: client_id param is required"));
+    }
+
+    @Test
+    public void shouldThrowSpecificErrorCodeAndMessageWhenAnyCustomExceptionIsThrown() throws Exception {
+        String authorizationRequestUrl = "presentation_definition_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fpresentation_definition_uri&response_type=vp_token&response_mode=direct_post&nonce=NHgLcWlae745DpfJbUyfdg%253D%253D&response_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response&state=pcmxBfvdPEcjFObgt%252BLekA%253D%253D";
+        VerifiablePresentationAuthorizationRequest authorizationRequest = new VerifiablePresentationAuthorizationRequest();
+        authorizationRequest.setAuthorizationRequestUrl(authorizationRequestUrl);
+        when(presentationService.handleVPAuthorizationRequest(authorizationRequest.getAuthorizationRequestUrl(), walletId)).thenThrow(new ApiNotAccessibleException("Error occurred while fetching trusted verifiers"));
+
+        mockMvc.perform(post("/wallets/{walletId}/presentations", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(authorizationRequest))
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("RESIDENT-APP-026"))
+                .andExpect(jsonPath("$.errorMessage").value("Error occurred while fetching trusted verifiers"));
+    }
+
+    @Test
+    public void shouldThrowWalletCreateExceptionWhenAnyUnexpectedErrorOccurs() throws Exception {
+        String authorizationRequestUrl = "presentation_definition_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fpresentation_definition_uri&response_type=vp_token&response_mode=direct_post&nonce=NHgLcWlae745DpfJbUyfdg%253D%253D&response_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response&state=pcmxBfvdPEcjFObgt%252BLekA%253D%253D";
+        VerifiablePresentationAuthorizationRequest authorizationRequest = new VerifiablePresentationAuthorizationRequest();
+        authorizationRequest.setAuthorizationRequestUrl(authorizationRequestUrl);
+        when(presentationService.handleVPAuthorizationRequest(authorizationRequest.getAuthorizationRequestUrl(), walletId)).thenThrow(new RuntimeException("Error occurred while creating presentation in openid4vp flow"));
+
+        mockMvc.perform(post("/wallets/{walletId}/presentations", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(authorizationRequest))
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
+                .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
+    }
+}

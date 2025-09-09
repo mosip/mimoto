@@ -4028,6 +4028,148 @@
                 }
             }
         },
+        "/wallets/{walletId}/presentations": {
+            "post": {
+                "tags": [
+                    "Wallet OpenID4VP"
+                ],
+                "summary": "Processes Verifiable Presentation Authorization Request and provides details about the verifier and presentation.",
+                "description": "This API is secured using session-based authentication. Upon receiving a request, the session is first retrieved using the session ID extracted from the Cookie header to authenticate the user. Once authenticated, the API processes the received Verifiable Presentation Authorization Request from the Verifier for a specific wallet. It validates the session, verifies the authenticity of the request, and checks if the Verifier is pre-registered and trusted by the wallet. If all validations pass, the API returns a response containing the presentation details; otherwise, an appropriate error response is returned.",
+                "operationId": "processVPAuthorizationRequest",
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unique identifier of the Wallet."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifiablePresentationAuthorizationRequest"
+                            },
+                            "examples": {
+                                "Verifier Verifiable Presentation Authorization Request": {
+                                    "value": {
+                                        "authorizationRequestUrl": "client_id=mock-client&presentation_definition_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fpresentation_definition_uri&response_type=vp_token&response_mode=direct_post&nonce=NHgLcWlae745DpfJbUyfdg%253D%253D&response_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response&state=pcmxBfvdPEcjFObgt%252BLekA%253D%253D"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successfully processed the Verifiable Presentation Authorization Request.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VerifiablePresentationResponseDTO"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "presentationId": "123e4567-e89b-12d3-a456-426614174000",
+                                            "verifier": {
+                                                "id": "mock-client",
+                                                "name": "Requester name",
+                                                "logo": "https://api.collab.mosip.net/inji/verifier-logo.png",
+                                                "isTrusted": true,
+                                                "isPreregisteredWithWallet": true,
+                                                "redirectUri": "https://injiverify.collab.mosip.net/redirect"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing required parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "response_type is missing in Authorization request": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Missing Input: response_type param is required"
+                                        }
+                                    },
+                                    "Invalid Wallet ID": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                        }
+                                    },
+                                    "Wallet ID not found in session": {
+                                        "value": {
+                                            "errorCode": "wallet_locked",
+                                            "errorMessage": "Wallet is locked"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized user performing the Verifiable Presentation flow",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User ID is not present in session": {
+                                        "value": {
+                                            "errorCode": "unauthorized",
+                                            "errorMessage": "User ID not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Failed to fetch pre-registered trusted verifiers": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-026",
+                                            "errorMessage": "Api not accessible failure"
+                                        }
+                                    },
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ]
+            }
+        },
         "/auth/{provider}/token-login": {
             "post": {
                 "tags": ["OAuth2 Authentication"],
@@ -4299,6 +4441,61 @@
                         "description": "Wallet status indicating if it is locked or unlocked",
                         "enum": ["active", "temporarily_locked", "permanently_locked", "ready_for_unlock"],
                         "nullable": true
+                    }
+                }
+            },
+            "VerifiablePresentationAuthorizationRequest": {
+                "type": "object",
+                "properties": {
+                    "authorizationRequestUrl": {
+                        "type": "string",
+                        "description": "The complete authorization request URL received from the Verifier"
+                    }
+                },
+                "required": [
+                    "authorizationRequestUrl"
+                ]
+            },
+            "VerifiablePresentationResponseDTO": {
+                "type": "object",
+                "properties": {
+                    "presentationId": {
+                        "type": "string",
+                        "description": "Unique identifier for the verifiable presentation request"
+                    },
+                    "verifier": {
+                        "$ref": "#/components/schemas/VerifiablePresentationVerifierDTO"
+                    }
+                }
+            },
+            "VerifiablePresentationVerifierDTO": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "The client ID of the verifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the verifier"
+                    },
+                    "logo": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "The logo URI of the verifier"
+                    },
+                    "isTrusted": {
+                        "type": "boolean",
+                        "description": "Indicates if the verifier is trusted by the wallet"
+                    },
+                    "isPreregisteredWithWallet": {
+                        "type": "boolean",
+                        "description": "Indicates if the verifier is pre-registered with the wallet"
+                    },
+                    "redirectUri": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "The redirect URI provided in the authorization request to redirect the User back to Verifier"
                     }
                 }
             },
