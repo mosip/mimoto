@@ -8,6 +8,7 @@ import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
+@Slf4j
 public class SessionManager {
 
     @Autowired
@@ -27,7 +29,7 @@ public class SessionManager {
         session.setAttribute(SessionKeys.USER_ID, userId);
     }
 
-    public void storePresentationSessionDataInSession(HttpSession httpSession, VerifiablePresentationSessionData sessionData, String presentationId, String walletId) {
+    public void storePresentationSessionDataInSession(HttpSession httpSession, VerifiablePresentationSessionData sessionData, String presentationId, String walletId) throws JsonProcessingException{
         Map<String, String> presentations = (Map<String, String>) httpSession.getAttribute("presentations");
 
         if (presentations == null) {
@@ -44,7 +46,8 @@ public class SessionManager {
 
                 return objectMapper.writeValueAsString(vpSessionData);
             } catch (JsonProcessingException e) {
-                throw new VPNotCreatedException("Failed to serialize presentation data" + e);
+                log.error("Failed to store presentation details into session", e);
+                throw new VPNotCreatedException("Failed to serialize presentation data - " + e.getMessage());
             }
         });
 
