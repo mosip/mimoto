@@ -35,6 +35,7 @@ public class PostWithPathParamsAndCookie extends MimotoUtil implements ITest {
 	private static final Logger logger = Logger.getLogger(PostWithPathParamsAndCookie.class);
 	protected String testCaseName = "";
 	public String pathParams = null;
+	Response response  = null;
 
 	@BeforeClass
 	public static void setLogLevel() {
@@ -54,7 +55,7 @@ public class PostWithPathParamsAndCookie extends MimotoUtil implements ITest {
 
 	/**
 	 * Data provider class provides test case list
-	 * 
+	 *
 	 * @return object of data provider
 	 */
 	@DataProvider(name = "testcaselist")
@@ -67,7 +68,7 @@ public class PostWithPathParamsAndCookie extends MimotoUtil implements ITest {
 
 	/**
 	 * Test method for OTP Generation execution
-	 * 
+	 *
 	 * @param objTestParameters
 	 * @param testScenario
 	 * @param testcaseName
@@ -75,35 +76,62 @@ public class PostWithPathParamsAndCookie extends MimotoUtil implements ITest {
 	 * @throws AdminTestException
 	 */
 	@Test(dataProvider = "testcaselist")
-	public void test(TestCaseDTO testCaseDTO) throws AuthenticationTestException, AdminTestException, SecurityXSSException {
+	public void test(TestCaseDTO testCaseDTO)
+			throws AuthenticationTestException, AdminTestException, SecurityXSSException {
+
 		testCaseName = testCaseDTO.getTestCaseName();
 		testCaseDTO = MimotoUtil.isTestCaseValidForTheExecution(testCaseDTO);
-		
+
 		if (HealthChecker.signalTerminateExecution) {
 			throw new SkipException(
-					GlobalConstants.TARGET_ENV_HEALTH_CHECK_FAILED + HealthChecker.healthCheckFailureMapS);
+					GlobalConstants.TARGET_ENV_HEALTH_CHECK_FAILED + HealthChecker.healthCheckFailureMapS
+			);
 		}
 
-	
 		String inputJson = getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate());
 		inputJson = MimotoUtil.inputstringKeyWordHandeler(inputJson, testCaseName);
-		
-		Response response = postWithPathParamsBodyAndCookie(ApplnURI + testCaseDTO.getEndPoint(), inputJson, COOKIENAME,
-				testCaseDTO.getRole(), testCaseDTO.getTestCaseName(), pathParams);
+
+		if (testCaseName.equals("Mimoto_UnlockWalletForTemporarilyLock_TemporaryLocker_IncorrectWalletPin_Neg")) {
+			for (int i = 0; i < MimotoConfigManager.getMaxFailedAttemptsAllowedPerCycle(); i++) {
+				response = postWithPathParamsBodyAndCookie(
+						ApplnURI + testCaseDTO.getEndPoint(),
+						inputJson,
+						COOKIENAME,
+						testCaseDTO.getRole(),
+						testCaseDTO.getTestCaseName(),
+						pathParams
+				);
+			}
+		} else {
+			response = postWithPathParamsBodyAndCookie(
+					ApplnURI + testCaseDTO.getEndPoint(),
+					inputJson,
+					COOKIENAME,
+					testCaseDTO.getRole(),
+					testCaseDTO.getTestCaseName(),
+					pathParams
+			);
+		}
 
 		Map<String, List<OutputValidationDto>> ouputValid = OutputValidationUtil.doJsonOutputValidation(
-				response.asString(), getJsonFromTemplate(testCaseDTO.getOutput(), testCaseDTO.getOutputTemplate()),
-				testCaseDTO, response.getStatusCode());
+				response.asString(),
+				getJsonFromTemplate(testCaseDTO.getOutput(), testCaseDTO.getOutputTemplate()),
+				testCaseDTO,
+				response.getStatusCode()
+		);
+
 		Reporter.log(ReportUtil.getOutputValidationReport(ouputValid));
 
-		if (!OutputValidationUtil.publishOutputResult(ouputValid))
+		if (!OutputValidationUtil.publishOutputResult(ouputValid)) {
 			throw new AdminTestException("Failed at output validation");
-
+		}
 	}
+
+
 
 	/**
 	 * The method ser current test name to result
-	 * 
+	 *
 	 * @param result
 	 */
 	@AfterMethod(alwaysRun = true)

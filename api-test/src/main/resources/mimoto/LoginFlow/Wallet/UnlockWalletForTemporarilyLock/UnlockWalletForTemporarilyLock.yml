@@ -1,0 +1,18 @@
+UnlockWalletForTemporarilyLock:
+   Mimoto_UnlockWalletForTemporarilyLock_TemporaryLocker_IncorrectWalletPin_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/unlock
+      description: Unlock the wallet with incorrect wallet Pin till wallet gets temporarily locks
+      uniqueIdentifier: TC_Mimoto_UnlockWalletForTemporarilyLock_01
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/UnlockWalletForTemporarilyLock/UnlockWalletForTemporarilyLock
+      outputTemplate: mimoto/error2
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+      	"walletPin": "876532"
+}'
+      output: '{
+      "errorCode": "temporarily_locked"
+}'
