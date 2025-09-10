@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service;
 
+import io.mosip.mimoto.dto.CredentialResponse;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VCCredentialRequest;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
@@ -21,7 +22,7 @@ public interface CredentialService {
      * @return ByteArrayInputStream containing the PDF
      * @throws Exception If any error occurs during processing
      */
-    ByteArrayInputStream downloadCredentialAsPDF(String issuerId, String credentialType, TokenResponseDTO response, String credentialValidity, String locale) throws Exception;
+    CredentialResponse downloadCredentialAsPDF(String issuerId, String credentialType, TokenResponseDTO response, String credentialValidity, String locale) throws Exception;
 
     /**
      * Downloads credential from the issuer endpoint.
@@ -29,7 +30,7 @@ public interface CredentialService {
      * @param credentialEndpoint The credential endpoint
      * @param vcCredentialRequest The credential request
      * @param accessToken The access token
-     * @return VCCredentialResponse containing the credential
+     * @return CredentialResponse containing the credential
      * @throws InvalidCredentialResourceException If the credential resource is invalid
      */
     VCCredentialResponse downloadCredential(String credentialEndpoint, VCCredentialRequest vcCredentialRequest, String accessToken) throws InvalidCredentialResourceException;

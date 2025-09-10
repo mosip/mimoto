@@ -35,9 +35,11 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import io.mosip.injivcrenderer.InjiVcRenderer;
 import org.springframework.web.client.RestTemplate;
+import io.mosip.mimoto.dto.CredentialResponse;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -94,11 +96,11 @@ public class CredentialPDFGeneratorService {
     @Value("${mosip.injiweb.mask.disclosures:true}")
     private boolean maskDisclosures;
 
-    public ByteArrayInputStream generatePdfForVerifiableCredential(String credentialConfigurationId, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
-        // ByteArrayInputStream renderedVcStream = renderVcWithInjiRender(vcCredentialResponse);
-        ByteArrayInputStream renderedVcStream = renderVcWithHandlebars(vcCredentialResponse);
-        if (renderedVcStream != null) {
-            return renderedVcStream;
+    public CredentialResponse generatePdfForVerifiableCredential(String credentialConfigurationId, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
+        // ByteArrayInputStream renderedVcStream = renderVcWithHandlebars(vcCredentialResponse);
+        CredentialResponse credentialResponse = renderVcWithInjiRender(vcCredentialResponse);
+        if (credentialResponse != null) {
+            return credentialResponse;
         }
 
         // Get the appropriate processor based on format
@@ -246,7 +248,7 @@ public class CredentialPDFGeneratorService {
         return val != null ? val.toString() : "";
     }
 
-    private ByteArrayInputStream renderVCInCredentialTemplate(Map<String, Object> data, String issuerId, String credentialConfigurationId) {
+    private CredentialResponse renderVCInCredentialTemplate(Map<String, Object> data, String issuerId, String credentialConfigurationId) {
         String credentialTemplate = utilities.getCredentialSupportedTemplateString(issuerId, credentialConfigurationId);
         Properties props = new Properties();
         props.setProperty("resource.loader", "class");
@@ -265,7 +267,7 @@ public class CredentialPDFGeneratorService {
         ConverterProperties converterProperties = new ConverterProperties();
         converterProperties.setFontProvider(defaultFont);
         HtmlConverter.convertToPdf(mergedHtml, pdfwriter, converterProperties);
-        return new ByteArrayInputStream(outputStream.toByteArray());
+        return new CredentialResponse(new ByteArrayInputStream(outputStream.toByteArray()), MediaType.APPLICATION_PDF);
     }
 
     private String constructQRCodeWithVCData(VCCredentialResponse vcCredentialResponse) throws JsonProcessingException, WriterException {
@@ -290,7 +292,7 @@ public class CredentialPDFGeneratorService {
         return Utilities.encodeToString(qrImage, "png");
     }
 
-    private ByteArrayInputStream renderVcWithInjiRender(VCCredentialResponse vcCredentialResponse) throws JsonProcessingException {
+    private CredentialResponse renderVcWithInjiRender(VCCredentialResponse vcCredentialResponse) throws JsonProcessingException {
         // Parsing renderMethod with strict typing
         if (vcCredentialResponse.getCredential() == null) {
             return null;
@@ -319,18 +321,21 @@ public class CredentialPDFGeneratorService {
 
         if (template != null && "svg-mustache".equals(renderSuite)) {
             List<String> svgImage = injiVcRenderer.renderSvg(vcJson);
-            return convertSvgToPdf(svgImage.getFirst());
+            // considering only first svg in the list
+            String svgContent = svgImage.getFirst();
+
+            return new CredentialResponse(new ByteArrayInputStream(svgContent.getBytes(StandardCharsets.UTF_8)), MediaType.valueOf("image/svg+xml"));
+        } else if (template != null && "pdf-mustache".equals(renderSuite)) {
+            // pdf template
+            return new CredentialResponse();
         }
         return null;
     }
 
-    private ByteArrayInputStream convertSvgToPdf(String svgImage) {
-        if (StringUtils.isEmpty(svgImage)) {
+    private CredentialResponse convertSvgToPdf(String svgContent, MediaType mediaType) {
+        if (StringUtils.isEmpty(svgContent)) {
             return null;
         }
-
-        // considering only first svg from the list
-        String svgContent = String.join("\n", svgImage);
 
         // Convert SVG to PDF
         try (ByteArrayOutputStream pdfOutputStream = new ByteArrayOutputStream();
@@ -341,14 +346,14 @@ public class CredentialPDFGeneratorService {
             converterProperties.setFontProvider(new DefaultFontProvider(true, false, false));
             HtmlConverter.convertToPdf(html, pdfWriter, converterProperties);
 
-            return new ByteArrayInputStream(pdfOutputStream.toByteArray());
+            return new CredentialResponse(new ByteArrayInputStream(pdfOutputStream.toByteArray()), mediaType);
         } catch (IOException e) {
             log.error("Error converting SVG to PDF: {}", e.getMessage());
             throw new RuntimeException("Failed to convert SVG to PDF", e);
         }
     }
 
-    private ByteArrayInputStream renderVcWithHandlebars(VCCredentialResponse vcCredentialResponse) {
+    private CredentialResponse renderVcWithHandlebars(VCCredentialResponse vcCredentialResponse) {
         // Parsing renderMethod with strict typing
         if (vcCredentialResponse.getCredential() == null) {
             return null;
@@ -386,7 +391,7 @@ public class CredentialPDFGeneratorService {
             Map<String, Object> templateData = prepareTemplateData(credentialSubject);
 
             String renderedSvg = renderSvgWithHandlebars(svgTemplate, templateData);
-            return convertSvgToPdf(renderedSvg);
+            return convertSvgToPdf(renderedSvg, MediaType.valueOf("image/svg+xml"));
         }
         return null;
     }
