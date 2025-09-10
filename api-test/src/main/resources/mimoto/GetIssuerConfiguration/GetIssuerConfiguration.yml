@@ -10,7 +10,7 @@ GetIssuerConfiguration:
       input: '{
 }'
       output: '{
-      "name": "MosipVerifiableCredential"
+      "name": "MOSIPVerifiableCredential"
 }'
    Mimoto_GetIssuerConfiguration_With_Issuer_Removed_From_URL_Neg:
       endPoint: /v1/mimoto/issuers/configuration
