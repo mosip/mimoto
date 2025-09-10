@@ -90,17 +90,11 @@ public class MimotoUtil extends AdminTestUtil {
 	
 	public static TestCaseDTO isTestCaseValidForTheExecution(TestCaseDTO testCaseDTO) {
 		String testCaseName = testCaseDTO.getTestCaseName();
-		currentTestCaseName = testCaseName;
-		
+
 		int indexof = testCaseName.indexOf("_");
 		String modifiedTestCaseName = testCaseName.substring(indexof + 1);
 		
 		addTestCaseDetailsToMap(modifiedTestCaseName, testCaseDTO.getUniqueIdentifier());
-		
-		if (!testCasesInRunScope.isEmpty()
-				&& testCasesInRunScope.contains(testCaseDTO.getUniqueIdentifier()) == false) {
-			throw new SkipException(GlobalConstants.NOT_IN_RUN_SCOPE_MESSAGE);
-		}		
 		
 		String endpoint = testCaseDTO.getEndPoint();
 		String inputJson = testCaseDTO.getInput();
