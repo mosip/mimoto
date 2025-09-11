@@ -45,9 +45,7 @@ public class MimotoUtil extends AdminTestUtil {
 	private static String fullNameForSunBirdR = generateFullNameForSunBirdR();
 	private static String dobForSunBirdR = generateDobForSunBirdR();
 	private static String policyNumberForSunBirdR = generateRandomNumberString(9);
-	
-	public static List<String> testCasesInRunScope = new ArrayList<>();
-	
+
 	public static void setLogLevel() {
 		if (MimotoConfigManager.IsDebugEnabled())
 			logger.setLevel(Level.ALL);
