@@ -87,7 +87,6 @@ public class CredentialShareController {
     public ResponseEntity<GenericResponseDTO> handleSubscribeEvent(@RequestBody EventModel eventModel)
             throws Exception {
         log.info("Received websub event:: transaction id = " + eventModel.getEvent().getTransactionId());
-        log.debug("Received websub event:: " + JsonUtils.javaObjectToJsonString(eventModel));
         GenericResponseDTO responseDTO = new GenericResponseDTO();
         Path vcRequestIdPath = Path.of(
             utilities.getDataPath(),
