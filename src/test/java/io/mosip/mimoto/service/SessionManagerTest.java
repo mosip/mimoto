@@ -46,7 +46,7 @@ public class SessionManagerTest {
     }
 
     @Test
-    public void testSetupSession_setsAttributes() {
+    public void shouldSetupSessionWithProvidedUserAndOAuth2ProviderDetails() {
         HttpServletRequest request = mock(HttpServletRequest.class);
         HttpSession session = new MockHttpSession();
         when(request.getSession(true)).thenReturn(session);
@@ -62,7 +62,7 @@ public class SessionManagerTest {
     }
 
     @Test
-    public void testStorePresentationSessionData_createsAndStoresPresentationDetails() throws Exception {
+    public void shouldCreateAndStorePresentationDetailsInSession() throws Exception {
         Instant fixedInstant = Instant.parse("2025-09-08T12:34:56Z");
         MockHttpSession session = new MockHttpSession();
         OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
@@ -84,7 +84,7 @@ public class SessionManagerTest {
     }
 
     @Test
-    public void testStorePresentationSessionData_storesMultiplePresentations() throws Exception {
+    public void shouldStorePresentationDetailsProperlyInSessionForMultiplePresentations() throws Exception {
         Instant fixedInstant = Instant.parse("2025-09-08T12:34:56Z");
         MockHttpSession session = new MockHttpSession();
 
@@ -120,7 +120,7 @@ public class SessionManagerTest {
     }
 
     @Test
-    public void testStorePresentationSessionData_throwErrorOnSerializationFailure() throws Exception {
+    public void shouldThrowErrorOnSerializationFailureWhenStoringPresentationDetailsInSession() throws Exception {
         Instant fixedInstant = Instant.parse("2025-09-08T12:34:56Z");
         MockHttpSession session = new MockHttpSession();
         OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
@@ -139,5 +139,4 @@ public class SessionManagerTest {
             assertEquals(expectedErrorMessage, e.getErrorText());
         }
     }
-
 }
