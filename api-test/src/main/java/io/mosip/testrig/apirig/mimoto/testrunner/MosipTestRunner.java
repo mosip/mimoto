@@ -104,8 +104,6 @@ public class MosipTestRunner {
 
 			// Generating biometric details with mock MDS
 			BiometricDataProvider.generateBiometricTestData("Registration");
-			
-			String testCasesToExecuteString = MimotoConfigManager.getproperty("testCasesToExecute");
 
 			startTestRunner();
 		} catch (Exception e) {
@@ -119,9 +117,6 @@ public class MosipTestRunner {
 		OTPListener.bTerminate = true;
 
 		HealthChecker.bTerminate = true;
-		
-		// Used for generating the test case interdependency JSON file
-		//AdminTestUtil.generateTestCaseInterDependencies(getGlobalResourcePath() + "/config/testCaseInterDependency.json");
 
 		System.exit(0);
 
