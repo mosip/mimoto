@@ -43,7 +43,7 @@ public class VcSdJwtCredentialFormatHandler implements CredentialFormatHandler {
         if (credential instanceof String) {
             return extractClaimsFromSdJwt((String) credential);
         }
-        log.warn("Unexpected credential format in response for SD-JWT VC: {}", credential);
+        log.warn("Unexpected credential format in response for SD-JWT VC:");
         return Collections.emptyMap();
     }
 

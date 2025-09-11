@@ -60,9 +60,9 @@ public class WalletValidator {
      * @throws InvalidRequestException If the Wallet PIN is invalid.
      */
     public void validateWalletPin(String pin) throws InvalidRequestException {
-        log.debug("Validating Wallet PIN: {}", pin);
+        log.debug("Validating Wallet PIN");
         if (pin == null || !pin.matches(pinRegex)) {
-            log.warn("Invalid PIN: {}", pin);
+            log.warn("Invalid PIN");
             throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "PIN must be numeric with 6 digits");
         }
     }
