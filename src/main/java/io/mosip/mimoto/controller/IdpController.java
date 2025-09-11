@@ -54,7 +54,7 @@ public class IdpController {
     @PostMapping(value = "/binding-otp", produces = MediaType.APPLICATION_JSON_VALUE)
     @SuppressWarnings("unchecked")
     public ResponseEntity<ResponseWrapper<BindingOtpResponseDto>> otpRequest(@Valid @RequestBody BindingOtpRequestDto requestDTO, BindingResult result) throws Exception {
-        log.debug("Received binding-otp request : " + JsonUtils.javaObjectToJsonString(requestDTO));
+        log.debug("Received binding-otp request");
         requestValidator.validateInputRequest(result);
         requestValidator.validateNotificationChannel(requestDTO.getRequest().getOtpChannels());
         ResponseWrapper<BindingOtpResponseDto> responseWrapper = new ResponseWrapper<>();
@@ -79,7 +79,7 @@ public class IdpController {
     public ResponseEntity<ResponseWrapper<WalletBindingResponseDto>> request(@RequestBody WalletBindingRequestDTO requestDTO)
             throws Exception {
 
-        log.debug("Received wallet-binding request : " + JsonUtils.javaObjectToJsonString(requestDTO));
+        log.debug("Received wallet-binding request ");
         ResponseWrapper<WalletBindingResponseDto> responseWrapper = new ResponseWrapper<>();
         try {
             WalletBindingInnerRequestDto innerRequestDto = new WalletBindingInnerRequestDto();
@@ -101,7 +101,7 @@ public class IdpController {
             responseWrapper = joseUtil.addThumbprintAndKeyId(internalResponse);
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception e) {
-            log.error("Wallet binding error occurred for transaction id " + requestDTO.getRequest().getIndividualId(), e);
+            log.error("Wallet binding error occurred ", e);
             String[] errorObj = Utilities.handleExceptionWithErrorCode(e, PlatformErrorMessages.MIMOTO_WALLET_BINDING_EXCEPTION.getCode());
             List<ErrorDTO> errors = Utilities.getErrors(errorObj[0], errorObj[1]);
             responseWrapper.setResponse(null);
