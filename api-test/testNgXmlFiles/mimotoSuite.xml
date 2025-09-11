@@ -157,21 +157,6 @@
 					name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithBodyWithOtpGenerate" />
 		</classes>
 	</test>
-	<test name="BindingOtp">
-		<parameter name="ymlFile"
-				   value="mimoto/BindingOtp/BindingOtp.yml" />
-		<classes>
-			<class name="io.mosip.testrig.apirig.mimoto.testscripts.SimplePost" />
-		</classes>
-	</test>
-	<test name="WalletBinding">
-		<parameter name="ymlFile"
-				   value="mimoto/WalletBinding/WalletBinding.yml" />
-		<classes>
-			<class
-					name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithBodyWithOtpGenerate" />
-		</classes>
-	</test>
 	<test name="GetAllIssuers">
 		<parameter name="ymlFile"
 				   value="mimoto/GetAllIssuers/GetAllIssuers.yml" />
@@ -414,4 +399,19 @@
 			<class name="io.mosip.testrig.apirig.mimoto.testscripts.GetWithParam" />
 		</classes>
 	</test>
+    <test name="BindingOtp">
+        <parameter name="ymlFile"
+                   value="mimoto/BindingOtp/BindingOtp.yml" />
+        <classes>
+            <class name="io.mosip.testrig.apirig.mimoto.testscripts.SimplePost" />
+        </classes>
+    </test>
+    <test name="WalletBinding">
+        <parameter name="ymlFile"
+                   value="mimoto/WalletBinding/WalletBinding.yml" />
+        <classes>
+            <class
+                    name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithBodyWithOtpGenerate" />
+        </classes>
+    </test>
 </suite>
