@@ -154,5 +154,7 @@ fileignoreconfig:
 - filename: db_upgrade_script/inji_mimoto/sql/0.14.x_to_0.15.x_rollback.sql
   checksum: 21fdd239be77e4c8fa23cffe3c9799254a98536d433d74dde95add38ea288a8c
 - filename: src/main/java/io/mosip/mimoto/util/WalletPresentationUtil.java
-  checksum: 33a6cdf90d5a2d44d3859b931e277ac2ba476dc00fbd3cef2a94b51d885f9170
+  checksum: 135810b914b3d693094da6e53e8bcea2a5164d89edffd63ce203495395c51dcb
+- filename: src/test/java/io/mosip/mimoto/util/WalletPresentationUtilTest.java
+  checksum: c7b264e1f134f3cfd83561143fc46e83168e664438f783109405b3ec7c753126
 version: ""

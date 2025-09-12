@@ -20,7 +20,6 @@ public class WalletPresentationUtil {
         Map<String, ?> clientMetadataMap = verifierDTO.getClientMetadata();
 
         if (clientMetadataMap == null) {
-            log.info("clientMetadata is null for verifierDTO: " + verifierDTO.getClientId());
             return new Verifier(verifierDTO.getClientId(), verifierDTO.getResponseUris(), null);
         }
 
