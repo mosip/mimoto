@@ -12,8 +12,6 @@ import io.mosip.mimoto.service.VerifierService;
 import io.mosip.mimoto.util.Utilities;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.validator.routines.UrlValidator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
@@ -45,8 +43,6 @@ public class VerifierServiceImpl implements VerifierService {
         pathMatcher = new AntPathMatcher();
         urlValidator = new UrlValidator(ALLOW_ALL_SCHEMES+ALLOW_LOCAL_URLS);
     }
-
-    private final Logger logger = LoggerFactory.getLogger(VerifierServiceImpl.class);
 
     @Cacheable(value = "preRegisteredTrustedVerifiersCache", key = "'preRegisteredTrustedVerifiers'")
     public VerifiersDTO getTrustedVerifiers() throws ApiNotAccessibleException, JsonProcessingException {
