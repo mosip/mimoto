@@ -65,7 +65,7 @@ public class DataShareServiceImpl {
 
         HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
         DataShareResponseWrapperDTO dataShareResponseWrapperDTO = pushCredentialIntoDataShare(requestEntity, credentialValidity);
-        log.info("Data pushed into DataShare -> " + dataShareResponseWrapperDTO);
+        log.info("Data pushed into DataShare -> ");
         return  dataShareResponseWrapperDTO.getDataShare().getUrl();
     }
 
@@ -111,7 +111,7 @@ public class DataShareServiceImpl {
         }
         VCCredentialResponse vcCredentialResponse = objectMapper.readValue(vcCredentialResponseString, VCCredentialResponse.class);
 
-        log.info("Completed Mapping the Credential to Object => " + vcCredentialResponse );
+        log.info("Completed Mapping the Credential to Object => ");
         if(vcCredentialResponse.getCredential() == null){
             DataShareResponseDto dataShareResponse = objectMapper.readValue(vcCredentialResponseString, DataShareResponseDto.class);
             String errorCode = dataShareResponse.getErrors().get(0).getErrorCode();

@@ -28,7 +28,7 @@ public class JwtUtils {
         try {
             String[] parts = jwt.split("\\.");
             if (parts.length < 3) {
-                log.error("Invalid JWT format for payload parsing: {}", jwt);
+                log.error("Invalid JWT format for payload parsing: ");
                 return Collections.emptyMap();
             }
             String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
@@ -46,7 +46,7 @@ public class JwtUtils {
         try {
             String[] parts = jwt.split("\\.");
             if (parts.length < 3) {
-                log.warn("Invalid JWT format for header parsing: {}", jwt);
+                log.warn("Invalid JWT format for header parsing: ");
                 return Collections.emptyMap();
             }
             String headerJson = new String(Base64.getUrlDecoder().decode(parts[0]), StandardCharsets.UTF_8);

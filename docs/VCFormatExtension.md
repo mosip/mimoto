@@ -74,10 +74,11 @@ Before starting the implementation, check existing handlers implementation
 
 ### 2. Implement New Handler
 
-Create a new handler class implementing `CredentialFormatHandler`:
+
+Create a new handler class implementing `CredentialFormatHandler` (with a @Component qualifier name required for injection)::
 
 ```java
-@Component
+@Component("vc+sd-jwt")
 @Slf4j
 public class SDJWTCredentialFormatHandler implements CredentialFormatHandler {
     
@@ -93,7 +94,7 @@ public class SDJWTCredentialFormatHandler implements CredentialFormatHandler {
 
 ### 3. Handler Registration
 
-New handler will be auto-discovered by Spring. The factory automatically injects all handlers:
+New handler will be auto-discovered by Spring. The factory automatically injects all handlers based on credential format:
 
 **Reference**: [`CredentialFormatHandlerFactory.java`](https://github.com/mosip/mimoto/blob/release-0.19.x/src/main/java/io/mosip/mimoto/service/CredentialFormatHandlerFactory.java)
 
