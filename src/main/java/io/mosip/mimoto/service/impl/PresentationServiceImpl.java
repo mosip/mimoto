@@ -15,6 +15,7 @@ import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.VerifierService;
+import io.mosip.mimoto.util.ClientValidationUtils;
 import io.mosip.openID4VP.OpenID4VP;
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
 import io.mosip.openID4VP.authorizationRequest.Verifier;
@@ -65,7 +66,8 @@ public class PresentationServiceImpl implements PresentationService {
         OpenID4VP openID4VP = openID4VPFactory.create(presentationId);
 
         List<Verifier> preRegisteredVerifiers = getPreRegisteredVerifiers();
-        AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers);
+        boolean shouldValidateClient = ClientValidationUtils.isClientValid(preRegisteredVerifiers, urlEncodedVPAuthorizationRequest);
+        AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers, shouldValidateClient);
         VerifiablePresentationVerifierDTO verifiablePresentationVerifierDTO = createVPResponseVerifierDTO(preRegisteredVerifiers, authorizationRequest, walletId);
         VerifiablePresentationSessionData verifiablePresentationSessionData = new VerifiablePresentationSessionData(openID4VP, Instant.now());
 
