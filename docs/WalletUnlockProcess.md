@@ -135,7 +135,7 @@ participant WalletRepository
 ## Configuration
 
 Configurable properties that govern the entire Passcode flow within the Wallet unlock process are defined in the
-`application-local.properties` file for the local setup, and in the `mimoto-default.properties` file for the environment setup.
+`application-default.properties` file for the local setup, and in the `mimoto-default.properties` file for the environment setup.
 
 #### Passcode Control Properties
 - `wallet.passcode.retryBlockedUntil`: Duration for which the Wallet remains in temporary lock state (in milliseconds)

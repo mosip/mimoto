@@ -55,7 +55,7 @@ public class WebSubSubscriptionHelper {
             unsubscriptionRequest.setCallbackURL(callBackUrl);
             unsubscriptionRequest.setHubURL(webSubHubSubUrl);
             unsubscriptionRequest.setTopic(topic);
-            log.info("Unsubscription request : {}", unsubscriptionRequest);
+            log.info("Unsubscription request : ");
             return sb.unSubscribe(unsubscriptionRequest);
         } catch (WebSubClientException e) {
             log.info("Websub unsubscription error: {} ", e.getMessage());
@@ -70,7 +70,7 @@ public class WebSubSubscriptionHelper {
             subscriptionRequest.setHubURL(webSubHubSubUrl);
             subscriptionRequest.setSecret(secret);
             subscriptionRequest.setTopic(topic);
-            log.info("Subscription request : {}", subscriptionRequest);
+            log.info("Subscription request : ");
             return sb.subscribe(subscriptionRequest);
         } catch (WebSubClientException e) {
             log.info("Websub subscription error: {}", e.getMessage());
