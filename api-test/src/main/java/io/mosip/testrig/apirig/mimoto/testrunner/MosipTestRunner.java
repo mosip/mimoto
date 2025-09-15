@@ -145,10 +145,10 @@ public class MosipTestRunner {
 		if (!runType.equalsIgnoreCase("JAR")) {
 			AuthTestsUtil.removeOldMosipTempTestResource();
 		}
-		BaseTestCase.currentModule = GlobalConstants.MIMOTO;
-		BaseTestCase.certsForModule = GlobalConstants.MIMOTO;
-		MimotoUtil.dbCleanUp();
 		AdminTestUtil.initiateMimotoTest();
+		BaseTestCase.currentModule = BaseTestCase.runContext + GlobalConstants.MIMOTO;
+		BaseTestCase.certsForModule = BaseTestCase.runContext + GlobalConstants.MIMOTO;
+		MimotoUtil.dbCleanUp();
 		BaseTestCase.otpListener = new OTPListener();
 		BaseTestCase.otpListener.run();
 	}
