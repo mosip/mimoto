@@ -7,6 +7,7 @@ import io.mosip.mimoto.dto.openid.VerifiersDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidVerifierException;
+import io.mosip.mimoto.repository.VerifierRepository;
 import io.mosip.mimoto.service.impl.VerifierServiceImpl;
 import io.mosip.mimoto.util.TestUtilities;
 import io.mosip.mimoto.util.Utilities;
@@ -34,6 +35,9 @@ public class VerifierServiceTest {
     ObjectMapper objectMapper;
     @InjectMocks
     VerifierServiceImpl verifiersService;
+
+    @Mock
+    VerifierRepository verifierRepository;
 
     @Before
     public void setUp() throws JsonProcessingException {
@@ -113,5 +117,38 @@ public class VerifierServiceTest {
         InvalidVerifierException actualException = assertThrows(InvalidVerifierException.class, () -> verifiersService.validateVerifier(presentationRequestDTO.getClientId(), presentationRequestDTO.getRedirectUri()));
 
         assertEquals(expectedExceptionMsg, actualException.getMessage());
+    }
+
+    @Test
+    public void testIsVerifierTrustedByWallet_TrustedVerifier() {
+        String walletId = "wallet123";
+        String verifierId = "verifier123";
+        when(verifierRepository.existsByWalletIdAndVerifierId(walletId, verifierId)).thenReturn(true);
+
+        boolean result = verifiersService.isVerifierTrustedByWallet(verifierId, walletId);
+
+        assertTrue(result);
+    }
+
+    @Test
+    public void testIsVerifierTrustedByWallet_UntrustedVerifier() {
+        String walletId = "wallet123";
+        String verifierId = "verifier123";
+        when(verifierRepository.existsByWalletIdAndVerifierId(walletId, verifierId)).thenReturn(false);
+
+        boolean result = verifiersService.isVerifierTrustedByWallet(verifierId, walletId);
+
+        assertFalse(result);
+    }
+
+    @Test
+    public void testIsVerifierTrustedByWallet_NullInputs() {
+        String walletId = null;
+        String verifierId = null;
+        when(verifierRepository.existsByWalletIdAndVerifierId(walletId, verifierId)).thenReturn(false);
+
+        boolean result = verifiersService.isVerifierTrustedByWallet(verifierId, walletId);
+
+        assertFalse(result);
     }
 }

@@ -85,7 +85,7 @@ public class PresentationServiceTest {
         verifiersDTO = new VerifiersDTO();
         verifiersDTO.setVerifiers(List.of(verifierDTO));
         preRegisteredVerifiers = List.of(
-                new Verifier(verifierDTO.getClientId(), verifierDTO.getResponseUris())
+                new Verifier(verifierDTO.getClientId(), verifierDTO.getResponseUris(), null)
         );
 
         fixedUuid = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
