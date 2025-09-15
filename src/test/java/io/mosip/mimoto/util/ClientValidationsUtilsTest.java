@@ -22,7 +22,7 @@ public class ClientValidationsUtilsTest {
     @Test
     public void testIsClientValidWithValidClientIdAndMatchingVerifier() {
         List<Verifier> verifiers = Arrays.asList(
-                new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI)));
+                new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI), null));
         String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID + "&response_uri=" + ENCODED_RESPONSE_URI;
 
         boolean result = ClientValidationUtils.isClientValid(verifiers, url);
@@ -33,7 +33,7 @@ public class ClientValidationsUtilsTest {
     @Test
     public void testIsClientValidWithValidClientIdButNoMatchingVerifier() {
         List<Verifier> verifiers = Arrays.asList(
-                new Verifier("https://other-verifier.com", Arrays.asList(VALID_RESPONSE_URI)));
+                new Verifier("https://other-verifier.com", Arrays.asList(VALID_RESPONSE_URI), null));
         String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID;
 
         boolean result = ClientValidationUtils.isClientValid(verifiers, url);
@@ -44,7 +44,7 @@ public class ClientValidationsUtilsTest {
     @Test
     public void testIsClientValidWithNullClientId() {
         List<Verifier> verifiers = Arrays.asList(
-                new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI)));
+                new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI), null));
         String url = "https://example.com?other_param=value";
 
         boolean result = ClientValidationUtils.isClientValid(verifiers, url);
@@ -55,7 +55,7 @@ public class ClientValidationsUtilsTest {
     @Test
     public void testIsClientValidWithEmptyClientId() {
         List<Verifier> verifiers = Arrays.asList(
-                new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI)));
+                new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI), null));
         String url = "https://example.com?client_id=";
 
         boolean result = ClientValidationUtils.isClientValid(verifiers, url);
@@ -66,7 +66,7 @@ public class ClientValidationsUtilsTest {
     @Test
     public void testIsClientValidWithWhitespaceOnlyClientId() {
         List<Verifier> verifiers = Arrays.asList(
-                new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI)));
+                new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI), null));
         String url = "https://example.com?client_id=%20%20";
 
         boolean result = ClientValidationUtils.isClientValid(verifiers, url);
@@ -89,7 +89,7 @@ public class ClientValidationsUtilsTest {
         List<String> expectedResponseUris = Arrays.asList("https://example.com/callback1",
                 "https://example.com/callback2");
         List<Verifier> verifiers = Arrays.asList(
-                new Verifier(VALID_CLIENT_ID, expectedResponseUris));
+                new Verifier(VALID_CLIENT_ID, expectedResponseUris, null));
         String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID + "&response_uri="
                 + ENCODED_MULTIPLE_RESPONSE_URIS;
 
@@ -103,7 +103,7 @@ public class ClientValidationsUtilsTest {
         List<String> verifierResponseUris = Arrays.asList("https://example.com/callback1",
                 "https://example.com/callback2");
         List<Verifier> verifiers = Arrays.asList(
-                new Verifier(VALID_CLIENT_ID, verifierResponseUris));
+                new Verifier(VALID_CLIENT_ID, verifierResponseUris, null));
         String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID + "&response_uri=" + ENCODED_RESPONSE_URI;
 
         boolean result = ClientValidationUtils.isClientValid(verifiers, url);
@@ -114,7 +114,7 @@ public class ClientValidationsUtilsTest {
     @Test
     public void testIsClientValidWithExceptionInExtraction() {
         List<Verifier> verifiers = Arrays.asList(
-                new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI)));
+                new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI), null));
         String url = null;
 
         boolean result = ClientValidationUtils.isClientValid(verifiers, url);
@@ -294,7 +294,7 @@ public class ClientValidationsUtilsTest {
         String specialClientId = "https://test.com/path?param=value&other=123";
         String encodedSpecialClientId = "https%3A%2F%2Ftest.com%2Fpath%3Fparam%3Dvalue%26other%3D123";
         List<Verifier> verifiers = Arrays.asList(
-                new Verifier(specialClientId, Arrays.asList(VALID_RESPONSE_URI)));
+                new Verifier(specialClientId, Arrays.asList(VALID_RESPONSE_URI), null));
         String url = "https://example.com?client_id=" + encodedSpecialClientId;
 
         boolean result = ClientValidationUtils.isClientValid(verifiers, url);
@@ -307,7 +307,7 @@ public class ClientValidationsUtilsTest {
         String specialResponseUri = "https://test.com/callback?param=value&other=123";
         String encodedSpecialResponseUri = "https%3A%2F%2Ftest.com%2Fcallback%3Fparam%3Dvalue%26other%3D123";
         List<Verifier> verifiers = Arrays.asList(
-                new Verifier(VALID_CLIENT_ID, Arrays.asList(specialResponseUri)));
+                new Verifier(VALID_CLIENT_ID, Arrays.asList(specialResponseUri), null));
         String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID + "&response_uri="
                 + encodedSpecialResponseUri;
 
@@ -319,9 +319,9 @@ public class ClientValidationsUtilsTest {
     @Test
     public void testIsClientValidWithMultipleVerifiers() {
         List<Verifier> verifiers = Arrays.asList(
-                new Verifier("https://verifier1.com", Arrays.asList("https://callback1.com")),
-                new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI)),
-                new Verifier("https://verifier3.com", Arrays.asList("https://callback3.com")));
+                new Verifier("https://verifier1.com", Arrays.asList("https://callback1.com"), null),
+                new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI), null),
+                new Verifier("https://verifier3.com", Arrays.asList("https://callback3.com"), null));
         String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID + "&response_uri=" + ENCODED_RESPONSE_URI;
 
         boolean result = ClientValidationUtils.isClientValid(verifiers, url);
