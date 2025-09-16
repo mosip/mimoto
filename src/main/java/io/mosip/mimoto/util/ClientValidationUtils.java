@@ -1,16 +1,16 @@
 package io.mosip.mimoto.util;
 
+import io.mosip.openID4VP.authorizationRequest.Verifier;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-
-import io.mosip.openID4VP.authorizationRequest.Verifier;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ClientValidationUtils {
@@ -19,8 +19,7 @@ public class ClientValidationUtils {
 
     private static final String RESPONSE_URI = "response_uri";
 
-    public static boolean isVerifierClientPreregistered(List<Verifier> preRegisteredVerifiers,
-            String urlEncodedVPAuthorizationRequest) {
+    public static boolean isVerifierClientPreregistered(List<Verifier> preRegisteredVerifiers, String urlEncodedVPAuthorizationRequest) {
 
         if (urlEncodedVPAuthorizationRequest == null || urlEncodedVPAuthorizationRequest.trim().isEmpty()) {
             log.warn("URL encoded VP authorization request is null or empty");
@@ -36,11 +35,7 @@ public class ClientValidationUtils {
                 return false;
             }
 
-            boolean isClientPreRegistered = preRegisteredVerifiers.stream()
-                    .anyMatch(verifier -> clientId.equals(verifier.getClientId())
-                            && verifier.getResponseUris().containsAll(responseUris));
-
-            return isClientPreRegistered;
+            return preRegisteredVerifiers.stream().anyMatch(verifier -> clientId.equals(verifier.getClientId()) && new HashSet<>(verifier.getResponseUris()).containsAll(responseUris));
 
         } catch (Exception e) {
             log.error("Error during client validation for URL: {}", urlEncodedVPAuthorizationRequest, e);
@@ -50,7 +45,7 @@ public class ClientValidationUtils {
 
     /**
      * Extracts a query parameter value from a URL using Apache URLEncodedUtils
-     * 
+     *
      * @param url           the URL to parse
      * @param parameterName the name of the parameter to extract
      * @return the decoded parameter value, or null if not found
