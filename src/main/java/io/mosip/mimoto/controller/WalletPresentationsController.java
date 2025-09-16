@@ -28,6 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 import static io.mosip.mimoto.exception.ErrorConstants.WALLET_CREATE_VP_EXCEPTION;
 
@@ -48,7 +49,7 @@ public class WalletPresentationsController {
      * @param walletId               The unique identifier of the wallet.
      * @param httpSession            The HTTP session containing wallet details such as wallet ID.
      * @param vpAuthorizationRequest The Verifiable Presentation Authorization Request parameters.
-     * @return The processed Verifiable Presentation details, including information about the verifier.
+     * @return The processed Verifiable Presentation details, including information about the verifier. 
      */
     @Operation(summary = "Processes Verifiable Presentation Authorization Request and provides details about the verifier and presentation.", description = "This API is secured using session-based authentication. Upon receiving a request, the session is first retrieved using the session ID extracted from the Cookie header to authenticate the user. Once authenticated, the API processes the received Verifiable Presentation Authorization Request from the Verifier for a specific wallet. It validates the session, verifies the authenticity of the request, and checks if the Verifier is pre-registered and trusted by the wallet. If all validations pass, the API returns a response containing the presentation details; otherwise, an appropriate error response is returned.", operationId = "processVPAuthorizationRequest", security = @SecurityRequirement(name = "SessionAuth"), parameters = {
             @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "The unique identifier of the Wallet.", schema = @Schema(type = "string"))},
@@ -77,7 +78,7 @@ public class WalletPresentationsController {
             @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")
     }))
     @PostMapping
-    public ResponseEntity<VerifiablePresentationResponseDTO> handleVPAuthorizationRequest(@PathVariable("walletId") String walletId, HttpSession httpSession, @RequestBody VerifiablePresentationAuthorizationRequest vpAuthorizationRequest) {
+    public ResponseEntity<VerifiablePresentationResponseDTO> handleVPAuthorizationRequest(@PathVariable("walletId") String walletId, HttpSession httpSession, @RequestBody VerifiablePresentationAuthorizationRequest vpAuthorizationRequest) throws URISyntaxException {
         try {
             WalletUtil.validateWalletId(httpSession, walletId);
 
@@ -89,7 +90,7 @@ public class WalletPresentationsController {
             log.error("Error occurred while processing the received VP Authorization Request from Verifier: ", exception);
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     exception, exception.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
-        } catch (ApiNotAccessibleException | IOException | VPNotCreatedException exception) {
+        } catch (ApiNotAccessibleException | IOException | VPNotCreatedException | URISyntaxException exception) {
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     exception, WALLET_CREATE_VP_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }

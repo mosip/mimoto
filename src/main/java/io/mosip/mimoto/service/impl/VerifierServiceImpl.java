@@ -9,7 +9,9 @@ import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidVerifierException;
 import io.mosip.mimoto.repository.VerifierRepository;
 import io.mosip.mimoto.service.VerifierService;
+import io.mosip.mimoto.util.ClientValidationUtils;
 import io.mosip.mimoto.util.Utilities;
+import io.mosip.openID4VP.authorizationRequest.Verifier;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,9 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 import org.springframework.cache.annotation.Cacheable;
 
+import java.net.URISyntaxException;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 
 import static org.apache.commons.validator.routines.UrlValidator.ALLOW_ALL_SCHEMES;
@@ -85,4 +90,35 @@ public class VerifierServiceImpl implements VerifierService {
     public boolean isVerifierTrustedByWallet(String verifierId, String walletId) {
         return verifierRepository.existsByWalletIdAndVerifierId(walletId, verifierId);
     }
+
+    @Override
+    public boolean isVerifierClientPreregistered(List<Verifier> preRegisteredVerifiers, String urlEncodedVPAuthorizationRequest) throws URISyntaxException {
+        if (urlEncodedVPAuthorizationRequest == null || urlEncodedVPAuthorizationRequest.trim().isEmpty()) {
+            log.warn("URL encoded VP authorization request is null or empty");
+            return false;
+        }
+
+        try {
+            String clientId = ClientValidationUtils.extractClientIdFromUrl(urlEncodedVPAuthorizationRequest);
+            List<String> responseUris = ClientValidationUtils.extractResponseUrisFromUrl(urlEncodedVPAuthorizationRequest);
+
+            if (clientId == null || clientId.trim().isEmpty()) {
+                log.warn("No client_id found in the authorization request URL");
+                return false;
+            }
+
+            return preRegisteredVerifiers.stream().anyMatch(verifier -> clientId.equals(verifier.getClientId()) && new HashSet<>(verifier.getResponseUris()).containsAll(responseUris));
+
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid argument provided during client validation for URL: {}", urlEncodedVPAuthorizationRequest, e);
+            return false;
+        } catch (NullPointerException e) {
+            log.error("Null pointer exception during client validation for URL: {}", urlEncodedVPAuthorizationRequest, e);
+            return false;
+        } catch (RuntimeException e) {
+            log.error("Runtime error during client validation for URL: {}", urlEncodedVPAuthorizationRequest, e);
+            return false;
+        }
+    }
+
 }
