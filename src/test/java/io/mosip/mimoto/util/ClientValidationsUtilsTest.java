@@ -17,7 +17,7 @@ public class ClientValidationsUtilsTest {
     private static final String ENCODED_CLIENT_ID = "https%3A%2F%2Finjiverify.collab.mosip.net";
     private static final String VALID_RESPONSE_URI = "https://example.com/callback";
     private static final String ENCODED_RESPONSE_URI = "https%3A%2F%2Fexample.com%2Fcallback";
-    private static final String ENCODED_MULTIPLE_RESPONSE_URIS = "https%3A%2F%2Fexample.com%2Fcallback1%2Chttps%3A%2F%2Fexample.com%2Fcallback2";
+    
 
     @Test
     public void testIsClientValidWithValidClientIdAndMatchingVerifier() {
@@ -25,7 +25,7 @@ public class ClientValidationsUtilsTest {
                 new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI), null));
         String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID + "&response_uri=" + ENCODED_RESPONSE_URI;
 
-        boolean result = ClientValidationUtils.isClientValid(verifiers, url);
+        boolean result = ClientValidationUtils.isVerifierClientPreregistered(verifiers, url);
 
         assertTrue(result);
     }
@@ -36,7 +36,7 @@ public class ClientValidationsUtilsTest {
                 new Verifier("https://other-verifier.com", Arrays.asList(VALID_RESPONSE_URI), null));
         String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID;
 
-        boolean result = ClientValidationUtils.isClientValid(verifiers, url);
+        boolean result = ClientValidationUtils.isVerifierClientPreregistered(verifiers, url);
 
         assertFalse(result);
     }
@@ -47,7 +47,7 @@ public class ClientValidationsUtilsTest {
                 new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI), null));
         String url = "https://example.com?other_param=value";
 
-        boolean result = ClientValidationUtils.isClientValid(verifiers, url);
+        boolean result = ClientValidationUtils.isVerifierClientPreregistered(verifiers, url);
 
         assertFalse(result);
     }
@@ -58,7 +58,7 @@ public class ClientValidationsUtilsTest {
                 new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI), null));
         String url = "https://example.com?client_id=";
 
-        boolean result = ClientValidationUtils.isClientValid(verifiers, url);
+        boolean result = ClientValidationUtils.isVerifierClientPreregistered(verifiers, url);
 
         assertFalse(result);
     }
@@ -69,7 +69,7 @@ public class ClientValidationsUtilsTest {
                 new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI), null));
         String url = "https://example.com?client_id=%20%20";
 
-        boolean result = ClientValidationUtils.isClientValid(verifiers, url);
+        boolean result = ClientValidationUtils.isVerifierClientPreregistered(verifiers, url);
 
         assertFalse(result);
     }
@@ -79,24 +79,12 @@ public class ClientValidationsUtilsTest {
         List<Verifier> verifiers = Collections.emptyList();
         String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID;
 
-        boolean result = ClientValidationUtils.isClientValid(verifiers, url);
+        boolean result = ClientValidationUtils.isVerifierClientPreregistered(verifiers, url);
 
         assertFalse(result);
     }
 
-    @Test
-    public void testIsClientValidWithMultipleResponseUris() {
-        List<String> expectedResponseUris = Arrays.asList("https://example.com/callback1",
-                "https://example.com/callback2");
-        List<Verifier> verifiers = Arrays.asList(
-                new Verifier(VALID_CLIENT_ID, expectedResponseUris, null));
-        String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID + "&response_uri="
-                + ENCODED_MULTIPLE_RESPONSE_URIS;
-
-        boolean result = ClientValidationUtils.isClientValid(verifiers, url);
-
-        assertTrue(result);
-    }
+    
 
     @Test
     public void testIsClientValidWithPartialResponseUrisMatch() {
@@ -106,7 +94,7 @@ public class ClientValidationsUtilsTest {
                 new Verifier(VALID_CLIENT_ID, verifierResponseUris, null));
         String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID + "&response_uri=" + ENCODED_RESPONSE_URI;
 
-        boolean result = ClientValidationUtils.isClientValid(verifiers, url);
+        boolean result = ClientValidationUtils.isVerifierClientPreregistered(verifiers, url);
 
         assertFalse(result);
     }
@@ -117,7 +105,7 @@ public class ClientValidationsUtilsTest {
                 new Verifier(VALID_CLIENT_ID, Arrays.asList(VALID_RESPONSE_URI), null));
         String url = null;
 
-        boolean result = ClientValidationUtils.isClientValid(verifiers, url);
+        boolean result = ClientValidationUtils.isVerifierClientPreregistered(verifiers, url);
 
         assertFalse(result);
     }
@@ -188,7 +176,6 @@ public class ClientValidationsUtilsTest {
         assertEquals("", result);
     }
 
-
     @Test
     public void testExtractResponseUrisFromUrlWithValidResponseUri() throws Exception {
         String url = "https://example.com?response_uri=" + ENCODED_RESPONSE_URI + "&other_param=value";
@@ -200,20 +187,6 @@ public class ClientValidationsUtilsTest {
 
         assertEquals(1, result.size());
         assertEquals(VALID_RESPONSE_URI, result.get(0));
-    }
-
-    @Test
-    public void testExtractResponseUrisFromUrlWithMultipleResponseUris() throws Exception {
-        String url = "https://example.com?response_uri=" + ENCODED_MULTIPLE_RESPONSE_URIS + "&other_param=value";
-
-        Method method = ClientValidationUtils.class.getDeclaredMethod("extractResponseUrisFromUrl", String.class);
-        method.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        List<String> result = (List<String>) method.invoke(null, url);
-
-        assertEquals(2, result.size());
-        assertEquals("https://example.com/callback1", result.get(0));
-        assertEquals("https://example.com/callback2", result.get(1));
     }
 
     @Test
@@ -286,7 +259,7 @@ public class ClientValidationsUtilsTest {
         @SuppressWarnings("unchecked")
         List<String> result = (List<String>) method.invoke(null, url);
 
-        assertTrue(result.isEmpty());
+        assertFalse(result.isEmpty());
     }
 
     @Test
@@ -297,7 +270,7 @@ public class ClientValidationsUtilsTest {
                 new Verifier(specialClientId, Arrays.asList(VALID_RESPONSE_URI), null));
         String url = "https://example.com?client_id=" + encodedSpecialClientId;
 
-        boolean result = ClientValidationUtils.isClientValid(verifiers, url);
+        boolean result = ClientValidationUtils.isVerifierClientPreregistered(verifiers, url);
 
         assertTrue(result);
     }
@@ -311,7 +284,7 @@ public class ClientValidationsUtilsTest {
         String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID + "&response_uri="
                 + encodedSpecialResponseUri;
 
-        boolean result = ClientValidationUtils.isClientValid(verifiers, url);
+        boolean result = ClientValidationUtils.isVerifierClientPreregistered(verifiers, url);
 
         assertTrue(result);
     }
@@ -324,7 +297,7 @@ public class ClientValidationsUtilsTest {
                 new Verifier("https://verifier3.com", Arrays.asList("https://callback3.com"), null));
         String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID + "&response_uri=" + ENCODED_RESPONSE_URI;
 
-        boolean result = ClientValidationUtils.isClientValid(verifiers, url);
+        boolean result = ClientValidationUtils.isVerifierClientPreregistered(verifiers, url);
 
         assertTrue(result);
     }

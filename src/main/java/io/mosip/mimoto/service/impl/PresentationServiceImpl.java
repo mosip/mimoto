@@ -67,7 +67,7 @@ public class PresentationServiceImpl implements PresentationService {
         OpenID4VP openID4VP = openID4VPFactory.create(presentationId);
 
         List<Verifier> preRegisteredVerifiers = getPreRegisteredVerifiers();
-        boolean shouldValidateClient = ClientValidationUtils.isClientValid(preRegisteredVerifiers, urlEncodedVPAuthorizationRequest);
+        boolean shouldValidateClient = ClientValidationUtils.isVerifierClientPreregistered(preRegisteredVerifiers, urlEncodedVPAuthorizationRequest);
         AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers, shouldValidateClient);
         VerifiablePresentationVerifierDTO verifiablePresentationVerifierDTO = createVPResponseVerifierDTO(preRegisteredVerifiers, authorizationRequest, walletId);
         VerifiablePresentationSessionData verifiablePresentationSessionData = new VerifiablePresentationSessionData(openID4VP, Instant.now());
