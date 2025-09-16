@@ -157,4 +157,6 @@ fileignoreconfig:
   checksum: 135810b914b3d693094da6e53e8bcea2a5164d89edffd63ce203495395c51dcb
 - filename: src/test/java/io/mosip/mimoto/util/WalletPresentationUtilTest.java
   checksum: c7b264e1f134f3cfd83561143fc46e83168e664438f783109405b3ec7c753126
+- filename: src/main/java/io/mosip/mimoto/util/ClientValidationUtils.java
+  checksum: ef0cb7c9f0295ad7b5f25f4a73c998f55b2ed847922527929860b75eead7103c
 version: ""
