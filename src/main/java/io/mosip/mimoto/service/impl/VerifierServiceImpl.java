@@ -21,7 +21,6 @@ import org.springframework.util.PathMatcher;
 import org.springframework.cache.annotation.Cacheable;
 
 import java.net.URISyntaxException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -109,7 +108,7 @@ public class VerifierServiceImpl implements VerifierService {
             log.warn("No response_uri found in the authorization request URL");
             return false;
         }
-        return preRegisteredVerifiers.stream().anyMatch(verifier -> clientId.equals(verifier.getClientId()) && new HashSet<>(verifier.getResponseUris()).containsAll(responseUris));
+        return preRegisteredVerifiers.stream().anyMatch(verifier -> clientId.equals(verifier.getClientId()) && verifier.getResponseUris().containsAll(responseUris));
     }
 
 }
