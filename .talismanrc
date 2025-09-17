@@ -140,7 +140,7 @@ fileignoreconfig:
 - filename: src/main/java/io/mosip/mimoto/controller/OpenID4VPController.java
   checksum: eef302db396aa1d46d128ef7422d5aeb00c9173af32f61effdf31a0762ddff83
 - filename: src/main/java/io/mosip/mimoto/service/impl/VerifierServiceImpl.java
-  checksum: 3dc429c6f4c6d53c2776c6278fb0e985b0c5c2d3ba327a7e00dc8ded9092fb3a
+  checksum: 04d143cb4cb10b7dd4d66344c412681a4888983e232f85e4a0e56237e5248325
 - filename: src/main/java/io/mosip/mimoto/service/impl/SessionManager.java
   checksum: 7056459609cf6aad806a94a8526e3971562147d1658f16a3e501e74785748f5c
 - filename: src/test/java/io/mosip/mimoto/controller/WalletPresentationsControllerTest.java
