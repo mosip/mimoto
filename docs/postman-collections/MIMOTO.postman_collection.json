@@ -503,6 +503,40 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Submit Presentation",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"selectedCredentials\": [\"{{credentialId1}}\", \"{{credentialId2}}\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HOST}}/wallets/{{walletId}}/presentations/{{presentationId}}",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"wallets",
+								"{{walletId}}",
+								"presentations",
+								"{{presentationId}}"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
