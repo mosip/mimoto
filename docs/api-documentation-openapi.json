@@ -4170,6 +4170,131 @@
                 ]
             }
         },
+        "/wallets/{walletId}/presentations/{presentationId}/credentials": {
+            "get": {
+                "tags": [
+                    "Wallet OpenID4VP"
+                ],
+                "summary": "Get matching credentials for a presentation request",
+                "description": "This API retrieves credentials from the wallet that match the presentation definition requirements. It returns available credentials that can satisfy the presentation request along with any missing claims that are required but not available.",
+                "operationId": "getMatchingCredentials",
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unique identifier of the Wallet."
+                    },
+                    {
+                        "name": "presentationId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unique identifier of the Presentation."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved matching credentials.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MatchingCredentialsResponseDTO"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "availableCredentials": [
+                                                {
+                                                    "credentialId": "cred-123",
+                                                    "credentialTypeDisplayName": "Mock Verifiable Credential (SD-JWT)",
+                                                    "credentialTypeLogo": "https://mosip.github.io/inji-config/logos/mosipid-logo.png",
+                                                    "type": ["IDCredential"],
+                                                    "claims": {
+                                                        "birthdate": "1990-01-01"
+                                                    }
+                                                }
+                                            ],
+                                            "missingClaims": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing required parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Invalid Wallet ID": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                        }
+                                    },
+                                    "Presentation not found": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Presentation not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized user performing the Verifiable Presentation flow",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User ID is not present in session": {
+                                        "value": {
+                                            "errorCode": "unauthorized",
+                                            "errorMessage": "User ID not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ]
+            }
+        },
         "/auth/{provider}/token-login": {
             "post": {
                 "tags": ["OAuth2 Authentication"],
@@ -4758,6 +4883,55 @@
                     },
                     "transactionID": {
                         "type": "string"
+                    }
+                }
+            },
+            "MatchingCredentialsResponseDTO": {
+                "type": "object",
+                "properties": {
+                    "availableCredentials": {
+                        "type": "array",
+                        "description": "List of credentials that match the presentation definition",
+                        "items": {
+                            "$ref": "#/components/schemas/AvailableCredentialDTO"
+                        }
+                    },
+                    "missingClaims": {
+                        "type": "array",
+                        "description": "List of claims that are required but not available in any credential",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "AvailableCredentialDTO": {
+                "type": "object",
+                "properties": {
+                    "credentialId": {
+                        "type": "string",
+                        "description": "Unique identifier of the credential"
+                    },
+                    "credentialTypeDisplayName": {
+                        "type": "string",
+                        "description": "Display name of the credential type"
+                    },
+                    "credentialTypeLogo": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Logo URL for the credential type"
+                    },
+                    "type": {
+                        "type": "array",
+                        "description": "List of credential types",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "claims": {
+                        "type": "object",
+                        "description": "Available claims from the credential",
+                        "additionalProperties": true
                     }
                 }
             }
