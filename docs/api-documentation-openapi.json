@@ -4259,7 +4259,7 @@
                                 "examples": {
                                     "Failed to process presentation submission": {
                                         "value": {
-                                            "errorCode": "WALLET_CREATE_VP_EXCEPTION",
+                                            "errorCode": "wallet_vp_submission_error",
                                             "errorMessage": "Failed to process presentation submission: Error message"
                                         }
                                     },
