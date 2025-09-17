@@ -483,6 +483,33 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get Matching Credentials",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "SESSION={{SESSION_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{HOST}}/wallets/{{walletId}}/presentations/{{presentationId}}/credentials",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"wallets",
+								"{{walletId}}",
+								"presentations",
+								"{{presentationId}}",
+								"credentials"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
