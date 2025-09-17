@@ -483,6 +483,26 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get Matching Credentials",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{HOST}}/wallets/{{walletId}}/presentations/{{presentationId}}/credentials",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"wallets",
+								"{{walletId}}",
+								"presentations",
+								"{{presentationId}}",
+								"credentials"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
