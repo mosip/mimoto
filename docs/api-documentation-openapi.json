@@ -3999,7 +3999,7 @@
         "/wallets/{walletId}/presentations": {
             "post": {
                 "tags": [
-                    "Wallet OpenID4VP"
+                    "Wallet Presentations"
                 ],
                 "summary": "Processes Verifiable Presentation Authorization Request and provides details about the verifier and presentation.",
                 "description": "This API is secured using session-based authentication. Upon receiving a request, the session is first retrieved using the session ID extracted from the Cookie header to authenticate the user. Once authenticated, the API processes the received Verifiable Presentation Authorization Request from the Verifier for a specific wallet. It validates the session, verifies the authenticity of the request, and checks if the Verifier is pre-registered and trusted by the wallet. If all validations pass, the API returns a response containing the presentation details; otherwise, an appropriate error response is returned.",
@@ -4139,7 +4139,7 @@
             },
             "patch": {
                 "tags": [
-                    "Wallet OpenID4VP"
+                    "Wallet Presentations"
                 ],
                 "summary": "Handles user submission or rejection of a presentation",
                 "description": "This API allows users to accept or reject a presentation request by selecting specific credentials. Upon acceptance, the system fetches the selected credentials, constructs and signs a VP token, shares it with the verifier, and stores the presentation record in the database.",
@@ -4284,7 +4284,7 @@
         "/wallets/{walletId}/presentations/{presentationId}/credentials": {
             "get": {
                 "tags": [
-                    "Wallet OpenID4VP"
+                    "Wallet Presentations"
                 ],
                 "summary": "Get matching credentials for a presentation request",
                 "description": "This API retrieves credentials from the wallet that match the presentation definition requirements. It returns available credentials that can satisfy the presentation request along with any missing claims that are required but not available.",
