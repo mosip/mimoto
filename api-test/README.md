@@ -96,7 +96,7 @@ To execute the tests using Jar, use the following steps:
 
 2. Run the automation test suite JAR file:
    ```
-   java -jar -Dmodules=mimoto -Denv.user=api-internal.<env_name> -Denv.endpoint=<base_env> -Denv.testLevel=smokeAndRegression -jar apitest-mimoto-0.19.0-SNAPSHOT-jar-with-dependencies.jar
+   java -jar -Dmodules=mimoto -Denv.user=api-internal.<env_name> -Denv.endpoint=<base_env> -Denv.testLevel=smokeAndRegression -jar apitest-mimoto-0.19.0-jar-with-dependencies.jar
    ```
    
 # Using Eclipse IDE
