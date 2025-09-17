@@ -3999,7 +3999,7 @@
         "/wallets/{walletId}/presentations": {
             "post": {
                 "tags": [
-                    "Wallet OpenID4VP"
+                    "Wallet Presentations"
                 ],
                 "summary": "Processes Verifiable Presentation Authorization Request and provides details about the verifier and presentation.",
                 "description": "This API is secured using session-based authentication. Upon receiving a request, the session is first retrieved using the session ID extracted from the Cookie header to authenticate the user. Once authenticated, the API processes the received Verifiable Presentation Authorization Request from the Verifier for a specific wallet. It validates the session, verifies the authenticity of the request, and checks if the Verifier is pre-registered and trusted by the wallet. If all validations pass, the API returns a response containing the presentation details; otherwise, an appropriate error response is returned.",
@@ -4136,12 +4136,155 @@
                         "SessionAuth": []
                     }
                 ]
+            },
+            "patch": {
+                "tags": [
+                    "Wallet Presentations"
+                ],
+                "summary": "Handles user submission or rejection of a presentation",
+                "description": "This API allows users to accept or reject a presentation request by selecting specific credentials. Upon acceptance, the system fetches the selected credentials, constructs and signs a VP token, shares it with the verifier, and stores the presentation record in the database.",
+                "operationId": "handlePresentationSubmission",
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unique identifier of the Wallet."
+                    },
+                    {
+                        "name": "presentationId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unique identifier of the Presentation."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PresentationSubmissionRequestDTO"
+                            },
+                            "examples": {
+                                "Presentation Submission Request": {
+                                    "value": {
+                                        "selectedCredentials": ["cred-123", "cred-456"]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successfully processed the presentation submission.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PresentationSubmissionResponseDTO"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "presentationId": "123e4567-e89b-12d3-a456-426614174000",
+                                            "status": "success",
+                                            "message": "Presentation submitted successfully"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing required parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Invalid Wallet ID": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                        }
+                                    },
+                                    "Wallet ID not found in session": {
+                                        "value": {
+                                            "errorCode": "wallet_locked",
+                                            "errorMessage": "Wallet is locked"
+                                        }
+                                    },
+                                    "Credential not found": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Credential not found: cred-123"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized user performing the presentation submission",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User ID is not present in session": {
+                                        "value": {
+                                            "errorCode": "unauthorized",
+                                            "errorMessage": "User ID not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Failed to process presentation submission": {
+                                        "value": {
+                                            "errorCode": "wallet_vp_submission_error",
+                                            "errorMessage": "Failed to process presentation submission: Error message"
+                                        }
+                                    },
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ]
             }
         },
         "/wallets/{walletId}/presentations/{presentationId}/credentials": {
             "get": {
                 "tags": [
-                    "Wallet OpenID4VP"
+                    "Wallet Presentations"
                 ],
                 "summary": "Get matching credentials for a presentation request",
                 "description": "This API retrieves credentials from the wallet that match the presentation definition requirements. It returns available credentials that can satisfy the presentation request along with any missing claims that are required but not available.",
@@ -4591,6 +4734,48 @@
                         "description": "The redirect URI provided in the authorization request to redirect the User back to Verifier"
                     }
                 }
+            },
+            "PresentationSubmissionRequestDTO": {
+                "type": "object",
+                "properties": {
+                    "selectedCredentials": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "List of selected credential IDs for presentation",
+                        "example": ["cred-123", "cred-456"]
+                    }
+                },
+                "required": [
+                    "selectedCredentials"
+                ]
+            },
+            "PresentationSubmissionResponseDTO": {
+                "type": "object",
+                "properties": {
+                    "presentationId": {
+                        "type": "string",
+                        "description": "Unique identifier for the presentation",
+                        "example": "123e4567-e89b-12d3-a456-426614174000"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Status of the presentation submission",
+                        "example": "success",
+                        "enum": ["success", "error", "pending"]
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "Response message",
+                        "example": "Presentation submitted successfully"
+                    }
+                },
+                "required": [
+                    "presentationId",
+                    "status",
+                    "message"
+                ]
             },
             "IssuerConfigurationSuccessResponse": {
                 "type": "object",
