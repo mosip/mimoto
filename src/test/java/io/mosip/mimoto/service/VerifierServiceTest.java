@@ -270,7 +270,7 @@ public class VerifierServiceTest {
 
         boolean result = verifiersService.isVerifierClientPreregistered(verifiers, url);
 
-        assertTrue(result);
+        assertFalse(result);
     }
 
     @Test

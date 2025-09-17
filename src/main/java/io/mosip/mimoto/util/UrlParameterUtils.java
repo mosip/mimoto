@@ -1,6 +1,5 @@
 package io.mosip.mimoto.util;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 
@@ -10,8 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
-@Slf4j
-public class ClientValidationUtils {
+public class UrlParameterUtils {
 
     private static final String CLIENT_ID = "client_id";
 

@@ -9,7 +9,7 @@ import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.InvalidVerifierException;
 import io.mosip.mimoto.repository.VerifierRepository;
 import io.mosip.mimoto.service.VerifierService;
-import io.mosip.mimoto.util.ClientValidationUtils;
+import io.mosip.mimoto.util.UrlParameterUtils;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.openID4VP.authorizationRequest.Verifier;
 import lombok.extern.slf4j.Slf4j;
@@ -98,27 +98,18 @@ public class VerifierServiceImpl implements VerifierService {
             return false;
         }
 
-        try {
-            String clientId = ClientValidationUtils.extractClientIdFromUrl(urlEncodedVPAuthorizationRequest);
-            List<String> responseUris = ClientValidationUtils.extractResponseUrisFromUrl(urlEncodedVPAuthorizationRequest);
+        String clientId = UrlParameterUtils.extractClientIdFromUrl(urlEncodedVPAuthorizationRequest);
+        List<String> responseUris = UrlParameterUtils.extractResponseUrisFromUrl(urlEncodedVPAuthorizationRequest);
 
-            if (clientId == null || clientId.trim().isEmpty()) {
-                log.warn("No client_id found in the authorization request URL");
-                return false;
-            }
-
-            return preRegisteredVerifiers.stream().anyMatch(verifier -> clientId.equals(verifier.getClientId()) && new HashSet<>(verifier.getResponseUris()).containsAll(responseUris));
-
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid argument provided during client validation for URL: {}", urlEncodedVPAuthorizationRequest, e);
-            return false;
-        } catch (NullPointerException e) {
-            log.error("Null pointer exception during client validation for URL: {}", urlEncodedVPAuthorizationRequest, e);
-            return false;
-        } catch (RuntimeException e) {
-            log.error("Runtime error during client validation for URL: {}", urlEncodedVPAuthorizationRequest, e);
+        if (clientId == null || clientId.trim().isEmpty()) {
+            log.warn("No client_id found in the authorization request URL");
             return false;
         }
+        if (responseUris==null || responseUris.isEmpty()) {
+            log.warn("No response_uri found in the authorization request URL");
+            return false;
+        }
+        return preRegisteredVerifiers.stream().anyMatch(verifier -> clientId.equals(verifier.getClientId()) && new HashSet<>(verifier.getResponseUris()).containsAll(responseUris));
     }
 
 }
