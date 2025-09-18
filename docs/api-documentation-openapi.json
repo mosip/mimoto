@@ -4210,11 +4210,16 @@
                                             "status": "success",
                                             "message": "Presentation submitted successfully"
                                         }
-                                    }, "Success response when rejected": {
+                                    }, "Response when successfully rejected": {
                                         "value": {
-                                            "status": "REJECTED",
+                                            "status": "success, ",
                                             "message": "Presentation request rejected. An OpenID4VP error response has been sent to the verifier.",
                                             "redirectUri": "https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee"
+                                        }
+                                    }, "Response when error in rejection": {
+                                        "value": {
+                                            "status": "error",
+                                            "message": "Failed to submit Verifiable Presentation."
                                         }
                                     }
                                 }
@@ -4487,7 +4492,7 @@
                                 "examples": {
                                     "Success response": {
                                         "value": {
-                                            "id": "trusted-verifier-id"
+                                            "id": "uuid"
                                         }
                                     }
                                 }
@@ -4920,7 +4925,7 @@
                         "type": "string",
                         "description": "Status of the presentation submission",
                         "example": "success",
-                        "enum": ["success", "error", "pending"]
+                        "enum": ["success", "error"]
                     },
                     "message": {
                         "type": "string",
@@ -5255,7 +5260,7 @@
                 "properties": {
                     "id": {
                         "type": "string",
-                        "description": "Unique identifier of the trusted verifier"
+                        "description": "UUID of the trusted verifier"
                     }
                 },
                 "required": [
