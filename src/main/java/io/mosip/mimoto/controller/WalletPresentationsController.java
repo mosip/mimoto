@@ -1,10 +1,11 @@
 package io.mosip.mimoto.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dto.ErrorDTO;
-import io.mosip.mimoto.dto.VerifiablePresentationAuthorizationRequest;
-import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
+import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.impl.SessionManager;
@@ -29,9 +30,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Map;
 
-import static io.mosip.mimoto.exception.ErrorConstants.WALLET_CREATE_VP_EXCEPTION;
-import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
+import static io.mosip.mimoto.exception.ErrorConstants.*;
 
 @Slf4j
 @RestController
@@ -43,6 +44,9 @@ public class WalletPresentationsController {
 
     @Autowired
     private SessionManager sessionManager;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     /**
      * Processes the Verifiable Presentation Authorization Request for a specific wallet.
@@ -98,6 +102,81 @@ public class WalletPresentationsController {
         } catch (URISyntaxException exception) {
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     exception, INVALID_REQUEST.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+        }
+    }
+
+
+    /**
+     * Endpoint invoked when a wallet user rejects a Verifiable Presentation request from a Verifier.
+     *
+     * Validates the session and that the provided presentationId exists in the session store.
+     * If valid, forwards the rejection payload to the OpenID4VP instance associated with the
+     * presentation so the Verifier is notified. Returns a brief status object on success.
+     *
+     * @param walletId       The unique identifier of the wallet (path parameter).
+     * @param httpSession    The HTTP session holding presentation session data.
+     * @param presentationId The presentation session identifier (path parameter) that was previously created.
+     * @param payload        Error payload containing rejection reason/description.
+     * @return 200 with {@link RejectedVerifierDTO} when rejection is accepted; appropriate error responses otherwise.
+     */
+    @Operation(
+            summary = "User rejects a verifier for a presentation",
+            description = "Allows an authenticated wallet user to reject a verifier's Verifiable Presentation request. Validates session and presentationId, then forwards the rejection to the OpenID4VP instance stored in session.",
+            operationId = "userRejectedVerifier",
+            security = @SecurityRequirement(name = "SessionAuth"),
+            parameters = {
+                    @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "The unique identifier of the Wallet.", schema = @Schema(type = "string")),
+                    @Parameter(name = "presentationId", in = ParameterIn.PATH, required = true, description = "The presentation session identifier.", schema = @Schema(type = "string"))
+            },
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Error payload containing rejection reason sent by the user.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorDTO.class),
+                            examples = @ExampleObject(name = "Rejection payload", value = "{\"errorCode\": \"access_denied\", \"errorMessage\": \"User denied authorization to share credentials\"}")
+                    )
+            )
+    )
+    @ApiResponse(responseCode = "200", description = "Verifier rejection accepted.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = RejectedVerifierDTO.class), examples = @ExampleObject(name = "Success response", value = "{\"status\": \"success\", \"message\": \"Presentation request rejected. An OpenID4VP error response has been sent to the verifier.\", \"redirectUri\": https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee}")))
+    @ApiResponse(responseCode = "400", description = "Invalid request (missing/incorrect presentationId or wallet mismatch).", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {
+        @ExampleObject(name = "presentationId not found in session", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"presentationId not found in session\"}"),
+        @ExampleObject(name = "Invalid Wallet ID", value = "{\"errorCode\":\"invalid_request\",\"errorMessage\":\"Invalid Wallet ID. Session and request Wallet ID do not match\"}")
+    }))
+    @ApiResponse(responseCode = "401", description = "Unauthorized or invalid session.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "unauthorized", value = "{\"errorCode\": \"unauthorized\", \"errorMessage\": \"User ID not found in session\"}")))
+    @ApiResponse(responseCode = "500", description = "Internal server error.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Failed to reject verifier", value = "{\"errorCode\": \"error\", \"errorMessage\": \"Unable to process reject verifier request\"}")))
+    @PatchMapping("/{presentationId}")
+    public ResponseEntity<?> userRejectedVerifier(@PathVariable("walletId") String walletId, HttpSession httpSession, @PathVariable("presentationId") String presentationId, @RequestBody ErrorDTO payload) {
+        try {
+            WalletUtil.validateWalletId(httpSession, walletId);
+
+            @SuppressWarnings("unchecked")
+            Map<String, String> presentations = (Map<String, String>) httpSession.getAttribute("presentations");
+
+            if (presentations == null || !presentations.containsKey(presentationId)) {
+                return Utilities.getErrorResponseEntityWithoutWrapper(
+                        new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "presentationId not found in session"),
+                        INVALID_REQUEST.getErrorCode(),
+                        HttpStatus.BAD_REQUEST,
+                        MediaType.APPLICATION_JSON
+                );
+            }
+
+            String vpSessionJson = presentations.get(presentationId);
+            Map<String, Object> vpSessionData = objectMapper.readValue(
+                    vpSessionJson, new TypeReference<Map<String, Object>>() {});
+
+            presentationService.rejectVerifier(walletId, vpSessionData, payload);
+
+            RejectedVerifierDTO rejectedVerifierDTO = new RejectedVerifierDTO();
+            rejectedVerifierDTO.setStatus(REJECTED_VERIFIER.getErrorCode());
+            rejectedVerifierDTO.setMessage(REJECTED_VERIFIER.getErrorMessage());
+            // todo set redirect uri
+            rejectedVerifierDTO.setRedirectUri(null);
+            return ResponseEntity.status(HttpStatus.OK).body(rejectedVerifierDTO);
+        } catch (Exception e) {
+            log.error("Error during user rejection for VP request: ", e);
+            return Utilities.getErrorResponseEntityWithoutWrapper(e, REJECT_VERIFIER_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
     }
 }
