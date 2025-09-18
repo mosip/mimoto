@@ -4441,7 +4441,7 @@
         "/wallets/{walletId}/trusted-verifiers": {
             "post": {
                 "tags": [
-                    "Trusted Verifiers"
+                    "Wallet Trusted Verifiers"
                 ],
                 "summary": "Add a trusted verifier to a wallet",
                 "description": "Adds a trusted verifier for the specified wallet after validating the session and request. Requires an active session; the path walletId must match the wallet in session.",
