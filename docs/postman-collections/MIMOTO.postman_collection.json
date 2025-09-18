@@ -426,6 +426,44 @@
 						"url": "{{HOST}}/wallets/<walletId>"
 					},
 					"response": []
+				},
+				{
+					"name": "Add Trusted Verifier",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Cookie",
+								"value": "SESSION={{SESSION_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"verifierId\": \"mock-client\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HOST}}/wallets/{{walletId}}/trusted-verifiers",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"wallets",
+								"{{walletId}}",
+								"trusted-verifiers"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -540,6 +578,45 @@
 				}
 			]
 		},
+			{
+				"name": "User Reject Verifier",
+				"request": {
+					"method": "PATCH",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Cookie",
+							"value": "SESSION={{SESSION_TOKEN}}",
+							"type": "text"
+						}
+					],
+					"body": {
+						"mode": "raw",
+						"raw": "{\n  \"errorCode\": \"access_denied\",\n  \"errorMessage\": \"User denied authorization to share credentials\"\n}",
+						"options": {
+							"raw": {
+								"language": "json"
+							}
+						}
+					},
+					"url": {
+						"raw": "{{HOST}}/wallets/{{walletId}}/presentations/{{presentationId}}",
+						"host": [
+							"{{HOST}}"
+						],
+						"path": [
+							"wallets",
+							"{{walletId}}",
+							"presentations",
+							"{{presentationId}}"
+						]
+					}
+				},
+				"response": []
+			},
 		{
 			"name": "Users",
 			"item": [
