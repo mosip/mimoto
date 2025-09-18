@@ -3,6 +3,7 @@ package io.mosip.mimoto.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
+import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationVerifierDTO;
 import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
@@ -11,6 +12,7 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialResponseProof;
 import io.mosip.mimoto.dto.openid.presentation.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.ErrorConstants;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.VerifierService;
@@ -20,6 +22,8 @@ import io.mosip.openID4VP.OpenID4VP;
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
 import io.mosip.openID4VP.authorizationRequest.Verifier;
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata;
+import io.mosip.mimoto.util.RestApiClient;
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -334,5 +338,17 @@ public class PresentationServiceImpl implements PresentationService {
                 .id(UUID.randomUUID().toString())
                 .inputDescriptors(inputDescriptors)
                 .build();
+    }
+
+    @Override
+    public void rejectVerifier(String walletId, Map<String, Object> sessionData, ErrorDTO payload) {
+        OpenID4VP openID4VP = (OpenID4VP) sessionData.get("openID4VPInstance");
+        if (openID4VP == null) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "OpenID4VP instance not found for presentationId");
+        }
+
+        OpenID4VPExceptions.AccessDenied accessDeniedException = new OpenID4VPExceptions.AccessDenied(payload.getErrorMessage(), "PresentationServiceImpl");
+        openID4VP.sendErrorToVerifier(accessDeniedException);
+
     }
 }
