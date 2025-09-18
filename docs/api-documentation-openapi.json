@@ -4325,13 +4325,10 @@
                                                     "credentialId": "cred-123",
                                                     "credentialTypeDisplayName": "Mock Verifiable Credential (SD-JWT)",
                                                     "credentialTypeLogo": "https://mosip.github.io/inji-config/logos/mosipid-logo.png",
-                                                    "type": ["IDCredential"],
-                                                    "claims": {
-                                                        "birthdate": "1990-01-01"
-                                                    }
+                                                    "format": "ldp_vc"
                                                 }
                                             ],
-                                            "missingClaims": []
+                                            "missingClaims": ["$.type"]
                                         }
                                     }
                                 }
@@ -5074,17 +5071,10 @@
                         "format": "uri",
                         "description": "Logo URL for the credential type"
                     },
-                    "type": {
-                        "type": "array",
-                        "description": "List of credential types",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "claims": {
-                        "type": "object",
-                        "description": "Available claims from the credential",
-                        "additionalProperties": true
+                    "format": {
+                        "type": "string",
+                        "description": "Format of the credential (e.g., ldp_vc, vc+sd-jwt, dc+sd-jwt)",
+                        "example": "ldp_vc"
                     }
                 }
             }
