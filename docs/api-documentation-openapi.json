@@ -4136,7 +4136,9 @@
                         "SessionAuth": []
                     }
                 ]
-            },
+            }
+        },
+        "/wallets/{walletId}/presentations/{presentationId}": {
             "patch": {
                 "tags": [
                     "Wallet Presentations"
@@ -4169,12 +4171,21 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PresentationSubmissionRequestDTO"
+                                "oneOf": [
+                                    { "$ref": "#/components/schemas/PresentationSubmissionRequestDTO" },
+                                    { "$ref": "#/components/schemas/Error" }
+                                ]
                             },
                             "examples": {
                                 "Presentation Submission Request": {
                                     "value": {
                                         "selectedCredentials": ["cred-123", "cred-456"]
+                                    }
+                                },
+                                "Rejection payload": {
+                                    "value": {
+                                        "errorCode": "access_denied",
+                                        "errorMessage": "User denied authorization to share credentials"
                                     }
                                 }
                             }
@@ -4187,7 +4198,10 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/PresentationSubmissionResponseDTO"
+                                    "oneOf": [
+                                        { "$ref": "#/components/schemas/PresentationSubmissionResponseDTO" },
+                                        { "$ref": "#/components/schemas/RejectedVerifierDTO" }
+                                    ]
                                 },
                                 "examples": {
                                     "Success response": {
@@ -4195,6 +4209,12 @@
                                             "presentationId": "123e4567-e89b-12d3-a456-426614174000",
                                             "status": "success",
                                             "message": "Presentation submitted successfully"
+                                        }
+                                    }, "Success response when rejected": {
+                                        "value": {
+                                            "status": "REJECTED",
+                                            "message": "Presentation request rejected. An OpenID4VP error response has been sent to the verifier.",
+                                            "redirectUri": "https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee"
                                         }
                                     }
                                 }
@@ -4225,6 +4245,12 @@
                                         "value": {
                                             "errorCode": "invalid_request",
                                             "errorMessage": "Credential not found: cred-123"
+                                        }
+                                    },
+                                    "presentationId not found in session": {
+                                        "value": { 
+                                            "errorCode": "invalid_request", 
+                                            "errorMessage": "presentationId not found in session" 
                                         }
                                     }
                                 }
@@ -4267,6 +4293,12 @@
                                         "value": {
                                             "errorCode": "internal_server_error",
                                             "errorMessage": "We are unable to process request now"
+                                        }
+                                    },
+                                    "Failed to reject verifier": {
+                                        "value": { 
+                                            "errorCode": "error", 
+                                            "errorMessage": "Unable to process reject verifier request" 
                                         }
                                     }
                                 }
@@ -4404,6 +4436,134 @@
                         "SessionAuth": []
                     }
                 ]
+            }
+        },
+        "/wallets/{walletId}/trusted-verifiers": {
+            "post": {
+                "tags": [
+                    "Wallet Trusted Verifiers"
+                ],
+                "summary": "Add a trusted verifier to a wallet",
+                "description": "Adds a trusted verifier for the specified wallet after validating the session and request. Requires an active session; the path walletId must match the wallet in session.",
+                "operationId": "addTrustedVerifier",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unique identifier of the wallet."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TrustedVerifierRequest"
+                            },
+                            "examples": {
+                                "Trusted Verifier Request": {
+                                    "value": {
+                                        "verifierId": "mock-client"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Trusted verifier created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TrustedVerifierResponseDTO"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "id": "trusted-verifier-id"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing required parameters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Missing verifierId": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Missing Input: verifierId is required"
+                                        }
+                                    },
+                                    "Invalid Wallet ID": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                        }
+                                    },
+                                    "Duplicate verifier": {
+                                        "value": {
+                                            "errorCode": "duplicate_verifier",
+                                            "errorMessage": "Verifier is already trusted for this wallet"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - session invalid or missing user",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Unauthorized": {
+                                        "value": {
+                                            "errorCode": "unauthorized",
+                                            "errorMessage": "User ID not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/auth/{provider}/token-login": {
@@ -5087,6 +5247,40 @@
                         "additionalProperties": true
                     }
                 }
+            },
+            "TrustedVerifierRequest": {
+                "type": "object",
+                "properties": {
+                    "verifierId": {
+                        "type": "string",
+                        "description": "Unique client id of the verifier"
+                    }
+                },
+                "required": [
+                    "verifierId"
+                ]
+            },
+            "TrustedVerifierResponseDTO": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique identifier of the trusted verifier"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            }
+            ,
+            "RejectedVerifierDTO": {
+                "type": "object",
+                "properties": {
+                    "status": { "type": "string", "description": "Status of the rejection request (for example success)" },
+                    "message": { "type": "string", "description": "Human readable message describing the result" },
+                    "redirectUri": { "type": "string", "description": "Redirect URI provided to the verifier" }
+                },
+                "required": [ "status", "message", "redirectUri" ]
             }
         }
     },
