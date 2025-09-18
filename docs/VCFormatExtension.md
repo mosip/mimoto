@@ -74,7 +74,6 @@ Before starting the implementation, check existing handlers implementation
 
 ### 2. Implement New Handler
 
-
 Create a new handler class implementing `CredentialFormatHandler` (with a @Component qualifier name required for injection)::
 
 ```java
