@@ -8,10 +8,11 @@ import io.mosip.openID4VP.exceptions.OpenID4VPExceptions;
 
 import java.io.IOException;
 import java.util.Map;
+import java.net.URISyntaxException;
 
 public interface PresentationService {
 
     String authorizePresentation(PresentationRequestDTO presentationRequestDTO) throws ApiNotAccessibleException, IOException;
-    VerifiablePresentationResponseDTO handleVPAuthorizationRequest(String urlEncodedVPAuthorizationRequest, String walletId) throws ApiNotAccessibleException, IOException, OpenID4VPExceptions;
+    VerifiablePresentationResponseDTO handleVPAuthorizationRequest(String urlEncodedVPAuthorizationRequest, String walletId) throws ApiNotAccessibleException, IOException, OpenID4VPExceptions, URISyntaxException;
     void rejectVerifier(String walletId, Map<String, Object> sessionData, ErrorDTO payload);
 }
