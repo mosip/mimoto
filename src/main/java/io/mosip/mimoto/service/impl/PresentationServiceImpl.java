@@ -23,9 +23,11 @@ import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
 import io.mosip.openID4VP.authorizationRequest.Verifier;
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata;
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions;
+import io.mosip.mimoto.util.RestApiClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -46,10 +48,13 @@ import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
 public class PresentationServiceImpl implements PresentationService {
 
     @Autowired
-    DataShareServiceImpl dataShareService;
+    private DataShareServiceImpl dataShareService;
 
     @Autowired
-    ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private RestApiClient restApiClient;
 
     @Autowired
     private VerifierService verifierService;
@@ -58,10 +63,10 @@ public class PresentationServiceImpl implements PresentationService {
     private OpenID4VPFactory openID4VPFactory;
 
     @Value("${mosip.inji.ovp.redirect.url.pattern}")
-    String injiOvpRedirectURLPattern;
+    private String injiOvpRedirectURLPattern;
 
     @Value("${server.tomcat.max-http-response-header-size:65536}")
-    Integer maximumResponseHeaderSize;
+    private Integer maximumResponseHeaderSize;
 
     @Override
     public VerifiablePresentationResponseDTO handleVPAuthorizationRequest(String urlEncodedVPAuthorizationRequest, String walletId) throws ApiNotAccessibleException, IOException, URISyntaxException {
@@ -121,7 +126,8 @@ public class PresentationServiceImpl implements PresentationService {
         }
 
         log.info("Started the Constructing VP Token");
-        String redirectionString = presentationDefinitionDTO.getInputDescriptors()
+
+        return presentationDefinitionDTO.getInputDescriptors()
                 .stream()
                 .findFirst()
                 .map(inputDescriptorDTO -> {
@@ -132,29 +138,20 @@ public class PresentationServiceImpl implements PresentationService {
                     }
                 })
                 .orElseThrow(() -> new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage()));
-
-        if (redirectionString.length() > maximumResponseHeaderSize) {
-            throw new VPNotCreatedException(
-                    ErrorConstants.URI_TOO_LONG.getErrorCode(),
-                    ErrorConstants.URI_TOO_LONG.getErrorMessage());
-        }
-        return redirectionString;
     }
 
     private String processInputDescriptor(VCCredentialResponse vcCredentialResponse, InputDescriptorDTO inputDescriptorDTO,
                                           PresentationRequestDTO presentationRequestDTO, PresentationDefinitionDTO presentationDefinitionDTO) throws JsonProcessingException {
         String format = vcCredentialResponse.getFormat();
+        VerifiablePresentationDTO vpDTO;
+
         if (CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(format)) {
             VCCredentialProperties ldpCredential = objectMapper.convertValue(vcCredentialResponse.getCredential(), VCCredentialProperties.class);
             if (inputDescriptorDTO.getFormat().get("ldpVc").get("proofTypes")
                     .stream().anyMatch(proofType -> ldpCredential.getProof().getType().equals(proofType))) {
-                return buildRedirectString(
-                        constructVerifiablePresentationString(ldpCredential),
-                        format,
-                        presentationRequestDTO,
-                        presentationDefinitionDTO,
-                        inputDescriptorDTO
-                );
+                vpDTO = constructVerifiablePresentationString(ldpCredential);
+            } else {
+                throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
             }
         } else if (CredentialFormat.VC_SD_JWT.getFormat().equalsIgnoreCase(format)
                 || CredentialFormat.DC_SD_JWT.getFormat().equalsIgnoreCase(format)) {
@@ -163,33 +160,97 @@ public class PresentationServiceImpl implements PresentationService {
             String responseAlgo = (String) jwtHeaders.get("alg");
             if (inputDescriptorDTO.getFormat().get(format).get("sd-jwt_alg_values")
                     .stream().anyMatch(responseAlgo::equals)) {
-                return buildRedirectString(
-                        constructVerifiablePresentationStringForSDjwt(credential),
-                        format,
-                        presentationRequestDTO,
-                        presentationDefinitionDTO,
-                        inputDescriptorDTO
-                );
+                vpDTO = constructVerifiablePresentationStringForSDjwt(credential);
+            } else {
+                throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
             }
+        } else {
+            throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
         }
-        log.info("No Credentials Matched the VP request.");
-        throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
+
+        // Create VP Token
+        String vpToken = createVpToken(vpDTO);
+        // Create PresentationSubmission
+        String presentationSubmission = constructPresentationSubmission(format, vpDTO, presentationDefinitionDTO, inputDescriptorDTO);
+
+        // If response_uri is present, POST the response
+        if (presentationRequestDTO.getResponseMode() != null && "direct_post".equals(presentationRequestDTO.getResponseMode())) {
+            return postVpToResponseUri(
+                    presentationRequestDTO.getResponseUri(),
+                    vpToken,
+                    presentationSubmission,
+                    presentationRequestDTO.getState(),
+                    presentationRequestDTO.getNonce()
+            );
+        }
+
+        // Otherwise, do redirect
+        String redirectString = buildRedirectString(
+                vpToken,
+                presentationRequestDTO.getRedirectUri(),
+                presentationSubmission
+        );
+
+        if (redirectString.length() > maximumResponseHeaderSize) {
+            throw new VPNotCreatedException(ErrorConstants.URI_TOO_LONG.getErrorCode(), ErrorConstants.URI_TOO_LONG.getErrorMessage());
+        }
+
+        return redirectString;
     }
 
-    private String buildRedirectString(VerifiablePresentationDTO verifiablePresentationDTO, String format,
-                                       PresentationRequestDTO presentationRequestDTO, PresentationDefinitionDTO presentationDefinitionDTO,
-                                       InputDescriptorDTO inputDescriptorDTO) throws JsonProcessingException {
-        String presentationSubmission = constructPresentationSubmission(format, verifiablePresentationDTO, presentationDefinitionDTO, inputDescriptorDTO);
-        String vpToken = objectMapper.writeValueAsString(verifiablePresentationDTO);
+    private String createVpToken(VerifiablePresentationDTO vpDTO) throws JsonProcessingException {
+        return objectMapper.writeValueAsString(vpDTO);
+    }
+
+    private String buildRedirectString(String vpToken, String redirectUri, String presentationSubmission) {
         return String.format(injiOvpRedirectURLPattern,
-                presentationRequestDTO.getRedirectUri(),
+                redirectUri,
                 Base64.getUrlEncoder().encodeToString(vpToken.getBytes(StandardCharsets.UTF_8)),
                 URLEncoder.encode(presentationSubmission, StandardCharsets.UTF_8));
     }
 
+    private String postVpToResponseUri(String responseUri, String vpToken, String presentationSubmission, String state, String nonce) throws JsonProcessingException {
+        Map<String, Object> postRequest = new HashMap<>();
+        postRequest.put("vp_token", vpToken);
+        postRequest.put("presentation_submission", objectMapper.readTree(presentationSubmission));
+
+        if (state != null) {
+            postRequest.put("state", state);
+        }
+
+        if (nonce != null) {
+            postRequest.put("nonce", nonce);
+        }
+
+        log.info("Posting VP to response_uri: {}", responseUri);
+        Map<String, Object> postResponse = null;
+        try {
+            postResponse = restApiClient.postApi(
+                    responseUri,
+                    MediaType.APPLICATION_JSON,
+                    postRequest,
+                    Map.class
+            );
+        } catch (Exception e) {
+            log.error("Exception while submitting the vp_token to the response_uri", e);
+            throw new VPNotCreatedException(ErrorConstants.INTERNAL_SERVER_ERROR.getErrorCode(), ErrorConstants.INTERNAL_SERVER_ERROR.getErrorMessage());
+        }
+
+        log.info("Response from verifier after POST: {}", postResponse);
+
+        // Check for redirect_uri in response
+        String redirectUri = (String) postResponse.get("redirect_uri");
+        if (redirectUri != null && !redirectUri.isEmpty()) {
+            return redirectUri;
+        }
+
+        // Fallback behavior if redirect_uri is not provided
+        log.warn("No redirect_uri received from verifier in POST response. Falling back to response_uri.");
+        return responseUri + "?status=vp_sent";
+    }
+
     private VerifiablePresentationDTO constructVerifiablePresentationString(VCCredentialProperties vcCredentialProperties) {
         Object context = vcCredentialProperties.getContext();
-
         List<Object> contextList = (context instanceof List<?> list)
                 ? (List<Object>) list
                 : List.of(context);
@@ -201,7 +262,7 @@ public class PresentationServiceImpl implements PresentationService {
                 .build();
     }
 
-    private VerifiablePresentationDTO constructVerifiablePresentationStringForSDjwt(String vcCredential) throws JsonProcessingException {
+    private VerifiablePresentationDTO constructVerifiablePresentationStringForSDjwt(String vcCredential) {
         return VerifiablePresentationDTO.builder()
                 .verifiableCredential(Collections.singletonList(vcCredential))
                 .type(Collections.singletonList("VerifiablePresentation"))
@@ -243,7 +304,7 @@ public class PresentationServiceImpl implements PresentationService {
 
             inputDescriptors.add(InputDescriptorDTO.builder()
                     .id(UUID.randomUUID().toString())
-                    .constraints(ConstraintsDTO.builder().fields(new FieldDTO[]{ field }).build())
+                    .constraints(ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build())
                     .format(format)
                     .build());
 
