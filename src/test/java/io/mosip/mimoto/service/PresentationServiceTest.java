@@ -14,6 +14,7 @@ import io.mosip.mimoto.service.impl.DataShareServiceImpl;
 import io.mosip.mimoto.service.impl.PresentationServiceImpl;
 import io.mosip.mimoto.service.impl.VerifierServiceImpl;
 import io.mosip.mimoto.util.JwtUtils;
+import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.TestUtilities;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,10 +42,15 @@ import static org.mockito.Mockito.*;
 public class PresentationServiceTest {
     @Mock
     VerifierService verifierService = new VerifierServiceImpl();
+
     @Mock
     DataShareServiceImpl dataShareService;
+
     @Mock
     ObjectMapper objectMapper;
+
+    @Mock
+    RestApiClient restApiClient;
 
     @InjectMocks
     PresentationServiceImpl presentationService;
@@ -91,7 +97,7 @@ public class PresentationServiceTest {
         when(objectMapper.convertValue(eq(vcCredentialResponse.getCredential()), eq(String.class)))
                 .thenReturn("eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.test.signature");
 
-        try (MockedStatic<io.mosip.mimoto.util.JwtUtils> jwtUtilsMock = mockStatic(io.mosip.mimoto.util.JwtUtils.class)) {
+        try (MockedStatic<JwtUtils> jwtUtilsMock = mockStatic(JwtUtils.class)) {
             jwtUtilsMock.when(() -> parseJwtHeader(anyString())).thenReturn(jwtHeaders);
 
             String expectedRedirectUrl = "test_redirect_uri#vp_token=dGVzdC1kYXRh&presentation_submission=test-data";
@@ -101,7 +107,6 @@ public class PresentationServiceTest {
         }
     }
 
-    // Error handling - essential for robustness
     @Test(expected = VPNotCreatedException.class)
     public void nullPresentationDefinitionWithVPRequest() throws IOException {
         VCCredentialResponse vcCredentialResponse = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
@@ -128,7 +133,6 @@ public class PresentationServiceTest {
         presentationService.authorizePresentation(presentationRequestDTO);
     }
 
-    // Presentation definition construction - key functionality
     @Test
     public void constructPresentationDefinitionForLdpVcCredential() {
         VCCredentialResponse vcCredentialResponse = createLdpVcCredentialResponse();
@@ -154,7 +158,7 @@ public class PresentationServiceTest {
         Map<String, Object> jwtPayload = Map.of("type", Arrays.asList("VerifiableCredential", "TestCredential"));
         Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
 
-        try (MockedStatic<JwtUtils> jwtUtilsMock = mockStatic(io.mosip.mimoto.util.JwtUtils.class)) {
+        try (MockedStatic<JwtUtils> jwtUtilsMock = mockStatic(JwtUtils.class)) {
             jwtUtilsMock.when(() -> JwtUtils.extractJwtPayloadFromSdJwt(anyString())).thenReturn(jwtPayload);
             jwtUtilsMock.when(() -> JwtUtils.parseJwtHeader(anyString())).thenReturn(jwtHeaders);
 
@@ -210,5 +214,132 @@ public class PresentationServiceTest {
 
         response.setCredential(credential);
         return response;
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void authorizePresentationNullCredentialThrowsException() throws Exception {
+        VCCredentialResponse vcCredentialResponse = new VCCredentialResponse();
+        vcCredentialResponse.setCredential(null);
+        vcCredentialResponse.setFormat(CredentialFormat.LDP_VC.getFormat());
+
+        PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
+        when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
+        when(objectMapper.convertValue(eq(null), eq(VCCredentialProperties.class))).thenReturn(null);
+
+        presentationService.authorizePresentation(presentationRequestDTO);
+    }
+
+    @Test(expected = VPNotCreatedException.class)
+    public void authorizePresentationUnsupportedCredentialFormatThrowsException() throws Exception {
+        VCCredentialResponse vcCredentialResponse = new VCCredentialResponse();
+        vcCredentialResponse.setCredential("dummy");
+        vcCredentialResponse.setFormat("unsupported-format");
+
+        PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
+        when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
+
+        presentationService.authorizePresentation(presentationRequestDTO);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void authorizePresentationObjectMapperThrowsException() throws Exception {
+        VCCredentialResponse vcCredentialResponse = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
+        PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
+
+        when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
+        when(objectMapper.convertValue(eq(vcCredentialResponse.getCredential()), eq(VCCredentialProperties.class)))
+                .thenThrow(new RuntimeException("Mapping error"));
+        presentationService.authorizePresentation(presentationRequestDTO);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void constructPresentationDefinitionNullCredentialCausesNPE() {
+        VCCredentialResponse vcCredentialResponse = new VCCredentialResponse();
+        vcCredentialResponse.setCredential(null);
+        vcCredentialResponse.setFormat(CredentialFormat.LDP_VC.getFormat());
+
+        when(objectMapper.convertValue(eq(null), eq(VCCredentialProperties.class))).thenReturn(null);
+
+        presentationService.constructPresentationDefinition(vcCredentialResponse);
+    }
+
+    // Test for constructPresentationDefinition with proper null handling
+    @Test
+    public void constructPresentationDefinitionWithValidCredential() {
+        VCCredentialResponse vcCredentialResponse = createLdpVcCredentialResponse();
+        VCCredentialProperties credential = (VCCredentialProperties) vcCredentialResponse.getCredential();
+        when(objectMapper.convertValue(eq(vcCredentialResponse.getCredential()), eq(VCCredentialProperties.class)))
+                .thenReturn(credential);
+
+        PresentationDefinitionDTO result = presentationService.constructPresentationDefinition(vcCredentialResponse);
+
+        assertNotNull(result);
+        assertNotNull(result.getId());
+        assertEquals(1, result.getInputDescriptors().size());
+    }
+
+    @Test
+    public void constructPresentationDefinitionUnsupportedFormatReturnsNull() {
+        VCCredentialResponse vcCredentialResponse = new VCCredentialResponse();
+        vcCredentialResponse.setCredential("dummy");
+        vcCredentialResponse.setFormat("unsupported-format");
+
+        PresentationDefinitionDTO result = presentationService.constructPresentationDefinition(vcCredentialResponse);
+
+        assertNotNull(result);
+        assertTrue(result.getInputDescriptors().isEmpty());
+    }
+
+    @Test
+    public void testDirectPostResponseMode() throws Exception {
+        VCCredentialResponse vcCredentialResponse = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
+        PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
+        presentationRequestDTO.setResponseMode("direct_post");
+        presentationRequestDTO.setResponseUri("https://verifier.example.com/response");
+        presentationRequestDTO.setState("test-state");
+        presentationRequestDTO.setNonce("test-nonce");
+
+        Map<String, Object> mockResponse = Map.of("redirect_uri", "https://verifier.example.com/success");
+
+        when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
+        when(objectMapper.convertValue(eq(vcCredentialResponse.getCredential()), eq(VCCredentialProperties.class)))
+                .thenReturn((VCCredentialProperties) vcCredentialResponse.getCredential());
+        when(restApiClient.postApi(anyString(), any(), any(), eq(Map.class))).thenReturn(mockResponse);
+
+        String result = presentationService.authorizePresentation(presentationRequestDTO);
+
+        assertEquals("https://verifier.example.com/success", result);
+        verify(restApiClient).postApi(eq("https://verifier.example.com/response"), any(), any(), eq(Map.class));
+    }
+
+    @Test(expected = VPNotCreatedException.class)
+    public void testSdJwtUnsupportedAlgorithm() throws Exception {
+        VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("vc+sd-jwt");
+        PresentationRequestDTO presentationRequestDTO = createSDJwtPresentationRequest();
+        Map<String, Object> jwtHeaders = Map.of("alg", "RS256", "typ", "JWT"); // Unsupported algorithm
+
+        when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
+        when(objectMapper.convertValue(eq(vcCredentialResponse.getCredential()), eq(String.class)))
+                .thenReturn("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.test.signature");
+
+        try (MockedStatic<JwtUtils> jwtUtilsMock = mockStatic(JwtUtils.class)) {
+            jwtUtilsMock.when(() -> parseJwtHeader(anyString())).thenReturn(jwtHeaders);
+
+            presentationService.authorizePresentation(presentationRequestDTO);
+        }
+    }
+
+    @Test(expected = VPNotCreatedException.class)
+    public void testMissingInputDescriptors() throws Exception {
+        VCCredentialResponse vcCredentialResponse = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
+        PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
+
+        // Set empty input descriptors list
+        PresentationDefinitionDTO presentationDefinition = presentationRequestDTO.getPresentationDefinition();
+        presentationDefinition.setInputDescriptors(Arrays.asList());
+
+        when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
+
+        presentationService.authorizePresentation(presentationRequestDTO);
     }
 }

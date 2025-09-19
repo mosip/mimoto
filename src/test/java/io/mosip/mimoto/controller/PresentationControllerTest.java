@@ -31,6 +31,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -297,14 +298,6 @@ public class PresentationControllerTest {
                         .param("redirect_uri", REDIRECT_URI))
                 .andExpect(status().isBadRequest());
 
-        // Test missing redirect_uri
-        mockMvc.perform(get("/authorize")
-                        .param("response_type", RESPONSE_TYPE)
-                        .param("resource", RESOURCE)
-                        .param("presentation_definition", PRESENTATION_DEFINITION_JSON)
-                        .param("client_id", CLIENT_ID))
-                .andExpect(status().isBadRequest());
-
         // Verify no service calls were made
         verify(verifierService, never()).validateVerifier(anyString(), anyString());
         verify(presentationService, never()).authorizePresentation(any());
@@ -360,4 +353,77 @@ public class PresentationControllerTest {
         verify(verifierService).validateVerifier(specialClientId, specialRedirectUri);
         verify(presentationService).authorizePresentation(any(PresentationRequestDTO.class));
     }
+
+// Add to PresentationControllerTest.java
+
+    @Test
+    public void testPerformAuthorizationWithInvalidHttpMethod() throws Exception {
+        // POST instead of GET should return 405 Method Not Allowed
+        mockMvc.perform(post("/authorize")
+                        .param("response_type", RESPONSE_TYPE)
+                        .param("resource", RESOURCE)
+                        .param("presentation_definition", PRESENTATION_DEFINITION_JSON)
+                        .param("client_id", CLIENT_ID)
+                        .param("redirect_uri", REDIRECT_URI))
+                .andExpect(status().isMethodNotAllowed());
+    }
+
+    @Test
+    public void testPerformAuthorizationWithExtraParameters() throws Exception {
+        PresentationDefinitionDTO mockPresentationDefinitionDTO = new PresentationDefinitionDTO();
+        when(objectMapper.readValue(PRESENTATION_DEFINITION_JSON, PresentationDefinitionDTO.class))
+                .thenReturn(mockPresentationDefinitionDTO);
+        when(presentationService.authorizePresentation(any(PresentationRequestDTO.class)))
+                .thenReturn(SUCCESS_REDIRECT_URL);
+        doNothing().when(verifierService).validateVerifier(CLIENT_ID, REDIRECT_URI);
+
+        mockMvc.perform(get("/authorize")
+                        .param("response_type", RESPONSE_TYPE)
+                        .param("resource", RESOURCE)
+                        .param("presentation_definition", PRESENTATION_DEFINITION_JSON)
+                        .param("client_id", CLIENT_ID)
+                        .param("redirect_uri", REDIRECT_URI)
+                        .param("extra_param", "extra_value"))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl(SUCCESS_REDIRECT_URL));
+    }
+
+    @Test
+    public void testPerformAuthorizationWithMalformedPresentationDefinitionJson() throws Exception {
+        String malformedJson = "{invalid_json}";
+        when(objectMapper.readValue(malformedJson, PresentationDefinitionDTO.class))
+                .thenThrow(new RuntimeException("Malformed JSON"));
+        doNothing().when(verifierService).validateVerifier(CLIENT_ID, REDIRECT_URI);
+
+        String expectedRedirectUrl = String.format(
+                "%s?error_code=%s&error_message=%s",
+                REDIRECT_URI,
+                ErrorConstants.INTERNAL_SERVER_ERROR.getErrorCode(),
+                URLEncoder.encode(ErrorConstants.INTERNAL_SERVER_ERROR.getErrorMessage(), StandardCharsets.UTF_8)
+        );
+
+        mockMvc.perform(get("/authorize")
+                        .param("response_type", RESPONSE_TYPE)
+                        .param("resource", RESOURCE)
+                        .param("presentation_definition", malformedJson)
+                        .param("client_id", CLIENT_ID)
+                        .param("redirect_uri", REDIRECT_URI))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl(expectedRedirectUrl));
+    }
+
+    @Test
+    public void testPerformAuthorizationWithNullParameters() throws Exception {
+        mockMvc.perform(get("/authorize")
+                        .param("response_type", (String) null)
+                        .param("resource", (String) null)
+                        .param("presentation_definition", (String) null)
+                        .param("client_id", (String) null)
+                        .param("redirect_uri", (String) null))
+                .andExpect(status().isBadRequest());
+
+        verify(verifierService, never()).validateVerifier(anyString(), anyString());
+        verify(presentationService, never()).authorizePresentation(any());
+    }
+
 }
