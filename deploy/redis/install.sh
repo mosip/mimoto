@@ -46,6 +46,7 @@ function installing_redis() {
 
   echo Installing redis
   helm -n $NS install redis bitnami/redis --wait --version $CHART_VERSION
+  --set image.repository=mosipint/redis --set image.tag=latest
 
   echo Installed redis service
 
