@@ -11,6 +11,18 @@ CHART_VERSION=0.19.0-develop
 KEYGEN_CHART_VERSION=1.3.0-beta.2
 SOFTHSM_NS=softhsm
 SOFTHSM_CHART_VERSION=1.3.0-beta.2
+DATASHARE_CHART_VERSION=1.3.0-beta.2
+##The value of INJI_DATASHARE_HOST is set to a fixed value: "datashare-inji.injiweb".
+INJI_DATASHARE_HOST="datashare-inji.injiweb"
+
+DEFAULT_INJI_DATASHARE_HOST=$(kubectl get cm inji-stack-config -n config-server -o jsonpath={.data.inji-datashare-host})
+if [ -z "$DEFAULT_INJI_DATASHARE_HOST" ]; then
+    echo "Adding INJI_DATASHARE_HOST to config-server deployment"
+    kubectl patch configmap inji-stack-config -n config-server --type merge -p "{\"data\": {\"inji-datashare-host\": \"$INJI_DATASHARE_HOST\"}}"
+    kubectl patch configmap inji-stack-config -n default --type merge -p "{\"data\": {\"inji-datashare-host\": \"$INJI_DATASHARE_HOST\"}}"
+    kubectl -n config-server set env --keys=inji-datashare-host --from configmap/inji-stack-config deployment/config-server --prefix=SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_
+    kubectl -n config-server get deploy -o name | xargs -n1 -t kubectl -n config-server rollout status
+fi
 
 echo Create $NS namespace
 kubectl create ns $NS
@@ -45,6 +57,12 @@ function installing_mimoto() {
   if [ "$flag" = "n" ]; then
     ENABLE_INSECURE='--set enable_insecure=true';
   fi
+
+  INJI_DATASHARE_HOST=$(kubectl get cm inji-stack-config -o jsonpath={.data.inji-datashare-host})
+  echo "Installing datashare"
+  helm -n $NS install datashare-inji mosip/datashare \
+    -f datashare-values.yaml \
+    --version $DATASHARE_CHART_VERSION
 
   echo "Do you want to use SoftHSM or .p12 keystore for key management?"
   echo "1) SoftHSM"
