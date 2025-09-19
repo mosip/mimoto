@@ -59,7 +59,12 @@ public class PresentationController {
                                      @RequestParam("resource") @Schema(description = "URL Encoded Resource url of the Credential ")  String resource,
                                      @RequestParam("presentation_definition")  @Schema(description = "URL Encoded presentation definition") String presentationDefinition,
                                      @RequestParam("client_id") @Schema(description = "URL Encoded Client Id") String clientId,
-                                     @RequestParam("redirect_uri") @Schema(description = "URL Encoded Redirect URI") String redirectUri ) throws IOException {
+                                     @RequestParam(name = "redirect_uri", required = false) @Schema(description = "URL Encoded Redirect URI") String redirectUri,
+                                     @RequestParam(name = "state", required = false) @Schema(description = "Unique session identifier to prevent CSRF") String state,
+                                     @RequestParam(name = "nonce", required = false) @Schema(description = "Cryptographic challenge used to bind the presentation to this request") String nonce,
+                                     @RequestParam(name = "response_uri", required = false) @Schema(description = "Where to send the VP token") String responseUri,
+                                     @RequestParam(name = "response_mode", required = false) @Schema(description = "Specifies how the Verifier will receive the Authorization Response from the Wallet") String responseMode) throws IOException {
+
         try {
             log.info("Started Presentation Authorization in the controller.");
             verifierService.validateVerifier(clientId, redirectUri);
@@ -69,7 +74,12 @@ public class PresentationController {
                     .resource(resource)
                     .presentationDefinition(presentationDefinitionDTO)
                     .clientId(clientId)
-                    .redirectUri(redirectUri).build();
+                    .redirectUri(redirectUri)
+                    .state(state)
+                    .nonce(nonce)
+                    .responseUri(responseUri)
+                    .responseMode(responseMode)
+                    .build();
             String redirectString = presentationService.authorizePresentation(presentationRequestDTO);
             log.info("Completed Presentation Authorization in the controller.");
             response.sendRedirect(redirectString);
