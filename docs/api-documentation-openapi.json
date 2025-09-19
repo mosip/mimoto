@@ -4216,7 +4216,7 @@
                                             "message": "Presentation request rejected. An OpenID4VP error response has been sent to the verifier.",
                                             "redirectUri": "https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee"
                                         }
-                                    }, "Response when error in rejection": {
+                                    }, "Response when an error occurs while submitting a rejection": {
                                         "value": {
                                             "status": "error",
                                             "message": "Failed to submit Verifiable Presentation."
