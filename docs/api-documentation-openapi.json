@@ -2665,6 +2665,38 @@
                         "in": "query",
                         "name": "redirect_uri",
                         "description": "One of the Redirect uri of the registered verifiers"
+                    },
+                    {
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "query",
+                        "name": "state",
+                        "description": "Unique session identifier to prevent CSRF"
+                    },
+                    {
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "query",
+                        "name": "nonce",
+                        "description": "Cryptographic challenge used to bind the presentation to this request"
+                    },
+                    {
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "query",
+                        "name": "response_uri",
+                        "description": "Where to send the VP token"
+                    },
+                    {
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "query",
+                        "name": "response_mode",
+                        "description": "Specifies how the Verifier will receive the Authorization Response from the Wallet"
                     }
                 ]
             }
