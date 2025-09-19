@@ -38,9 +38,11 @@ cd ../partner-onboarder
 * Once the job is completed, log in to S3 / NFS and check the reports. There should not be any failures.
 * Note: If you are running the Onboarder in a separate INJI cluster, update the extraEnvVars section accordingly in [values.yaml](../partner-onboarder/values.yaml).
 
-## Install mimoto
+## Install mimoto and datashare
 * Execute mimoto install script
 * Before installing Mimoto, please ensure that the database host and port are correctly configured in the [values.yaml](mimoto/values.yaml) file.
+* Datashare will be deployed as part of the Mimoto installation.
+* Note: During the installation of Mimoto and Datashare, ensure that the active_profile_env parameter in the ConfigMap of the config-server-share (in the injiweb namespace) is set to: default,inji-default,standalone
 ```
 cd ../deploy/mimoto
 ./install.sh

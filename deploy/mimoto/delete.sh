@@ -7,6 +7,7 @@ function deleting_mimoto() {
       if [ $yn = "Y" ]
         then
           helm -n $NS delete mimoto
+          helm -n $NS delete datashare-inji
           break
         else
           break
