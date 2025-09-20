@@ -8,6 +8,7 @@ import io.mosip.mimoto.dto.openid.presentation.ConstraintsDTO;
 import io.mosip.mimoto.dto.openid.presentation.FieldDTO;
 import io.mosip.mimoto.dto.openid.presentation.FilterDTO;
 import io.mosip.mimoto.dto.openid.presentation.InputDescriptorDTO;
+import io.mosip.mimoto.dto.MatchingCredentialsResponseDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.VPNotCreatedException;
@@ -173,5 +174,58 @@ public class SessionManager {
         }
         
         return dto;
+    }
+
+    /**
+     * Stores the matching credentials response in the session cache.
+     *
+     * @param httpSession The HTTP session.
+     * @param presentationId The presentation ID.
+     * @param matchingCredentialsResponse The matching credentials response to cache.
+     */
+    public void storeMatchingCredentialsInSession(HttpSession httpSession, String presentationId, MatchingCredentialsResponseDTO matchingCredentialsResponse) {
+        try {
+            Map<String, String> matchingCredentialsCache = (Map<String, String>) httpSession.getAttribute("matchingCredentials");
+            
+            if (matchingCredentialsCache == null) {
+                matchingCredentialsCache = new HashMap<>();
+            }
+            
+            String matchingCredentialsJson = objectMapper.writeValueAsString(matchingCredentialsResponse);
+            matchingCredentialsCache.put(presentationId, matchingCredentialsJson);
+            
+            httpSession.setAttribute("matchingCredentials", matchingCredentialsCache);
+            
+        } catch (JsonProcessingException e) {
+            log.error("Failed to store matching credentials in session cache for presentationId: {}", presentationId, e);
+            throw new VPNotCreatedException("Failed to cache matching credentials - " + e.getMessage());
+        }
+    }
+
+    /**
+     * Retrieves the matching credentials response from the session cache.
+     *
+     * @param httpSession The HTTP session.
+     * @param presentationId The presentation ID.
+     * @return The matching credentials response if found in cache, null otherwise.
+     */
+    public MatchingCredentialsResponseDTO getMatchingCredentialsFromSession(HttpSession httpSession, String presentationId) {
+        try {
+            Map<String, String> matchingCredentialsCache = (Map<String, String>) httpSession.getAttribute("matchingCredentials");
+            
+            if (matchingCredentialsCache == null || !matchingCredentialsCache.containsKey(presentationId)) {
+                log.info("No matching credentials found in session cache for presentationId: {}", presentationId);
+                return null;
+            }
+            
+            String matchingCredentialsJson = matchingCredentialsCache.get(presentationId);
+            MatchingCredentialsResponseDTO matchingCredentialsResponse = objectMapper.readValue(matchingCredentialsJson, MatchingCredentialsResponseDTO.class);
+            
+            return matchingCredentialsResponse;
+            
+        } catch (JsonProcessingException e) {
+            log.error("Failed to retrieve matching credentials from session cache for presentationId: {}", presentationId, e);
+            return null;
+        }
     }
 }

@@ -128,6 +128,13 @@ public class WalletPresentationsController {
                 return Utilities.getErrorResponseEntityWithoutWrapper(new VPNotCreatedException("Wallet key not found in session"), "unauthorized", HttpStatus.UNAUTHORIZED, MediaType.APPLICATION_JSON);
             }
 
+            // Check if matching credentials are already cached
+            MatchingCredentialsResponseDTO cachedMatchingCredentials = sessionManager.getMatchingCredentialsFromSession(httpSession, presentationId);
+            if (cachedMatchingCredentials != null) {
+                log.info("Returning cached matching credentials for presentationId: {}", presentationId);
+                return ResponseEntity.status(HttpStatus.OK).body(cachedMatchingCredentials);
+            }
+
             PresentationDefinitionDTO presentationDefinition = sessionManager.getPresentationDefinitionFromSession(httpSession, presentationId);
 
             if (presentationDefinition == null) {
@@ -135,9 +142,12 @@ public class WalletPresentationsController {
                 return Utilities.getErrorResponseEntityWithoutWrapper(new VPNotCreatedException("Presentation definition not found in session"), "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
             }
 
-            MatchingCredentialsResponseDTO response = presentationService.getMatchingCredentials(presentationDefinition, walletId, base64Key);
+            MatchingCredentialsResponseDTO matchingCredentialsResponseDTO = presentationService.getMatchingCredentials(presentationDefinition, walletId, base64Key);
 
-            return ResponseEntity.status(HttpStatus.OK).body(response);
+            // Store the matching credentials in session cache before returning
+            sessionManager.storeMatchingCredentialsInSession(httpSession, presentationId, matchingCredentialsResponseDTO);
+
+            return ResponseEntity.status(HttpStatus.OK).body(matchingCredentialsResponseDTO);
         } catch (ApiNotAccessibleException | IOException | VPNotCreatedException exception) {
             return Utilities.getErrorResponseEntityWithoutWrapper(exception, WALLET_CREATE_VP_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
