@@ -35,7 +35,7 @@ public class TrustedVerifierServiceImpl implements TrustedVerifierService {
         TrustedVerifier row = verifierRepository.save(trustedVerifier);
 
         TrustedVerifierResponseDTO trustedVerifierResponseDTO = new TrustedVerifierResponseDTO();
-        trustedVerifierResponseDTO.setTrustedVerifierId(row.getId());
+        trustedVerifierResponseDTO.setId(row.getId());
         return trustedVerifierResponseDTO;
     }
 }

@@ -1,6 +1,7 @@
 package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.dto.*;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.service.TrustedVerifierService;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.mimoto.util.WalletUtil;
@@ -22,7 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.mosip.mimoto.dto.TrustedVerifierResponseDTO;
 
-import static io.mosip.mimoto.exception.ErrorConstants.ERROR_REJECTING_VERIFIER;
+import static io.mosip.mimoto.exception.ErrorConstants.ERROR_ADDING_TRUSTED_VERIFIER;
 
 @Slf4j
 @RestController
@@ -67,28 +68,37 @@ public class WalletTrustedVerifiersController {
                     )
             )
     )
-    @ApiResponse(responseCode = "201", description = "Trusted verifier created successfully.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = TrustedVerifierResponseDTO.class), examples = @ExampleObject(name = "Success response", value = "{ \"id\": \"trusted-verifier-id\" }")))
+    @ApiResponse(responseCode = "201", description = "Trusted verifier created successfully.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = TrustedVerifierResponseDTO.class), examples = @ExampleObject(name = "Success response", value = "{ \"id\": \"uuid\" }")))
     @ApiResponse(responseCode = "400", description = "Invalid request or missing required parameters.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {
             @ExampleObject(name = "Missing verifierId", value = "{\"errorCode\":\"invalid_request\",\"errorMessage\":\"Missing Input: verifierId is required\"}"),
             @ExampleObject(name = "Invalid Wallet ID", value = "{\"errorCode\":\"invalid_request\",\"errorMessage\":\"Invalid Wallet ID. Session and request Wallet ID do not match\"}"),
             @ExampleObject(name = "Duplicate verifier", value = "{\"errorCode\":\"duplicate_verifier\",\"errorMessage\":\"Verifier is already trusted for this wallet\"}")
     }))
     @ApiResponse(responseCode = "401", description = "Unauthorized - session invalid or missing user.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unauthorized", value = "{\"errorCode\":\"unauthorized\",\"errorMessage\":\"User ID not found in session\"}")))
-    @ApiResponse(responseCode = "500", description = "Internal server error.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\":\"internal_server_error\",\"errorMessage\":\"We are unable to process request now\"}")))
+    @ApiResponse(responseCode = "500", description = "Internal server error.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\":\"internal_server_error\",\"errorMessage\":\"Failed to add trusted verifier\"}")))
     @PostMapping("/{walletId}/trusted-verifiers")
-    public ResponseEntity<TrustedVerifierResponseDTO> addTrustedVerifier(@PathVariable String walletId, @RequestBody TrustedVerifierRequest trustedVerifierRequest, HttpSession httpSession) {
+    public ResponseEntity<TrustedVerifierResponseDTO> addTrustedVerifier(@PathVariable(name = "walletId") String walletId, @RequestBody TrustedVerifierRequest trustedVerifierRequest, HttpSession httpSession) {
         try {
             WalletUtil.validateWalletId(httpSession, walletId);
 
-            if (StringUtils.isEmpty(trustedVerifierRequest.getVerifierId())) {
+            if (StringUtils.isBlank(trustedVerifierRequest.getVerifierId())) {
                 return Utilities.getErrorResponseEntityWithoutWrapper(new IllegalArgumentException("Missing Input: verifierId is required"), "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
             }
 
             TrustedVerifierResponseDTO trustedVerifierResponseDTO = trustedVerifierService.addTrustedVerifier(walletId, trustedVerifierRequest);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(trustedVerifierResponseDTO);
+        } catch (IllegalArgumentException e) {
+            log.warn("Validation error for walletId: {} - Message: {}", walletId, e.getMessage());
+            return Utilities.getErrorResponseEntityWithoutWrapper(e, "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+
+        } catch (InvalidRequestException e) {
+            log.warn("Invalid request for walletId: {} - Message: {}", walletId, e.getMessage());
+            return Utilities.getErrorResponseEntityWithoutWrapper(e, "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
         } catch (Exception e) {
-            return Utilities.getErrorResponseEntityWithoutWrapper(e, ERROR_REJECTING_VERIFIER.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
+            log.error("Unexpected error while adding trusted verifier for walletId: {} - Error: {}", walletId, e.getMessage(), e);
+            return Utilities.getErrorResponseEntityWithoutWrapper(e,
+                    ERROR_ADDING_TRUSTED_VERIFIER.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
     }
 
