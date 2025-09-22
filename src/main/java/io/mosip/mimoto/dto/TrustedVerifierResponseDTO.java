@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class TrustedVerifierResponseDTO {
-    private String trustedVerifierId;
+    private String id;
 }

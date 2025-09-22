@@ -3,6 +3,7 @@ package io.mosip.mimoto.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
+import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
@@ -503,11 +504,11 @@ public class PresentationServiceTest {
     @Test
     public void testConstructPresentationDefinitionForSdJwtWithMapType() {
         VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("dc+sd-jwt");
-        
+
         // Create complex type structure with Map containing _value
         Map<String, Object> typeMap = new HashMap<>();
         typeMap.put("_value", "TestCredential");
-        
+
         Map<String, Object> jwtPayload = Map.of("type", Arrays.asList("VerifiableCredential", typeMap));
         Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
 
@@ -520,7 +521,7 @@ public class PresentationServiceTest {
             assertNotNull(result);
             assertEquals(1, result.getInputDescriptors().size());
             assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("dc+sd-jwt"));
-            
+
             // Verify the filter pattern is set to the extracted type
             InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
             FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
@@ -531,7 +532,7 @@ public class PresentationServiceTest {
     @Test
     public void testConstructPresentationDefinitionForSdJwtWithStringType() {
         VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("vc+sd-jwt");
-        
+
         // Create simple type structure with String
         Map<String, Object> jwtPayload = Map.of("type", Arrays.asList("VerifiableCredential", "TestCredential"));
         Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
@@ -545,7 +546,7 @@ public class PresentationServiceTest {
             assertNotNull(result);
             assertEquals(1, result.getInputDescriptors().size());
             assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("vc+sd-jwt"));
-            
+
             // Verify the filter pattern is set to the extracted type
             InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
             FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
@@ -556,7 +557,7 @@ public class PresentationServiceTest {
     @Test
     public void testConstructPresentationDefinitionForSdJwtWithNullType() {
         VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("vc+sd-jwt");
-        
+
         // Create payload with null type using HashMap to allow null values
         Map<String, Object> jwtPayload = new HashMap<>();
         jwtPayload.put("type", null);
@@ -571,7 +572,7 @@ public class PresentationServiceTest {
             assertNotNull(result);
             assertEquals(1, result.getInputDescriptors().size());
             assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("vc+sd-jwt"));
-            
+
             // Verify the filter pattern is null when type is null
             InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
             FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
@@ -582,7 +583,7 @@ public class PresentationServiceTest {
     @Test
     public void testConstructPresentationDefinitionForSdJwtWithEmptyTypeList() {
         VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("dc+sd-jwt");
-        
+
         // Create payload with empty type list
         Map<String, Object> jwtPayload = Map.of("type", Arrays.asList());
         Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
@@ -596,7 +597,7 @@ public class PresentationServiceTest {
             assertNotNull(result);
             assertEquals(1, result.getInputDescriptors().size());
             assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("dc+sd-jwt"));
-            
+
             // Verify the filter pattern is null when type list is empty
             InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
             FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
@@ -607,11 +608,11 @@ public class PresentationServiceTest {
     @Test
     public void testConstructPresentationDefinitionForSdJwtWithMapTypeNullValue() {
         VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("vc+sd-jwt");
-        
+
         // Create complex type structure with Map containing null _value
         Map<String, Object> typeMap = new HashMap<>();
         typeMap.put("_value", null);
-        
+
         Map<String, Object> jwtPayload = Map.of("type", Arrays.asList("VerifiableCredential", typeMap));
         Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
 
@@ -624,7 +625,7 @@ public class PresentationServiceTest {
             assertNotNull(result);
             assertEquals(1, result.getInputDescriptors().size());
             assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("vc+sd-jwt"));
-            
+
             // Verify the filter pattern is null when _value is null
             InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
             FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
@@ -663,7 +664,7 @@ public class PresentationServiceTest {
         when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
         when(objectMapper.convertValue(eq(vcCredentialResponse.getCredential()), eq(VCCredentialProperties.class)))
                 .thenReturn((VCCredentialProperties) vcCredentialResponse.getCredential());
-        
+
         // Mock objectMapper.writeValueAsString to throw JsonProcessingException
         when(objectMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("JSON processing error") {});
 
@@ -671,7 +672,73 @@ public class PresentationServiceTest {
         VPNotCreatedException exception = assertThrows(VPNotCreatedException.class, () -> {
             presentationService.authorizePresentation(presentationRequestDTO);
         });
-        
+
         assertEquals(ErrorConstants.INVALID_REQUEST.getErrorCode() + " --> " + ErrorConstants.INVALID_REQUEST.getErrorMessage(), exception.getMessage());
+    }
+
+    @Test
+    public void testRejectVerifierSuccess() throws Exception {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+        Map<String, Object> sessionData = new HashMap<>();
+        sessionData.put("openID4VPInstance", mockOpenID4VP);
+
+        // Test that the method completes without throwing an exception
+        presentationService.rejectVerifier(walletId, sessionData, payload);
+
+        // Verify that sendErrorToVerifier was called on the OpenID4VP instance
+        verify(mockOpenID4VP, times(1)).sendErrorToVerifier(any());
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testRejectVerifierNullOpenID4VPInstance() {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        Map<String, Object> sessionData = new HashMap<>();
+        sessionData.put("openID4VPInstance", null);
+
+        presentationService.rejectVerifier(walletId, sessionData, payload);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testRejectVerifierMissingOpenID4VPInstance() {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        Map<String, Object> sessionData = new HashMap<>();
+        // Don't put openID4VPInstance in session data
+
+        presentationService.rejectVerifier(walletId, sessionData, payload);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testRejectVerifierNullSessionData() {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        presentationService.rejectVerifier(walletId, null, payload);
+    }
+
+    @Test
+    public void testRejectVerifierWithDifferentErrorCodes() throws Exception {
+        String walletId = "wallet-123";
+        OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+        Map<String, Object> sessionData = new HashMap<>();
+        sessionData.put("openID4VPInstance", mockOpenID4VP);
+
+        // Test with different error codes
+        ErrorDTO payload1 = new ErrorDTO("access_denied", "User denied authorization");
+        ErrorDTO payload2 = new ErrorDTO("unsupported_request", "Request not supported");
+        ErrorDTO payload3 = new ErrorDTO("invalid_request", "Invalid request parameters");
+
+        presentationService.rejectVerifier(walletId, sessionData, payload1);
+        presentationService.rejectVerifier(walletId, sessionData, payload2);
+        presentationService.rejectVerifier(walletId, sessionData, payload3);
+
+        // Verify sendErrorToVerifier was called 3 times
+        verify(mockOpenID4VP, times(3)).sendErrorToVerifier(any());
     }
 }

@@ -2,6 +2,10 @@ package io.mosip.mimoto.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
@@ -24,6 +28,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -35,6 +40,7 @@ import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.Map;
 
+import static io.mosip.mimoto.constant.LoggerFileConstant.DELIMITER;
 import static io.mosip.mimoto.exception.ErrorConstants.*;
 
 @Slf4j
@@ -196,7 +202,7 @@ public class WalletPresentationsController {
             @ExampleObject(name = "Invalid Wallet ID", value = "{\"errorCode\":\"invalid_request\",\"errorMessage\":\"Invalid Wallet ID. Session and request Wallet ID do not match\"}")
     }))
     @ApiResponse(responseCode = "401", description = "Unauthorized or invalid session.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "unauthorized", value = "{\"errorCode\": \"unauthorized\", \"errorMessage\": \"User ID not found in session\"}")))
-    @ApiResponse(responseCode = "500", description = "Internal server error.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Failed to reject verifier", value = "{\"errorCode\": \"error\", \"errorMessage\": \"Unable to process reject verifier request\"}")))
+    @ApiResponse(responseCode = "500", description = "Internal server error.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Failed to reject verifier", value = "{\"status\": \"error\", \"message\": \"Failed to submit Verifiable Presentation.\"}")))
     @PatchMapping("/{presentationId}")
     public ResponseEntity<?> userRejectedVerifier(@PathVariable("walletId") String walletId, HttpSession httpSession, @PathVariable("presentationId") String presentationId, @RequestBody ErrorDTO payload) {
         try {
@@ -218,17 +224,51 @@ public class WalletPresentationsController {
             Map<String, Object> vpSessionData = objectMapper.readValue(
                     vpSessionJson, new TypeReference<Map<String, Object>>() {});
 
+            /*String redirectUri = presentationService.rejectVerifier(walletId, vpSessionData, payload);
+            if(StringUtils.isBlank(redirectUri)) {
+                log.warn("Redirect URI is blank after rejecting verifier for presentationId: {}", presentationId);
+                return Utilities.getErrorResponseEntityWithoutWrapper(
+                        new Exception("Redirect URI is blank"), REJECT_VERIFIER_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON
+                );
+            }*/
             presentationService.rejectVerifier(walletId, vpSessionData, payload);
 
             RejectedVerifierDTO rejectedVerifierDTO = new RejectedVerifierDTO();
             rejectedVerifierDTO.setStatus(REJECTED_VERIFIER.getErrorCode());
             rejectedVerifierDTO.setMessage(REJECTED_VERIFIER.getErrorMessage());
-            // todo set redirect uri
-            rejectedVerifierDTO.setRedirectUri(null);
+            // rejectedVerifierDTO.setRedirectUri(redirectUri);
+            rejectedVerifierDTO.setRedirectUri("");
+
             return ResponseEntity.status(HttpStatus.OK).body(rejectedVerifierDTO);
+        } catch (InvalidRequestException e) {
+            log.error("Invalid request during user rejection for VP request: ", e);
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    e, e.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+        } catch (JsonProcessingException e) {
+            log.error("JSON processing error during user rejection for VP request: ", e);
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    e, REJECT_VERIFIER_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         } catch (Exception e) {
             log.error("Error during user rejection for VP request: ", e);
-            return Utilities.getErrorResponseEntityWithoutWrapper(e, REJECT_VERIFIER_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
+            return getErrorResponseEntity(e, REJECT_VERIFIER_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
+    }
+
+    private <T> ResponseEntity<T> getErrorResponseEntity(
+            Exception exception, String flowErrorCode, HttpStatus status, MediaType contentType) {
+        String errorMessage = exception.getMessage();
+        String errorCode = flowErrorCode;
+
+        if (errorMessage.contains(DELIMITER)) {
+            String[] errorSections = errorMessage.split(DELIMITER);
+            errorCode = errorSections[0];
+            errorMessage = errorSections[1];
+        }
+
+        ResponseEntity.BodyBuilder responseEntity = ResponseEntity.status(status);
+        if (contentType != null) {
+            responseEntity.contentType(contentType);
+        }
+        return (ResponseEntity<T>) responseEntity.body(new RejectedVerifierErrorDTO(errorCode, errorMessage));
     }
 }
