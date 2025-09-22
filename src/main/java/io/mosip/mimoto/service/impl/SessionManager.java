@@ -92,13 +92,8 @@ public class SessionManager {
                 return null;
             }
 
-            try {
-                Map<String, Object> openID4VPInstance = objectMapper.readValue(openID4VPInstanceJson, Map.class);
-                return extractPresentationDefinitionFromOpenID4VP(openID4VPInstance, presentationId);
-            } catch (JsonProcessingException e) {
-                log.warn("Failed to parse openID4VPInstance for presentationId: {}", presentationId, e);
-                return null;
-            }
+            Map<String, Object> openID4VPInstance = objectMapper.readValue(openID4VPInstanceJson, Map.class);
+            return extractPresentationDefinitionFromOpenID4VP(openID4VPInstance, presentationId);
 
         } catch (JsonProcessingException e) {
             log.error("Failed to retrieve presentation definition from session for presentationId: {}", presentationId, e);

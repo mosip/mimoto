@@ -12,7 +12,6 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.openid.presentation.ConstraintsDTO;
-import io.mosip.mimoto.dto.openid.presentation.FieldDTO;
 import io.mosip.mimoto.dto.openid.presentation.FilterDTO;
 import io.mosip.mimoto.dto.openid.presentation.InputDescriptorDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
@@ -30,6 +29,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static io.mosip.mimoto.util.JwtUtils.extractJwtPayloadFromSdJwt;
 
@@ -71,21 +72,30 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
 
             List<DecryptedCredentialDTO> decryptedCredentials = createDecryptedCredentials(walletCredentials, base64Key);
 
-            List<SelectableCredentialDTO> availableCredentials;
-            try {
-                availableCredentials = processCredentialsForMatching(walletCredentials, presentationDefinition, base64Key);
-            } catch (IOException | IllegalArgumentException | DecryptionException e) {
-                log.error("Error processing credentials for matching: {}", e.getMessage());
-                throw new ApiNotAccessibleException();
-            }
+            List<SelectableCredentialDTO> availableCredentials = new ArrayList<>();
+            Set<String> addedCredentialIds = new HashSet<>();
+            List<InputDescriptorDTO> descriptors = presentationDefinition.getInputDescriptors();
+            boolean[] matchedDescriptor = new boolean[descriptors.size()];
 
-            List<String> missingClaims;
-            try {
-                missingClaims = extractMissingClaims(walletCredentials, presentationDefinition, base64Key);
-            } catch (JsonProcessingException | IllegalArgumentException e) {
-                log.error("Error extracting missing claims: {}", e.getMessage());
-                missingClaims = new ArrayList<>();
-            }
+            decryptedCredentials.forEach(decrypted -> {
+                VCCredentialResponse vcCredentialResponse = decrypted.getCredential();
+                IntStream.range(0, descriptors.size())
+                        .filter(i -> matchesInputDescriptor(vcCredentialResponse, descriptors.get(i), presentationDefinition))
+                        .findFirst()
+                        .ifPresent(i -> {
+                            matchedDescriptor[i] = true;
+                            if (!addedCredentialIds.contains(decrypted.getId())) {
+                                availableCredentials.add(buildAvailableCredential(decrypted));
+                                addedCredentialIds.add(decrypted.getId());
+                            }
+                        });
+            });
+
+            Set<String> missingClaims = IntStream.range(0, descriptors.size())
+                    .filter(i -> !matchedDescriptor[i])
+                    .mapToObj(descriptors::get)
+                    .flatMap(descriptor -> extractClaimsFromInputDescriptor(descriptor).stream())
+                    .collect(Collectors.toSet());
 
             MatchingCredentialsResponseDTO matchingCredentialsResponse = MatchingCredentialsResponseDTO.builder()
                     .availableCredentials(availableCredentials)
@@ -99,9 +109,6 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
 
         } catch (IllegalArgumentException e) {
             log.error("Invalid input parameters for getMatchingCredentialsWithWalletData: {}", e.getMessage());
-            throw e;
-        } catch (ApiNotAccessibleException e) {
-            log.error("API not accessible while getting matching credentials with wallet data for walletId: {}", walletId, e);
             throw e;
         }
     }
@@ -123,19 +130,20 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
             throw new IllegalArgumentException("Presentation definition must contain at least one input descriptor");
         }
 
-        for (int i = 0; i < presentationDefinition.getInputDescriptors().size(); i++) {
-            InputDescriptorDTO descriptor = presentationDefinition.getInputDescriptors().get(i);
-            if (descriptor.getId() == null || descriptor.getId().trim().isEmpty()) {
-                throw new IllegalArgumentException("Input descriptor at index " + i + " must have a valid ID");
-            }
-        }
+        IntStream.range(0, presentationDefinition.getInputDescriptors().size())
+                .filter(i -> {
+                    InputDescriptorDTO descriptor = presentationDefinition.getInputDescriptors().get(i);
+                    return descriptor.getId() == null || descriptor.getId().trim().isEmpty();
+                })
+                .findFirst()
+                .ifPresent(i -> { throw new IllegalArgumentException("Input descriptor at index " + i + " must have a valid ID"); });
     }
 
     private MatchingCredentialsResponseDTO createEmptyResponseWithMissingClaims(PresentationDefinitionDTO presentationDefinition) {
         log.info("No credentials found for wallet");
         return MatchingCredentialsResponseDTO.builder()
                 .availableCredentials(Collections.emptyList())
-                .missingClaims(extractRequiredClaims(presentationDefinition))
+                .missingClaims(extractRequiredClaims(presentationDefinition).stream().collect(Collectors.toSet()))
                 .build();
     }
 
@@ -144,45 +152,29 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
     }
 
     private List<DecryptedCredentialDTO> createDecryptedCredentials(List<VerifiableCredential> walletCredentials, String base64Key) {
-        List<DecryptedCredentialDTO> decryptedCredentials = new ArrayList<>();
-
-        for (VerifiableCredential credential : walletCredentials) {
-            try {
-                VCCredentialResponse decryptedCredential = decryptAndParseCredential(credential, base64Key);
-
-                DecryptedCredentialDTO decryptedCredentialDTO = DecryptedCredentialDTO.builder()
-                        .id(credential.getId())
-                        .walletId(credential.getWalletId())
-                        .credential(decryptedCredential)
-                        .credentialMetadata(credential.getCredentialMetadata())
-                        .createdAt(credential.getCreatedAt())
-                        .updatedAt(credential.getUpdatedAt())
-                        .build();
-
-                decryptedCredentials.add(decryptedCredentialDTO);
-
-            } catch (IOException | IllegalArgumentException | DecryptionException e) {
-                log.warn("Failed to decrypt credential {}: {}", credential.getId(), e.getMessage());
-            }
-        }
+        List<DecryptedCredentialDTO> decryptedCredentials = walletCredentials.stream()
+                .map(credential -> {
+                    try {
+                        VCCredentialResponse decryptedCredential = decryptAndParseCredential(credential, base64Key);
+                        return Optional.of(DecryptedCredentialDTO.builder()
+                                .id(credential.getId())
+                                .walletId(credential.getWalletId())
+                                .credential(decryptedCredential)
+                                .credentialMetadata(credential.getCredentialMetadata())
+                                .createdAt(credential.getCreatedAt())
+                                .updatedAt(credential.getUpdatedAt())
+                                .build());
+                    } catch (IOException | IllegalArgumentException | DecryptionException e) {
+                        log.warn("Failed to decrypt credential {}: {}", credential.getId(), e.getMessage());
+                        return Optional.<DecryptedCredentialDTO>empty();
+                    }
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
 
         log.info("Successfully decrypted {} out of {} credentials", decryptedCredentials.size(), walletCredentials.size());
         return decryptedCredentials;
-    }
-
-    private List<SelectableCredentialDTO> processCredentialsForMatching(List<VerifiableCredential> walletCredentials, PresentationDefinitionDTO presentationDefinition, String base64Key) throws IOException, IllegalArgumentException, DecryptionException {
-        log.info("Starting credential matching process for {} credentials against {} input descriptors", walletCredentials.size(), presentationDefinition.getInputDescriptors().size());
-
-        List<SelectableCredentialDTO> availableCredentials = new ArrayList<>();
-        Set<String> addedCredentialIds = new HashSet<>();
-
-        for (VerifiableCredential credential : walletCredentials) {
-            VCCredentialResponse vcCredentialResponse = decryptAndParseCredential(credential, base64Key);
-            processCredentialAgainstInputDescriptors(credential, vcCredentialResponse, presentationDefinition, availableCredentials, addedCredentialIds);
-        }
-
-        log.info("Completed credential matching process - found {} matching credentials", availableCredentials.size());
-        return availableCredentials;
     }
 
     private VCCredentialResponse decryptAndParseCredential(VerifiableCredential credential, String base64Key) throws IOException, IllegalArgumentException, DecryptionException {
@@ -202,65 +194,19 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
         return objectMapper.readValue(decryptedCredential, VCCredentialResponse.class);
     }
 
-    private void processCredentialAgainstInputDescriptors(VerifiableCredential credential, VCCredentialResponse vcCredentialResponse, PresentationDefinitionDTO presentationDefinition, List<SelectableCredentialDTO> availableCredentials, Set<String> addedCredentialIds) {
-        for (InputDescriptorDTO inputDescriptor : presentationDefinition.getInputDescriptors()) {
-            if (matchesInputDescriptor(vcCredentialResponse, inputDescriptor, presentationDefinition)) {
-                if (!addedCredentialIds.contains(credential.getId())) {
-                    SelectableCredentialDTO availableCredential = buildAvailableCredential(credential, vcCredentialResponse);
-                    availableCredentials.add(availableCredential);
-                    addedCredentialIds.add(credential.getId());
-                }
-                break;
-            }
-        }
-    }
-
-    private List<String> extractMissingClaims(List<VerifiableCredential> walletCredentials, PresentationDefinitionDTO presentationDefinition, String base64Key) throws JsonProcessingException, IllegalArgumentException {
-        log.info("Starting missing claims extraction for {} input descriptors", presentationDefinition.getInputDescriptors().size());
-
-        List<String> missingClaims = new ArrayList<>();
-
-        for (InputDescriptorDTO inputDescriptor : presentationDefinition.getInputDescriptors()) {
-            if (!hasMatchingCredential(walletCredentials, inputDescriptor, presentationDefinition, base64Key)) {
-                missingClaims.addAll(extractClaimsFromInputDescriptor(inputDescriptor));
-            }
-        }
-
-        log.info("Completed missing claims extraction - found {} missing claims", missingClaims.size());
-        return missingClaims;
-    }
-
-    private boolean hasMatchingCredential(List<VerifiableCredential> walletCredentials, InputDescriptorDTO inputDescriptor, PresentationDefinitionDTO presentationDefinition, String base64Key) throws JsonProcessingException, IllegalArgumentException {
-        for (VerifiableCredential credential : walletCredentials) {
-            try {
-                VCCredentialResponse vcCredentialResponse = decryptAndParseCredential(credential, base64Key);
-                if (matchesInputDescriptor(vcCredentialResponse, inputDescriptor, presentationDefinition)) {
-                    return true;
-                }
-            } catch (IOException | IllegalArgumentException | DecryptionException e) {
-                log.error("Failed to decrypt credential {} for missing claims check: {}", credential.getId(), e.getMessage());
-            }
-        }
-        return false;
-    }
 
     private List<String> extractClaimsFromInputDescriptor(InputDescriptorDTO inputDescriptor) {
-        List<String> claims = new ArrayList<>();
-
-        if (inputDescriptor.getConstraints() != null && inputDescriptor.getConstraints().getFields() != null) {
-            for (FieldDTO field : inputDescriptor.getConstraints().getFields()) {
-                if (field.getPath() != null && field.getPath().length > 0) {
-                    for (String path : field.getPath()) {
-                        String claim = extractClaimKeyFromPath(path);
-                        if (claim != null && !claim.isBlank()) {
-                            claims.add(claim);
-                        }
-                    }
-                }
-            }
+        if (inputDescriptor.getConstraints() == null || inputDescriptor.getConstraints().getFields() == null) {
+            return Collections.emptyList();
         }
-
-        return claims;
+        return Arrays.stream(inputDescriptor.getConstraints().getFields())
+                .filter(Objects::nonNull)
+                .filter(field -> field.getPath() != null && field.getPath().length > 0)
+                .flatMap(field -> Arrays.stream(field.getPath()))
+                .map(this::extractClaimKeyFromPath)
+                .filter(Objects::nonNull)
+                .filter(claim -> !claim.isBlank())
+                .collect(Collectors.toList());
     }
 
     private boolean matchesInputDescriptor(VCCredentialResponse vc, InputDescriptorDTO inputDescriptor, PresentationDefinitionDTO presentationDefinition) {
@@ -310,27 +256,12 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
             return true;
         }
 
-        for (int i = 0; i < constraints.getFields().length; i++) {
-            FieldDTO field = constraints.getFields()[i];
-
+        return Arrays.stream(constraints.getFields()).allMatch(field -> {
             if (field.getPath() == null || field.getPath().length == 0) {
-                continue;
+                return true;
             }
-
-            boolean fieldMatches = false;
-            for (String path : field.getPath()) {
-                if (matchesFieldPath(vc, path, field.getFilter())) {
-                    fieldMatches = true;
-                    break;
-                }
-            }
-
-            if (!fieldMatches) {
-                return false;
-            }
-        }
-
-        return true;
+            return Arrays.stream(field.getPath()).anyMatch(path -> matchesFieldPath(vc, path, field.getFilter()));
+        });
     }
 
     private boolean matchesFieldPath(VCCredentialResponse vc, String path, FilterDTO filter) {
@@ -343,13 +274,7 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
                 return false;
             }
 
-            for (Object match : matches) {
-                if (matchesFilter(match, filter)) {
-                    return true;
-                }
-            }
-
-            return false;
+            return matches.stream().anyMatch(match -> matchesFilter(match, filter));
         } catch (JsonProcessingException | NoSuchFieldException | IllegalAccessException e) {
             log.error("Error checking field path {}: {}", path, e.getMessage());
             return false;
@@ -453,44 +378,36 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
     }
 
     private List<String> extractRequiredClaims(PresentationDefinitionDTO presentationDefinition) {
-        Set<String> requiredClaims = new HashSet<>();
-
-        if (presentationDefinition.getInputDescriptors() != null) {
-            for (InputDescriptorDTO inputDescriptor : presentationDefinition.getInputDescriptors()) {
-                if (inputDescriptor.getConstraints() != null && inputDescriptor.getConstraints().getFields() != null) {
-                    for (FieldDTO field : inputDescriptor.getConstraints().getFields()) {
-                        if (field.getPath() != null && field.getPath().length > 0) {
-                            for (String path : field.getPath()) {
-                                String claim = extractClaimKeyFromPath(path);
-                                if (claim != null && !claim.isBlank()) {
-                                    requiredClaims.add(claim);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        if (presentationDefinition.getInputDescriptors() == null) {
+            return Collections.emptyList();
         }
-        return new ArrayList<>(requiredClaims);
+        return presentationDefinition.getInputDescriptors().stream()
+                .filter(id -> id.getConstraints() != null && id.getConstraints().getFields() != null)
+                .flatMap(id -> Arrays.stream(id.getConstraints().getFields()))
+                .filter(field -> field.getPath() != null && field.getPath().length > 0)
+                .flatMap(field -> Arrays.stream(field.getPath()))
+                .map(this::extractClaimKeyFromPath)
+                .filter(Objects::nonNull)
+                .filter(claim -> !claim.isBlank())
+                .collect(Collectors.toCollection(LinkedHashSet::new))
+                .stream().collect(Collectors.toList());
     }
 
     private String extractClaimKeyFromPath(String path) {
         if (path == null || path.isBlank()) {
             return null;
         }
-        // Expecting JSONPath like $.a.b.c – return c
         int lastDot = path.lastIndexOf('.');
         String tail = lastDot >= 0 ? path.substring(lastDot + 1) : path;
-        // Strip leading $ if present (e.g., "$")
         if (tail.startsWith("$")) {
             tail = tail.substring(1);
         }
         return tail;
     }
 
-    private SelectableCredentialDTO buildAvailableCredential(VerifiableCredential credential, VCCredentialResponse vcCredentialResponse) {
-        String issuerId = credential.getCredentialMetadata().getIssuerId();
-        String credentialType = credential.getCredentialMetadata().getCredentialType();
+    private SelectableCredentialDTO buildAvailableCredential(DecryptedCredentialDTO decryptedCredentialDTO) {
+        String issuerId = decryptedCredentialDTO.getCredentialMetadata().getIssuerId();
+        String credentialType = decryptedCredentialDTO.getCredentialMetadata().getCredentialType();
 
         String credentialTypeDisplayName = "Unknown Credential";
         String credentialTypeLogo = null;
@@ -498,7 +415,7 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
         try {
             IssuerConfig issuerConfig = issuersService.getIssuerConfig(issuerId, credentialType);
             if (issuerConfig != null) {
-                VerifiableCredentialResponseDTO credentialResponse = VerifiableCredentialResponseDTO.fromIssuerConfig(issuerConfig, "en", credential.getId());
+                VerifiableCredentialResponseDTO credentialResponse = VerifiableCredentialResponseDTO.fromIssuerConfig(issuerConfig, "en", decryptedCredentialDTO.getId());
                 credentialTypeDisplayName = credentialResponse.getCredentialTypeDisplayName();
                 credentialTypeLogo = credentialResponse.getCredentialTypeLogo();
             }
@@ -507,10 +424,10 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
         }
 
         return SelectableCredentialDTO.builder()
-                .credentialId(credential.getId())
+                .credentialId(decryptedCredentialDTO.getId())
                 .credentialTypeDisplayName(credentialTypeDisplayName)
                 .credentialTypeLogo(credentialTypeLogo)
-                .format(vcCredentialResponse.getFormat())
+                .format(decryptedCredentialDTO.getCredential().getFormat())
                 .build();
     }
 }

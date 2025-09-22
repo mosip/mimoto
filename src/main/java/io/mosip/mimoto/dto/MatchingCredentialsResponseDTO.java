@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Builder
@@ -21,5 +22,5 @@ public class MatchingCredentialsResponseDTO {
 
     @JsonProperty("missingClaims")
     @Schema(description = "List of claims that are required but not available in any credential")
-    private List<String> missingClaims;
+    private Set<String> missingClaims;
 }
