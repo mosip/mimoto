@@ -3,11 +3,13 @@ package io.mosip.mimoto.controller;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.MatchingCredentialsResponseDTO;
+import io.mosip.mimoto.dto.MatchingCredentialsWithWalletDataDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationAuthorizationRequest;
 import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
+import io.mosip.mimoto.service.CredentialMatchingService;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.impl.SessionManager;
 import io.mosip.mimoto.util.Utilities;
@@ -42,6 +44,9 @@ public class WalletPresentationsController {
 
     @Autowired
     private PresentationService presentationService;
+
+    @Autowired
+    private CredentialMatchingService credentialMatchingService;
 
     @Autowired
     private SessionManager sessionManager;
@@ -128,13 +133,6 @@ public class WalletPresentationsController {
                 return Utilities.getErrorResponseEntityWithoutWrapper(new VPNotCreatedException("Wallet key not found in session"), "unauthorized", HttpStatus.UNAUTHORIZED, MediaType.APPLICATION_JSON);
             }
 
-            // Check if matching credentials are already cached
-            MatchingCredentialsResponseDTO cachedMatchingCredentials = sessionManager.getMatchingCredentialsFromSession(httpSession, presentationId);
-            if (cachedMatchingCredentials != null) {
-                log.info("Returning cached matching credentials for presentationId: {}", presentationId);
-                return ResponseEntity.status(HttpStatus.OK).body(cachedMatchingCredentials);
-            }
-
             PresentationDefinitionDTO presentationDefinition = sessionManager.getPresentationDefinitionFromSession(httpSession, presentationId);
 
             if (presentationDefinition == null) {
@@ -142,12 +140,14 @@ public class WalletPresentationsController {
                 return Utilities.getErrorResponseEntityWithoutWrapper(new VPNotCreatedException("Presentation definition not found in session"), "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
             }
 
-            MatchingCredentialsResponseDTO matchingCredentialsResponseDTO = presentationService.getMatchingCredentials(presentationDefinition, walletId, base64Key);
+            MatchingCredentialsWithWalletDataDTO matchingCredentialsWithWalletData = credentialMatchingService.getMatchingCredentials(presentationDefinition, walletId, base64Key);
 
-            // Store the matching credentials in session cache before returning
-            sessionManager.storeMatchingCredentialsInSession(httpSession, presentationId, matchingCredentialsResponseDTO);
+            // Store the matching credentials and filtered matched credentials in session cache before returning
+            sessionManager.storeMatchingWalletCredentialsInSession(httpSession, presentationId,
+                    matchingCredentialsWithWalletData.getMatchingCredentialsResponse(), 
+                    matchingCredentialsWithWalletData.getCredentials());
 
-            return ResponseEntity.status(HttpStatus.OK).body(matchingCredentialsResponseDTO);
+            return ResponseEntity.status(HttpStatus.OK).body(matchingCredentialsWithWalletData.getMatchingCredentialsResponse());
         } catch (ApiNotAccessibleException | IOException | VPNotCreatedException exception) {
             return Utilities.getErrorResponseEntityWithoutWrapper(exception, WALLET_CREATE_VP_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }

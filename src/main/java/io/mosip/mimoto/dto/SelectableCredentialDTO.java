@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AvailableCredentialDTO {
+public class SelectableCredentialDTO {
 
     @JsonProperty("credentialId")
     @Schema(description = "Unique identifier of the credential")

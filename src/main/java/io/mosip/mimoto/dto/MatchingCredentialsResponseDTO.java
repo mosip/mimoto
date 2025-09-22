@@ -17,7 +17,7 @@ public class MatchingCredentialsResponseDTO {
 
     @JsonProperty("availableCredentials")
     @Schema(description = "List of credentials that match the presentation definition")
-    private List<AvailableCredentialDTO> availableCredentials;
+    private List<SelectableCredentialDTO> availableCredentials;
 
     @JsonProperty("missingClaims")
     @Schema(description = "List of claims that are required but not available in any credential")

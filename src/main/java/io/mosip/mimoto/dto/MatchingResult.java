@@ -13,6 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 public class MatchingResult {
     
-    private List<AvailableCredentialDTO> availableCredentials;
+    private List<SelectableCredentialDTO> availableCredentials;
     private List<String> missingClaims;
 }
