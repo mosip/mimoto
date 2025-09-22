@@ -12,6 +12,7 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.openid.presentation.ConstraintsDTO;
+import io.mosip.mimoto.dto.openid.presentation.FieldDTO;
 import io.mosip.mimoto.dto.openid.presentation.FilterDTO;
 import io.mosip.mimoto.dto.openid.presentation.InputDescriptorDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static io.mosip.mimoto.util.JwtUtils.extractJwtPayloadFromSdJwt;
 
@@ -72,30 +74,31 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
 
             List<DecryptedCredentialDTO> decryptedCredentials = createDecryptedCredentials(walletCredentials, base64Key);
 
-            List<SelectableCredentialDTO> availableCredentials = new ArrayList<>();
-            Set<String> addedCredentialIds = new HashSet<>();
             List<InputDescriptorDTO> descriptors = presentationDefinition.getInputDescriptors();
-            boolean[] matchedDescriptor = new boolean[descriptors.size()];
+            Map<Integer, List<SelectableCredentialDTO>> matchingCredentialsByDescriptor = new HashMap<>();
+            Set<String> missingClaims = new HashSet<>();
 
-            decryptedCredentials.forEach(decrypted -> {
-                VCCredentialResponse vcCredentialResponse = decrypted.getCredential();
-                IntStream.range(0, descriptors.size())
-                        .filter(i -> matchesInputDescriptor(vcCredentialResponse, descriptors.get(i), presentationDefinition))
-                        .findFirst()
-                        .ifPresent(i -> {
-                            matchedDescriptor[i] = true;
-                            if (!addedCredentialIds.contains(decrypted.getId())) {
-                                availableCredentials.add(buildAvailableCredential(decrypted));
-                                addedCredentialIds.add(decrypted.getId());
-                            }
-                        });
-            });
+            IntStream.range(0, descriptors.size())
+                    .forEach(i -> {
+                        InputDescriptorDTO descriptor = descriptors.get(i);
+                        List<SelectableCredentialDTO> matches = decryptedCredentials.stream()
+                                .filter(decrypted -> matchesInputDescriptor(decrypted.getCredential(), descriptor, presentationDefinition))
+                                .map(this::buildAvailableCredential)
+                                .collect(Collectors.toList());
+                                
+                        if (!matches.isEmpty()) {
+                            matchingCredentialsByDescriptor.put(i, matches);
+                        } else {
+                            missingClaims.addAll(extractClaimsFromInputDescriptor(descriptor));
+                        }
+                    });
 
-            Set<String> missingClaims = IntStream.range(0, descriptors.size())
-                    .filter(i -> !matchedDescriptor[i])
-                    .mapToObj(descriptors::get)
-                    .flatMap(descriptor -> extractClaimsFromInputDescriptor(descriptor).stream())
-                    .collect(Collectors.toSet());
+            // Flatten all matching credentials into a single list, removing duplicates by credential ID
+            Set<String> addedCredentialIds = new HashSet<>();
+            List<SelectableCredentialDTO> availableCredentials = matchingCredentialsByDescriptor.values().stream()
+                    .flatMap(List::stream)
+                    .filter(credential -> addedCredentialIds.add(credential.getCredentialId()))
+                    .collect(Collectors.toList());
 
             MatchingCredentialsResponseDTO matchingCredentialsResponse = MatchingCredentialsResponseDTO.builder()
                     .availableCredentials(availableCredentials)
@@ -196,17 +199,35 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
 
 
     private List<String> extractClaimsFromInputDescriptor(InputDescriptorDTO inputDescriptor) {
-        if (inputDescriptor.getConstraints() == null || inputDescriptor.getConstraints().getFields() == null) {
+        return extractClaimsFromFields(inputDescriptor.getConstraints() != null ? 
+                inputDescriptor.getConstraints().getFields() : null, false);
+    }
+
+    /**
+     * Common method to extract claims from an array of fields.
+     * 
+     * @param fields Array of FieldDTO objects to extract claims from
+     * @param deduplicate Whether to deduplicate claims using LinkedHashSet
+     * @return List of extracted claim keys
+     */
+    private List<String> extractClaimsFromFields(FieldDTO[] fields, boolean deduplicate) {
+        if (fields == null) {
             return Collections.emptyList();
         }
-        return Arrays.stream(inputDescriptor.getConstraints().getFields())
+        
+        Stream<String> claimsStream = Arrays.stream(fields)
                 .filter(Objects::nonNull)
                 .filter(field -> field.getPath() != null && field.getPath().length > 0)
                 .flatMap(field -> Arrays.stream(field.getPath()))
                 .map(this::extractClaimKeyFromPath)
                 .filter(Objects::nonNull)
-                .filter(claim -> !claim.isBlank())
-                .collect(Collectors.toList());
+                .filter(claim -> !claim.isBlank());
+        
+        if (deduplicate) {
+            return claimsStream.distinct().collect(Collectors.toList());
+        } else {
+            return claimsStream.collect(Collectors.toList());
+        }
     }
 
     private boolean matchesInputDescriptor(VCCredentialResponse vc, InputDescriptorDTO inputDescriptor, PresentationDefinitionDTO presentationDefinition) {
@@ -226,29 +247,25 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
         if (descriptorFormat == null) {
             return true;
         }
-
+    
         String vcFormat = vc.getFormat();
-
-        if (CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(vcFormat)) {
-            if (descriptorFormat.containsKey(LDP_VC_FORMAT)) {
-                Map<String, List<String>> ldpVcFormat = descriptorFormat.get(LDP_VC_FORMAT);
-
-                if (ldpVcFormat.containsKey(PROOF_TYPE_KEY)) {
-                    VCCredentialProperties ldpCredential = objectMapper.convertValue(vc.getCredential(), VCCredentialProperties.class);
-                    String vcProofType = ldpCredential.getProof() != null ? ldpCredential.getProof().getType() : null;
-                    List<String> requiredProofTypes = ldpVcFormat.get(PROOF_TYPE_KEY);
-                    boolean matches = vcProofType != null && requiredProofTypes.contains(vcProofType);
-
-                    return matches;
-                } else {
-                    return true;
-                }
-            } else {
-                return false;
-            }
-        } else {
+        
+        if (!CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(vcFormat) || 
+            !descriptorFormat.containsKey(LDP_VC_FORMAT)) {
             return false;
         }
+    
+        Map<String, List<String>> ldpVcFormat = descriptorFormat.get(LDP_VC_FORMAT);
+        
+        if (!ldpVcFormat.containsKey(PROOF_TYPE_KEY)) {
+            return true;
+        }
+    
+        VCCredentialProperties ldpCredential = objectMapper.convertValue(vc.getCredential(), VCCredentialProperties.class);
+        String vcProofType = ldpCredential.getProof() != null ? ldpCredential.getProof().getType() : null;
+        List<String> requiredProofTypes = ldpVcFormat.get(PROOF_TYPE_KEY);
+        
+        return vcProofType != null && requiredProofTypes.contains(vcProofType);
     }
 
     private boolean matchesConstraints(VCCredentialResponse vc, ConstraintsDTO constraints) {
@@ -381,16 +398,13 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
         if (presentationDefinition.getInputDescriptors() == null) {
             return Collections.emptyList();
         }
-        return presentationDefinition.getInputDescriptors().stream()
+        
+        FieldDTO[] allFields = presentationDefinition.getInputDescriptors().stream()
                 .filter(id -> id.getConstraints() != null && id.getConstraints().getFields() != null)
                 .flatMap(id -> Arrays.stream(id.getConstraints().getFields()))
-                .filter(field -> field.getPath() != null && field.getPath().length > 0)
-                .flatMap(field -> Arrays.stream(field.getPath()))
-                .map(this::extractClaimKeyFromPath)
-                .filter(Objects::nonNull)
-                .filter(claim -> !claim.isBlank())
-                .collect(Collectors.toCollection(LinkedHashSet::new))
-                .stream().collect(Collectors.toList());
+                .toArray(FieldDTO[]::new);
+                
+        return extractClaimsFromFields(allFields, true);
     }
 
     private String extractClaimKeyFromPath(String path) {
