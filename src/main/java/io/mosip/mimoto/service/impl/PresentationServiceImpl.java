@@ -355,6 +355,5 @@ public class PresentationServiceImpl implements PresentationService {
 
         OpenID4VPExceptions.AccessDenied accessDeniedException = new OpenID4VPExceptions.AccessDenied(payload.getErrorMessage(), "PresentationServiceImpl");
         openID4VP.sendErrorToVerifier(accessDeniedException);
-
     }
 }
