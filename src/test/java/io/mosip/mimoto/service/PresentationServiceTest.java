@@ -3,6 +3,7 @@ package io.mosip.mimoto.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
+import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
@@ -454,4 +455,71 @@ public class PresentationServiceTest {
 
         presentationService.authorizePresentation(presentationRequestDTO);
     }
+
+    @Test
+    public void testRejectVerifierSuccess() throws Exception {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+        Map<String, Object> sessionData = new HashMap<>();
+        sessionData.put("openID4VPInstance", mockOpenID4VP);
+
+        // Test that the method completes without throwing an exception
+        presentationService.rejectVerifier(walletId, sessionData, payload);
+
+        // Verify that sendErrorToVerifier was called on the OpenID4VP instance
+        verify(mockOpenID4VP, times(1)).sendErrorToVerifier(any());
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testRejectVerifierNullOpenID4VPInstance() {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        Map<String, Object> sessionData = new HashMap<>();
+        sessionData.put("openID4VPInstance", null);
+
+        presentationService.rejectVerifier(walletId, sessionData, payload);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testRejectVerifierMissingOpenID4VPInstance() {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        Map<String, Object> sessionData = new HashMap<>();
+        // Don't put openID4VPInstance in session data
+
+        presentationService.rejectVerifier(walletId, sessionData, payload);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testRejectVerifierNullSessionData() {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        presentationService.rejectVerifier(walletId, null, payload);
+    }
+
+    @Test
+    public void testRejectVerifierWithDifferentErrorCodes() throws Exception {
+        String walletId = "wallet-123";
+        OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+        Map<String, Object> sessionData = new HashMap<>();
+        sessionData.put("openID4VPInstance", mockOpenID4VP);
+
+        // Test with different error codes
+        ErrorDTO payload1 = new ErrorDTO("access_denied", "User denied authorization");
+        ErrorDTO payload2 = new ErrorDTO("unsupported_request", "Request not supported");
+        ErrorDTO payload3 = new ErrorDTO("invalid_request", "Invalid request parameters");
+
+        presentationService.rejectVerifier(walletId, sessionData, payload1);
+        presentationService.rejectVerifier(walletId, sessionData, payload2);
+        presentationService.rejectVerifier(walletId, sessionData, payload3);
+
+        // Verify sendErrorToVerifier was called 3 times
+        verify(mockOpenID4VP, times(3)).sendErrorToVerifier(any());
+    }
+
 }
