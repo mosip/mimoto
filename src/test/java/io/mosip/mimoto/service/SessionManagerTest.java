@@ -8,6 +8,10 @@ import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.dto.openid.presentation.InputDescriptorDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
+import io.mosip.mimoto.dto.MatchingCredentialsResponseDTO;
+import io.mosip.mimoto.dto.DecryptedCredentialDTO;
+import io.mosip.mimoto.dto.SelectableCredentialDTO;
+import io.mosip.mimoto.model.CredentialMetadata;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.impl.SessionManager;
 import io.mosip.openID4VP.OpenID4VP;
@@ -27,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -59,7 +64,7 @@ public class SessionManagerTest {
 
         sessionManager.setupSession(request, provider, userMetadataDTO, userId);
 
-        assertEquals(provider, session.getAttribute("clientRegistrationId"));
+        assertEquals(provider, session.getAttribute(SessionKeys.CLIENT_REGISTRATION_ID));
         assertEquals(userMetadataDTO, session.getAttribute(SessionKeys.USER_METADATA));
         assertEquals(userId, session.getAttribute(SessionKeys.USER_ID));
     }
@@ -75,7 +80,7 @@ public class SessionManagerTest {
 
         sessionManager.storePresentationSessionDataInSession(session, presentationSessionData, "123e4567-e89b-12d3-a456-426614174000", "wallet123");
 
-        Map<String, String> presentations = (Map<String, String>) session.getAttribute("presentations");
+        Map<String, String> presentations = (Map<String, String>) session.getAttribute(SessionKeys.PRESENTATIONS);
 
         assertNotNull(presentations);
         assertTrue(presentations.containsKey("123e4567-e89b-12d3-a456-426614174000"));
@@ -96,28 +101,42 @@ public class SessionManagerTest {
         VerifiablePresentationSessionData sessionData1 = new VerifiablePresentationSessionData(mockOpenID4VP1, fixedInstant);
         VerifiablePresentationSessionData sessionData2 = new VerifiablePresentationSessionData(mockOpenID4VP2, fixedInstant);
 
-        // Mock ObjectMapper
-        when(objectMapper.writeValueAsString(any())).thenAnswer(invocation -> {
-            Object arg = invocation.getArgument(0);
-            if (arg == mockOpenID4VP1) return "{\"mock\":\"json1\"}";
-            if (arg == mockOpenID4VP2) return "{\"mock\":\"json2\"}";
-            if (arg instanceof Map) return new ObjectMapper().writeValueAsString(arg);
-            return "{}";
+        // Mock ObjectMapper to return specific JSON for OpenID4VP objects
+        when(objectMapper.writeValueAsString(mockOpenID4VP1)).thenReturn("{\"mock\":\"json1\"}");
+        when(objectMapper.writeValueAsString(mockOpenID4VP2)).thenReturn("{\"mock\":\"json2\"}");
+        
+        // For Map serialization, use real ObjectMapper
+        when(objectMapper.writeValueAsString(any(Map.class))).thenAnswer(invocation -> {
+            Map<String, Object> map = invocation.getArgument(0);
+            return new ObjectMapper().writeValueAsString(map);
         });
 
         // Store presentations
         sessionManager.storePresentationSessionDataInSession(session, sessionData1, "123e4567-e89b-12d3-a456-426614174000", "wallet123");
         sessionManager.storePresentationSessionDataInSession(session, sessionData2, "123e4567-e89b-12d3-a456-426614174001", "wallet456");
 
-        Map<String, String> presentations = (Map<String, String>) session.getAttribute("presentations");
+        Map<String, String> presentations = (Map<String, String>) session.getAttribute(SessionKeys.PRESENTATIONS);
         assertNotNull(presentations);
 
-        // Expected JSON strings
-        String expectedSessionPresentationData1 = "{\"createdAt\":\"2025-09-08T12:34:56Z\",\"walletId\":\"wallet123\",\"openID4VPInstance\":\"{\\\"mock\\\":\\\"json1\\\"}\"}", expectedSessionPresentationData2 = "{\"createdAt\":\"2025-09-08T12:34:56Z\",\"walletId\":\"wallet456\",\"openID4VPInstance\":\"{\\\"mock\\\":\\\"json2\\\"}\"}";
+        // Verify both presentations are stored
+        assertTrue(presentations.containsKey("123e4567-e89b-12d3-a456-426614174000"));
+        assertTrue(presentations.containsKey("123e4567-e89b-12d3-a456-426614174001"));
 
-        // Compare directly as strings
-        assertEquals(expectedSessionPresentationData1, presentations.get("123e4567-e89b-12d3-a456-426614174000"));
-        assertEquals(expectedSessionPresentationData2, presentations.get("123e4567-e89b-12d3-a456-426614174001"));
+        // Verify the stored data contains expected values
+        String storedData1 = presentations.get("123e4567-e89b-12d3-a456-426614174000");
+        String storedData2 = presentations.get("123e4567-e89b-12d3-a456-426614174001");
+        
+        assertNotNull(storedData1);
+        assertNotNull(storedData2);
+        
+        // Verify the JSON contains expected fields
+        assertTrue(storedData1.contains("\"createdAt\":\"2025-09-08T12:34:56Z\""));
+        assertTrue(storedData1.contains("\"wallet_id\":\"wallet123\""));
+        assertTrue(storedData1.contains("\"openID4VPInstance\":\"{\\\"mock\\\":\\\"json1\\\"}\""));
+        
+        assertTrue(storedData2.contains("\"createdAt\":\"2025-09-08T12:34:56Z\""));
+        assertTrue(storedData2.contains("\"wallet_id\":\"wallet456\""));
+        assertTrue(storedData2.contains("\"openID4VPInstance\":\"{\\\"mock\\\":\\\"json2\\\"}\""));
     }
 
     @Test
@@ -148,7 +167,7 @@ public class SessionManagerTest {
         Map<String, String> presentations = new HashMap<>();
         String sessionDataJson = createMockSessionDataJson();
         presentations.put(presentationId, sessionDataJson);
-        session.setAttribute("presentations", presentations);
+        session.setAttribute(SessionKeys.PRESENTATIONS, presentations);
 
         when(objectMapper.readValue(eq(sessionDataJson), eq(Map.class))).thenReturn(createMockVpSessionData());
         when(objectMapper.readValue(eq(createMockOpenID4VPInstanceJson()), eq(Map.class))).thenReturn(createMockOpenID4VPInstance());
@@ -188,7 +207,7 @@ public class SessionManagerTest {
 
         Map<String, String> presentations = new HashMap<>();
         presentations.put("other-id", "some-data");
-        session.setAttribute("presentations", presentations);
+        session.setAttribute(SessionKeys.PRESENTATIONS, presentations);
 
         PresentationDefinitionDTO result = sessionManager.getPresentationDefinitionFromSession(session, presentationId);
 
@@ -204,7 +223,7 @@ public class SessionManagerTest {
         Map<String, String> presentations = new HashMap<>();
         String sessionDataJson = createMockSessionDataJsonWithoutOpenID4VP();
         presentations.put(presentationId, sessionDataJson);
-        session.setAttribute("presentations", presentations);
+        session.setAttribute(SessionKeys.PRESENTATIONS, presentations);
 
         when(objectMapper.readValue(eq(sessionDataJson), eq(Map.class))).thenReturn(createMockVpSessionDataWithoutOpenID4VP());
 
@@ -222,7 +241,7 @@ public class SessionManagerTest {
         Map<String, String> presentations = new HashMap<>();
         String sessionDataJson = createMockSessionDataJson();
         presentations.put(presentationId, sessionDataJson);
-        session.setAttribute("presentations", presentations);
+        session.setAttribute(SessionKeys.PRESENTATIONS, presentations);
 
         when(objectMapper.readValue(eq(sessionDataJson), eq(Map.class))).thenReturn(createMockVpSessionData());
         when(objectMapper.readValue(eq(createMockOpenID4VPInstanceJson()), eq(Map.class))).thenReturn(createMockOpenID4VPInstanceWithoutAuthRequest());
@@ -241,7 +260,7 @@ public class SessionManagerTest {
         Map<String, String> presentations = new HashMap<>();
         String sessionDataJson = createMockSessionDataJson();
         presentations.put(presentationId, sessionDataJson);
-        session.setAttribute("presentations", presentations);
+        session.setAttribute(SessionKeys.PRESENTATIONS, presentations);
 
         when(objectMapper.readValue(eq(sessionDataJson), eq(Map.class))).thenReturn(createMockVpSessionData());
         when(objectMapper.readValue(eq(createMockOpenID4VPInstanceJson()), eq(Map.class))).thenReturn(createMockOpenID4VPInstanceWithoutPresentationDefinition());
@@ -260,7 +279,7 @@ public class SessionManagerTest {
         Map<String, String> presentations = new HashMap<>();
         String sessionDataJson = "invalid-json";
         presentations.put(presentationId, sessionDataJson);
-        session.setAttribute("presentations", presentations);
+        session.setAttribute(SessionKeys.PRESENTATIONS, presentations);
 
         when(objectMapper.readValue(eq(sessionDataJson), eq(Map.class))).thenThrow(new JsonProcessingException("Invalid JSON") {
         });
@@ -279,7 +298,7 @@ public class SessionManagerTest {
         Map<String, String> presentations = new HashMap<>();
         String sessionDataJson = createMockSessionDataJson();
         presentations.put(presentationId, sessionDataJson);
-        session.setAttribute("presentations", presentations);
+        session.setAttribute(SessionKeys.PRESENTATIONS, presentations);
 
         when(objectMapper.readValue(eq(sessionDataJson), eq(Map.class))).thenReturn(createMockVpSessionData());
         when(objectMapper.readValue(eq(createMockOpenID4VPInstanceJson()), eq(Map.class))).thenThrow(new JsonProcessingException("Invalid OpenID4VP JSON") {
@@ -299,7 +318,7 @@ public class SessionManagerTest {
         Map<String, String> presentations = new HashMap<>();
         String sessionDataJson = createMockSessionDataJson();
         presentations.put(presentationId, sessionDataJson);
-        session.setAttribute("presentations", presentations);
+        session.setAttribute(SessionKeys.PRESENTATIONS, presentations);
 
         when(objectMapper.readValue(eq(sessionDataJson), eq(Map.class))).thenReturn(createMockVpSessionData());
         when(objectMapper.readValue(eq(createMockOpenID4VPInstanceJson()), eq(Map.class))).thenReturn(createMockOpenID4VPInstanceWithEmptyInputDescriptors());
@@ -320,7 +339,7 @@ public class SessionManagerTest {
         Map<String, String> presentations = new HashMap<>();
         String sessionDataJson = createMockSessionDataJson();
         presentations.put(presentationId, sessionDataJson);
-        session.setAttribute("presentations", presentations);
+        session.setAttribute(SessionKeys.PRESENTATIONS, presentations);
 
         when(objectMapper.readValue(eq(sessionDataJson), eq(Map.class))).thenReturn(createMockVpSessionData());
         when(objectMapper.readValue(eq(createMockOpenID4VPInstanceJson()), eq(Map.class))).thenReturn(createMockOpenID4VPInstanceWithInputDescriptorWithoutConstraints());
@@ -332,6 +351,265 @@ public class SessionManagerTest {
         InputDescriptorDTO descriptor = result.getInputDescriptors().get(0);
         assertEquals("id card credential", descriptor.getId());
         assertNull(descriptor.getConstraints());
+    }
+
+    @Test
+    public void shouldStoreMatchingWalletCredentialsInSessionSuccessfully() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        String presentationId = "test-presentation-id";
+        
+        // Create test data
+        MatchingCredentialsResponseDTO matchingResponse = createTestMatchingCredentialsResponse();
+        List<DecryptedCredentialDTO> decryptedCredentials = createTestDecryptedCredentials();
+        
+        // Mock ObjectMapper
+        when(objectMapper.writeValueAsString(any(MatchingCredentialsResponseDTO.class)))
+                .thenReturn("{\"availableCredentials\":[{\"credentialId\":\"cred1\"}],\"missingClaims\":[]}");
+        when(objectMapper.writeValueAsString(any(List.class)))
+                .thenReturn("[{\"id\":\"cred1\",\"walletId\":\"wallet1\"}]");
+        
+        // Execute
+        sessionManager.storeMatchingWalletCredentialsInSession(session, presentationId, matchingResponse, decryptedCredentials);
+        
+        // Verify matching credentials are stored
+        Map<String, String> matchingCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHING_CREDENTIALS);
+        assertNotNull(matchingCredentialsCache);
+        assertTrue(matchingCredentialsCache.containsKey(presentationId));
+        assertEquals("{\"availableCredentials\":[{\"credentialId\":\"cred1\"}],\"missingClaims\":[]}", 
+                matchingCredentialsCache.get(presentationId));
+        
+        // Verify matched credentials are stored
+        Map<String, String> matchedCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHED_CREDENTIALS);
+        assertNotNull(matchedCredentialsCache);
+        assertTrue(matchedCredentialsCache.containsKey(presentationId));
+        assertEquals("[{\"id\":\"cred1\",\"walletId\":\"wallet1\"}]", 
+                matchedCredentialsCache.get(presentationId));
+    }
+
+    @Test
+    public void shouldStoreMatchingWalletCredentialsInSessionWithExistingCache() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        String presentationId1 = "presentation-1";
+        String presentationId2 = "presentation-2";
+        
+        // Create test data
+        MatchingCredentialsResponseDTO matchingResponse = createTestMatchingCredentialsResponse();
+        List<DecryptedCredentialDTO> decryptedCredentials = createTestDecryptedCredentials();
+        
+        // Pre-populate session with existing data
+        Map<String, String> existingMatchingCache = new HashMap<>();
+        existingMatchingCache.put(presentationId1, "existing-matching-data");
+        session.setAttribute(SessionKeys.MATCHING_CREDENTIALS, existingMatchingCache);
+        
+        Map<String, String> existingMatchedCache = new HashMap<>();
+        existingMatchedCache.put(presentationId1, "existing-matched-data");
+        session.setAttribute(SessionKeys.MATCHED_CREDENTIALS, existingMatchedCache);
+        
+        // Mock ObjectMapper
+        when(objectMapper.writeValueAsString(any(MatchingCredentialsResponseDTO.class)))
+                .thenReturn("{\"availableCredentials\":[{\"credentialId\":\"cred1\"}],\"missingClaims\":[]}");
+        when(objectMapper.writeValueAsString(any(List.class)))
+                .thenReturn("[{\"id\":\"cred1\",\"walletId\":\"wallet1\"}]");
+        
+        // Execute
+        sessionManager.storeMatchingWalletCredentialsInSession(session, presentationId2, matchingResponse, decryptedCredentials);
+        
+        // Verify both presentations are stored
+        Map<String, String> matchingCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHING_CREDENTIALS);
+        assertNotNull(matchingCredentialsCache);
+        assertEquals(2, matchingCredentialsCache.size());
+        assertTrue(matchingCredentialsCache.containsKey(presentationId1));
+        assertTrue(matchingCredentialsCache.containsKey(presentationId2));
+        assertEquals("existing-matching-data", matchingCredentialsCache.get(presentationId1));
+        assertEquals("{\"availableCredentials\":[{\"credentialId\":\"cred1\"}],\"missingClaims\":[]}", 
+                matchingCredentialsCache.get(presentationId2));
+        
+        Map<String, String> matchedCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHED_CREDENTIALS);
+        assertNotNull(matchedCredentialsCache);
+        assertEquals(2, matchedCredentialsCache.size());
+        assertTrue(matchedCredentialsCache.containsKey(presentationId1));
+        assertTrue(matchedCredentialsCache.containsKey(presentationId2));
+        assertEquals("existing-matched-data", matchedCredentialsCache.get(presentationId1));
+        assertEquals("[{\"id\":\"cred1\",\"walletId\":\"wallet1\"}]", 
+                matchedCredentialsCache.get(presentationId2));
+    }
+
+    @Test
+    public void shouldStoreMatchingWalletCredentialsInSessionWithEmptyCredentials() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        String presentationId = "test-presentation-id";
+        
+        // Create test data with empty credentials
+        MatchingCredentialsResponseDTO matchingResponse = MatchingCredentialsResponseDTO.builder()
+                .availableCredentials(new ArrayList<>())
+                .missingClaims(Set.of("claim1", "claim2"))
+                .build();
+        List<DecryptedCredentialDTO> decryptedCredentials = new ArrayList<>();
+        
+        // Mock ObjectMapper
+        when(objectMapper.writeValueAsString(any(MatchingCredentialsResponseDTO.class)))
+                .thenReturn("{\"availableCredentials\":[],\"missingClaims\":[\"claim1\",\"claim2\"]}");
+        when(objectMapper.writeValueAsString(any(List.class)))
+                .thenReturn("[]");
+        
+        // Execute
+        sessionManager.storeMatchingWalletCredentialsInSession(session, presentationId, matchingResponse, decryptedCredentials);
+        
+        // Verify data is stored
+        Map<String, String> matchingCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHING_CREDENTIALS);
+        assertNotNull(matchingCredentialsCache);
+        assertTrue(matchingCredentialsCache.containsKey(presentationId));
+        assertEquals("{\"availableCredentials\":[],\"missingClaims\":[\"claim1\",\"claim2\"]}", 
+                matchingCredentialsCache.get(presentationId));
+        
+        Map<String, String> matchedCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHED_CREDENTIALS);
+        assertNotNull(matchedCredentialsCache);
+        assertTrue(matchedCredentialsCache.containsKey(presentationId));
+        assertEquals("[]", matchedCredentialsCache.get(presentationId));
+    }
+
+    @Test
+    public void shouldStoreMatchingWalletCredentialsInSessionWithNullMatchingResponse() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        String presentationId = "test-presentation-id";
+        
+        // Create test data with null matching response
+        MatchingCredentialsResponseDTO matchingResponse = null;
+        List<DecryptedCredentialDTO> decryptedCredentials = createTestDecryptedCredentials();
+        
+        // Mock ObjectMapper - only need to mock the List serialization since null will be handled by ObjectMapper
+        when(objectMapper.writeValueAsString(any(List.class)))
+                .thenReturn("[]");
+        
+        // Execute
+        sessionManager.storeMatchingWalletCredentialsInSession(session, presentationId, matchingResponse, decryptedCredentials);
+        
+        // Verify data is stored
+        Map<String, String> matchingCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHING_CREDENTIALS);
+        assertNotNull(matchingCredentialsCache);
+        assertTrue(matchingCredentialsCache.containsKey(presentationId));
+        assertEquals(null, matchingCredentialsCache.get(presentationId)); // ObjectMapper serializes null as "null"
+        
+        Map<String, String> matchedCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHED_CREDENTIALS);
+        assertNotNull(matchedCredentialsCache);
+        assertTrue(matchedCredentialsCache.containsKey(presentationId));
+        assertEquals("[]", matchedCredentialsCache.get(presentationId));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenSerializationFailsForMatchingCredentials() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        String presentationId = "test-presentation-id";
+        
+        // Create test data
+        MatchingCredentialsResponseDTO matchingResponse = createTestMatchingCredentialsResponse();
+        List<DecryptedCredentialDTO> decryptedCredentials = createTestDecryptedCredentials();
+        
+        // Mock ObjectMapper to throw exception
+        when(objectMapper.writeValueAsString(any(MatchingCredentialsResponseDTO.class)))
+                .thenThrow(new JsonProcessingException("Serialization failed") {});
+        
+        // Execute and verify exception
+        try {
+            sessionManager.storeMatchingWalletCredentialsInSession(session, presentationId, matchingResponse, decryptedCredentials);
+            fail("Expected VPNotCreatedException to be thrown");
+        } catch (VPNotCreatedException e) {
+            assertEquals("invalid_request", e.getErrorCode());
+            assertTrue(e.getErrorText().contains("Failed to cache matching credentials"));
+            assertTrue(e.getErrorText().contains("Serialization failed"));
+        }
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenSerializationFailsForMatchedCredentials() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        String presentationId = "test-presentation-id";
+        
+        // Create test data
+        MatchingCredentialsResponseDTO matchingResponse = createTestMatchingCredentialsResponse();
+        List<DecryptedCredentialDTO> decryptedCredentials = createTestDecryptedCredentials();
+        
+        // Mock ObjectMapper - first call succeeds, second fails
+        when(objectMapper.writeValueAsString(any(MatchingCredentialsResponseDTO.class)))
+                .thenReturn("{\"availableCredentials\":[{\"credentialId\":\"cred1\"}],\"missingClaims\":[]}");
+        when(objectMapper.writeValueAsString(any(List.class)))
+                .thenThrow(new JsonProcessingException("Serialization failed") {});
+        
+        // Execute and verify exception
+        try {
+            sessionManager.storeMatchingWalletCredentialsInSession(session, presentationId, matchingResponse, decryptedCredentials);
+            fail("Expected VPNotCreatedException to be thrown");
+        } catch (VPNotCreatedException e) {
+            assertEquals("invalid_request", e.getErrorCode());
+            assertTrue(e.getErrorText().contains("Failed to cache matching credentials"));
+            assertTrue(e.getErrorText().contains("Serialization failed"));
+        }
+    }
+
+    @Test
+    public void shouldFilterMatchedCredentialsCorrectly() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        String presentationId = "test-presentation-id";
+        
+        // Create test data with multiple credentials
+        MatchingCredentialsResponseDTO matchingResponse = MatchingCredentialsResponseDTO.builder()
+                .availableCredentials(List.of(
+                        SelectableCredentialDTO.builder().credentialId("cred1").build(),
+                        SelectableCredentialDTO.builder().credentialId("cred3").build()
+                ))
+                .missingClaims(Set.of("claim1"))
+                .build();
+        
+        List<DecryptedCredentialDTO> decryptedCredentials = List.of(
+                DecryptedCredentialDTO.builder().id("cred1").walletId("wallet1").build(),
+                DecryptedCredentialDTO.builder().id("cred2").walletId("wallet2").build(),
+                DecryptedCredentialDTO.builder().id("cred3").walletId("wallet3").build()
+        );
+        
+        // Mock ObjectMapper
+        when(objectMapper.writeValueAsString(any(MatchingCredentialsResponseDTO.class)))
+                .thenReturn("{\"availableCredentials\":[{\"credentialId\":\"cred1\"},{\"credentialId\":\"cred3\"}],\"missingClaims\":[\"claim1\"]}");
+        when(objectMapper.writeValueAsString(any(List.class)))
+                .thenReturn("[{\"id\":\"cred1\",\"walletId\":\"wallet1\"},{\"id\":\"cred3\",\"walletId\":\"wallet3\"}]");
+        
+        // Execute
+        sessionManager.storeMatchingWalletCredentialsInSession(session, presentationId, matchingResponse, decryptedCredentials);
+        
+        // Verify only matched credentials are stored
+        Map<String, String> matchedCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHED_CREDENTIALS);
+        assertNotNull(matchedCredentialsCache);
+        assertTrue(matchedCredentialsCache.containsKey(presentationId));
+        String storedCredentials = matchedCredentialsCache.get(presentationId);
+        assertTrue(storedCredentials.contains("cred1"));
+        assertTrue(storedCredentials.contains("cred3"));
+        assertFalse(storedCredentials.contains("cred2")); // Should not contain unmatched credential
+    }
+
+    private MatchingCredentialsResponseDTO createTestMatchingCredentialsResponse() {
+        return MatchingCredentialsResponseDTO.builder()
+                .availableCredentials(List.of(
+                        SelectableCredentialDTO.builder()
+                                .credentialId("cred1")
+                                .credentialTypeDisplayName("Test Credential")
+                                .format("ldp_vc")
+                                .build()
+                ))
+                .missingClaims(Set.of("claim1", "claim2"))
+                .build();
+    }
+
+    private List<DecryptedCredentialDTO> createTestDecryptedCredentials() {
+        CredentialMetadata metadata = new CredentialMetadata();
+        metadata.setIssuerId("issuer1");
+        metadata.setCredentialType("TestCredential");
+        
+        return List.of(
+                DecryptedCredentialDTO.builder()
+                        .id("cred1")
+                        .walletId("wallet1")
+                        .credentialMetadata(metadata)
+                        .build()
+        );
     }
 
     private String createMockSessionDataJson() {

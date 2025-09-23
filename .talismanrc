@@ -167,4 +167,8 @@ fileignoreconfig:
   checksum: 688825bedb86334f4909812e95ddb6e46cbfa6b4c7a9599bfe48608843d129df
 - filename: src/main/java/io/mosip/mimoto/service/impl/CredentialMatchingServiceImpl.java
   checksum: aab6a880672f540eafd547c0af5bc6d817e6fbe4a90b10806d5c6531f05f854d
+- filename: src/test/java/io/mosip/mimoto/service/CredentialMatchingServiceTest.java
+  checksum: fa18fbade26f1976836764ebc4a760632dec351c3e4fd726406afc25de014619
+- filename: src/test/java/io/mosip/mimoto/service/SessionManagerTest.java
+  checksum: 2dfc3d0402507cb655173fa390f7538f9fba8d4786524a917b153d173c5f964e
 version: ""
