@@ -5,10 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.constant.OpenID4VPConstants;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
-import io.mosip.mimoto.dto.openid.presentation.ConstraintsDTO;
-import io.mosip.mimoto.dto.openid.presentation.FieldDTO;
-import io.mosip.mimoto.dto.openid.presentation.FilterDTO;
-import io.mosip.mimoto.dto.openid.presentation.InputDescriptorDTO;
 import io.mosip.mimoto.dto.MatchingCredentialsResponseDTO;
 import io.mosip.mimoto.dto.SelectableCredentialDTO;
 import io.mosip.mimoto.dto.DecryptedCredentialDTO;
@@ -99,75 +95,29 @@ public class SessionManager {
     }
 
     private PresentationDefinitionDTO extractPresentationDefinitionFromOpenID4VP(Map<String, Object> openID4VPInstance, String presentationId) {
-        Map<String, Object> authorizationRequest = (Map<String, Object>) openID4VPInstance.get(OpenID4VPConstants.AUTHORIZATION_REQUEST);
-        if (authorizationRequest == null) {
-            log.warn("No authorizationRequest found in openID4VPInstance for presentationId: {}", presentationId);
+        try {
+            Map<String, Object> authorizationRequest = (Map<String, Object>) openID4VPInstance.get(OpenID4VPConstants.AUTHORIZATION_REQUEST);
+            if (authorizationRequest == null) {
+                log.warn("No authorizationRequest found in openID4VPInstance for presentationId: {}", presentationId);
+                return null;
+            }
+
+            Map<String, Object> presentationDefinition = (Map<String, Object>) authorizationRequest.get(OpenID4VPConstants.PRESENTATION_DEFINITION);
+            if (presentationDefinition == null) {
+                log.warn("No presentationDefinition found in authorizationRequest for presentationId: {}", presentationId);
+                return null;
+            }
+
+            // Use Jackson to deserialize the presentation definition map directly to DTO
+            // This handles the complex nested structure including List<InputDescriptorDTO>
+            return objectMapper.convertValue(presentationDefinition, PresentationDefinitionDTO.class);
+
+        } catch (Exception e) {
+            log.error("Failed to deserialize presentation definition for presentationId: {}", presentationId, e);
             return null;
         }
-
-        Map<String, Object> presentationDefinition = (Map<String, Object>) authorizationRequest.get(OpenID4VPConstants.PRESENTATION_DEFINITION);
-        if (presentationDefinition == null) {
-            log.warn("No presentationDefinition found in authorizationRequest for presentationId: {}", presentationId);
-            return null;
-        }
-
-        PresentationDefinitionDTO dto = new PresentationDefinitionDTO();
-        dto.setId((String) presentationDefinition.get(OpenID4VPConstants.ID));
-
-        List<Map<String, Object>> inputDescriptorsList = (List<Map<String, Object>>) presentationDefinition.get(OpenID4VPConstants.INPUT_DESCRIPTORS);
-        if (inputDescriptorsList != null) {
-            dto.setInputDescriptors(processInputDescriptors(inputDescriptorsList));
-        }
-
-        return dto;
     }
 
-    private List<InputDescriptorDTO> processInputDescriptors(List<Map<String, Object>> inputDescriptorsList) {
-        return inputDescriptorsList.stream().map(this::buildInputDescriptorDTO).collect(java.util.stream.Collectors.toList());
-    }
-
-    private InputDescriptorDTO buildInputDescriptorDTO(Map<String, Object> inputDescriptor) {
-        InputDescriptorDTO dto = new InputDescriptorDTO();
-        dto.setId((String) inputDescriptor.get(OpenID4VPConstants.ID));
-        dto.setFormat((Map<String, Map<String, List<String>>>) inputDescriptor.get(OpenID4VPConstants.FORMAT));
-
-        Map<String, Object> constraints = (Map<String, Object>) inputDescriptor.get(OpenID4VPConstants.CONSTRAINTS);
-        if (constraints != null) {
-            dto.setConstraints(buildConstraintsDTO(constraints));
-        }
-
-        return dto;
-    }
-
-    private ConstraintsDTO buildConstraintsDTO(Map<String, Object> constraints) {
-        ConstraintsDTO dto = new ConstraintsDTO();
-        dto.setLimitDisclosure((String) constraints.get(OpenID4VPConstants.LIMIT_DISCLOSURE));
-
-        List<Map<String, Object>> fieldsList = (List<Map<String, Object>>) constraints.get(OpenID4VPConstants.FIELDS);
-        if (fieldsList != null) {
-            FieldDTO[] fields = fieldsList.stream().map(this::buildFieldDTO).toArray(FieldDTO[]::new);
-            dto.setFields(fields);
-        }
-
-        return dto;
-    }
-
-    private FieldDTO buildFieldDTO(Map<String, Object> field) {
-        FieldDTO dto = new FieldDTO();
-
-        List<String> path = (List<String>) field.get(OpenID4VPConstants.PATH);
-        dto.setPath(path != null ? path.toArray(new String[0]) : new String[0]);
-
-        Map<String, Object> filter = (Map<String, Object>) field.get(OpenID4VPConstants.FILTER);
-        if (filter != null) {
-            FilterDTO filterDTO = new FilterDTO();
-            filterDTO.setType((String) filter.get(OpenID4VPConstants.TYPE));
-            filterDTO.setPattern((String) filter.get(OpenID4VPConstants.PATTERN));
-            dto.setFilter(filterDTO);
-        }
-
-        return dto;
-    }
 
     /**
      * Stores the matching credentials response and filtered decrypted credentials in the session cache.

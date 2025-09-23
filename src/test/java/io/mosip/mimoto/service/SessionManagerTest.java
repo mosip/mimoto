@@ -5,6 +5,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
+import io.mosip.mimoto.dto.openid.presentation.ConstraintsDTO;
+import io.mosip.mimoto.dto.openid.presentation.FieldDTO;
+import io.mosip.mimoto.dto.openid.presentation.FilterDTO;
 import io.mosip.mimoto.dto.openid.presentation.InputDescriptorDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
@@ -28,6 +31,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -171,6 +175,10 @@ public class SessionManagerTest {
 
         when(objectMapper.readValue(eq(sessionDataJson), eq(Map.class))).thenReturn(createMockVpSessionData());
         when(objectMapper.readValue(eq(createMockOpenID4VPInstanceJson()), eq(Map.class))).thenReturn(createMockOpenID4VPInstance());
+        
+        // Mock the convertValue call for Jackson deserialization
+        PresentationDefinitionDTO expectedResult = createExpectedPresentationDefinitionDTO();
+        when(objectMapper.convertValue(any(Map.class), eq(PresentationDefinitionDTO.class))).thenReturn(expectedResult);
 
 
         PresentationDefinitionDTO result = sessionManager.getPresentationDefinitionFromSession(session, presentationId);
@@ -322,6 +330,10 @@ public class SessionManagerTest {
 
         when(objectMapper.readValue(eq(sessionDataJson), eq(Map.class))).thenReturn(createMockVpSessionData());
         when(objectMapper.readValue(eq(createMockOpenID4VPInstanceJson()), eq(Map.class))).thenReturn(createMockOpenID4VPInstanceWithEmptyInputDescriptors());
+        
+        // Mock the convertValue call for Jackson deserialization with empty input descriptors
+        PresentationDefinitionDTO expectedResult = createExpectedPresentationDefinitionDTOWithEmptyInputDescriptors();
+        when(objectMapper.convertValue(any(Map.class), eq(PresentationDefinitionDTO.class))).thenReturn(expectedResult);
 
         PresentationDefinitionDTO result = sessionManager.getPresentationDefinitionFromSession(session, presentationId);
 
@@ -343,6 +355,10 @@ public class SessionManagerTest {
 
         when(objectMapper.readValue(eq(sessionDataJson), eq(Map.class))).thenReturn(createMockVpSessionData());
         when(objectMapper.readValue(eq(createMockOpenID4VPInstanceJson()), eq(Map.class))).thenReturn(createMockOpenID4VPInstanceWithInputDescriptorWithoutConstraints());
+        
+        // Mock the convertValue call for Jackson deserialization with input descriptor without constraints
+        PresentationDefinitionDTO expectedResult = createExpectedPresentationDefinitionDTOWithInputDescriptorWithoutConstraints();
+        when(objectMapper.convertValue(any(Map.class), eq(PresentationDefinitionDTO.class))).thenReturn(expectedResult);
 
         PresentationDefinitionDTO result = sessionManager.getPresentationDefinitionFromSession(session, presentationId);
         
@@ -734,5 +750,100 @@ public class SessionManagerTest {
         constraints.put("fields", fields);
 
         return constraints;
+    }
+
+    private PresentationDefinitionDTO createExpectedPresentationDefinitionDTO() {
+        PresentationDefinitionDTO dto = new PresentationDefinitionDTO();
+        dto.setId("c4822b58-7fb4-454e-b827-f8758fe27f9a");
+        
+        // Create input descriptors list
+        List<InputDescriptorDTO> inputDescriptors = new ArrayList<>();
+        
+        // First input descriptor
+        InputDescriptorDTO inputDescriptor1 = new InputDescriptorDTO();
+        inputDescriptor1.setId("id card credential");
+        inputDescriptor1.setFormat(createExpectedFormat());
+        inputDescriptor1.setConstraints(createExpectedConstraintsDTO());
+        inputDescriptors.add(inputDescriptor1);
+        
+        // Second input descriptor
+        InputDescriptorDTO inputDescriptor2 = new InputDescriptorDTO();
+        inputDescriptor2.setId("id card credential");
+        inputDescriptor2.setFormat(createExpectedFormat());
+        inputDescriptor2.setConstraints(createExpectedConstraintsDTO2());
+        inputDescriptors.add(inputDescriptor2);
+        
+        dto.setInputDescriptors(inputDescriptors);
+        return dto;
+    }
+
+    private ConstraintsDTO createExpectedConstraintsDTO() {
+        ConstraintsDTO constraints = new ConstraintsDTO();
+        constraints.setLimitDisclosure(null);
+        
+        FieldDTO[] fields = new FieldDTO[1];
+        FieldDTO field = new FieldDTO();
+        field.setPath(new String[]{"$.type"});
+        
+        FilterDTO filter = new FilterDTO();
+        filter.setType("object");
+        filter.setPattern("MOSIPVerifiableCredential");
+        field.setFilter(filter);
+        
+        fields[0] = field;
+        constraints.setFields(fields);
+        
+        return constraints;
+    }
+
+    private ConstraintsDTO createExpectedConstraintsDTO2() {
+        ConstraintsDTO constraints = new ConstraintsDTO();
+        constraints.setLimitDisclosure(null);
+        
+        FieldDTO[] fields = new FieldDTO[1];
+        FieldDTO field = new FieldDTO();
+        field.setPath(new String[]{"$.type"});
+        
+        FilterDTO filter = new FilterDTO();
+        filter.setType("object");
+        filter.setPattern("InsuranceCredential");
+        field.setFilter(filter);
+        
+        fields[0] = field;
+        constraints.setFields(fields);
+        
+        return constraints;
+    }
+
+    private Map<String, Map<String, List<String>>> createExpectedFormat() {
+        Map<String, Map<String, List<String>>> format = new HashMap<>();
+        Map<String, List<String>> ldpVc = new HashMap<>();
+        ldpVc.put("proof_type", Arrays.asList("RsaSignature2018"));
+        format.put("ldp_vc", ldpVc);
+        return format;
+    }
+
+    private PresentationDefinitionDTO createExpectedPresentationDefinitionDTOWithEmptyInputDescriptors() {
+        PresentationDefinitionDTO dto = new PresentationDefinitionDTO();
+        dto.setId("c4822b58-7fb4-454e-b827-f8758fe27f9a");
+        dto.setInputDescriptors(null); // Empty input descriptors as expected by the test
+        return dto;
+    }
+
+    private PresentationDefinitionDTO createExpectedPresentationDefinitionDTOWithInputDescriptorWithoutConstraints() {
+        PresentationDefinitionDTO dto = new PresentationDefinitionDTO();
+        dto.setId("c4822b58-7fb4-454e-b827-f8758fe27f9a");
+        
+        // Create input descriptors list with one descriptor without constraints
+        List<InputDescriptorDTO> inputDescriptors = new ArrayList<>();
+        
+        InputDescriptorDTO inputDescriptor = new InputDescriptorDTO();
+        inputDescriptor.setId("id card credential");
+        inputDescriptor.setFormat(createExpectedFormat());
+        inputDescriptor.setConstraints(null); // No constraints as expected by the test
+        inputDescriptors.add(inputDescriptor);
+        
+        dto.setInputDescriptors(inputDescriptors);
+        return dto;
     }
 }

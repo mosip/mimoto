@@ -13,6 +13,6 @@ import lombok.NoArgsConstructor;
 public class ConstraintsDTO {
     FieldDTO[] fields;
 
-    @JsonProperty("limit_disclosure")
+    @JsonProperty("limitDisclosure")
     private String limitDisclosure;
 }
