@@ -43,11 +43,7 @@ public class SessionManager {
     }
 
     public void storePresentationSessionDataInSession(HttpSession httpSession, VerifiablePresentationSessionData sessionData, String presentationId, String walletId) {
-        Map<String, String> presentations = (Map<String, String>) httpSession.getAttribute(SessionKeys.PRESENTATIONS);
-
-        if (presentations == null) {
-            presentations = new HashMap<>();
-        }
+        Map<String, String> presentations = getOrCreateSessionMap(httpSession, SessionKeys.PRESENTATIONS);
 
         // Adds the new presentation to the map if it is not already present
         presentations.computeIfAbsent(presentationId, id -> {
@@ -186,11 +182,7 @@ public class SessionManager {
             // Filter and store only the matched decrypted credentials
             List<DecryptedCredentialDTO> matchedCredentials = filterMatchedCredentials(matchingCredentialsResponse, credentials);
 
-            Map<String, String> matchedCredentialsCache = (Map<String, String>) httpSession.getAttribute(SessionKeys.MATCHED_CREDENTIALS);
-
-            if (matchedCredentialsCache == null) {
-                matchedCredentialsCache = new HashMap<>();
-            }
+            Map<String, String> matchedCredentialsCache = getOrCreateSessionMap(httpSession, SessionKeys.MATCHED_CREDENTIALS);
 
             // Serialize the matching credentials response (for error handling tests, but not stored)
             objectMapper.writeValueAsString(matchingCredentialsResponse);
@@ -233,5 +225,21 @@ public class SessionManager {
         log.info("Filtered {} matched decrypted credentials from {} total decrypted credentials", filteredCredentials.size(), decryptedCredentials.size());
 
         return filteredCredentials;
+    }
+
+    /**
+     * Helper method to get or create a session map attribute.
+     * This eliminates duplication in session map handling across store methods.
+     *
+     * @param httpSession The HTTP session.
+     * @param key         The session attribute key.
+     * @return The existing map or a new HashMap if none exists.
+     */
+    private Map<String, String> getOrCreateSessionMap(HttpSession httpSession, String key) {
+        Map<String, String> sessionMap = (Map<String, String>) httpSession.getAttribute(key);
+        if (sessionMap == null) {
+            sessionMap = new HashMap<>();
+        }
+        return sessionMap;
     }
 }
