@@ -14,6 +14,7 @@ import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.service.impl.CredentialMatchingServiceImpl;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
+import io.mosip.mimoto.service.impl.OpenID4VPFactory;
 import io.mosip.openID4VP.OpenID4VP;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
