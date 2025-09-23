@@ -371,13 +371,6 @@ public class SessionManagerTest {
         // Execute
         sessionManager.storeMatchingWalletCredentialsInSession(session, presentationId, matchingResponse, decryptedCredentials);
         
-        // Verify matching credentials are stored
-        Map<String, String> matchingCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHING_CREDENTIALS);
-        assertNotNull(matchingCredentialsCache);
-        assertTrue(matchingCredentialsCache.containsKey(presentationId));
-        assertEquals("{\"availableCredentials\":[{\"credentialId\":\"cred1\"}],\"missingClaims\":[]}", 
-                matchingCredentialsCache.get(presentationId));
-        
         // Verify matched credentials are stored
         Map<String, String> matchedCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHED_CREDENTIALS);
         assertNotNull(matchedCredentialsCache);
@@ -397,17 +390,11 @@ public class SessionManagerTest {
         List<DecryptedCredentialDTO> decryptedCredentials = createTestDecryptedCredentials();
         
         // Pre-populate session with existing data
-        Map<String, String> existingMatchingCache = new HashMap<>();
-        existingMatchingCache.put(presentationId1, "existing-matching-data");
-        session.setAttribute(SessionKeys.MATCHING_CREDENTIALS, existingMatchingCache);
-        
         Map<String, String> existingMatchedCache = new HashMap<>();
         existingMatchedCache.put(presentationId1, "existing-matched-data");
         session.setAttribute(SessionKeys.MATCHED_CREDENTIALS, existingMatchedCache);
         
         // Mock ObjectMapper
-        when(objectMapper.writeValueAsString(any(MatchingCredentialsResponseDTO.class)))
-                .thenReturn("{\"availableCredentials\":[{\"credentialId\":\"cred1\"}],\"missingClaims\":[]}");
         when(objectMapper.writeValueAsString(any(List.class)))
                 .thenReturn("[{\"id\":\"cred1\",\"walletId\":\"wallet1\"}]");
         
@@ -415,14 +402,6 @@ public class SessionManagerTest {
         sessionManager.storeMatchingWalletCredentialsInSession(session, presentationId2, matchingResponse, decryptedCredentials);
         
         // Verify both presentations are stored
-        Map<String, String> matchingCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHING_CREDENTIALS);
-        assertNotNull(matchingCredentialsCache);
-        assertEquals(2, matchingCredentialsCache.size());
-        assertTrue(matchingCredentialsCache.containsKey(presentationId1));
-        assertTrue(matchingCredentialsCache.containsKey(presentationId2));
-        assertEquals("existing-matching-data", matchingCredentialsCache.get(presentationId1));
-        assertEquals("{\"availableCredentials\":[{\"credentialId\":\"cred1\"}],\"missingClaims\":[]}", 
-                matchingCredentialsCache.get(presentationId2));
         
         Map<String, String> matchedCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHED_CREDENTIALS);
         assertNotNull(matchedCredentialsCache);
@@ -456,12 +435,6 @@ public class SessionManagerTest {
         sessionManager.storeMatchingWalletCredentialsInSession(session, presentationId, matchingResponse, decryptedCredentials);
         
         // Verify data is stored
-        Map<String, String> matchingCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHING_CREDENTIALS);
-        assertNotNull(matchingCredentialsCache);
-        assertTrue(matchingCredentialsCache.containsKey(presentationId));
-        assertEquals("{\"availableCredentials\":[],\"missingClaims\":[\"claim1\",\"claim2\"]}", 
-                matchingCredentialsCache.get(presentationId));
-        
         Map<String, String> matchedCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHED_CREDENTIALS);
         assertNotNull(matchedCredentialsCache);
         assertTrue(matchedCredentialsCache.containsKey(presentationId));
@@ -485,11 +458,6 @@ public class SessionManagerTest {
         sessionManager.storeMatchingWalletCredentialsInSession(session, presentationId, matchingResponse, decryptedCredentials);
         
         // Verify data is stored
-        Map<String, String> matchingCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHING_CREDENTIALS);
-        assertNotNull(matchingCredentialsCache);
-        assertTrue(matchingCredentialsCache.containsKey(presentationId));
-        assertEquals(null, matchingCredentialsCache.get(presentationId)); // ObjectMapper serializes null as "null"
-        
         Map<String, String> matchedCredentialsCache = (Map<String, String>) session.getAttribute(SessionKeys.MATCHED_CREDENTIALS);
         assertNotNull(matchedCredentialsCache);
         assertTrue(matchedCredentialsCache.containsKey(presentationId));

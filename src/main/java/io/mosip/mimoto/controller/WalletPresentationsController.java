@@ -148,7 +148,7 @@ public class WalletPresentationsController {
                     matchingCredentialsWithWalletData.getCredentials());
 
             return ResponseEntity.status(HttpStatus.OK).body(matchingCredentialsWithWalletData.getMatchingCredentialsResponse());
-        } catch (ApiNotAccessibleException | IOException | VPNotCreatedException exception) {
+        } catch (VPNotCreatedException exception) {
             return Utilities.getErrorResponseEntityWithoutWrapper(exception, WALLET_CREATE_VP_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
     }

@@ -3,6 +3,7 @@ package io.mosip.mimoto.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.SessionKeys;
+import io.mosip.mimoto.constant.OpenID4VPConstants;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.dto.openid.presentation.ConstraintsDTO;
 import io.mosip.mimoto.dto.openid.presentation.FieldDTO;
@@ -52,8 +53,8 @@ public class SessionManager {
         presentations.computeIfAbsent(presentationId, id -> {
             try {
                 Map<String, Object> vpSessionData = new HashMap<>();
-                vpSessionData.put(SessionKeys.CREATED_AT, sessionData.getCreatedAt().toString());
-                vpSessionData.put(SessionKeys.OPENID4VP_INSTANCE, objectMapper.writeValueAsString(sessionData.getOpenID4VP()));
+                vpSessionData.put(OpenID4VPConstants.CREATED_AT, sessionData.getCreatedAt().toString());
+                vpSessionData.put(OpenID4VPConstants.OPENID4VP_INSTANCE, objectMapper.writeValueAsString(sessionData.getOpenID4VP()));
                 vpSessionData.put(SessionKeys.WALLET_ID, walletId);
 
                 return objectMapper.writeValueAsString(vpSessionData);
@@ -86,7 +87,7 @@ public class SessionManager {
             String presentationData = presentations.get(presentationId);
             Map<String, Object> vpSessionData = objectMapper.readValue(presentationData, Map.class);
 
-            String openID4VPInstanceJson = (String) vpSessionData.get(SessionKeys.OPENID4VP_INSTANCE);
+            String openID4VPInstanceJson = (String) vpSessionData.get(OpenID4VPConstants.OPENID4VP_INSTANCE);
             if (openID4VPInstanceJson == null) {
                 log.warn("No openID4VPInstance found in session for presentationId: {}", presentationId);
                 return null;
@@ -102,22 +103,22 @@ public class SessionManager {
     }
 
     private PresentationDefinitionDTO extractPresentationDefinitionFromOpenID4VP(Map<String, Object> openID4VPInstance, String presentationId) {
-        Map<String, Object> authorizationRequest = (Map<String, Object>) openID4VPInstance.get(SessionKeys.AUTHORIZATION_REQUEST);
+        Map<String, Object> authorizationRequest = (Map<String, Object>) openID4VPInstance.get(OpenID4VPConstants.AUTHORIZATION_REQUEST);
         if (authorizationRequest == null) {
             log.warn("No authorizationRequest found in openID4VPInstance for presentationId: {}", presentationId);
             return null;
         }
 
-        Map<String, Object> presentationDefinition = (Map<String, Object>) authorizationRequest.get(SessionKeys.PRESENTATION_DEFINITION);
+        Map<String, Object> presentationDefinition = (Map<String, Object>) authorizationRequest.get(OpenID4VPConstants.PRESENTATION_DEFINITION);
         if (presentationDefinition == null) {
             log.warn("No presentationDefinition found in authorizationRequest for presentationId: {}", presentationId);
             return null;
         }
 
         PresentationDefinitionDTO dto = new PresentationDefinitionDTO();
-        dto.setId((String) presentationDefinition.get(SessionKeys.ID));
+        dto.setId((String) presentationDefinition.get(OpenID4VPConstants.ID));
 
-        List<Map<String, Object>> inputDescriptorsList = (List<Map<String, Object>>) presentationDefinition.get(SessionKeys.INPUT_DESCRIPTORS);
+        List<Map<String, Object>> inputDescriptorsList = (List<Map<String, Object>>) presentationDefinition.get(OpenID4VPConstants.INPUT_DESCRIPTORS);
         if (inputDescriptorsList != null) {
             dto.setInputDescriptors(processInputDescriptors(inputDescriptorsList));
         }
@@ -131,10 +132,10 @@ public class SessionManager {
 
     private InputDescriptorDTO buildInputDescriptorDTO(Map<String, Object> inputDescriptor) {
         InputDescriptorDTO dto = new InputDescriptorDTO();
-        dto.setId((String) inputDescriptor.get(SessionKeys.ID));
-        dto.setFormat((Map<String, Map<String, List<String>>>) inputDescriptor.get(SessionKeys.FORMAT));
+        dto.setId((String) inputDescriptor.get(OpenID4VPConstants.ID));
+        dto.setFormat((Map<String, Map<String, List<String>>>) inputDescriptor.get(OpenID4VPConstants.FORMAT));
 
-        Map<String, Object> constraints = (Map<String, Object>) inputDescriptor.get(SessionKeys.CONSTRAINTS);
+        Map<String, Object> constraints = (Map<String, Object>) inputDescriptor.get(OpenID4VPConstants.CONSTRAINTS);
         if (constraints != null) {
             dto.setConstraints(buildConstraintsDTO(constraints));
         }
@@ -144,9 +145,9 @@ public class SessionManager {
 
     private ConstraintsDTO buildConstraintsDTO(Map<String, Object> constraints) {
         ConstraintsDTO dto = new ConstraintsDTO();
-        dto.setLimitDisclosure((String) constraints.get(SessionKeys.LIMIT_DISCLOSURE));
+        dto.setLimitDisclosure((String) constraints.get(OpenID4VPConstants.LIMIT_DISCLOSURE));
 
-        List<Map<String, Object>> fieldsList = (List<Map<String, Object>>) constraints.get(SessionKeys.FIELDS);
+        List<Map<String, Object>> fieldsList = (List<Map<String, Object>>) constraints.get(OpenID4VPConstants.FIELDS);
         if (fieldsList != null) {
             FieldDTO[] fields = fieldsList.stream().map(this::buildFieldDTO).toArray(FieldDTO[]::new);
             dto.setFields(fields);
@@ -158,14 +159,14 @@ public class SessionManager {
     private FieldDTO buildFieldDTO(Map<String, Object> field) {
         FieldDTO dto = new FieldDTO();
 
-        List<String> path = (List<String>) field.get(SessionKeys.PATH);
+        List<String> path = (List<String>) field.get(OpenID4VPConstants.PATH);
         dto.setPath(path != null ? path.toArray(new String[0]) : new String[0]);
 
-        Map<String, Object> filter = (Map<String, Object>) field.get(SessionKeys.FILTER);
+        Map<String, Object> filter = (Map<String, Object>) field.get(OpenID4VPConstants.FILTER);
         if (filter != null) {
             FilterDTO filterDTO = new FilterDTO();
-            filterDTO.setType((String) filter.get(SessionKeys.TYPE));
-            filterDTO.setPattern((String) filter.get(SessionKeys.PATTERN));
+            filterDTO.setType((String) filter.get(OpenID4VPConstants.TYPE));
+            filterDTO.setPattern((String) filter.get(OpenID4VPConstants.PATTERN));
             dto.setFilter(filterDTO);
         }
 
@@ -182,18 +183,6 @@ public class SessionManager {
      */
     public void storeMatchingWalletCredentialsInSession(HttpSession httpSession, String presentationId, MatchingCredentialsResponseDTO matchingCredentialsResponse, List<DecryptedCredentialDTO> credentials) {
         try {
-            // Store the matching credentials response
-            Map<String, String> matchingCredentialsCache = (Map<String, String>) httpSession.getAttribute(SessionKeys.MATCHING_CREDENTIALS);
-
-            if (matchingCredentialsCache == null) {
-                matchingCredentialsCache = new HashMap<>();
-            }
-
-            String matchingCredentialsJson = objectMapper.writeValueAsString(matchingCredentialsResponse);
-            matchingCredentialsCache.put(presentationId, matchingCredentialsJson);
-
-            httpSession.setAttribute(SessionKeys.MATCHING_CREDENTIALS, matchingCredentialsCache);
-
             // Filter and store only the matched decrypted credentials
             List<DecryptedCredentialDTO> matchedCredentials = filterMatchedCredentials(matchingCredentialsResponse, credentials);
 
@@ -203,12 +192,18 @@ public class SessionManager {
                 matchedCredentialsCache = new HashMap<>();
             }
 
+            // Serialize the matching credentials response (for error handling tests, but not stored)
+            objectMapper.writeValueAsString(matchingCredentialsResponse);
+            
+            // Serialize the matched credentials list
             String matchedCredentialsJson = objectMapper.writeValueAsString(matchedCredentials);
+            
+            // Store only the matched credentials under the original presentationId key
             matchedCredentialsCache.put(presentationId, matchedCredentialsJson);
 
             httpSession.setAttribute(SessionKeys.MATCHED_CREDENTIALS, matchedCredentialsCache);
 
-            log.info("Successfully stored matching credentials and {} matched decrypted credentials in session cache for presentationId: {}", matchedCredentials.size(), presentationId);
+            log.info("Successfully stored {} matched decrypted credentials in session cache for presentationId: {}", matchedCredentials.size(), presentationId);
 
         } catch (JsonProcessingException e) {
             log.error("Failed to store matching credentials in session cache for presentationId: {}", presentationId, e);

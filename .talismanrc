@@ -171,4 +171,6 @@ fileignoreconfig:
   checksum: fa18fbade26f1976836764ebc4a760632dec351c3e4fd726406afc25de014619
 - filename: src/test/java/io/mosip/mimoto/service/SessionManagerTest.java
   checksum: 2dfc3d0402507cb655173fa390f7538f9fba8d4786524a917b153d173c5f964e
+- filename: src/main/java/io/mosip/mimoto/constant/OpenID4VPConstants.java
+  checksum: 81ca55276277c00a7121ecc70444202bd30a8a7f0c88b40799ab1106f5bbf0e5
 version: ""

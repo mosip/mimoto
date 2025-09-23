@@ -57,7 +57,7 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
     @Autowired
     private IssuersService issuersService;
 
-    public MatchingCredentialsWithWalletDataDTO getMatchingCredentials(PresentationDefinitionDTO presentationDefinition, String walletId, String base64Key) throws ApiNotAccessibleException, IOException {
+    public MatchingCredentialsWithWalletDataDTO getMatchingCredentials(PresentationDefinitionDTO presentationDefinition, String walletId, String base64Key) {
         log.info("Getting matching credentials with wallet data for walletId: {}", walletId);
 
         try {
@@ -82,7 +82,7 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
                     .forEach(i -> {
                         InputDescriptorDTO descriptor = descriptors.get(i);
                         List<SelectableCredentialDTO> matches = decryptedCredentials.stream()
-                                .filter(decrypted -> matchesInputDescriptor(decrypted.getCredential(), descriptor, presentationDefinition))
+                                .filter(decrypted -> matchesInputDescriptor(decrypted.getCredential(), descriptor))
                                 .map(this::buildAvailableCredential)
                                 .collect(Collectors.toList());
                                 
@@ -116,7 +116,7 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
         }
     }
 
-    private void validateInputParameters(PresentationDefinitionDTO presentationDefinition, String walletId, String base64Key) {
+    private void validateInputParameters(PresentationDefinitionDTO presentationDefinition, String walletId, String base64Key) throws IllegalArgumentException {
         if (walletId == null || walletId.trim().isEmpty()) {
             throw new IllegalArgumentException("Wallet ID cannot be null or empty");
         }
@@ -230,7 +230,7 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
         }
     }
 
-    private boolean matchesInputDescriptor(VCCredentialResponse vc, InputDescriptorDTO inputDescriptor, PresentationDefinitionDTO presentationDefinition) {
+    private boolean matchesInputDescriptor(VCCredentialResponse vc, InputDescriptorDTO inputDescriptor) {
         Map<String, Map<String, List<String>>> formatToCheck = inputDescriptor.getFormat();
 
         if (!matchesFormat(vc, formatToCheck)) {
@@ -362,7 +362,7 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
                 } catch (NumberFormatException e) {
                     return Collections.emptyList();
                 }
-            } else if (current != null) {
+            } else {
                 try {
                     @SuppressWarnings("unchecked") Map<String, Object> map = objectMapper.convertValue(current, Map.class);
                     current = map.get(part);
@@ -377,8 +377,6 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
                         current = field.get(current);
                     }
                 }
-            } else {
-                return Collections.emptyList();
             }
 
             if (current == null) {
