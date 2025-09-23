@@ -2,10 +2,14 @@ package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.ErrorDTO;
+import io.mosip.mimoto.dto.MatchingCredentialsResponseDTO;
+import io.mosip.mimoto.dto.MatchingCredentialsWithWalletDataDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationAuthorizationRequest;
 import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
+import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
+import io.mosip.mimoto.service.CredentialMatchingService;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.impl.SessionManager;
 import io.mosip.mimoto.util.Utilities;
@@ -40,6 +44,9 @@ public class WalletPresentationsController {
 
     @Autowired
     private PresentationService presentationService;
+
+    @Autowired
+    private CredentialMatchingService credentialMatchingService;
 
     @Autowired
     private SessionManager sessionManager;
@@ -98,6 +105,51 @@ public class WalletPresentationsController {
         } catch (URISyntaxException exception) {
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     exception, INVALID_REQUEST.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+        }
+    }
+
+    /**
+     * Gets matching credentials for a specific presentation request.
+     *
+     * @param walletId       The unique identifier of the wallet.
+     * @param presentationId The unique identifier of the presentation.
+     * @param httpSession    The HTTP session containing wallet details.
+     * @return The matching credentials response with available credentials and
+     * missing claims.
+     */
+    @Operation(summary = "Get matching credentials for a presentation request", description = "This API retrieves credentials from the wallet that match the presentation definition requirements. It returns available credentials that can satisfy the presentation request along with any missing claims that are required but not available.", operationId = "getMatchingCredentials", security = @SecurityRequirement(name = "SessionAuth"), parameters = {@Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "The unique identifier of the Wallet.", schema = @Schema(type = "string")), @Parameter(name = "presentationId", in = ParameterIn.PATH, required = true, description = "The unique identifier of the Presentation.", schema = @Schema(type = "string"))})
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved matching credentials.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MatchingCredentialsResponseDTO.class), examples = @ExampleObject(name = "Success response", value = "{ \"availableCredentials\": [{ \"credentialId\": \"cred-123\", \"credentialTypeDisplayName\": \"Mock Verifiable Credential (SD-JWT)\", \"credentialTypeLogo\": \"https://mosip.github.io/inji-config/logos/mosipid-logo.png\", \"type\": [\"IDCredential\"], \"claims\": { \"birthdate\": \"1990-01-01\" } }], \"missingClaims\": [] }")))
+    @ApiResponse(responseCode = "400", description = "Invalid request or missing required parameters.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "Invalid Wallet ID", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Invalid Wallet ID. Session and request Wallet ID do not match\"}"), @ExampleObject(name = "Presentation not found", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Presentation not found in session\"}")}))
+    @ApiResponse(responseCode = "401", description = "Unauthorized user performing the Verifiable Presentation flow", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "User ID is not present in session", value = "{\"errorCode\": \"unauthorized\", \"errorMessage\": \"User ID not found in session\"}")))
+    @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
+    @GetMapping("/{presentationId}/credentials")
+    public ResponseEntity<MatchingCredentialsResponseDTO> getMatchingCredentials(@PathVariable("walletId") String walletId, @PathVariable("presentationId") String presentationId, HttpSession httpSession) {
+        try {
+            WalletUtil.validateWalletId(httpSession, walletId);
+
+            String base64Key = (String) httpSession.getAttribute(SessionKeys.WALLET_KEY);
+            if (base64Key == null) {
+                log.warn("Wallet key not found in session for walletId: {}", walletId);
+                return Utilities.getErrorResponseEntityWithoutWrapper(new VPNotCreatedException("Wallet key not found in session"), "unauthorized", HttpStatus.UNAUTHORIZED, MediaType.APPLICATION_JSON);
+            }
+
+            PresentationDefinitionDTO presentationDefinition = sessionManager.getPresentationDefinitionFromSession(httpSession, presentationId);
+
+            if (presentationDefinition == null) {
+                log.warn("No presentation definition found in session for presentationId: {}", presentationId);
+                return Utilities.getErrorResponseEntityWithoutWrapper(new VPNotCreatedException("Presentation definition not found in session"), "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+            }
+
+            MatchingCredentialsWithWalletDataDTO matchingCredentialsWithWalletData = credentialMatchingService.getMatchingCredentials(presentationDefinition, walletId, base64Key);
+
+            // Store the matching credentials and filtered matched credentials in session cache before returning
+            sessionManager.storeMatchingWalletCredentialsInSession(httpSession, presentationId,
+                    matchingCredentialsWithWalletData.getMatchingCredentialsResponse(), 
+                    matchingCredentialsWithWalletData.getCredentials());
+
+            return ResponseEntity.status(HttpStatus.OK).body(matchingCredentialsWithWalletData.getMatchingCredentialsResponse());
+        } catch (VPNotCreatedException exception) {
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, WALLET_CREATE_VP_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
     }
 }

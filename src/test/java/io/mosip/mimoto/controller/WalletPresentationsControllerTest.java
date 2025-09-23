@@ -37,6 +37,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.time.Instant;
 import java.util.List;
+import io.mosip.mimoto.service.CredentialMatchingService;
 
 
 @RunWith(SpringRunner.class)
@@ -60,6 +61,9 @@ public class WalletPresentationsControllerTest {
 
     @MockBean
     private SessionManager sessionManager;
+
+    @MockBean
+    private CredentialMatchingService credentialMatchingService;
 
     private final String walletId = "wallet123";
     private final String walletKey = "encodedKey";
