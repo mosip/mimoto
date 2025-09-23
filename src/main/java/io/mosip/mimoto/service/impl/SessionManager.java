@@ -3,12 +3,10 @@ package io.mosip.mimoto.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.constant.OpenID4VPConstants;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.dto.MatchingCredentialsResponseDTO;
 import io.mosip.mimoto.dto.SelectableCredentialDTO;
 import io.mosip.mimoto.dto.DecryptedCredentialDTO;
-import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,85 +37,44 @@ public class SessionManager {
     }
 
     public void storePresentationSessionDataInSession(HttpSession httpSession, VerifiablePresentationSessionData sessionData, String presentationId, String walletId) {
-        Map<String, String> presentations = getOrCreateSessionMap(httpSession, SessionKeys.PRESENTATIONS);
+        Map<String, VerifiablePresentationSessionData> presentations = getOrCreateSessionMap(httpSession, SessionKeys.PRESENTATIONS);
 
         // Adds the new presentation to the map if it is not already present
-        presentations.computeIfAbsent(presentationId, id -> {
-            try {
-                Map<String, Object> vpSessionData = new HashMap<>();
-                vpSessionData.put(OpenID4VPConstants.CREATED_AT, sessionData.getCreatedAt().toString());
-                vpSessionData.put(OpenID4VPConstants.OPENID4VP_INSTANCE, objectMapper.writeValueAsString(sessionData.getOpenID4VP()));
-                vpSessionData.put(SessionKeys.WALLET_ID, walletId);
-
-                return objectMapper.writeValueAsString(vpSessionData);
-            } catch (JsonProcessingException e) {
-                log.error("Failed to store presentation details into session", e);
-                throw new VPNotCreatedException("Failed to serialize presentation data - " + e.getMessage());
-            }
-        });
+        presentations.computeIfAbsent(presentationId, id -> sessionData);
 
         // Store the updated presentations map in the session
         httpSession.setAttribute(SessionKeys.PRESENTATIONS, presentations);
     }
 
     /**
-     * Retrieves the presentation definition from session for a given presentation
+     * Retrieves the verifiable presentation session data from session for a given presentation
      * ID.
      *
      * @param httpSession    The HTTP session.
      * @param presentationId The presentation ID.
-     * @return The presentation definition if found, null otherwise.
+     * @return The verifiable presentation session data if found, null otherwise.
      */
-    public PresentationDefinitionDTO getPresentationDefinitionFromSession(HttpSession httpSession, String presentationId) {
+    public VerifiablePresentationSessionData getPresentationDefinitionFromSession(HttpSession httpSession, String presentationId) {
         try {
-            Map<String, String> presentations = (Map<String, String>) httpSession.getAttribute(SessionKeys.PRESENTATIONS);
+            Map<String, VerifiablePresentationSessionData> presentations = (Map<String, VerifiablePresentationSessionData>) httpSession.getAttribute(SessionKeys.PRESENTATIONS);
             if (presentations == null || !presentations.containsKey(presentationId)) {
                 log.warn("No presentation found in session for presentationId: {}", presentationId);
                 return null;
             }
 
-            String presentationData = presentations.get(presentationId);
-            Map<String, Object> vpSessionData = objectMapper.readValue(presentationData, Map.class);
-
-            String openID4VPInstanceJson = (String) vpSessionData.get(OpenID4VPConstants.OPENID4VP_INSTANCE);
-            if (openID4VPInstanceJson == null) {
+            VerifiablePresentationSessionData sessionData = presentations.get(presentationId);
+            if (sessionData.getOpenID4VP() == null) {
                 log.warn("No openID4VPInstance found in session for presentationId: {}", presentationId);
                 return null;
             }
 
-            Map<String, Object> openID4VPInstance = objectMapper.readValue(openID4VPInstanceJson, Map.class);
-            return extractPresentationDefinitionFromOpenID4VP(openID4VPInstance, presentationId);
-
-        } catch (JsonProcessingException e) {
-            log.error("Failed to retrieve presentation definition from session for presentationId: {}", presentationId, e);
-            return null;
-        }
-    }
-
-    private PresentationDefinitionDTO extractPresentationDefinitionFromOpenID4VP(Map<String, Object> openID4VPInstance, String presentationId) {
-        try {
-            Map<String, Object> authorizationRequest = (Map<String, Object>) openID4VPInstance.get(OpenID4VPConstants.AUTHORIZATION_REQUEST);
-            if (authorizationRequest == null) {
-                log.warn("No authorizationRequest found in openID4VPInstance for presentationId: {}", presentationId);
-                return null;
-            }
-
-            Map<String, Object> presentationDefinition = (Map<String, Object>) authorizationRequest.get(OpenID4VPConstants.PRESENTATION_DEFINITION);
-            if (presentationDefinition == null) {
-                log.warn("No presentationDefinition found in authorizationRequest for presentationId: {}", presentationId);
-                return null;
-            }
-
-            // Use Jackson to deserialize the presentation definition map directly to DTO
-            // This handles the complex nested structure including List<InputDescriptorDTO>
-            return objectMapper.convertValue(presentationDefinition, PresentationDefinitionDTO.class);
+            return sessionData;
 
         } catch (Exception e) {
-            log.error("Failed to deserialize presentation definition for presentationId: {}", presentationId, e);
+            log.error("Failed to retrieve presentation session data from session for presentationId: {}", presentationId, e);
             return null;
         }
     }
-
 
     /**
      * Stores the matching credentials response and filtered decrypted credentials in the session cache.
@@ -130,22 +87,31 @@ public class SessionManager {
     public void storeMatchingWalletCredentialsInSession(HttpSession httpSession, String presentationId, MatchingCredentialsResponseDTO matchingCredentialsResponse, List<DecryptedCredentialDTO> credentials) {
         try {
             // Filter and store only the matched decrypted credentials
-            List<DecryptedCredentialDTO> matchedCredentials = filterMatchedCredentials(matchingCredentialsResponse, credentials);
+            List<DecryptedCredentialDTO> matchingCredentials = filterMatchedCredentials(matchingCredentialsResponse, credentials);
 
-            Map<String, String> matchedCredentialsCache = getOrCreateSessionMap(httpSession, SessionKeys.MATCHED_CREDENTIALS);
+            // Get the presentations map
+            Map<String, VerifiablePresentationSessionData> presentations = (Map<String, VerifiablePresentationSessionData>) httpSession.getAttribute(SessionKeys.PRESENTATIONS);
+            if (presentations == null || !presentations.containsKey(presentationId)) {
+                log.warn("No presentation found in session for presentationId: {}", presentationId);
+                throw new VPNotCreatedException("No presentation found for the given presentationId");
+            }
+
+            // Get the existing session data and update it with matching credentials
+            VerifiablePresentationSessionData existingSessionData = presentations.get(presentationId);
+            VerifiablePresentationSessionData updatedSessionData = new VerifiablePresentationSessionData(
+                existingSessionData.getOpenID4VP(),
+                existingSessionData.getCreatedAt(),
+                matchingCredentials
+            );
+
+            // Update the presentations map with the updated session data
+            presentations.put(presentationId, updatedSessionData);
+            httpSession.setAttribute(SessionKeys.PRESENTATIONS, presentations);
 
             // Serialize the matching credentials response (for error handling tests, but not stored)
             objectMapper.writeValueAsString(matchingCredentialsResponse);
-            
-            // Serialize the matched credentials list
-            String matchedCredentialsJson = objectMapper.writeValueAsString(matchedCredentials);
-            
-            // Store only the matched credentials under the original presentationId key
-            matchedCredentialsCache.put(presentationId, matchedCredentialsJson);
 
-            httpSession.setAttribute(SessionKeys.MATCHED_CREDENTIALS, matchedCredentialsCache);
-
-            log.info("Successfully stored {} matched decrypted credentials in session cache for presentationId: {}", matchedCredentials.size(), presentationId);
+            log.info("Successfully stored {} matched decrypted credentials in session cache for presentationId: {}", matchingCredentials.size(), presentationId);
 
         } catch (JsonProcessingException e) {
             log.error("Failed to store matching credentials in session cache for presentationId: {}", presentationId, e);
@@ -178,15 +144,16 @@ public class SessionManager {
     }
 
     /**
-     * Helper method to get or create a session map attribute.
+     * Helper method to get or create a session map attribute for VerifiablePresentationSessionData objects.
      * This eliminates duplication in session map handling across store methods.
      *
      * @param httpSession The HTTP session.
      * @param key         The session attribute key.
      * @return The existing map or a new HashMap if none exists.
      */
-    private Map<String, String> getOrCreateSessionMap(HttpSession httpSession, String key) {
-        Map<String, String> sessionMap = (Map<String, String>) httpSession.getAttribute(key);
+    @SuppressWarnings("unchecked")
+    private Map<String, VerifiablePresentationSessionData> getOrCreateSessionMap(HttpSession httpSession, String key) {
+        Map<String, VerifiablePresentationSessionData> sessionMap = (Map<String, VerifiablePresentationSessionData>) httpSession.getAttribute(key);
         if (sessionMap == null) {
             sessionMap = new HashMap<>();
         }

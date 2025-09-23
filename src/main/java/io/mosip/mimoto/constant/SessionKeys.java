@@ -9,5 +9,5 @@ public class SessionKeys {
     public static final String CLIENT_REGISTRATION_ID = "clientRegistrationId";
     
     public static final String PRESENTATIONS = "presentations";
-    public static final String MATCHED_CREDENTIALS = "matchedCredentials";
+    public static final String MATCHED_CREDENTIALS = "matchingCredentials";
 }

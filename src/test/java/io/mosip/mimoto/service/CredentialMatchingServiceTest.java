@@ -13,6 +13,9 @@ import io.mosip.mimoto.model.VerifiableCredential;
 import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.service.impl.CredentialMatchingServiceImpl;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
+import io.mosip.mimoto.service.impl.OpenID4VPFactory;
+import io.mosip.openID4VP.OpenID4VP;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,7 +67,7 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldThrowExceptionWhenWalletIdIsNull() {
         // When & Then
-        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(testPresentationDefinition, null, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Wallet ID cannot be null or empty");
+        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), null, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Wallet ID cannot be null or empty");
     }
 
     @ParameterizedTest
@@ -72,13 +75,13 @@ class CredentialMatchingServiceTest {
     @ValueSource(strings = {" ", "  ", "\t", "\n"})
     void shouldThrowExceptionWhenWalletIdIsEmptyOrWhitespace(String walletId) {
         // When & Then
-        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(testPresentationDefinition, walletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Wallet ID cannot be null or empty");
+        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), walletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Wallet ID cannot be null or empty");
     }
 
     @Test
     void shouldThrowExceptionWhenBase64KeyIsNull() {
         // When & Then
-        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, null)).isInstanceOf(IllegalArgumentException.class).hasMessage("Base64 key cannot be null or empty");
+        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, null)).isInstanceOf(IllegalArgumentException.class).hasMessage("Base64 key cannot be null or empty");
     }
 
     @ParameterizedTest
@@ -86,13 +89,13 @@ class CredentialMatchingServiceTest {
     @ValueSource(strings = {" ", "  ", "\t", "\n"})
     void shouldThrowExceptionWhenBase64KeyIsEmptyOrWhitespace(String base64Key) {
         // When & Then
-        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, base64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Base64 key cannot be null or empty");
+        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, base64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Base64 key cannot be null or empty");
     }
 
     @Test
     void shouldThrowExceptionWhenPresentationDefinitionIsNull() {
         // When & Then
-        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(null, testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Presentation definition cannot be null");
+        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(null, testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Presentation definition not found in session data");
     }
 
     @Test
@@ -101,7 +104,7 @@ class CredentialMatchingServiceTest {
         PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(null).build();
 
         // When & Then
-        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Presentation definition must contain at least one input descriptor");
+        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Presentation definition must contain at least one input descriptor");
     }
 
     @Test
@@ -110,7 +113,7 @@ class CredentialMatchingServiceTest {
         PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(Collections.emptyList()).build();
 
         // When & Then
-        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Presentation definition must contain at least one input descriptor");
+        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Presentation definition must contain at least one input descriptor");
     }
 
     @Test
@@ -120,7 +123,7 @@ class CredentialMatchingServiceTest {
         PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(List.of(inputDescriptor)).build();
 
         // When & Then
-        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
+        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
     }
 
     @Test
@@ -130,7 +133,7 @@ class CredentialMatchingServiceTest {
         PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(List.of(inputDescriptor)).build();
 
         // When & Then
-        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
+        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
     }
 
     @Test
@@ -139,7 +142,7 @@ class CredentialMatchingServiceTest {
         when(walletCredentialsRepository.findByWalletIdOrderByCreatedAtDesc(testWalletId)).thenReturn(Collections.emptyList());
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -162,7 +165,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null); // Return null to use default values
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -184,7 +187,7 @@ class CredentialMatchingServiceTest {
         when(encryptionDecryptionUtil.decryptCredential(anyString(), eq(testBase64Key))).thenThrow(new DecryptionException("DECRYPTION_ERROR", "Decryption failed"));
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -203,7 +206,7 @@ class CredentialMatchingServiceTest {
         });
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -226,7 +229,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenThrow(new InvalidIssuerIdException());
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -250,7 +253,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null); // Return null to use default values
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).hasSize(1);
@@ -268,7 +271,7 @@ class CredentialMatchingServiceTest {
         when(objectMapper.readValue(decryptedCredentialJson, VCCredentialResponse.class)).thenReturn(vcResponse);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).isEmpty();
@@ -294,7 +297,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null); // Return null to use default values
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).hasSize(1);
@@ -318,7 +321,7 @@ class CredentialMatchingServiceTest {
         when(objectMapper.convertValue(any(), eq(VCCredentialProperties.class))).thenReturn(vcProperties);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).isEmpty();
@@ -344,7 +347,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null); // Return null to use default values
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).hasSize(1);
@@ -371,7 +374,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null); // Return null to use default values
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).hasSize(1);
@@ -397,7 +400,7 @@ class CredentialMatchingServiceTest {
         when(objectMapper.convertValue(any(), eq(VCCredentialProperties.class))).thenReturn(vcProperties);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).isEmpty();
@@ -415,7 +418,7 @@ class CredentialMatchingServiceTest {
         when(walletCredentialsRepository.findByWalletIdOrderByCreatedAtDesc(testWalletId)).thenReturn(Collections.emptyList());
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         Set<String> missingClaims = result.getMatchingCredentialsResponse().getMissingClaims();
@@ -435,7 +438,7 @@ class CredentialMatchingServiceTest {
         when(walletCredentialsRepository.findByWalletIdOrderByCreatedAtDesc(testWalletId)).thenReturn(Collections.emptyList());
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         Set<String> missingClaims = result.getMatchingCredentialsResponse().getMissingClaims();
@@ -456,7 +459,7 @@ class CredentialMatchingServiceTest {
         when(walletCredentialsRepository.findByWalletIdOrderByCreatedAtDesc(testWalletId)).thenReturn(List.of(walletCredential));
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).isEmpty();
@@ -471,7 +474,7 @@ class CredentialMatchingServiceTest {
         when(encryptionDecryptionUtil.decryptCredential(anyString(), eq(testBase64Key))).thenReturn("");
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).isEmpty();
@@ -486,7 +489,7 @@ class CredentialMatchingServiceTest {
         when(encryptionDecryptionUtil.decryptCredential(anyString(), eq(testBase64Key))).thenReturn("   ");
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).isEmpty();
@@ -510,7 +513,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null); // Return null to use default values
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).hasSize(1);
@@ -535,7 +538,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null); // Return null to use default values
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).hasSize(1);
@@ -572,7 +575,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null); // Return null to use default values
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).hasSize(1);
@@ -607,7 +610,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null); // Return null to use default values
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).hasSize(1);
@@ -633,7 +636,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(sdJwtPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(sdJwtPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -656,7 +659,7 @@ class CredentialMatchingServiceTest {
         when(objectMapper.readValue(decryptedCredentialJson, VCCredentialResponse.class)).thenReturn(sdJwtResponse);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then - Should handle gracefully: credential appears in raw list but not in available credentials
         // because SD-JWT processing fails during matching, not during decryption
@@ -687,7 +690,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(complexPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(complexPresentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).hasSize(1);
@@ -714,7 +717,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).hasSize(1);
@@ -738,7 +741,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).hasSize(1);
@@ -761,7 +764,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then - Should match since no constraints means no requirements
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).hasSize(1);
@@ -784,7 +787,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then - Should match since null constraints means no requirements
         assertThat(result.getMatchingCredentialsResponse().getAvailableCredentials()).hasSize(1);
@@ -809,7 +812,7 @@ class CredentialMatchingServiceTest {
         when(objectMapper.convertValue(any(), eq(VCCredentialProperties.class))).thenReturn(createTestVCCredentialProperties());
         
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then - Should handle gracefully and extract what claims it can
         assertThat(result).isNotNull();
@@ -839,7 +842,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then - Should handle gracefully without infinite loops
         assertThat(result).isNotNull();
@@ -871,7 +874,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(testPresentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(testPresentationDefinition), testWalletId, testBase64Key);
 
         // Then - Should handle large dataset efficiently
         assertThat(result).isNotNull();
@@ -933,7 +936,7 @@ class CredentialMatchingServiceTest {
         PresentationDefinitionDTO invalidPresentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(invalidDescriptor)).build();
 
         // When & Then
-        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(invalidPresentationDefinition, testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
+        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(invalidPresentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
     }
 
     @Test
@@ -943,7 +946,7 @@ class CredentialMatchingServiceTest {
         PresentationDefinitionDTO invalidPresentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(invalidDescriptor)).build();
 
         // When & Then
-        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(invalidPresentationDefinition, testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
+        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(invalidPresentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
     }
 
     @Test
@@ -953,7 +956,7 @@ class CredentialMatchingServiceTest {
         PresentationDefinitionDTO invalidPresentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(invalidDescriptor)).build();
 
         // When & Then
-        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(invalidPresentationDefinition, testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
+        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(invalidPresentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
     }
 
     // ========== FORMAT MATCHING TESTS ==========
@@ -979,7 +982,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -1007,7 +1010,7 @@ class CredentialMatchingServiceTest {
         when(objectMapper.convertValue(any(), eq(VCCredentialProperties.class))).thenReturn(createTestLdpVcWithProof());
  
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -1036,7 +1039,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -1062,7 +1065,7 @@ class CredentialMatchingServiceTest {
         when(objectMapper.readValue(decryptedCredentialJson, VCCredentialResponse.class)).thenReturn(nonLdpVcResponse);
         
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -1089,7 +1092,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -1113,7 +1116,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -1138,7 +1141,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -1163,7 +1166,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -1189,7 +1192,7 @@ class CredentialMatchingServiceTest {
         when(objectMapper.readValue(anyString(), eq(VCCredentialResponse.class))).thenReturn(createTestVCCredentialResponse());
         
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -1218,7 +1221,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -1245,7 +1248,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -1275,7 +1278,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -1304,7 +1307,7 @@ class CredentialMatchingServiceTest {
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(null);
 
         // When
-        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(presentationDefinition, testWalletId, testBase64Key);
+        MatchingCredentialsWithWalletDataDTO result = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key);
 
         // Then
         assertThat(result).isNotNull();
@@ -1320,7 +1323,7 @@ class CredentialMatchingServiceTest {
         InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(null).build();
 
         // When
-        Set<String> claims = credentialMatchingService.getMatchingCredentials(createPresentationDefinitionWithDescriptor(descriptor), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
+        Set<String> claims = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(createPresentationDefinitionWithDescriptor(descriptor)), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
 
         // Then
         assertThat(claims).isEmpty();
@@ -1333,7 +1336,7 @@ class CredentialMatchingServiceTest {
         InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(constraints).build();
 
         // When
-        Set<String> claims = credentialMatchingService.getMatchingCredentials(createPresentationDefinitionWithDescriptor(descriptor), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
+        Set<String> claims = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(createPresentationDefinitionWithDescriptor(descriptor)), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
 
         // Then
         assertThat(claims).isEmpty();
@@ -1347,7 +1350,7 @@ class CredentialMatchingServiceTest {
         InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(constraints).build();
 
         // When
-        Set<String> claims = credentialMatchingService.getMatchingCredentials(createPresentationDefinitionWithDescriptor(descriptor), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
+        Set<String> claims = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(createPresentationDefinitionWithDescriptor(descriptor)), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
 
         // Then
         assertThat(claims).isEmpty();
@@ -1361,7 +1364,7 @@ class CredentialMatchingServiceTest {
         InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(constraints).build();
 
         // When
-        Set<String> claims = credentialMatchingService.getMatchingCredentials(createPresentationDefinitionWithDescriptor(descriptor), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
+        Set<String> claims = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(createPresentationDefinitionWithDescriptor(descriptor)), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
 
         // Then
         assertThat(claims).isEmpty();
@@ -1375,7 +1378,7 @@ class CredentialMatchingServiceTest {
         InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(constraints).build();
 
         // When
-        Set<String> claims = credentialMatchingService.getMatchingCredentials(createPresentationDefinitionWithDescriptor(descriptor), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
+        Set<String> claims = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(createPresentationDefinitionWithDescriptor(descriptor)), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
 
         // Then
         assertThat(claims).isEmpty();
@@ -1390,6 +1393,33 @@ class CredentialMatchingServiceTest {
     private ConstraintsDTO createTestConstraints() {
         FieldDTO field = FieldDTO.builder().path(new String[]{"$.credentialSubject.name"}).build();
         return ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
+    }
+
+    private VerifiablePresentationSessionData createSessionDataFromPresentationDefinition(PresentationDefinitionDTO presentationDefinition) {
+        // Create a mock OpenID4VP object
+        OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+        
+        // Mock the objectMapper to return our presentation definition when converting
+        when(objectMapper.convertValue(mockOpenID4VP, Map.class)).thenReturn(createMockOpenID4VPMap(presentationDefinition));
+        
+        // Also mock the second convertValue call that converts the presentation definition map back to DTO
+        when(objectMapper.convertValue(any(Map.class), eq(PresentationDefinitionDTO.class))).thenReturn(presentationDefinition);
+        
+        return new VerifiablePresentationSessionData(mockOpenID4VP, Instant.now(), null);
+    }
+    
+    private Map<String, Object> createMockOpenID4VPMap(PresentationDefinitionDTO presentationDefinition) {
+        Map<String, Object> openID4VP = new HashMap<>();
+        Map<String, Object> authorizationRequest = new HashMap<>();
+        
+        // Convert PresentationDefinitionDTO to Map
+        Map<String, Object> presentationDefinitionMap = new HashMap<>();
+        presentationDefinitionMap.put("id", presentationDefinition.getId());
+        presentationDefinitionMap.put("inputDescriptors", presentationDefinition.getInputDescriptors());
+        
+        authorizationRequest.put("presentationDefinition", presentationDefinitionMap);
+        openID4VP.put("authorizationRequest", authorizationRequest);
+        return openID4VP;
     }
 
 }

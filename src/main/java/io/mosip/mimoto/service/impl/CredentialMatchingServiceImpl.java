@@ -16,6 +16,7 @@ import io.mosip.mimoto.dto.openid.presentation.FieldDTO;
 import io.mosip.mimoto.dto.openid.presentation.FilterDTO;
 import io.mosip.mimoto.dto.openid.presentation.InputDescriptorDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
@@ -57,10 +58,18 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
     @Autowired
     private IssuersService issuersService;
 
-    public MatchingCredentialsWithWalletDataDTO getMatchingCredentials(PresentationDefinitionDTO presentationDefinition, String walletId, String base64Key) {
+    public MatchingCredentialsWithWalletDataDTO getMatchingCredentials(VerifiablePresentationSessionData sessionData, String walletId, String base64Key) {
         log.info("Getting matching credentials with wallet data for walletId: {}", walletId);
 
         try {
+            // Extract presentation definition from the session data
+            PresentationDefinitionDTO presentationDefinition = extractPresentationDefinitionFromSessionData(sessionData);
+            
+            if (presentationDefinition == null) {
+                log.warn("No presentation definition found in session data");
+                throw new IllegalArgumentException("Presentation definition not found in session data");
+            }
+
             validateInputParameters(presentationDefinition, walletId, base64Key);
 
             List<VerifiableCredential> walletCredentials = getWalletCredentials(walletId);
@@ -85,7 +94,7 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
                                 .filter(decrypted -> matchesInputDescriptor(decrypted.getCredential(), descriptor))
                                 .map(this::buildAvailableCredential)
                                 .collect(Collectors.toList());
-                                
+
                         if (!matches.isEmpty()) {
                             matchingCredentialsByDescriptor.put(i, matches);
                         } else {
@@ -441,6 +450,41 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
                 .credentialTypeLogo(credentialTypeLogo)
                 .format(decryptedCredentialDTO.getCredential().getFormat())
                 .build();
+    }
+
+    /**
+     * Extracts the presentation definition from the VerifiablePresentationSessionData object.
+     *
+     * @param sessionData The session data containing the OpenID4VP object.
+     * @return The presentation definition if found, null otherwise.
+     */
+    private PresentationDefinitionDTO extractPresentationDefinitionFromSessionData(VerifiablePresentationSessionData sessionData) {
+        try {
+            if (sessionData == null || sessionData.getOpenID4VP() == null) {
+                log.warn("Session data or OpenID4VP is null");
+                return null;
+            }
+
+            Map<String, Object> openID4VPInstance = objectMapper.convertValue(sessionData.getOpenID4VP(), Map.class);
+            
+            Map<String, Object> authorizationRequest = (Map<String, Object>) openID4VPInstance.get("authorizationRequest");
+            if (authorizationRequest == null) {
+                log.warn("No authorizationRequest found in openID4VPInstance");
+                return null;
+            }
+
+            Map<String, Object> presentationDefinition = (Map<String, Object>) authorizationRequest.get("presentationDefinition");
+            if (presentationDefinition == null) {
+                log.warn("No presentationDefinition found in authorizationRequest");
+                return null;
+            }
+
+            return objectMapper.convertValue(presentationDefinition, PresentationDefinitionDTO.class);
+
+        } catch (Exception e) {
+            log.error("Failed to extract presentation definition from session data", e);
+            return null;
+        }
     }
 }
 

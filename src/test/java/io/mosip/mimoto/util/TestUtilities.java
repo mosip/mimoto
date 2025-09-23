@@ -495,7 +495,7 @@ public class TestUtilities {
                 isPreRegisteredWithWallet,
                 redirectUri
         );
-        VerifiablePresentationSessionData presentationSessionData = new VerifiablePresentationSessionData(openID4VP, time);
+        VerifiablePresentationSessionData presentationSessionData = new VerifiablePresentationSessionData(openID4VP, time, null);
 
         VerifiablePresentationResponseDTO presentationResponseDTO = new VerifiablePresentationResponseDTO("123e4567-e89b-12d3-a456-426614174000", presentationVerifierDTO, presentationSessionData);
 
