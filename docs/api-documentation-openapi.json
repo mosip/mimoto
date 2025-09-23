@@ -4244,7 +4244,7 @@
                                         }
                                     }, "Response when successfully rejected": {
                                         "value": {
-                                            "status": "success, ",
+                                            "status": "success",
                                             "message": "Presentation request rejected. An OpenID4VP error response has been sent to the verifier.",
                                             "redirectUri": "https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee"
                                         }
