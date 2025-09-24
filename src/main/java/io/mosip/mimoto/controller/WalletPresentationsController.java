@@ -6,7 +6,7 @@ import io.mosip.mimoto.dto.MatchingCredentialsResponseDTO;
 import io.mosip.mimoto.dto.MatchingCredentialsWithWalletDataDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationAuthorizationRequest;
 import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
-import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.CredentialMatchingService;
@@ -133,14 +133,14 @@ public class WalletPresentationsController {
                 return Utilities.getErrorResponseEntityWithoutWrapper(new VPNotCreatedException("Wallet key not found in session"), "unauthorized", HttpStatus.UNAUTHORIZED, MediaType.APPLICATION_JSON);
             }
 
-            PresentationDefinitionDTO presentationDefinition = sessionManager.getPresentationDefinitionFromSession(httpSession, presentationId);
+            VerifiablePresentationSessionData sessionData = sessionManager.getPresentationDefinitionFromSession(httpSession, presentationId);
 
-            if (presentationDefinition == null) {
-                log.warn("No presentation definition found in session for presentationId: {}", presentationId);
-                return Utilities.getErrorResponseEntityWithoutWrapper(new VPNotCreatedException("Presentation definition not found in session"), "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+            if (sessionData == null || sessionData.getOpenID4VP() == null) {
+                log.warn("No presentation session data found in session for presentationId: {}", presentationId);
+                return Utilities.getErrorResponseEntityWithoutWrapper(new VPNotCreatedException("Presentation session data not found in session"), "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
             }
 
-            MatchingCredentialsWithWalletDataDTO matchingCredentialsWithWalletData = credentialMatchingService.getMatchingCredentials(presentationDefinition, walletId, base64Key);
+            MatchingCredentialsWithWalletDataDTO matchingCredentialsWithWalletData = credentialMatchingService.getMatchingCredentials(sessionData, walletId, base64Key);
 
             // Store the matching credentials and filtered matched credentials in session cache before returning
             sessionManager.storeMatchingWalletCredentialsInSession(httpSession, presentationId,
