@@ -5,12 +5,13 @@ import io.mosip.openID4VP.OpenID4VP;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class VerifiablePresentationSessionData {
+public class VerifiablePresentationSessionData implements Serializable {
     private OpenID4VP openID4VP;
     private Instant createdAt;
     private List<DecryptedCredentialDTO> matchingCredentials;
