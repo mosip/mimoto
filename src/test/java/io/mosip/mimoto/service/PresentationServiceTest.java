@@ -40,9 +40,7 @@ import java.util.*;
 import static io.mosip.mimoto.util.JwtUtils.parseJwtHeader;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -741,4 +739,5 @@ public class PresentationServiceTest {
         // Verify sendErrorToVerifier was called 3 times
         verify(mockOpenID4VP, times(3)).sendErrorToVerifier(any());
     }
+
 }

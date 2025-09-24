@@ -27,7 +27,7 @@ import static io.mosip.mimoto.exception.ErrorConstants.ERROR_ADDING_TRUSTED_VERI
 
 @Slf4j
 @RestController
-@RequestMapping("/wallets")
+@RequestMapping("/wallets/{walletId}/trusted-verifiers")
 public class WalletTrustedVerifiersController {
 
     @Autowired
@@ -38,7 +38,7 @@ public class WalletTrustedVerifiersController {
      *
      * Validates that the caller has an active session and that the provided
      * path `walletId` matches the wallet stored in the session. The request
-     * body contains verifier details (for example: verifierId. 
+     * body contains verifier details (for example: verifierId.
      * On success the created verifier record is returned with HTTP 201 Created.
      *
      * @param walletId               The unique identifier of the wallet. Must match the wallet id in session.
@@ -76,7 +76,7 @@ public class WalletTrustedVerifiersController {
     }))
     @ApiResponse(responseCode = "401", description = "Unauthorized - session invalid or missing user.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unauthorized", value = "{\"errorCode\":\"unauthorized\",\"errorMessage\":\"User ID not found in session\"}")))
     @ApiResponse(responseCode = "500", description = "Internal server error.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\":\"internal_server_error\",\"errorMessage\":\"Failed to add trusted verifier\"}")))
-    @PostMapping("/{walletId}/trusted-verifiers")
+    @PostMapping
     public ResponseEntity<TrustedVerifierResponseDTO> addTrustedVerifier(@PathVariable(name = "walletId") String walletId, @RequestBody TrustedVerifierRequest trustedVerifierRequest, HttpSession httpSession) {
         try {
             WalletUtil.validateWalletId(httpSession, walletId);
@@ -94,7 +94,7 @@ public class WalletTrustedVerifiersController {
 
         } catch (InvalidRequestException e) {
             log.warn("Invalid request for walletId: {} - Message: {}", walletId, e.getMessage());
-            return Utilities.getErrorResponseEntityWithoutWrapper(e, "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+            throw e;
         } catch (Exception e) {
             log.error("Unexpected error while adding trusted verifier for walletId: {} - Error: {}", walletId, e.getMessage(), e);
             return Utilities.getErrorResponseEntityWithoutWrapper(e,
