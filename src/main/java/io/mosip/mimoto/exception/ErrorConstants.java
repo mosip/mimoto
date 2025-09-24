@@ -47,9 +47,7 @@ public enum ErrorConstants {
 
     WALLET_CREATE_VP_EXCEPTION("wallet_vp_creation_failed", "Failed to create Verifiable Presentation and store the details in session cache for the Wallet"),
     DUPLICATE_VERIFIER("duplicate_verifier", "This verifier is already trusted."),
-    ERROR_ADDING_TRUSTED_VERIFIER("error", "Failed to add trusted verifier"),
-    REJECT_VERIFIER_EXCEPTION("error", "Failed to submit Verifiable Presentation."),
-    REJECTED_VERIFIER("success", "Presentation request rejected. An OpenID4VP error response has been sent to the verifier."),;
+    ERROR_ADDING_TRUSTED_VERIFIER("error", "Failed to add trusted verifier"),;
 
     private final String errorCode;
     private final String errorMessage;
