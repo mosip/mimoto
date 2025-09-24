@@ -7,12 +7,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.NotBlank;
+import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class VCCredentialResponseProof {
+public class VCCredentialResponseProof implements Serializable {
     @NotBlank
     private String type;
     @NotBlank

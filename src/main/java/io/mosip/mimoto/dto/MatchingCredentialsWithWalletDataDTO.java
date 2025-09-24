@@ -22,4 +22,7 @@ public class MatchingCredentialsWithWalletDataDTO {
     
     @JsonIgnore
     private List<DecryptedCredentialDTO> credentials;
+    
+    @JsonIgnore
+    private List<DecryptedCredentialDTO> matchingCredentials;
 }

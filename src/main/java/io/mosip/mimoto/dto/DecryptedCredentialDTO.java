@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 /**
@@ -17,7 +18,7 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DecryptedCredentialDTO {
+public class DecryptedCredentialDTO implements Serializable {
 
     /**
      * The credential ID from the original VerifiableCredential.
