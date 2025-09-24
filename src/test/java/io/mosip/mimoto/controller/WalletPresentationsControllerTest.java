@@ -75,7 +75,7 @@ public class WalletPresentationsControllerTest {
     @Before
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        presentationSessionData = new VerifiablePresentationSessionData(new OpenID4VP("presentationId123"), Instant.now());
+        presentationSessionData = new VerifiablePresentationSessionData(new OpenID4VP("presentationId123"), Instant.now(), null);
         presentationVerifierDTO = new VerifiablePresentationVerifierDTO("mock-client", "verifier123", "https://veriifer-logo.png", false, true, "https://verifier-redirect");
         presentationResponseDTO = new VerifiablePresentationResponseDTO("presentationId-123", presentationVerifierDTO, presentationSessionData);
 
