@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.dto.mimoto.*;
-import io.mosip.mimoto.dto.openid.presentation.*;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
 import io.mosip.mimoto.model.CredentialMetadata;
@@ -15,6 +14,12 @@ import io.mosip.mimoto.service.impl.CredentialMatchingServiceImpl;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.openID4VP.OpenID4VP;
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.Constraints;
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.Fields;
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.Filter;
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.InputDescriptor;
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.PresentationDefinition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +58,7 @@ class CredentialMatchingServiceTest {
     private ObjectMapper realObjectMapper;
     private String testWalletId;
     private String testBase64Key;
-    private PresentationDefinitionDTO testPresentationDefinition;
+    private PresentationDefinition testPresentationDefinition;
 
     @BeforeEach
     void setUp() {
@@ -98,18 +103,9 @@ class CredentialMatchingServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenInputDescriptorsIsNull() {
-        // Given
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(null).build();
-
-        // When & Then
-        assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Presentation definition must contain at least one input descriptor");
-    }
-
-    @Test
     void shouldThrowExceptionWhenInputDescriptorsIsEmpty() {
         // Given
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(Collections.emptyList()).build();
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test-id", Collections.emptyList(), null, null, null);
 
         // When & Then
         assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Presentation definition must contain at least one input descriptor");
@@ -118,8 +114,9 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldThrowExceptionWhenInputDescriptorHasNullId() {
         // Given
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id(null).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(List.of(inputDescriptor)).build();
+        Constraints constraints = new Constraints(Collections.emptyList(), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test-id", List.of(inputDescriptor), null, null, null);
 
         // When & Then
         assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
@@ -128,8 +125,9 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldThrowExceptionWhenInputDescriptorHasEmptyId() {
         // Given
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("   ").build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(List.of(inputDescriptor)).build();
+        Constraints constraints = new Constraints(Collections.emptyList(), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("   ", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test-id", List.of(inputDescriptor), null, null, null);
 
         // When & Then
         assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(presentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
@@ -281,8 +279,9 @@ class CredentialMatchingServiceTest {
     void shouldMatchCredentialsWithProofTypeConstraints() throws Exception {
         // Given
         Map<String, Map<String, List<String>>> format = Map.of("ldp_vc", Map.of("proof_type", List.of("Ed25519Signature2020")));
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("test-descriptor").format(format).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(List.of(inputDescriptor)).build();
+        Constraints constraints = createTestConstraints();
+        InputDescriptor inputDescriptor = new InputDescriptor("test-descriptor", "", "", format, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test-id", List.of(inputDescriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         VCCredentialResponse vcResponse = createTestVCCredentialResponse();
@@ -306,8 +305,9 @@ class CredentialMatchingServiceTest {
     void shouldNotMatchCredentialsWithDifferentProofType() throws Exception {
         // Given
         Map<String, Map<String, List<String>>> format = Map.of("ldp_vc", Map.of("proof_type", List.of("DifferentProofType")));
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("test-descriptor").format(format).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(List.of(inputDescriptor)).build();
+        Constraints constraints = createTestConstraints();
+        InputDescriptor inputDescriptor = new InputDescriptor("test-descriptor", "", "", format, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test-id", List.of(inputDescriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         VCCredentialResponse vcResponse = createTestVCCredentialResponse();
@@ -329,10 +329,10 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldMatchFieldPathsWithSimpleJsonPath() throws Exception {
         // Given
-        FieldDTO field = FieldDTO.builder().path(new String[]{"$.credentialSubject.name"}).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(List.of(inputDescriptor)).build();
+        Fields field = new Fields(List.of("$.credentialSubject.name"), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test-id", List.of(inputDescriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         VCCredentialResponse vcResponse = createTestVCCredentialResponse();
@@ -355,11 +355,11 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldMatchFieldPathsWithFilterPattern() throws Exception {
         // Given
-        FilterDTO filter = FilterDTO.builder().pattern("John").build();
-        FieldDTO field = FieldDTO.builder().path(new String[]{"$.credentialSubject.name"}).filter(filter).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(List.of(inputDescriptor)).build();
+        Filter filter = new Filter("String", "John");
+        Fields field = new Fields(List.of("$.credentialSubject.name"), null, null, null, filter, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test-id", List.of(inputDescriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         VCCredentialResponse vcResponse = createTestVCCredentialResponse();
@@ -382,11 +382,11 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldNotMatchFieldPathsWhenFilterPatternDoesNotMatch() throws Exception {
         // Given
-        FilterDTO filter = FilterDTO.builder().pattern("NonExistentName").build();
-        FieldDTO field = FieldDTO.builder().path(new String[]{"$.credentialSubject.name"}).filter(filter).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(List.of(inputDescriptor)).build();
+        Filter filter = new Filter("String", "NonExistentName");
+        Fields field = new Fields(List.of("$.credentialSubject.name"), null, null, null, filter, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test-id", List.of(inputDescriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         VCCredentialResponse vcResponse = createTestVCCredentialResponse();
@@ -408,11 +408,11 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldExtractClaimsFromInputDescriptors() throws Exception {
         // Given
-        FieldDTO field1 = FieldDTO.builder().path(new String[]{"$.credentialSubject.name", "$.credentialSubject.email"}).build();
-        FieldDTO field2 = FieldDTO.builder().path(new String[]{"$.credentialSubject.age"}).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field1, field2}).build();
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(List.of(inputDescriptor)).build();
+        Fields field1 = new Fields(List.of("$.credentialSubject.name", "$.credentialSubject.email"), null, null, null, null, null);
+        Fields field2 = new Fields(List.of("$.credentialSubject.age"), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(field1, field2), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test-id", List.of(inputDescriptor), null, null, null);
 
         when(walletCredentialsRepository.findByWalletIdOrderByCreatedAtDesc(testWalletId)).thenReturn(Collections.emptyList());
 
@@ -427,12 +427,12 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldHandleNullOrEmptyFieldPathsGracefully() throws Exception {
         // Given
-        FieldDTO field1 = FieldDTO.builder().path(null).build();
-        FieldDTO field2 = FieldDTO.builder().path(new String[]{}).build();
-        FieldDTO field3 = FieldDTO.builder().path(new String[]{"$.credentialSubject.name"}).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field1, field2, field3}).build();
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(List.of(inputDescriptor)).build();
+        Fields field1 = new Fields(Collections.emptyList(), null, null, null, null, null);
+        Fields field2 = new Fields(Collections.emptyList(), null, null, null, null, null);
+        Fields field3 = new Fields(List.of("$.credentialSubject.name"), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(field1, field2, field3), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test-id", List.of(inputDescriptor), null, null, null);
 
         when(walletCredentialsRepository.findByWalletIdOrderByCreatedAtDesc(testWalletId)).thenReturn(Collections.emptyList());
 
@@ -553,15 +553,15 @@ class CredentialMatchingServiceTest {
                 .type(List.of("VerifiableCredential", "TestCredential"))
                 .build();
 
-        FieldDTO field1 = FieldDTO.builder().path(new String[]{"$.credentialSubject.name"}).build();
-        FieldDTO field2 = FieldDTO.builder().path(new String[]{"$.credentialSubject.email"}).build();
-        ConstraintsDTO constraints1 = ConstraintsDTO.builder().fields(new FieldDTO[]{field1}).build();
-        ConstraintsDTO constraints2 = ConstraintsDTO.builder().fields(new FieldDTO[]{field2}).build();
+        Fields field1 = new Fields(List.of("$.credentialSubject.name"), null, null, null, null, null);
+        Fields field2 = new Fields(List.of("$.credentialSubject.email"), null, null, null, null, null);
+        Constraints constraints1 = new Constraints(List.of(field1), null);
+        Constraints constraints2 = new Constraints(List.of(field2), null);
 
-        InputDescriptorDTO descriptor1 = InputDescriptorDTO.builder().id("descriptor-1").constraints(constraints1).build();
-        InputDescriptorDTO descriptor2 = InputDescriptorDTO.builder().id("descriptor-2").constraints(constraints2).build();
+        InputDescriptor descriptor1 = new InputDescriptor("descriptor-1", "", "", null, constraints1);
+        InputDescriptor descriptor2 = new InputDescriptor("descriptor-2", "", "", null, constraints2);
 
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("complex-test-id").inputDescriptors(List.of(descriptor1, descriptor2)).build();
+        PresentationDefinition presentationDefinition = new PresentationDefinition("complex-test-id", List.of(descriptor1, descriptor2), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         VCCredentialResponse vcResponse = createTestVCCredentialResponse();
@@ -619,10 +619,10 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldHandleSdJwtFormatCredentials() throws Exception {
         // Given - Create a presentation definition that matches SD-JWT structure
-        FieldDTO field = FieldDTO.builder().path(new String[]{"$.name"}).build(); // SD-JWT has direct field access
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("sd-jwt-descriptor").format(null).constraints(constraints).build();
-        PresentationDefinitionDTO sdJwtPresentationDefinition = PresentationDefinitionDTO.builder().id("sd-jwt-test-id").inputDescriptors(List.of(inputDescriptor)).build();
+        Fields field = new Fields(List.of("$.name"), null, null, null, null, null); // SD-JWT has direct field access
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("sd-jwt-descriptor", "", "", null, constraints);
+        PresentationDefinition sdJwtPresentationDefinition = new PresentationDefinition("sd-jwt-test-id", List.of(inputDescriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         VCCredentialResponse sdJwtResponse = VCCredentialResponse.builder().format("vc+sd-jwt").credential("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0LXVzZXIiLCJuYW1lIjoiSm9obiBEb2UifQ.signature~WyIyR0xDNDJzS1F2ZUNmR2ZyeU5STjl3IiwgIm5hbWUiLCAiSm9obiBEb2UiXQ").build();
@@ -671,10 +671,10 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldMatchComplexJsonPathExpressions() throws Exception {
         // Given
-        FieldDTO complexField = FieldDTO.builder().path(new String[]{"$.credentialSubject.address.street", "$.credentialSubject.address.city", "$.credentialSubject.personalDetails.age"}).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{complexField}).build();
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("complex-descriptor").format(null).constraints(constraints).build();
-        PresentationDefinitionDTO complexPresentationDefinition = PresentationDefinitionDTO.builder().id("complex-test-id").inputDescriptors(List.of(inputDescriptor)).build();
+        Fields complexField = new Fields(List.of("$.credentialSubject.address.street", "$.credentialSubject.address.city", "$.credentialSubject.personalDetails.age"), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(complexField), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("complex-descriptor", "", "", null, constraints);
+        PresentationDefinition complexPresentationDefinition = new PresentationDefinition("complex-test-id", List.of(inputDescriptor), null, null, null);
 
         VCCredentialProperties complexCredentialProperties = VCCredentialProperties.builder().proof(VCCredentialResponseProof.builder().type("Ed25519Signature2020").build()).credentialSubject(Map.of("name", "John Doe", "address", Map.of("street", "123 Main St", "city", "New York"), "personalDetails", Map.of("age", 30))).type(List.of("VerifiableCredential", "AddressCredential")).build();
 
@@ -699,11 +699,11 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldHandleFilterWithConstValue() throws Exception {
         // Given
-        FilterDTO constFilter = FilterDTO.builder().pattern("VerifiableCredential").build();
-        FieldDTO fieldWithConstFilter = FieldDTO.builder().path(new String[]{"$.type"}).filter(constFilter).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{fieldWithConstFilter}).build();
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("const-filter-descriptor").format(null).constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("const-filter-test").inputDescriptors(List.of(inputDescriptor)).build();
+        Filter constFilter = new Filter("String", "VerifiableCredential");
+        Fields fieldWithConstFilter = new Fields(List.of("$.type"), null, null, null, constFilter, null);
+        Constraints constraints = new Constraints(List.of(fieldWithConstFilter), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("const-filter-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("const-filter-test", List.of(inputDescriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         VCCredentialResponse vcResponse = createTestVCCredentialResponse();
@@ -726,8 +726,9 @@ class CredentialMatchingServiceTest {
     void shouldHandleMultipleProofTypeRequirements() throws Exception {
         // Given
         Map<String, Map<String, List<String>>> format = Map.of("ldp_vc", Map.of("proof_type", List.of("Ed25519Signature2020", "RsaSignature2018")));
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("multi-proof-descriptor").format(format).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("multi-proof-test").inputDescriptors(List.of(inputDescriptor)).build();
+        Constraints constraints = new Constraints(Collections.emptyList(), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("multi-proof-descriptor", "", "", format, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("multi-proof-test", List.of(inputDescriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         VCCredentialResponse vcResponse = createTestVCCredentialResponse();
@@ -749,9 +750,9 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldHandleEmptyConstraints() throws Exception {
         // Given
-        ConstraintsDTO emptyConstraints = ConstraintsDTO.builder().fields(new FieldDTO[]{}).build();
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("empty-constraints-descriptor").format(null).constraints(emptyConstraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("empty-constraints-test").inputDescriptors(List.of(inputDescriptor)).build();
+        Constraints emptyConstraints = new Constraints(new ArrayList<>(), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("empty-constraints-descriptor", "", "", null, emptyConstraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("empty-constraints-test", List.of(inputDescriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         VCCredentialResponse vcResponse = createTestVCCredentialResponse();
@@ -771,10 +772,11 @@ class CredentialMatchingServiceTest {
     }
 
     @Test
-    void shouldHandleNullConstraints() throws Exception {
-        // Given
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("null-constraints-descriptor").format(null).constraints(null).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("null-constraints-test").inputDescriptors(List.of(inputDescriptor)).build();
+    void shouldHandleEmptyConstraintsWithCredentials() throws Exception {
+        // Given - Since the library doesn't allow null constraints, we test with empty constraints
+        Constraints constraints = new Constraints(Collections.emptyList(), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("empty-constraints-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("empty-constraints-test", List.of(inputDescriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         VCCredentialResponse vcResponse = createTestVCCredentialResponse();
@@ -796,10 +798,10 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldHandleInvalidJsonPathExpressions() throws Exception {
         // Given
-        FieldDTO invalidField = FieldDTO.builder().path(new String[]{"invalid.path.expression", "$.validPath"}).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{invalidField}).build();
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("invalid-path-descriptor").format(null).constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("invalid-path-test").inputDescriptors(List.of(inputDescriptor)).build();
+        Fields invalidField = new Fields(List.of("invalid.path.expression", "$.validPath"), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(invalidField), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("invalid-path-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("invalid-path-test", List.of(inputDescriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         VCCredentialResponse vcResponse = createTestVCCredentialResponse();
@@ -883,12 +885,11 @@ class CredentialMatchingServiceTest {
 
     // Helper methods for creating test data
 
-    private PresentationDefinitionDTO createTestPresentationDefinition() {
-        FieldDTO field = FieldDTO.builder().path(new String[]{"$.credentialSubject.name"}).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO inputDescriptor = InputDescriptorDTO.builder().id("test-descriptor").format(null) // No format constraints - should match any format
-                .constraints(constraints).build();
-        return PresentationDefinitionDTO.builder().id("test-id").inputDescriptors(List.of(inputDescriptor)).build();
+    private PresentationDefinition createTestPresentationDefinition() {
+        Fields field = new Fields(List.of("$.credentialSubject.name"), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor inputDescriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        return new PresentationDefinition("test-id", List.of(inputDescriptor), null, null, null);
     }
 
     private VerifiableCredential createTestVerifiableCredential() {
@@ -931,8 +932,9 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldThrowExceptionWhenInputDescriptorIdIsNull() {
         // Given
-        InputDescriptorDTO invalidDescriptor = InputDescriptorDTO.builder().id(null).constraints(createTestConstraints()).build();
-        PresentationDefinitionDTO invalidPresentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(invalidDescriptor)).build();
+        Constraints testConstraints = createTestConstraints();
+        InputDescriptor invalidDescriptor = new InputDescriptor("", "", "", null, testConstraints);
+        PresentationDefinition invalidPresentationDefinition = new PresentationDefinition("test", List.of(invalidDescriptor), null, null, null);
 
         // When & Then
         assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(invalidPresentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
@@ -941,8 +943,9 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldThrowExceptionWhenInputDescriptorIdIsEmpty() {
         // Given
-        InputDescriptorDTO invalidDescriptor = InputDescriptorDTO.builder().id("").constraints(createTestConstraints()).build();
-        PresentationDefinitionDTO invalidPresentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(invalidDescriptor)).build();
+        Constraints testConstraints2 = createTestConstraints();
+        InputDescriptor invalidDescriptor = new InputDescriptor("", "", "", null, testConstraints2);
+        PresentationDefinition invalidPresentationDefinition = new PresentationDefinition("test", List.of(invalidDescriptor), null, null, null);
 
         // When & Then
         assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(invalidPresentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
@@ -951,8 +954,9 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldThrowExceptionWhenInputDescriptorIdIsBlank() {
         // Given
-        InputDescriptorDTO invalidDescriptor = InputDescriptorDTO.builder().id("   ").constraints(createTestConstraints()).build();
-        PresentationDefinitionDTO invalidPresentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(invalidDescriptor)).build();
+        Constraints testConstraints3 = createTestConstraints();
+        InputDescriptor invalidDescriptor = new InputDescriptor("   ", "", "", null, testConstraints3);
+        PresentationDefinition invalidPresentationDefinition = new PresentationDefinition("test", List.of(invalidDescriptor), null, null, null);
 
         // When & Then
         assertThatThrownBy(() -> credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(invalidPresentationDefinition), testWalletId, testBase64Key)).isInstanceOf(IllegalArgumentException.class).hasMessage("Input descriptor at index 0 must have a valid ID");
@@ -966,8 +970,8 @@ class CredentialMatchingServiceTest {
         Map<String, List<String>> proofTypes = Map.of("proof_type", List.of("Ed25519Signature2020"));
         Map<String, Map<String, List<String>>> format = Map.of("ldp_vc", proofTypes);
 
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("ldp-vc-descriptor").format(format).constraints(createTestConstraints()).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("ldp-vc-test").inputDescriptors(List.of(descriptor)).build();
+        InputDescriptor descriptor = new InputDescriptor("ldp-vc-descriptor", "", "", format, createTestConstraints());
+        PresentationDefinition presentationDefinition = new PresentationDefinition("ldp-vc-test", List.of(descriptor), null, null, null);
 
         VCCredentialResponse ldpVcResponse = VCCredentialResponse.builder().format("ldp_vc").credential(createTestLdpVcWithProof()).build();
 
@@ -995,8 +999,8 @@ class CredentialMatchingServiceTest {
         Map<String, List<String>> proofTypes = Map.of("proof_type", List.of("WrongProofType"));
         Map<String, Map<String, List<String>>> format = Map.of("ldp_vc", proofTypes);
 
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("ldp-vc-descriptor").format(format).constraints(createTestConstraints()).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("ldp-vc-test").inputDescriptors(List.of(descriptor)).build();
+        InputDescriptor descriptor = new InputDescriptor("ldp-vc-descriptor", "", "", format, createTestConstraints());
+        PresentationDefinition presentationDefinition = new PresentationDefinition("ldp-vc-test", List.of(descriptor), null, null, null);
 
         VCCredentialResponse ldpVcResponse = VCCredentialResponse.builder().format("ldp_vc").credential(createTestLdpVcWithProof()).build();
 
@@ -1023,8 +1027,8 @@ class CredentialMatchingServiceTest {
         // Given
         Map<String, Map<String, List<String>>> format = Map.of("ldp_vc", Map.of());
 
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("ldp-vc-descriptor").format(format).constraints(createTestConstraints()).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("ldp-vc-test").inputDescriptors(List.of(descriptor)).build();
+        InputDescriptor descriptor = new InputDescriptor("ldp-vc-descriptor", "", "", format, createTestConstraints());
+        PresentationDefinition presentationDefinition = new PresentationDefinition("ldp-vc-test", List.of(descriptor), null, null, null);
 
         VCCredentialResponse ldpVcResponse = VCCredentialResponse.builder().format("ldp_vc").credential(createTestLdpVcWithProof()).build();
 
@@ -1051,8 +1055,8 @@ class CredentialMatchingServiceTest {
         // Given
         Map<String, Map<String, List<String>>> format = Map.of("ldp_vc", Map.of());
 
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("ldp-vc-descriptor").format(format).constraints(createTestConstraints()).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("ldp-vc-test").inputDescriptors(List.of(descriptor)).build();
+        InputDescriptor descriptor = new InputDescriptor("ldp-vc-descriptor", "", "", format, createTestConstraints());
+        PresentationDefinition presentationDefinition = new PresentationDefinition("ldp-vc-test", List.of(descriptor), null, null, null);
 
         VCCredentialResponse nonLdpVcResponse = VCCredentialResponse.builder().format("vc+sd-jwt").credential("some-credential").build();
 
@@ -1078,9 +1082,9 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldMatchConstraintsWithNullFields() throws Exception {
         // Given
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(null).build();
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").format(null).constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(descriptor)).build();
+        Constraints constraints = new Constraints(null, null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test", List.of(descriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         String decryptedCredentialJson = realObjectMapper.writeValueAsString(createTestVCCredentialResponse());
@@ -1102,9 +1106,9 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldMatchConstraintsWithEmptyFields() throws Exception {
         // Given
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[0]).build();
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").format(null).constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(descriptor)).build();
+        Constraints constraints = new Constraints(new ArrayList<>(), null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test", List.of(descriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         String decryptedCredentialJson = realObjectMapper.writeValueAsString(createTestVCCredentialResponse());
@@ -1126,10 +1130,10 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldMatchConstraintsWithNullPath() throws Exception {
         // Given
-        FieldDTO field = FieldDTO.builder().path(null).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").format(null).constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(descriptor)).build();
+        Fields field = new Fields(Collections.emptyList(), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test", List.of(descriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         String decryptedCredentialJson = realObjectMapper.writeValueAsString(createTestVCCredentialResponse());
@@ -1151,10 +1155,10 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldMatchConstraintsWithEmptyPath() throws Exception {
         // Given
-        FieldDTO field = FieldDTO.builder().path(new String[0]).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").format(null).constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(descriptor)).build();
+        Fields field = new Fields(new ArrayList<>(), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test", List.of(descriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         String decryptedCredentialJson = realObjectMapper.writeValueAsString(createTestVCCredentialResponse());
@@ -1178,10 +1182,10 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldHandleJsonPathWithoutDollarPrefix() throws Exception {
         // Given
-        FieldDTO field = FieldDTO.builder().path(new String[]{"credentialSubject.name"}).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").format(null).constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(descriptor)).build();
+        Fields field = new Fields(List.of("credentialSubject.name"), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test", List.of(descriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         String decryptedCredentialJson = realObjectMapper.writeValueAsString(createTestVCCredentialResponse());
@@ -1205,10 +1209,10 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldMatchFilterWithNullFilter() throws Exception {
         // Given
-        FieldDTO field = FieldDTO.builder().path(new String[]{"$.credentialSubject.name"}).filter(null).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").format(null).constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(descriptor)).build();
+        Fields field = new Fields(List.of("$.credentialSubject.name"), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test", List.of(descriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         String decryptedCredentialJson = realObjectMapper.writeValueAsString(createTestVCCredentialResponse());
@@ -1229,13 +1233,13 @@ class CredentialMatchingServiceTest {
     }
 
     @Test
-    void shouldMatchFilterWithNullPattern() throws Exception {
+    void shouldMatchFilterWithEmptyPattern() throws Exception {
         // Given
-        FilterDTO filter = FilterDTO.builder().pattern(null).build();
-        FieldDTO field = FieldDTO.builder().path(new String[]{"$.credentialSubject.name"}).filter(filter).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").format(null).constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(descriptor)).build();
+        Filter filter = new Filter("String", "");
+        Fields field = new Fields(List.of("$.credentialSubject.name"), null, null, null, filter, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test", List.of(descriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         String decryptedCredentialJson = realObjectMapper.writeValueAsString(createTestVCCredentialResponse());
@@ -1263,10 +1267,10 @@ class CredentialMatchingServiceTest {
         Map<String, Object> credentialData = Map.of("credentialSubject", Map.of("name", "John Doe"), "type", List.of("VerifiableCredential"));
         VCCredentialResponse vcResponse = VCCredentialResponse.builder().format("ldp_vc").credential(credentialData).build();
 
-        FieldDTO field = FieldDTO.builder().path(new String[]{"$.credentialSubject.name"}).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").format(null).constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(descriptor)).build();
+        Fields field = new Fields(List.of("$.credentialSubject.name"), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test", List.of(descriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         String decryptedCredentialJson = realObjectMapper.writeValueAsString(vcResponse);
@@ -1291,10 +1295,10 @@ class CredentialMatchingServiceTest {
         VCCredentialProperties credentialProperties = createTestVCCredentialProperties();
         VCCredentialResponse vcResponse = VCCredentialResponse.builder().format("ldp_vc").credential(credentialProperties).build();
 
-        FieldDTO field = FieldDTO.builder().path(new String[]{"$.credentialSubject.name"}).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").format(null).constraints(constraints).build();
-        PresentationDefinitionDTO presentationDefinition = PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(descriptor)).build();
+        Fields field = new Fields(List.of("$.credentialSubject.name"), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
+        PresentationDefinition presentationDefinition = new PresentationDefinition("test", List.of(descriptor), null, null, null);
 
         VerifiableCredential walletCredential = createTestVerifiableCredential();
         String decryptedCredentialJson = realObjectMapper.writeValueAsString(vcResponse);
@@ -1317,9 +1321,10 @@ class CredentialMatchingServiceTest {
     // ========== CLAIMS EXTRACTION TESTS ==========
 
     @Test
-    void shouldExtractClaimsFromInputDescriptorWithNullConstraints() throws Exception {
-        // Given
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(null).build();
+    void shouldExtractClaimsFromInputDescriptorWithEmptyConstraints() throws Exception {
+        // Given - Since the library doesn't allow null constraints, we test with empty constraints
+        Constraints constraints = new Constraints(Collections.emptyList(), null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
 
         // When
         Set<String> claims = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(createPresentationDefinitionWithDescriptor(descriptor)), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
@@ -1331,8 +1336,8 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldExtractClaimsFromInputDescriptorWithNullFields() throws Exception {
         // Given
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(null).build();
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(constraints).build();
+        Constraints constraints = new Constraints(null, null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
 
         // When
         Set<String> claims = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(createPresentationDefinitionWithDescriptor(descriptor)), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
@@ -1344,9 +1349,9 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldExtractClaimsFromInputDescriptorWithNullPath() throws Exception {
         // Given
-        FieldDTO field = FieldDTO.builder().path(null).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(constraints).build();
+        Fields field = new Fields(Collections.emptyList(), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
 
         // When
         Set<String> claims = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(createPresentationDefinitionWithDescriptor(descriptor)), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
@@ -1358,9 +1363,9 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldExtractClaimsFromInputDescriptorWithEmptyPath() throws Exception {
         // Given
-        FieldDTO field = FieldDTO.builder().path(new String[0]).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(constraints).build();
+        Fields field = new Fields(new ArrayList<>(), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
 
         // When
         Set<String> claims = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(createPresentationDefinitionWithDescriptor(descriptor)), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
@@ -1372,9 +1377,9 @@ class CredentialMatchingServiceTest {
     @Test
     void shouldExtractClaimsFromInputDescriptorWithBlankPath() throws Exception {
         // Given
-        FieldDTO field = FieldDTO.builder().path(new String[]{"   "}).build();
-        ConstraintsDTO constraints = ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
-        InputDescriptorDTO descriptor = InputDescriptorDTO.builder().id("test-descriptor").constraints(constraints).build();
+        Fields field = new Fields(List.of("   "), null, null, null, null, null);
+        Constraints constraints = new Constraints(List.of(field), null);
+        InputDescriptor descriptor = new InputDescriptor("test-descriptor", "", "", null, constraints);
 
         // When
         Set<String> claims = credentialMatchingService.getMatchingCredentials(createSessionDataFromPresentationDefinition(createPresentationDefinitionWithDescriptor(descriptor)), testWalletId, testBase64Key).getMatchingCredentialsResponse().getMissingClaims();
@@ -1385,40 +1390,21 @@ class CredentialMatchingServiceTest {
 
     // ========== HELPER METHODS ==========
 
-    private PresentationDefinitionDTO createPresentationDefinitionWithDescriptor(InputDescriptorDTO descriptor) {
-        return PresentationDefinitionDTO.builder().id("test").inputDescriptors(List.of(descriptor)).build();
+    private PresentationDefinition createPresentationDefinitionWithDescriptor(InputDescriptor descriptor) {
+        return new PresentationDefinition("test", List.of(descriptor), null, null, null);
     }
 
-    private ConstraintsDTO createTestConstraints() {
-        FieldDTO field = FieldDTO.builder().path(new String[]{"$.credentialSubject.name"}).build();
-        return ConstraintsDTO.builder().fields(new FieldDTO[]{field}).build();
+    private Constraints createTestConstraints() {
+        Fields field = new Fields(List.of("$.credentialSubject.name"), null, null, null, null, null);
+        return new Constraints(List.of(field), null);
     }
 
-    private VerifiablePresentationSessionData createSessionDataFromPresentationDefinition(PresentationDefinitionDTO presentationDefinition) {
-        // Create a mock OpenID4VP object
+    private VerifiablePresentationSessionData createSessionDataFromPresentationDefinition(PresentationDefinition presentationDefinition) {
         OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
-        
-        // Mock the objectMapper to return our presentation definition when converting
-        when(objectMapper.convertValue(mockOpenID4VP, Map.class)).thenReturn(createMockOpenID4VPMap(presentationDefinition));
-        
-        // Also mock the second convertValue call that converts the presentation definition map back to DTO
-        when(objectMapper.convertValue(any(Map.class), eq(PresentationDefinitionDTO.class))).thenReturn(presentationDefinition);
-        
+        AuthorizationRequest mockAuthorizationRequest = mock(AuthorizationRequest.class);
+        when(mockAuthorizationRequest.getPresentationDefinition()).thenReturn(presentationDefinition);
+        when(mockOpenID4VP.getAuthorizationRequest()).thenReturn(mockAuthorizationRequest);
         return new VerifiablePresentationSessionData(mockOpenID4VP, Instant.now(), null);
-    }
-    
-    private Map<String, Object> createMockOpenID4VPMap(PresentationDefinitionDTO presentationDefinition) {
-        Map<String, Object> openID4VP = new HashMap<>();
-        Map<String, Object> authorizationRequest = new HashMap<>();
-        
-        // Convert PresentationDefinitionDTO to Map
-        Map<String, Object> presentationDefinitionMap = new HashMap<>();
-        presentationDefinitionMap.put("id", presentationDefinition.getId());
-        presentationDefinitionMap.put("inputDescriptors", presentationDefinition.getInputDescriptors());
-        
-        authorizationRequest.put("presentationDefinition", presentationDefinitionMap);
-        openID4VP.put("authorizationRequest", authorizationRequest);
-        return openID4VP;
     }
 
 }

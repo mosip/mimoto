@@ -2,6 +2,13 @@ package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.Constraints;
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.Fields;
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.Filter;
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.InputDescriptor;
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.PresentationDefinition;
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
 import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.DecryptedCredentialDTO;
 import io.mosip.mimoto.dto.MatchingCredentialsResponseDTO;
@@ -11,11 +18,6 @@ import io.mosip.mimoto.dto.mimoto.IssuerConfig;
 import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
-import io.mosip.mimoto.dto.openid.presentation.ConstraintsDTO;
-import io.mosip.mimoto.dto.openid.presentation.FieldDTO;
-import io.mosip.mimoto.dto.openid.presentation.FilterDTO;
-import io.mosip.mimoto.dto.openid.presentation.InputDescriptorDTO;
-import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.DecryptionException;
@@ -30,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -63,7 +66,7 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
 
         try {
             // Extract presentation definition from the session data
-            PresentationDefinitionDTO presentationDefinition = extractPresentationDefinitionFromSessionData(sessionData);
+            PresentationDefinition presentationDefinition = extractPresentationDefinitionFromSessionData(sessionData);
             
             if (presentationDefinition == null) {
                 log.warn("No presentation definition found in session data");
@@ -83,13 +86,13 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
 
             List<DecryptedCredentialDTO> decryptedCredentials = createDecryptedCredentials(walletCredentials, base64Key);
 
-            List<InputDescriptorDTO> descriptors = presentationDefinition.getInputDescriptors();
+            List<InputDescriptor> descriptors = presentationDefinition.getInputDescriptors();
             Map<Integer, List<SelectableCredentialDTO>> matchingCredentialsByDescriptor = new HashMap<>();
             Set<String> missingClaims = new HashSet<>();
 
             IntStream.range(0, descriptors.size())
                     .forEach(i -> {
-                        InputDescriptorDTO descriptor = descriptors.get(i);
+                        InputDescriptor descriptor = descriptors.get(i);
                         List<SelectableCredentialDTO> matches = decryptedCredentials.stream()
                                 .filter(decrypted -> matchesInputDescriptor(decrypted.getCredential(), descriptor))
                                 .map(this::buildAvailableCredential)
@@ -125,7 +128,7 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
         }
     }
 
-    private void validateInputParameters(PresentationDefinitionDTO presentationDefinition, String walletId, String base64Key) throws IllegalArgumentException {
+    private void validateInputParameters(PresentationDefinition presentationDefinition, String walletId, String base64Key) throws IllegalArgumentException {
         if (walletId == null || walletId.trim().isEmpty()) {
             throw new IllegalArgumentException("Wallet ID cannot be null or empty");
         }
@@ -138,20 +141,20 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
             throw new IllegalArgumentException("Presentation definition cannot be null");
         }
 
-        if (presentationDefinition.getInputDescriptors() == null || presentationDefinition.getInputDescriptors().isEmpty()) {
+        if (presentationDefinition.getInputDescriptors().isEmpty()) {
             throw new IllegalArgumentException("Presentation definition must contain at least one input descriptor");
         }
 
         IntStream.range(0, presentationDefinition.getInputDescriptors().size())
                 .filter(i -> {
-                    InputDescriptorDTO descriptor = presentationDefinition.getInputDescriptors().get(i);
-                    return descriptor.getId() == null || descriptor.getId().trim().isEmpty();
+                    InputDescriptor descriptor = presentationDefinition.getInputDescriptors().get(i);
+                    return descriptor.getId().trim().isEmpty();
                 })
                 .findFirst()
                 .ifPresent(i -> { throw new IllegalArgumentException("Input descriptor at index " + i + " must have a valid ID"); });
     }
 
-    private MatchingCredentialsResponseDTO createEmptyResponseWithMissingClaims(PresentationDefinitionDTO presentationDefinition) {
+    private MatchingCredentialsResponseDTO createEmptyResponseWithMissingClaims(PresentationDefinition presentationDefinition) {
         log.info("No credentials found for wallet");
         return MatchingCredentialsResponseDTO.builder()
                 .availableCredentials(Collections.emptyList())
@@ -207,27 +210,26 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
     }
 
 
-    private List<String> extractClaimsFromInputDescriptor(InputDescriptorDTO inputDescriptor) {
-        return extractClaimsFromFields(inputDescriptor.getConstraints() != null ? 
-                inputDescriptor.getConstraints().getFields() : null, false);
+    private List<String> extractClaimsFromInputDescriptor(InputDescriptor inputDescriptor) {
+        return extractClaimsFromFields(inputDescriptor.getConstraints().getFields(), false);
     }
 
     /**
      * Common method to extract claims from an array of fields.
      * 
-     * @param fields Array of FieldDTO objects to extract claims from
+     * @param fields List of Fields objects to extract claims from
      * @param deduplicate Whether to deduplicate claims using LinkedHashSet
      * @return List of extracted claim keys
      */
-    private List<String> extractClaimsFromFields(FieldDTO[] fields, boolean deduplicate) {
+    private List<String> extractClaimsFromFields(List<Fields> fields, boolean deduplicate) {
         if (fields == null) {
             return Collections.emptyList();
         }
         
-        Stream<String> claimsStream = Arrays.stream(fields)
+        Stream<String> claimsStream = fields.stream()
                 .filter(Objects::nonNull)
-                .filter(field -> field.getPath() != null && field.getPath().length > 0)
-                .flatMap(field -> Arrays.stream(field.getPath()))
+                .filter(field -> !field.getPath().isEmpty())
+                .flatMap(field -> field.getPath().stream())
                 .map(this::extractClaimKeyFromPath)
                 .filter(Objects::nonNull)
                 .filter(claim -> !claim.isBlank());
@@ -239,14 +241,14 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
         }
     }
 
-    private boolean matchesInputDescriptor(VCCredentialResponse vc, InputDescriptorDTO inputDescriptor) {
+    private boolean matchesInputDescriptor(VCCredentialResponse vc, InputDescriptor inputDescriptor) {
         Map<String, Map<String, List<String>>> formatToCheck = inputDescriptor.getFormat();
 
         if (!matchesFormat(vc, formatToCheck)) {
             return false;
         }
 
-        if (inputDescriptor.getConstraints() != null && inputDescriptor.getConstraints().getFields() != null) {
+        if (inputDescriptor.getConstraints().getFields() != null) {
             return matchesConstraints(vc, inputDescriptor.getConstraints());
         }
         return true;
@@ -277,20 +279,20 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
         return vcProofType != null && requiredProofTypes.contains(vcProofType);
     }
 
-    private boolean matchesConstraints(VCCredentialResponse vc, ConstraintsDTO constraints) {
+    private boolean matchesConstraints(VCCredentialResponse vc, Constraints constraints) {
         if (constraints.getFields() == null) {
             return true;
         }
 
-        return Arrays.stream(constraints.getFields()).allMatch(field -> {
-            if (field.getPath() == null || field.getPath().length == 0) {
+        return constraints.getFields().stream().allMatch(field -> {
+            if (field.getPath().isEmpty()) {
                 return true;
             }
-            return Arrays.stream(field.getPath()).anyMatch(path -> matchesFieldPath(vc, path, field.getFilter()));
+            return field.getPath().stream().anyMatch(path -> matchesFieldPath(vc, path, field.getFilter()));
         });
     }
 
-    private boolean matchesFieldPath(VCCredentialResponse vc, String path, FilterDTO filter) {
+    private boolean matchesFieldPath(VCCredentialResponse vc, String path, Filter filter) {
         try {
             Object credentialData = getCredentialData(vc);
 
@@ -326,17 +328,14 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
         return vc.getCredential();
     }
 
-    private boolean matchesFilter(Object match, FilterDTO filter) {
+    private boolean matchesFilter(Object match, Filter filter) {
         if (filter == null) {
             return true;
         }
 
-        if (filter.getPattern() != null) {
-            String matchValue = match.toString();
-            return matchValue.contains(filter.getPattern());
-        }
+        String matchValue = match.toString();
+        return matchValue.contains(filter.getPattern());
 
-        return true;
     }
 
     private List<Object> evaluateJsonPath(String path, Object json) throws JsonProcessingException, NoSuchFieldException, IllegalAccessException {
@@ -381,7 +380,7 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
                         @SuppressWarnings("unchecked") Map<String, Object> map = objectMapper.readValue(jsonString, Map.class);
                         current = map.get(part);
                     } else {
-                        java.lang.reflect.Field field = current.getClass().getDeclaredField(part);
+                        Field field = current.getClass().getDeclaredField(part);
                         field.setAccessible(true);
                         current = field.get(current);
                     }
@@ -401,16 +400,13 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
         return Collections.singletonList(current);
     }
 
-    private List<String> extractRequiredClaims(PresentationDefinitionDTO presentationDefinition) {
-        if (presentationDefinition.getInputDescriptors() == null) {
-            return Collections.emptyList();
-        }
-        
-        FieldDTO[] allFields = presentationDefinition.getInputDescriptors().stream()
-                .filter(id -> id.getConstraints() != null && id.getConstraints().getFields() != null)
-                .flatMap(id -> Arrays.stream(id.getConstraints().getFields()))
-                .toArray(FieldDTO[]::new);
-                
+    private List<String> extractRequiredClaims(PresentationDefinition presentationDefinition) {
+
+        List<Fields> allFields = presentationDefinition.getInputDescriptors().stream()
+                .filter(id -> id.getConstraints().getFields() != null)
+                .flatMap(id -> id.getConstraints().getFields().stream())
+                .collect(Collectors.toList());
+
         return extractClaimsFromFields(allFields, true);
     }
 
@@ -458,32 +454,20 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService{
      * @param sessionData The session data containing the OpenID4VP object.
      * @return The presentation definition if found, null otherwise.
      */
-    private PresentationDefinitionDTO extractPresentationDefinitionFromSessionData(VerifiablePresentationSessionData sessionData) {
-        try {
-            if (sessionData == null || sessionData.getOpenID4VP() == null) {
-                log.warn("Session data or OpenID4VP is null");
-                return null;
-            }
-
-            Map<String, Object> openID4VPInstance = objectMapper.convertValue(sessionData.getOpenID4VP(), Map.class);
-            
-            Map<String, Object> authorizationRequest = (Map<String, Object>) openID4VPInstance.get("authorizationRequest");
-            if (authorizationRequest == null) {
-                log.warn("No authorizationRequest found in openID4VPInstance");
-                return null;
-            }
-
-            Map<String, Object> presentationDefinition = (Map<String, Object>) authorizationRequest.get("presentationDefinition");
-            if (presentationDefinition == null) {
-                log.warn("No presentationDefinition found in authorizationRequest");
-                return null;
-            }
-
-            return objectMapper.convertValue(presentationDefinition, PresentationDefinitionDTO.class);
-
-        } catch (Exception e) {
-            log.error("Failed to extract presentation definition from session data", e);
+    private PresentationDefinition extractPresentationDefinitionFromSessionData(VerifiablePresentationSessionData sessionData) {
+        if (sessionData == null || sessionData.getOpenID4VP() == null) {
+            log.warn("Session data or OpenID4VP is null");
             return null;
         }
+
+        AuthorizationRequest authorizationRequest = sessionData.getOpenID4VP().getAuthorizationRequest();
+        if (authorizationRequest == null) {
+            log.warn("No AuthorizationRequest found in OpenID4VP instance");
+            return null;
+        }
+
+        return authorizationRequest.getPresentationDefinition();
+
+        
     }
 }
