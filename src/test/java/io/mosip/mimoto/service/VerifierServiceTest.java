@@ -294,4 +294,24 @@ public class VerifierServiceTest {
 
         assertTrue(result);
     }
+
+    @Test
+    public void testIsVerifierClientPreregisteredNullResponseUris() throws URISyntaxException {
+        List<Verifier> verifiers = List.of(new Verifier(VALID_CLIENT_ID, List.of(VALID_RESPONSE_URI), null));
+        String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID;
+
+        boolean result = verifiersService.isVerifierClientPreregistered(verifiers, url);
+
+        assertFalse(result);
+    }
+
+    @Test
+    public void testIsVerifierClientPreregisteredEmptyResponseUris() throws URISyntaxException {
+        List<Verifier> verifiers = List.of(new Verifier(VALID_CLIENT_ID, List.of(VALID_RESPONSE_URI), null));
+        String url = "https://example.com?client_id=" + ENCODED_CLIENT_ID + "&response_uri=";
+
+        boolean result = verifiersService.isVerifierClientPreregistered(verifiers, url);
+
+        assertFalse(result);
+    }
 }
