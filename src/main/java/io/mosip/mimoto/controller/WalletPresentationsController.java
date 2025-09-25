@@ -202,7 +202,7 @@ public class WalletPresentationsController {
         try {
             WalletUtil.validateWalletId(httpSession, walletId);
 
-            VerifiablePresentationSessionData vpSessionData = sessionManager.getPresentationDefinitionFromSession(httpSession, presentationId);
+            VerifiablePresentationSessionData vpSessionData = sessionManager.getPresentationSessionData(httpSession, walletId, presentationId);
             presentationService.rejectVerifier(walletId, vpSessionData, payload);
 
             RejectedVerifierDTO rejectedVerifierDTO = new RejectedVerifierDTO();
