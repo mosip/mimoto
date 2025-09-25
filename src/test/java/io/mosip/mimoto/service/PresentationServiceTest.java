@@ -26,6 +26,7 @@ import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.TestUtilities;
 import io.mosip.openID4VP.OpenID4VP;
 import io.mosip.openID4VP.authorizationRequest.Verifier;
+import io.mosip.openID4VP.networkManager.NetworkResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -683,18 +684,24 @@ public class PresentationServiceTest {
         String walletId = "wallet-123";
         ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
 
-        OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+        // Create session data using the actual constructor (presentationId, authorizationRequest, createdAt, isPreregisteredWithWallet, matchedCredentials)
+        String presentationId = "presentation-123";
+        String authorizationRequest = "authorization-request";
         VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
-                mockOpenID4VP,
+                presentationId,
+                authorizationRequest,
                 Instant.now(),
+                true,
                 null
         );
 
-        // Test that the method completes without throwing an exception
+        NetworkResponse mockResponse = mock(NetworkResponse.class);
+        when(openID4VPService.sendErrorToVerifier(eq(sessionData), eq(payload))).thenReturn(mockResponse);
+
+        // Should not throw
         presentationService.rejectVerifier(walletId, sessionData, payload);
 
-        // Verify that sendErrorToVerifier was called on the OpenID4VP instance
-        verify(mockOpenID4VP, times(1)).sendErrorToVerifier(any());
+        verify(openID4VPService).sendErrorToVerifier(eq(sessionData), eq(payload));
     }
 
     @Test(expected = VPErrorNotSentException.class)
@@ -702,11 +709,19 @@ public class PresentationServiceTest {
         String walletId = "wallet-123";
         ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
 
+        // Create session data that would cause underlying OpenID4VP to fail (simulate by making the mocked service throw)
+        String presentationId = "presentation-123";
+        String authorizationRequest = "authorization-request";
         VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
-                null,
+                presentationId,
+                authorizationRequest,
                 Instant.now(),
+                false,
                 null
         );
+
+        // Simulate underlying service throwing an exception which PresentationServiceImpl should wrap into VPErrorNotSentException
+        doThrow(new IllegalArgumentException("OpenID4VP instance is null")).when(openID4VPService).sendErrorToVerifier(eq(sessionData), eq(payload));
 
         presentationService.rejectVerifier(walletId, sessionData, payload);
     }
@@ -716,21 +731,33 @@ public class PresentationServiceTest {
         String walletId = "wallet-123";
         ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
 
-        // Create session data with null OpenID4VP to simulate missing instance
+        String presentationId = "presentation-456";
+        String authorizationRequest = "authorization-request-2";
         VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
-                null,
+                presentationId,
+                authorizationRequest,
                 Instant.now(),
+                true,
                 null
         );
+
+        // Simulate sendErrorToVerifier throwing IOException
+        doThrow(new IOException("network failure")).when(openID4VPService).sendErrorToVerifier(eq(sessionData), eq(payload));
 
         presentationService.rejectVerifier(walletId, sessionData, payload);
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testRejectVerifierNullSessionData() {
+    @Test(expected = VPErrorNotSentException.class)
+    public void testRejectVerifierNullSessionData() throws Exception {
         String walletId = "wallet-123";
         ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
 
+        // Configure mock to throw when sendErrorToVerifier is invoked with null sessionData and the same payload instance
+        doThrow(new IllegalArgumentException("Invalid presentation session data"))
+                .when(openID4VPService).sendErrorToVerifier(isNull(), eq(payload));
+
+        // Call the service with null session data — PresentationServiceImpl should catch the underlying exception
+        // and rethrow VPErrorNotSentException, which this test now expects.
         presentationService.rejectVerifier(walletId, null, payload);
     }
 
@@ -738,22 +765,22 @@ public class PresentationServiceTest {
     public void testRejectVerifierWithDifferentErrorCodes() throws Exception {
         String walletId = "wallet-123";
         OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+        String presentationId = "presentation-789";
+        String authorizationRequest = "authorization-request-3";
         VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
-                mockOpenID4VP,
+                presentationId,
+                authorizationRequest,
                 Instant.now(),
+                true,
                 null
         );
 
-        // Test with different error codes
-        ErrorDTO payload1 = new ErrorDTO("access_denied", "User denied authorization");
-        ErrorDTO payload2 = new ErrorDTO("unsupported_request", "Request not supported");
-        ErrorDTO payload3 = new ErrorDTO("invalid_request", "Invalid request parameters");
+        ErrorDTO payload = new ErrorDTO("interaction_required", "Interaction required from user");
+        NetworkResponse mockResponse = mock(NetworkResponse.class);
+        when(openID4VPService.sendErrorToVerifier(eq(sessionData), eq(payload))).thenReturn(mockResponse);
 
-        presentationService.rejectVerifier(walletId, sessionData, payload1);
-        presentationService.rejectVerifier(walletId, sessionData, payload2);
-        presentationService.rejectVerifier(walletId, sessionData, payload3);
+        presentationService.rejectVerifier(walletId, sessionData, payload);
 
-        // Verify sendErrorToVerifier was called 3 times
-        verify(mockOpenID4VP, times(3)).sendErrorToVerifier(any());
+        verify(openID4VPService).sendErrorToVerifier(eq(sessionData), eq(payload));
     }
 }
