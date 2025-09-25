@@ -13,13 +13,10 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
-import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
-import io.mosip.mimoto.model.VerifiableCredential;
-import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.service.CredentialMatchingService;
 import io.mosip.mimoto.service.IssuersService;
-import io.mosip.mimoto.util.EncryptionDecryptionUtil;
+import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.openID4VP.authorizationRequest.presentationDefinition.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,86 +44,75 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
     private ObjectMapper objectMapper;
 
     @Autowired
-    private WalletCredentialsRepository walletCredentialsRepository;
-
-    @Autowired
-    private EncryptionDecryptionUtil encryptionDecryptionUtil;
-
-    @Autowired
     private IssuersService issuersService;
 
     @Autowired
     private OpenID4VPService openID4VPService;
 
+    @Autowired
+    private WalletCredentialService walletCredentialService;
+
     public MatchingCredentialsWithWalletDataDTO getMatchingCredentials(VerifiablePresentationSessionData sessionData, String walletId, String base64Key) throws ApiNotAccessibleException, IOException {
         log.info("Getting matching credentials with wallet data for walletId: {}", walletId);
 
-        try {
-            // Extract presentation definition from the session data
-            PresentationDefinition presentationDefinition = openID4VPService.resolvePresentationDefinition(sessionData.getPresentationId(), sessionData.getAuthorizationRequest(), sessionData.isVerifierClientPreregistered());
+        // Extract presentation definition from the session data
+        PresentationDefinition presentationDefinition = openID4VPService.resolvePresentationDefinition(sessionData.getPresentationId(), sessionData.getAuthorizationRequest(), sessionData.isVerifierClientPreregistered());
 
-            if (presentationDefinition == null) {
-                log.warn("No presentation definition found in session data");
-                throw new IllegalArgumentException("Presentation definition not found in session data");
-            }
+        if (presentationDefinition == null) {
+            log.warn("No presentation definition found in session data");
+            throw new IllegalArgumentException("Presentation definition not found in session data");
+        }
 
-            validateInputParameters(presentationDefinition, walletId, base64Key);
+        validateInputParameters(presentationDefinition, walletId, base64Key);
 
-            List<VerifiableCredential> walletCredentials = getWalletCredentials(walletId);
-            if (walletCredentials.isEmpty()) {
-                MatchingCredentialsResponseDTO emptyResponse = createEmptyResponseWithMissingClaims(presentationDefinition);
-                return MatchingCredentialsWithWalletDataDTO.builder()
-                        .matchingCredentialsResponse(emptyResponse)
-                        .matchingCredentials(new ArrayList<>())
-                        .build();
-            }
+        List<DecryptedCredentialDTO> decryptedCredentials = walletCredentialService.getDecryptedCredentials(walletId, base64Key);
+        if (decryptedCredentials.isEmpty()) {
+            MatchingCredentialsResponseDTO emptyResponse = createEmptyResponseWithMissingClaims(presentationDefinition);
+            return MatchingCredentialsWithWalletDataDTO.builder()
+                    .matchingCredentialsResponse(emptyResponse)
+                    .matchingCredentials(new ArrayList<>())
+                    .build();
+        }
 
-            List<DecryptedCredentialDTO> decryptedCredentials = createDecryptedCredentials(walletCredentials, base64Key);
+        List<InputDescriptor> descriptors = presentationDefinition.getInputDescriptors();
+        Map<Integer, List<SelectableCredentialDTO>> matchingCredentialsByDescriptor = new HashMap<>();
+        Set<String> missingClaims = new HashSet<>();
 
-            List<InputDescriptor> descriptors = presentationDefinition.getInputDescriptors();
-            Map<Integer, List<SelectableCredentialDTO>> matchingCredentialsByDescriptor = new HashMap<>();
-            Set<String> missingClaims = new HashSet<>();
+        IntStream.range(0, descriptors.size())
+                .forEach(i -> {
+                    InputDescriptor descriptor = descriptors.get(i);
+                    List<SelectableCredentialDTO> matches = decryptedCredentials.stream()
+                            .filter(decrypted -> matchesInputDescriptor(decrypted.getCredential(), descriptor))
+                            .map(this::buildAvailableCredential)
+                            .collect(Collectors.toList());
 
-            IntStream.range(0, descriptors.size())
-                    .forEach(i -> {
-                        InputDescriptor descriptor = descriptors.get(i);
-                        List<SelectableCredentialDTO> matches = decryptedCredentials.stream()
-                                .filter(decrypted -> matchesInputDescriptor(decrypted.getCredential(), descriptor))
-                                .map(this::buildAvailableCredential)
-                                .collect(Collectors.toList());
+                    if (!matches.isEmpty()) {
+                        matchingCredentialsByDescriptor.put(i, matches);
+                    } else {
+                        missingClaims.addAll(extractClaimsFromInputDescriptor(descriptor));
+                    }
+                });
 
-                        if (!matches.isEmpty()) {
-                            matchingCredentialsByDescriptor.put(i, matches);
-                        } else {
-                            missingClaims.addAll(extractClaimsFromInputDescriptor(descriptor));
-                        }
-                    });
+        // Flatten all matching credentials into a single list, removing duplicates by credential ID
+        Set<String> addedCredentialIds = new HashSet<>();
+        List<SelectableCredentialDTO> availableCredentials = matchingCredentialsByDescriptor.values().stream()
+                .flatMap(List::stream)
+                .filter(credential -> addedCredentialIds.add(credential.getCredentialId()))
+                .collect(Collectors.toList());
 
-            // Flatten all matching credentials into a single list, removing duplicates by credential ID
-            Set<String> addedCredentialIds = new HashSet<>();
-            List<SelectableCredentialDTO> availableCredentials = matchingCredentialsByDescriptor.values().stream()
-                    .flatMap(List::stream)
-                    .filter(credential -> addedCredentialIds.add(credential.getCredentialId()))
-                    .collect(Collectors.toList());
+        MatchingCredentialsResponseDTO matchingCredentialsResponse = MatchingCredentialsResponseDTO.builder().availableCredentials(availableCredentials).missingClaims(missingClaims).build();
 
-            MatchingCredentialsResponseDTO matchingCredentialsResponse = MatchingCredentialsResponseDTO.builder().availableCredentials(availableCredentials).missingClaims(missingClaims).build();
-
-            // Filter decrypted credentials to only include matched ones
-            Set<String> matchedCredentialIds = availableCredentials.stream()
+        // Filter decrypted credentials to only include matched ones
+        Set<String> matchedCredentialIds = availableCredentials.stream()
                 .map(SelectableCredentialDTO::getCredentialId)
                 .collect(Collectors.toSet());
 
-            List<DecryptedCredentialDTO> matchingCredentials = decryptedCredentials.stream().filter(credential -> matchedCredentialIds.contains(credential.getId())).collect(Collectors.toList());
+        List<DecryptedCredentialDTO> matchingCredentials = decryptedCredentials.stream().filter(credential -> matchedCredentialIds.contains(credential.getId())).collect(Collectors.toList());
 
-            return MatchingCredentialsWithWalletDataDTO.builder()
-                        .matchingCredentialsResponse(matchingCredentialsResponse)
-                        .matchingCredentials(matchingCredentials)
-                        .build();
-
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid input parameters for getMatchingCredentialsWithWalletData: {}", e.getMessage());
-            throw e;
-        }
+        return MatchingCredentialsWithWalletDataDTO.builder()
+                .matchingCredentialsResponse(matchingCredentialsResponse)
+                .matchingCredentials(matchingCredentials)
+                .build();
     }
 
     private void validateInputParameters(PresentationDefinition presentationDefinition, String walletId, String base64Key) throws IllegalArgumentException {
@@ -162,53 +148,6 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
                 .missingClaims(new HashSet<>(extractRequiredClaims(presentationDefinition)))
                 .build();
     }
-
-    private List<VerifiableCredential> getWalletCredentials(String walletId) {
-        return walletCredentialsRepository.findByWalletIdOrderByCreatedAtDesc(walletId);
-    }
-
-    private List<DecryptedCredentialDTO> createDecryptedCredentials(List<VerifiableCredential> walletCredentials, String base64Key) {
-        List<DecryptedCredentialDTO> decryptedCredentials = walletCredentials.stream().map(credential -> {
-            try {
-                VCCredentialResponse decryptedCredential = decryptAndParseCredential(credential, base64Key);
-                return Optional.of(DecryptedCredentialDTO.builder()
-                        .id(credential.getId())
-                        .walletId(credential.getWalletId())
-                        .credential(decryptedCredential)
-                        .credentialMetadata(credential.getCredentialMetadata())
-                        .createdAt(credential.getCreatedAt())
-                        .updatedAt(credential.getUpdatedAt())
-                        .build());
-            } catch (IOException | IllegalArgumentException | DecryptionException e) {
-                log.warn("Failed to decrypt credential {}: {}", credential.getId(), e.getMessage());
-                return Optional.<DecryptedCredentialDTO>empty();
-            }
-        })
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .collect(Collectors.toList());
-
-        log.info("Successfully decrypted {} out of {} credentials", decryptedCredentials.size(), walletCredentials.size());
-        return decryptedCredentials;
-    }
-
-    private VCCredentialResponse decryptAndParseCredential(VerifiableCredential credential, String base64Key) throws IOException, IllegalArgumentException, DecryptionException {
-        if (credential == null) {
-            throw new IllegalArgumentException("Credential cannot be null");
-        }
-
-        if (credential.getCredential() == null) {
-            throw new IllegalArgumentException("Credential data cannot be null");
-        }
-
-        String decryptedCredential = encryptionDecryptionUtil.decryptCredential(credential.getCredential(), base64Key);
-        if (decryptedCredential == null || decryptedCredential.trim().isEmpty()) {
-            throw new IllegalArgumentException("Failed to decrypt credential or decrypted data is empty");
-        }
-
-        return objectMapper.readValue(decryptedCredential, VCCredentialResponse.class);
-    }
-
 
     private List<String> extractClaimsFromInputDescriptor(InputDescriptor inputDescriptor) {
         return extractClaimsFromFields(inputDescriptor.getConstraints().getFields(), false);
