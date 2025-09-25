@@ -135,4 +135,30 @@ public class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_REQUEST, responseStatus.value());
     }
 
+    @Test
+    public void handleValidationExceptionReturnsBadRequest() throws Exception {
+        // Arrange: create BindingResult with a field error
+        Object target = new Object();
+        org.springframework.validation.BeanPropertyBindingResult bindingResult =
+                new org.springframework.validation.BeanPropertyBindingResult(target, "errorDTO");
+        bindingResult.addError(new org.springframework.validation.FieldError("errorDTO", "errorCode", "errorCode is required"));
+
+        // Create MethodParameter pointing to the handler's parameter to construct the exception
+        java.lang.reflect.Method handlerMethod = GlobalExceptionHandler.class.getMethod("handleValidationException", org.springframework.web.bind.MethodArgumentNotValidException.class);
+        org.springframework.core.MethodParameter methodParameter = new org.springframework.core.MethodParameter(handlerMethod, 0);
+
+        org.springframework.web.bind.MethodArgumentNotValidException ex =
+                new org.springframework.web.bind.MethodArgumentNotValidException(methodParameter, bindingResult);
+
+        // Act
+        org.springframework.http.ResponseEntity<io.mosip.mimoto.dto.ErrorDTO> response = globalExceptionHandler.handleValidationException(ex);
+
+        // Assert
+        org.junit.Assert.assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, response.getStatusCode());
+        io.mosip.mimoto.dto.ErrorDTO body = response.getBody();
+        org.junit.Assert.assertNotNull(body);
+        org.junit.Assert.assertEquals("invalid_request", body.getErrorCode());
+        org.junit.Assert.assertTrue(body.getErrorMessage().contains("errorCode"));
+    }
+
 }

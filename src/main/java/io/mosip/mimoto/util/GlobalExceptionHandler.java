@@ -9,6 +9,8 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -113,5 +115,17 @@ public class GlobalExceptionHandler {
                 .map(MessageSourceResolvable::getDefaultMessage)
                 .collect(Collectors.joining(", "));
         return new ErrorDTO(ErrorConstants.INVALID_REQUEST.getErrorCode(), errorMessage);
+    }
+
+    // Handler method to return 400 for validation failures
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorDTO> handleValidationException(MethodArgumentNotValidException ex) {
+        BindingResult br = ex.getBindingResult();
+        String message = br.getFieldErrors().stream()
+                .map(fe -> fe.getField() + " " + fe.getDefaultMessage())
+                .collect(Collectors.joining("; "));
+        log.warn("Validation failed: {}", message);
+        ErrorDTO err = new ErrorDTO("invalid_request", message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
     }
 }

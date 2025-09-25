@@ -5,6 +5,7 @@ import java.io.Serializable;
 import com.fasterxml.jackson.annotation.JsonAlias;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,9 +29,11 @@ public class ErrorDTO implements Serializable {
 
     /** The errorcode. */
     @Schema(description = "It represents the type or category of the error")
+    @NotBlank(message = "errorCode is required")
     private String errorCode;
 
     @Schema(description = "A human-readable message providing more details about the error")
+    @NotBlank(message = "errorMessage is required")
     /** The message. */
     @JsonAlias("message")
     private String errorMessage;

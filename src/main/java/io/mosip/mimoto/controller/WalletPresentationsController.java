@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -198,18 +199,16 @@ public class WalletPresentationsController {
     @ApiResponse(responseCode = "401", description = "Unauthorized or invalid session.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "unauthorized", value = "{\"errorCode\": \"unauthorized\", \"errorMessage\": \"User ID not found in session\"}")))
     @ApiResponse(responseCode = "500", description = "Internal server error.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Failed to reject verifier", value = "{\"status\": \"error\", \"message\": \"Failed to submit Verifiable Presentation.\"}")))
     @PatchMapping("/{presentationId}")
-    public ResponseEntity<?> userRejectedVerifier(@PathVariable("walletId") String walletId, HttpSession httpSession, @PathVariable("presentationId") String presentationId, @RequestBody ErrorDTO payload) {
+    public ResponseEntity<?> userRejectedVerifier(@PathVariable("walletId") String walletId, HttpSession httpSession, @PathVariable("presentationId") String presentationId, @Valid @RequestBody ErrorDTO payload) {
         try {
             WalletUtil.validateWalletId(httpSession, walletId);
 
             VerifiablePresentationSessionData vpSessionData = sessionManager.getPresentationSessionData(httpSession, walletId, presentationId);
-            presentationService.rejectVerifier(walletId, vpSessionData, payload);
-
-            RejectedVerifierDTO rejectedVerifierDTO = new RejectedVerifierDTO();
-            rejectedVerifierDTO.setStatus(REJECTED_VERIFIER.getErrorCode());
-            rejectedVerifierDTO.setMessage(REJECTED_VERIFIER.getErrorMessage());
-            // rejectedVerifierDTO.setRedirectUri(redirectUri);
-            rejectedVerifierDTO.setRedirectUri("");
+            if (vpSessionData == null) {
+                log.error("No presentation session data found in session for presentationId: {}", presentationId);
+                return getErrorResponseEntity(new InvalidRequestException("invalid_request", "presentationId not found in session"), "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+            }
+            RejectedVerifierDTO rejectedVerifierDTO = presentationService.rejectVerifier(walletId, vpSessionData, payload);
 
             return ResponseEntity.status(HttpStatus.OK).body(rejectedVerifierDTO);
         } catch (VPErrorNotSentException e) {
