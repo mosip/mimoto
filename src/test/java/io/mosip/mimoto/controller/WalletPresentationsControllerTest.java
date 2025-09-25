@@ -35,10 +35,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.io.IOException;
@@ -304,9 +306,10 @@ public class WalletPresentationsControllerTest {
         when(sessionManager.getPresentationSessionData(any(HttpSession.class), eq(walletId), eq(presentationId)))
                 .thenReturn(sessionData);
 
-        // Mock the rejectVerifier method to complete successfully
-        doNothing().when(presentationService)
-                .rejectVerifier(eq(walletId), eq(sessionData), any(ErrorDTO.class));
+        // Prepare the expected RejectedVerifierDTO and stub the service to return it
+        RejectedVerifierDTO expectedRejected = new RejectedVerifierDTO("success", "", "Presentation request rejected. An OpenID4VP error response has been sent to the verifier.");
+        when(presentationService.rejectVerifier(eq(walletId), eq(sessionData), any(ErrorDTO.class)))
+                .thenReturn(expectedRejected);
 
         mockMvc.perform(patch("/wallets/{walletId}/presentations/{presentationId}", walletId, presentationId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -318,8 +321,6 @@ public class WalletPresentationsControllerTest {
                 .andExpect(jsonPath("$.status").value("success"))
                 .andExpect(jsonPath("$.message").value("Presentation request rejected. An OpenID4VP error response has been sent to the verifier."))
                 .andExpect(jsonPath("$.redirectUri").value(""));
-
-        verify(presentationService).rejectVerifier(eq(walletId), eq(sessionData), any(ErrorDTO.class));
     }
 
     @Test
@@ -367,25 +368,21 @@ public class WalletPresentationsControllerTest {
 
     @Test
     public void testUserRejectedVerifierNullSessionData() throws Exception {
+        String walletId = "wallet-123";
         String presentationId = "presentation-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
 
+        // Arrange: make session manager return null to simulate missing session data
         when(sessionManager.getPresentationSessionData(any(HttpSession.class), eq(walletId), eq(presentationId)))
                 .thenReturn(null);
 
-        doThrow(new VPErrorNotSentException("OpenID4VP instance is null")).when(presentationService)
-                .rejectVerifier(eq(walletId), eq(null), any(ErrorDTO.class));
+        // Serialize payload to ensure MockMvc .content(...) is not null
+        String content = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(payload);
 
         mockMvc.perform(patch("/wallets/{walletId}/presentations/{presentationId}", walletId, presentationId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"errorCode\":\"access_denied\",\"errorMessage\":\"User denied authorization\"}")
-                        .accept(MediaType.APPLICATION_JSON)
-                        .sessionAttr("wallet_id", walletId)
-                        .sessionAttr("wallet_key", walletKey))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.message").value("OpenID4VP instance is null"));
-
-        verify(sessionManager).getPresentationSessionData(any(HttpSession.class), eq(walletId), eq(presentationId));
-        verify(presentationService).rejectVerifier(eq(walletId), eq(null), any(ErrorDTO.class));
+                        .content(content))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

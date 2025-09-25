@@ -1,6 +1,7 @@
 package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dto.ErrorDTO;
+import io.mosip.mimoto.dto.RejectedVerifierDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
@@ -16,5 +17,5 @@ public interface PresentationService {
 
     String authorizePresentation(PresentationRequestDTO presentationRequestDTO) throws ApiNotAccessibleException, IOException;
     VerifiablePresentationResponseDTO handleVPAuthorizationRequest(String urlEncodedVPAuthorizationRequest, String walletId) throws ApiNotAccessibleException, IOException, OpenID4VPExceptions, URISyntaxException;
-    void rejectVerifier(String walletId, VerifiablePresentationSessionData vpSessionData, ErrorDTO payload) throws VPErrorNotSentException;
+    RejectedVerifierDTO rejectVerifier(String walletId, VerifiablePresentationSessionData vpSessionData, ErrorDTO payload) throws VPErrorNotSentException;
 }

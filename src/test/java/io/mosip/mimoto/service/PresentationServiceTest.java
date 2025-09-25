@@ -35,11 +35,13 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
+import io.mosip.mimoto.dto.RejectedVerifierDTO;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 
+import static io.mosip.mimoto.exception.ErrorConstants.REJECTED_VERIFIER;
 import static io.mosip.mimoto.util.JwtUtils.parseJwtHeader;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -783,4 +785,35 @@ public class PresentationServiceTest {
 
         verify(openID4VPService).sendErrorToVerifier(eq(sessionData), eq(payload));
     }
+
+    @Test
+    public void testRejectVerifierExtractsRedirectUriFromBody() throws Exception {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        String presentationId = "presentation-999";
+        String authorizationRequest = "authorization-request-xyz";
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                presentationId,
+                authorizationRequest,
+                Instant.now(),
+                true,
+                null
+        );
+
+        // Inject a real ObjectMapper so JSON parsing in extractRedirectUriFromBody works
+        ReflectionTestUtils.setField(presentationService, "objectMapper", new com.fasterxml.jackson.databind.ObjectMapper());
+
+        NetworkResponse mockResponse = mock(NetworkResponse.class);
+        when(mockResponse.getBody()).thenReturn("{\"redirect_uri\":\"https://verifier.example.com/success\"}");
+        when(openID4VPService.sendErrorToVerifier(eq(sessionData), eq(payload))).thenReturn(mockResponse);
+
+        RejectedVerifierDTO result = presentationService.rejectVerifier(walletId, sessionData, payload);
+
+        assertNotNull(result);
+        assertEquals("https://verifier.example.com/success", result.getRedirectUri());
+        assertEquals(REJECTED_VERIFIER.getErrorCode(), result.getStatus());
+        assertEquals(REJECTED_VERIFIER.getErrorMessage(), result.getMessage());
+    }
+
 }
