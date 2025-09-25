@@ -212,9 +212,6 @@ public class WalletPresentationsController {
             rejectedVerifierDTO.setRedirectUri("");
 
             return ResponseEntity.status(HttpStatus.OK).body(rejectedVerifierDTO);
-        } catch (InvalidRequestException e) {
-            log.error("Invalid request during user rejection for VP request: ", e);
-            throw e;
         } catch (VPErrorNotSentException e) {
             log.error("Error during user rejection for VP request: ", e);
             return getErrorResponseEntity(e, REJECT_VERIFIER_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
@@ -236,6 +233,6 @@ public class WalletPresentationsController {
         if (contentType != null) {
             responseEntity.contentType(contentType);
         }
-        return (ResponseEntity<T>) responseEntity.body(new RejectedVerifierErrorDTO(errorCode, errorMessage));
+        return (ResponseEntity<T>) responseEntity.body(new RejectedVerifierDTO(errorCode, null, errorMessage));
     }
 }
