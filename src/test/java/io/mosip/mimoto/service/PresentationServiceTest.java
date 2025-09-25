@@ -14,7 +14,7 @@ import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.impl.DataShareServiceImpl;
-import io.mosip.mimoto.service.impl.OpenID4VPFactory;
+import io.mosip.mimoto.service.impl.OpenID4VPService;
 import io.mosip.mimoto.service.impl.PresentationServiceImpl;
 import io.mosip.mimoto.util.JwtUtils;
 import io.mosip.mimoto.util.RestApiClient;
@@ -54,7 +54,7 @@ public class PresentationServiceTest {
     ObjectMapper objectMapper;
 
     @Mock
-    private OpenID4VPFactory openID4VPFactory;
+    private OpenID4VPService openID4VPService;
 
     @Mock
     RestApiClient restApiClient;
@@ -218,7 +218,7 @@ public class PresentationServiceTest {
             when(verifierService.isVerifierTrustedByWallet(clientId, walletId)).thenReturn(true);
 
             OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
-            when(openID4VPFactory.create(anyString())).thenReturn(mockOpenID4VP);
+            when(openID4VPService.create(anyString())).thenReturn(mockOpenID4VP);
             when(mockOpenID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers, false))
                     .thenReturn(getPresentationAuthorizationRequest(clientId, "https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response"));
 
@@ -243,7 +243,7 @@ public class PresentationServiceTest {
             when(verifierService.isVerifierTrustedByWallet(clientId, walletId)).thenReturn(false);
 
             OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
-            when(openID4VPFactory.create(anyString())).thenReturn(mockOpenID4VP);
+            when(openID4VPService.create(anyString())).thenReturn(mockOpenID4VP);
             when(mockOpenID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers, false))
                     .thenReturn(getPresentationAuthorizationRequest(clientId, "https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response"));
 
@@ -269,7 +269,7 @@ public class PresentationServiceTest {
             when(verifierService.isVerifierTrustedByWallet(clientId, walletId)).thenReturn(false);
 
             OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
-            when(openID4VPFactory.create(anyString())).thenReturn(mockOpenID4VP);
+            when(openID4VPService.create(anyString())).thenReturn(mockOpenID4VP);
             when(mockOpenID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers, false))
                     .thenReturn(getPresentationAuthorizationRequest(clientId, "https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response"));
 
