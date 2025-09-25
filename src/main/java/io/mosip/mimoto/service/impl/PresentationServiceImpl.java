@@ -9,18 +9,17 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponseProof;
 import io.mosip.mimoto.dto.openid.presentation.*;
-import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.VerifierService;
+import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.WalletPresentationUtil;
 import io.mosip.openID4VP.OpenID4VP;
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
 import io.mosip.openID4VP.authorizationRequest.Verifier;
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata;
-import io.mosip.mimoto.util.RestApiClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +30,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -56,7 +54,7 @@ public class PresentationServiceImpl implements PresentationService {
     private VerifierService verifierService;
 
     @Autowired
-    private OpenID4VPFactory openID4VPFactory;
+    private OpenID4VPService openID4VPService;
 
     @Value("${mosip.inji.ovp.redirect.url.pattern}")
     private String injiOvpRedirectURLPattern;
@@ -69,18 +67,17 @@ public class PresentationServiceImpl implements PresentationService {
         String presentationId = UUID.randomUUID().toString();
 
         //Initialize OpenID4VP instance with presentationId as traceability id for each new Verifiable Presentation request
-        OpenID4VP openID4VP = openID4VPFactory.create(presentationId);
+        OpenID4VP openID4VP = openID4VPService.create(presentationId);
 
         List<Verifier> preRegisteredVerifiers = getPreRegisteredVerifiers();
         boolean shouldValidateClient = verifierService.isVerifierClientPreregistered(preRegisteredVerifiers, urlEncodedVPAuthorizationRequest);
         AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers, shouldValidateClient);
         VerifiablePresentationVerifierDTO verifiablePresentationVerifierDTO = createVPResponseVerifierDTO(preRegisteredVerifiers, authorizationRequest, walletId);
-        VerifiablePresentationSessionData verifiablePresentationSessionData = new VerifiablePresentationSessionData(openID4VP, Instant.now(), null);
 
-        return new VerifiablePresentationResponseDTO(presentationId, verifiablePresentationVerifierDTO, verifiablePresentationSessionData);
+        return new VerifiablePresentationResponseDTO(presentationId, verifiablePresentationVerifierDTO);
     }
 
-    private VerifiablePresentationVerifierDTO createVPResponseVerifierDTO(List<Verifier> preRegisteredVerifiers, AuthorizationRequest authorizationRequest, String walletId) throws ApiNotAccessibleException, IOException {
+    private VerifiablePresentationVerifierDTO createVPResponseVerifierDTO(List<Verifier> preRegisteredVerifiers, AuthorizationRequest authorizationRequest, String walletId) {
 
         boolean isVerifierPreRegisteredWithWallet = preRegisteredVerifiers.stream().map(
                 Verifier::getClientId).toList().contains(authorizationRequest.getClientId());
@@ -219,30 +216,27 @@ public class PresentationServiceImpl implements PresentationService {
         }
 
         log.info("Posting VP to response_uri: {}", responseUri);
-        Map<String, Object> postResponse = null;
         try {
-            postResponse = restApiClient.postApi(
+            Map<String, Object> postResponse = restApiClient.postApi(
                     responseUri,
                     MediaType.APPLICATION_JSON,
                     postRequest,
                     Map.class
             );
+            log.info("Response from verifier after POST: {}", postResponse);
+            // Check for redirect_uri in response
+            String redirectUri = (String) postResponse.get("redirect_uri");
+            if (redirectUri != null && !redirectUri.isEmpty()) {
+                return redirectUri;
+            }
+            // Fallback behavior if redirect_uri is not provided
+            log.warn("No redirect_uri received from verifier in POST response. Falling back to response_uri.");
+            return responseUri + "?status=vp_sent";
+
         } catch (Exception e) {
             log.error("Exception while submitting the vp_token to the response_uri", e);
             throw new VPNotCreatedException(ErrorConstants.INTERNAL_SERVER_ERROR.getErrorCode(), ErrorConstants.INTERNAL_SERVER_ERROR.getErrorMessage());
         }
-
-        log.info("Response from verifier after POST: {}", postResponse);
-
-        // Check for redirect_uri in response
-        String redirectUri = (String) postResponse.get("redirect_uri");
-        if (redirectUri != null && !redirectUri.isEmpty()) {
-            return redirectUri;
-        }
-
-        // Fallback behavior if redirect_uri is not provided
-        log.warn("No redirect_uri received from verifier in POST response. Falling back to response_uri.");
-        return responseUri + "?status=vp_sent";
     }
 
     private VerifiablePresentationDTO constructVerifiablePresentationString(VCCredentialProperties vcCredentialProperties) {

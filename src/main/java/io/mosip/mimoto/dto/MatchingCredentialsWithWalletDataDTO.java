@@ -21,8 +21,5 @@ public class MatchingCredentialsWithWalletDataDTO {
     private MatchingCredentialsResponseDTO matchingCredentialsResponse;
     
     @JsonIgnore
-    private List<DecryptedCredentialDTO> credentials;
-    
-    @JsonIgnore
     private List<DecryptedCredentialDTO> matchingCredentials;
 }

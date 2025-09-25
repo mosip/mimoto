@@ -2,13 +2,6 @@ package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.mosip.openID4VP.authorizationRequest.presentationDefinition.Constraints;
-import io.mosip.openID4VP.authorizationRequest.presentationDefinition.Fields;
-import io.mosip.openID4VP.authorizationRequest.presentationDefinition.Filter;
-import io.mosip.openID4VP.authorizationRequest.presentationDefinition.InputDescriptor;
-import io.mosip.openID4VP.authorizationRequest.presentationDefinition.PresentationDefinition;
-import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
 import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.DecryptedCredentialDTO;
 import io.mosip.mimoto.dto.MatchingCredentialsResponseDTO;
@@ -27,6 +20,7 @@ import io.mosip.mimoto.repository.WalletCredentialsRepository;
 import io.mosip.mimoto.service.CredentialMatchingService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.EncryptionDecryptionUtil;
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -61,12 +55,15 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
     @Autowired
     private IssuersService issuersService;
 
-    public MatchingCredentialsWithWalletDataDTO getMatchingCredentials(VerifiablePresentationSessionData sessionData, String walletId, String base64Key) {
+    @Autowired
+    private OpenID4VPService openID4VPService;
+
+    public MatchingCredentialsWithWalletDataDTO getMatchingCredentials(VerifiablePresentationSessionData sessionData, String walletId, String base64Key) throws ApiNotAccessibleException, IOException {
         log.info("Getting matching credentials with wallet data for walletId: {}", walletId);
 
         try {
             // Extract presentation definition from the session data
-            PresentationDefinition presentationDefinition = extractPresentationDefinitionFromSessionData(sessionData);
+            PresentationDefinition presentationDefinition = openID4VPService.resolvePresentationDefinition(sessionData.getPresentationId(), sessionData.getAuthorizationRequest(), sessionData.isVerifierClientPreregistered());
 
             if (presentationDefinition == null) {
                 log.warn("No presentation definition found in session data");
@@ -80,7 +77,7 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
                 MatchingCredentialsResponseDTO emptyResponse = createEmptyResponseWithMissingClaims(presentationDefinition);
                 return MatchingCredentialsWithWalletDataDTO.builder()
                         .matchingCredentialsResponse(emptyResponse)
-                        .credentials(new ArrayList<>())
+                        .matchingCredentials(new ArrayList<>())
                         .build();
             }
 
@@ -123,7 +120,6 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
 
             return MatchingCredentialsWithWalletDataDTO.builder()
                         .matchingCredentialsResponse(matchingCredentialsResponse)
-                        .credentials(decryptedCredentials)
                         .matchingCredentials(matchingCredentials)
                         .build();
 
@@ -161,7 +157,10 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
 
     private MatchingCredentialsResponseDTO createEmptyResponseWithMissingClaims(PresentationDefinition presentationDefinition) {
         log.info("No credentials found for wallet");
-        return MatchingCredentialsResponseDTO.builder().availableCredentials(Collections.emptyList()).missingClaims(extractRequiredClaims(presentationDefinition).stream().collect(Collectors.toSet())).build();
+        return MatchingCredentialsResponseDTO.builder()
+                .availableCredentials(Collections.emptyList())
+                .missingClaims(new HashSet<>(extractRequiredClaims(presentationDefinition)))
+                .build();
     }
 
     private List<VerifiableCredential> getWalletCredentials(String walletId) {
@@ -449,24 +448,4 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
                 .build();
     }
 
-    /**
-     * Extracts the presentation definition from the VerifiablePresentationSessionData object.
-     *
-     * @param sessionData The session data containing the OpenID4VP object.
-     * @return The presentation definition if found, null otherwise.
-     */
-    private PresentationDefinition extractPresentationDefinitionFromSessionData(VerifiablePresentationSessionData sessionData) {
-        if (sessionData == null || sessionData.getOpenID4VP() == null) {
-            log.warn("Session data or OpenID4VP is null");
-            return null;
-        }
-
-        AuthorizationRequest authorizationRequest = sessionData.getOpenID4VP().getAuthorizationRequest();
-        if (authorizationRequest == null) {
-            log.warn("No AuthorizationRequest found in OpenID4VP instance");
-            return null;
-        }
-
-        return authorizationRequest.getPresentationDefinition();
-    }
 }

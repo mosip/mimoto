@@ -1,19 +1,14 @@
 package io.mosip.mimoto.controller;
 
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.dto.VerifiablePresentationAuthorizationRequest;
 import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationVerifierDTO;
-import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.service.CredentialMatchingService;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.impl.SessionManager;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
-import io.mosip.openID4VP.OpenID4VP;
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -21,9 +16,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -32,12 +24,15 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
-import java.time.Instant;
 import java.util.List;
-import io.mosip.mimoto.service.CredentialMatchingService;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 @RunWith(SpringRunner.class)
@@ -68,16 +63,13 @@ public class WalletPresentationsControllerTest {
     private final String walletId = "wallet123";
     private final String walletKey = "encodedKey";
 
-    private VerifiablePresentationSessionData presentationSessionData;
-    private VerifiablePresentationVerifierDTO presentationVerifierDTO;
     private VerifiablePresentationResponseDTO presentationResponseDTO;
 
     @Before
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        presentationSessionData = new VerifiablePresentationSessionData(new OpenID4VP("presentationId123"), Instant.now(), null);
-        presentationVerifierDTO = new VerifiablePresentationVerifierDTO("mock-client", "verifier123", "https://veriifer-logo.png", false, true, "https://verifier-redirect");
-        presentationResponseDTO = new VerifiablePresentationResponseDTO("presentationId-123", presentationVerifierDTO, presentationSessionData);
+        VerifiablePresentationVerifierDTO presentationVerifierDTO = new VerifiablePresentationVerifierDTO("mock-client", "verifier123", "https://veriifer-logo.png", false, true, "https://verifier-redirect");
+        presentationResponseDTO = new VerifiablePresentationResponseDTO("presentationId-123", presentationVerifierDTO);
 
         when(httpSession.getAttribute("wallet_id")).thenReturn(walletId);
         when(httpSession.getAttribute("wallet_key")).thenReturn(walletKey);

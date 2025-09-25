@@ -1,8 +1,6 @@
 package io.mosip.mimoto.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,6 +16,4 @@ public class VerifiablePresentationResponseDTO {
     @Schema(description = "Information about the Verifier who sent the Verifiable Presentation request")
     VerifiablePresentationVerifierDTO verifiablePresentationVerifierDTO;
 
-    @JsonIgnore
-    VerifiablePresentationSessionData verifiablePresentationSessionData;
 }
