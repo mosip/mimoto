@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.dto.VerifiablePresentationAuthorizationRequest;
 import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationVerifierDTO;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.CredentialMatchingService;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.impl.SessionManager;
@@ -26,10 +28,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
+import java.io.IOException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -141,6 +145,141 @@ public class WalletPresentationsControllerTest {
         mockMvc.perform(post("/wallets/{walletId}/presentations", walletId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(authorizationRequest))
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
+                .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
+    }
+
+    @Test
+    public void shouldThrowUnauthorizedWhenWalletKeyIsMissingFromSession() throws Exception {
+        String presentationId = "presentation123";
+        
+        when(httpSession.getAttribute("wallet_key")).thenReturn(null);
+
+        mockMvc.perform(get("/wallets/{walletId}/presentations/{presentationId}/credentials", walletId, presentationId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value("unauthorized"))
+                .andExpect(jsonPath("$.errorMessage").value("You are not authorized to access this resource"));
+    }
+
+    @Test
+    public void shouldThrowBadRequestWhenApiNotAccessibleExceptionIsThrown() throws Exception {
+        String presentationId = "presentation123";
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                presentationId, "authorizationRequestUrl", java.time.Instant.now(), true, null);
+
+        when(sessionManager.getPresentationSessionData(httpSession, walletId, presentationId)).thenReturn(sessionData);
+        when(credentialMatchingService.getMatchingCredentials(sessionData, walletId, walletKey))
+                .thenThrow(new ApiNotAccessibleException("Error occurred while fetching credentials"));
+
+        mockMvc.perform(get("/wallets/{walletId}/presentations/{presentationId}/credentials", walletId, presentationId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
+                .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
+    }
+
+    @Test
+    public void shouldThrowInternalServerErrorWhenIOExceptionIsThrown() throws Exception {
+        String presentationId = "presentation123";
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                presentationId, "authorizationRequestUrl", java.time.Instant.now(), true, null);
+
+        when(sessionManager.getPresentationSessionData(httpSession, walletId, presentationId)).thenReturn(sessionData);
+        when(credentialMatchingService.getMatchingCredentials(sessionData, walletId, walletKey))
+                .thenThrow(new IOException("Error occurred while processing credentials"));
+
+        mockMvc.perform(get("/wallets/{walletId}/presentations/{presentationId}/credentials", walletId, presentationId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
+                .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
+    }
+
+    @Test
+    public void shouldThrowInternalServerErrorWhenVPNotCreatedExceptionIsThrown() throws Exception {
+        String presentationId = "presentation123";
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                presentationId, "authorizationRequestUrl", java.time.Instant.now(), true, null);
+
+        when(sessionManager.getPresentationSessionData(httpSession, walletId, presentationId)).thenReturn(sessionData);
+        when(credentialMatchingService.getMatchingCredentials(sessionData, walletId, walletKey))
+                .thenThrow(new VPNotCreatedException("Error occurred while creating VP"));
+
+        mockMvc.perform(get("/wallets/{walletId}/presentations/{presentationId}/credentials", walletId, presentationId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
+                .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
+    }
+
+    @Test
+    public void shouldThrowInternalServerErrorWhenIllegalArgumentExceptionIsThrown() throws Exception {
+        String presentationId = "presentation123";
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                presentationId, "authorizationRequestUrl", java.time.Instant.now(), true, null);
+
+        when(sessionManager.getPresentationSessionData(httpSession, walletId, presentationId)).thenReturn(sessionData);
+        when(credentialMatchingService.getMatchingCredentials(sessionData, walletId, walletKey))
+                .thenThrow(new IllegalArgumentException("Invalid argument provided"));
+
+        mockMvc.perform(get("/wallets/{walletId}/presentations/{presentationId}/credentials", walletId, presentationId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
+                .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
+    }
+
+    @Test
+    public void shouldThrowBadRequestWhenWalletIdInSessionIsNull() throws Exception {
+        String presentationId = "presentation123";
+        
+        when(httpSession.getAttribute("wallet_id")).thenReturn(null);
+
+        mockMvc.perform(get("/wallets/{walletId}/presentations/{presentationId}/credentials", walletId, presentationId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("wallet_locked"))
+                .andExpect(jsonPath("$.errorMessage").value("Wallet is locked"));
+    }
+
+    @Test
+    public void shouldThrowBadRequestWhenWalletIdInSessionDoesNotMatchRequest() throws Exception {
+        String presentationId = "presentation123";
+        String differentWalletId = "differentWallet123";
+        
+        when(httpSession.getAttribute("wallet_id")).thenReturn(differentWalletId);
+
+        mockMvc.perform(get("/wallets/{walletId}/presentations/{presentationId}/credentials", walletId, presentationId)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", differentWalletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("Invalid Wallet ID. Session and request Wallet ID do not match"));
+    }
+
+    @Test
+    public void shouldThrowInternalServerErrorWhenSessionDataIsNull() throws Exception {
+        String presentationId = "presentation123";
+        
+        when(sessionManager.getPresentationSessionData(httpSession, walletId, presentationId)).thenReturn(null);
+
+        mockMvc.perform(get("/wallets/{walletId}/presentations/{presentationId}/credentials", walletId, presentationId)
                         .accept(MediaType.APPLICATION_JSON)
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))

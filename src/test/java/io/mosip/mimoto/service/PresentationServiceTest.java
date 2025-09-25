@@ -9,9 +9,11 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponseProof;
 import io.mosip.mimoto.dto.openid.VerifierDTO;
 import io.mosip.mimoto.dto.openid.VerifiersDTO;
+import io.mosip.mimoto.dto.openid.presentation.FieldDTO;
 import io.mosip.mimoto.dto.openid.presentation.InputDescriptorDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
+import io.mosip.mimoto.exception.ErrorConstants;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.impl.DataShareServiceImpl;
 import io.mosip.mimoto.service.impl.OpenID4VPService;
@@ -36,7 +38,9 @@ import java.util.*;
 
 import static io.mosip.mimoto.util.JwtUtils.parseJwtHeader;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -453,5 +457,221 @@ public class PresentationServiceTest {
         when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
 
         presentationService.authorizePresentation(presentationRequestDTO);
+    }
+
+    @Test
+    public void testDirectPostResponseModeWithoutRedirectUri() throws Exception {
+        VCCredentialResponse vcCredentialResponse = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
+        PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
+        presentationRequestDTO.setResponseMode("direct_post");
+        presentationRequestDTO.setResponseUri("https://verifier.example.com/response");
+        presentationRequestDTO.setState("test-state");
+        presentationRequestDTO.setNonce("test-nonce");
+
+        // Mock response without redirect_uri
+        Map<String, Object> mockResponse = Map.of("status", "success");
+
+        when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
+        when(objectMapper.convertValue(eq(vcCredentialResponse.getCredential()), eq(VCCredentialProperties.class)))
+                .thenReturn((VCCredentialProperties) vcCredentialResponse.getCredential());
+        when(restApiClient.postApi(anyString(), any(), any(), eq(Map.class))).thenReturn(mockResponse);
+
+        String result = presentationService.authorizePresentation(presentationRequestDTO);
+
+        assertEquals("https://verifier.example.com/response?status=vp_sent", result);
+        verify(restApiClient).postApi(eq("https://verifier.example.com/response"), any(), any(), eq(Map.class));
+    }
+
+    @Test(expected = VPNotCreatedException.class)
+    public void testDirectPostResponseModeWithException() throws Exception {
+        VCCredentialResponse vcCredentialResponse = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
+        PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
+        presentationRequestDTO.setResponseMode("direct_post");
+        presentationRequestDTO.setResponseUri("https://verifier.example.com/response");
+        presentationRequestDTO.setState("test-state");
+        presentationRequestDTO.setNonce("test-nonce");
+
+        when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
+        when(objectMapper.convertValue(eq(vcCredentialResponse.getCredential()), eq(VCCredentialProperties.class)))
+                .thenReturn((VCCredentialProperties) vcCredentialResponse.getCredential());
+        when(restApiClient.postApi(anyString(), any(), any(), eq(Map.class)))
+                .thenThrow(new RuntimeException("Network error"));
+
+        presentationService.authorizePresentation(presentationRequestDTO);
+    }
+
+    @Test
+    public void testConstructPresentationDefinitionForSdJwtWithMapType() {
+        VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("dc+sd-jwt");
+        
+        // Create complex type structure with Map containing _value
+        Map<String, Object> typeMap = new HashMap<>();
+        typeMap.put("_value", "TestCredential");
+        
+        Map<String, Object> jwtPayload = Map.of("type", Arrays.asList("VerifiableCredential", typeMap));
+        Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
+
+        try (MockedStatic<JwtUtils> jwtUtilsMock = mockStatic(JwtUtils.class)) {
+            jwtUtilsMock.when(() -> JwtUtils.extractJwtPayloadFromSdJwt(anyString())).thenReturn(jwtPayload);
+            jwtUtilsMock.when(() -> JwtUtils.parseJwtHeader(anyString())).thenReturn(jwtHeaders);
+
+            PresentationDefinitionDTO result = presentationService.constructPresentationDefinition(vcCredentialResponse);
+
+            assertNotNull(result);
+            assertEquals(1, result.getInputDescriptors().size());
+            assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("dc+sd-jwt"));
+            
+            // Verify the filter pattern is set to the extracted type
+            InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
+            FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
+            assertEquals("TestCredential", field.getFilter().getPattern());
+        }
+    }
+
+    @Test
+    public void testConstructPresentationDefinitionForSdJwtWithStringType() {
+        VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("vc+sd-jwt");
+        
+        // Create simple type structure with String
+        Map<String, Object> jwtPayload = Map.of("type", Arrays.asList("VerifiableCredential", "TestCredential"));
+        Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
+
+        try (MockedStatic<JwtUtils> jwtUtilsMock = mockStatic(JwtUtils.class)) {
+            jwtUtilsMock.when(() -> JwtUtils.extractJwtPayloadFromSdJwt(anyString())).thenReturn(jwtPayload);
+            jwtUtilsMock.when(() -> JwtUtils.parseJwtHeader(anyString())).thenReturn(jwtHeaders);
+
+            PresentationDefinitionDTO result = presentationService.constructPresentationDefinition(vcCredentialResponse);
+
+            assertNotNull(result);
+            assertEquals(1, result.getInputDescriptors().size());
+            assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("vc+sd-jwt"));
+            
+            // Verify the filter pattern is set to the extracted type
+            InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
+            FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
+            assertEquals("TestCredential", field.getFilter().getPattern());
+        }
+    }
+
+    @Test
+    public void testConstructPresentationDefinitionForSdJwtWithNullType() {
+        VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("vc+sd-jwt");
+        
+        // Create payload with null type using HashMap to allow null values
+        Map<String, Object> jwtPayload = new HashMap<>();
+        jwtPayload.put("type", null);
+        Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
+
+        try (MockedStatic<JwtUtils> jwtUtilsMock = mockStatic(JwtUtils.class)) {
+            jwtUtilsMock.when(() -> JwtUtils.extractJwtPayloadFromSdJwt(anyString())).thenReturn(jwtPayload);
+            jwtUtilsMock.when(() -> JwtUtils.parseJwtHeader(anyString())).thenReturn(jwtHeaders);
+
+            PresentationDefinitionDTO result = presentationService.constructPresentationDefinition(vcCredentialResponse);
+
+            assertNotNull(result);
+            assertEquals(1, result.getInputDescriptors().size());
+            assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("vc+sd-jwt"));
+            
+            // Verify the filter pattern is null when type is null
+            InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
+            FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
+            assertNull(field.getFilter().getPattern());
+        }
+    }
+
+    @Test
+    public void testConstructPresentationDefinitionForSdJwtWithEmptyTypeList() {
+        VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("dc+sd-jwt");
+        
+        // Create payload with empty type list
+        Map<String, Object> jwtPayload = Map.of("type", Arrays.asList());
+        Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
+
+        try (MockedStatic<JwtUtils> jwtUtilsMock = mockStatic(JwtUtils.class)) {
+            jwtUtilsMock.when(() -> JwtUtils.extractJwtPayloadFromSdJwt(anyString())).thenReturn(jwtPayload);
+            jwtUtilsMock.when(() -> JwtUtils.parseJwtHeader(anyString())).thenReturn(jwtHeaders);
+
+            PresentationDefinitionDTO result = presentationService.constructPresentationDefinition(vcCredentialResponse);
+
+            assertNotNull(result);
+            assertEquals(1, result.getInputDescriptors().size());
+            assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("dc+sd-jwt"));
+            
+            // Verify the filter pattern is null when type list is empty
+            InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
+            FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
+            assertNull(field.getFilter().getPattern());
+        }
+    }
+
+    @Test
+    public void testConstructPresentationDefinitionForSdJwtWithMapTypeNullValue() {
+        VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("vc+sd-jwt");
+        
+        // Create complex type structure with Map containing null _value
+        Map<String, Object> typeMap = new HashMap<>();
+        typeMap.put("_value", null);
+        
+        Map<String, Object> jwtPayload = Map.of("type", Arrays.asList("VerifiableCredential", typeMap));
+        Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
+
+        try (MockedStatic<JwtUtils> jwtUtilsMock = mockStatic(JwtUtils.class)) {
+            jwtUtilsMock.when(() -> JwtUtils.extractJwtPayloadFromSdJwt(anyString())).thenReturn(jwtPayload);
+            jwtUtilsMock.when(() -> JwtUtils.parseJwtHeader(anyString())).thenReturn(jwtHeaders);
+
+            PresentationDefinitionDTO result = presentationService.constructPresentationDefinition(vcCredentialResponse);
+
+            assertNotNull(result);
+            assertEquals(1, result.getInputDescriptors().size());
+            assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("vc+sd-jwt"));
+            
+            // Verify the filter pattern is null when _value is null
+            InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
+            FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
+            assertNull(field.getFilter().getPattern());
+        }
+    }
+
+    @Test
+    public void testDirectPostResponseModeWithEmptyRedirectUri() throws Exception {
+        VCCredentialResponse vcCredentialResponse = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
+        PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
+        presentationRequestDTO.setResponseMode("direct_post");
+        presentationRequestDTO.setResponseUri("https://verifier.example.com/response");
+        presentationRequestDTO.setState("test-state");
+        presentationRequestDTO.setNonce("test-nonce");
+
+        // Mock response with empty redirect_uri
+        Map<String, Object> mockResponse = Map.of("redirect_uri", "");
+
+        when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
+        when(objectMapper.convertValue(eq(vcCredentialResponse.getCredential()), eq(VCCredentialProperties.class)))
+                .thenReturn((VCCredentialProperties) vcCredentialResponse.getCredential());
+        when(restApiClient.postApi(anyString(), any(), any(), eq(Map.class))).thenReturn(mockResponse);
+
+        String result = presentationService.authorizePresentation(presentationRequestDTO);
+
+        assertEquals("https://verifier.example.com/response?status=vp_sent", result);
+        verify(restApiClient).postApi(eq("https://verifier.example.com/response"), any(), any(), eq(Map.class));
+    }
+
+    @Test
+    public void testAuthorizePresentationWithJsonProcessingException() throws Exception {
+        VCCredentialResponse vcCredentialResponse = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
+        PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
+
+        when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
+        when(objectMapper.convertValue(eq(vcCredentialResponse.getCredential()), eq(VCCredentialProperties.class)))
+                .thenReturn((VCCredentialProperties) vcCredentialResponse.getCredential());
+        
+        // Mock objectMapper.writeValueAsString to throw JsonProcessingException
+        when(objectMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("JSON processing error") {});
+
+        // Act & Assert
+        VPNotCreatedException exception = assertThrows(VPNotCreatedException.class, () -> {
+            presentationService.authorizePresentation(presentationRequestDTO);
+        });
+        
+        assertEquals(ErrorConstants.INVALID_REQUEST.getErrorCode() + " --> " + ErrorConstants.INVALID_REQUEST.getErrorMessage(), exception.getMessage());
     }
 }
