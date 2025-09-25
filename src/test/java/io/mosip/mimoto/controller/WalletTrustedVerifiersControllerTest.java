@@ -15,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.mock.web.MockHttpSession;
@@ -212,6 +213,30 @@ public class WalletTrustedVerifiersControllerTest {
                     .thenThrow(new RuntimeException("Database connection failed"));
 
             // When & Then
+            mockMvc.perform(post("/wallets/{walletId}/trusted-verifiers", walletId)
+                            .session(session)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(jsonPath("$.errorCode").exists());
+
+            verify(trustedVerifierService).addTrustedVerifier(walletId, request);
+        }
+    }
+
+    @Test
+    void testAddTrustedVerifierServiceDataAccessException() throws Exception {
+        String walletId = "test-wallet-id";
+        TrustedVerifierRequest request = new TrustedVerifierRequest();
+        request.setVerifierId("test-verifier-id");
+
+        try (MockedStatic<WalletUtil> walletUtilMock = mockStatic(WalletUtil.class)) {
+            walletUtilMock.when(() -> WalletUtil.validateWalletId(any(HttpSession.class), eq(walletId)))
+                    .thenAnswer(invocation -> null);
+
+            when(trustedVerifierService.addTrustedVerifier(walletId, request))
+                    .thenThrow(new DataAccessResourceFailureException("DB down"));
+
             mockMvc.perform(post("/wallets/{walletId}/trusted-verifiers", walletId)
                             .session(session)
                             .contentType(MediaType.APPLICATION_JSON)
