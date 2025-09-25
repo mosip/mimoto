@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.Instant;
 
 import static io.mosip.mimoto.exception.ErrorConstants.WALLET_CREATE_VP_EXCEPTION;
 import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
@@ -93,7 +94,12 @@ public class WalletPresentationsController {
             WalletUtil.validateWalletId(httpSession, walletId);
 
             VerifiablePresentationResponseDTO verifiablePresentationResponseDTO = presentationService.handleVPAuthorizationRequest(vpAuthorizationRequest.getAuthorizationRequestUrl(), walletId);
-            sessionManager.storePresentationSessionDataInSession(httpSession, verifiablePresentationResponseDTO.getVerifiablePresentationSessionData(), verifiablePresentationResponseDTO.getPresentationId(), walletId);
+
+            VerifiablePresentationSessionData verifiablePresentationSessionData = new VerifiablePresentationSessionData(verifiablePresentationResponseDTO.getPresentationId(),
+                    vpAuthorizationRequest.getAuthorizationRequestUrl(), Instant.now(),
+                    verifiablePresentationResponseDTO.getVerifiablePresentationVerifierDTO().isPreregisteredWithWallet(), null);
+
+            sessionManager.storePresentationSessionData(httpSession, verifiablePresentationSessionData, walletId);
 
             return ResponseEntity.status(HttpStatus.OK).body(verifiablePresentationResponseDTO);
         } catch (OpenID4VPExceptions exception) {
@@ -134,18 +140,20 @@ public class WalletPresentationsController {
             return Utilities.getErrorResponseEntityFromPlatformErrorMessage(UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED, MediaType.APPLICATION_JSON);
         }
 
-        VerifiablePresentationSessionData sessionData = sessionManager.getPresentationDefinitionFromSession(httpSession, presentationId);
+        VerifiablePresentationSessionData sessionData = sessionManager.getPresentationSessionData(httpSession, walletId, presentationId);
 
-        if (sessionData == null || sessionData.getOpenID4VP() == null) {
-            log.warn("No presentation session data found in session for presentationId: {}", presentationId);
-            return Utilities.getErrorResponseEntityFromPlatformErrorMessage(INVALID_REQUEST, HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+        try {
+            MatchingCredentialsWithWalletDataDTO matchingCredentialsWithWalletData = credentialMatchingService.getMatchingCredentials(sessionData, walletId, base64Key);
+            // Store the matching credentials and pre-filtered matched credentials in session cache before returning
+            sessionManager.storeMatchingWalletCredentialsInPresentationSessionData(httpSession, walletId, sessionData, matchingCredentialsWithWalletData.getMatchingCredentials());
+            return ResponseEntity.status(HttpStatus.OK).body(matchingCredentialsWithWalletData.getMatchingCredentialsResponse());
+        } catch (ApiNotAccessibleException | IOException | VPNotCreatedException exception) {
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    exception, WALLET_CREATE_VP_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
+        } catch (IllegalArgumentException e) {
+            return Utilities.getErrorResponseEntityWithoutWrapper(
+                    e, INVALID_REQUEST.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
         }
 
-        MatchingCredentialsWithWalletDataDTO matchingCredentialsWithWalletData = credentialMatchingService.getMatchingCredentials(sessionData, walletId, base64Key);
-
-        // Store the matching credentials and pre-filtered matched credentials in session cache before returning
-        sessionManager.storeMatchingWalletCredentialsInSession(httpSession, presentationId, matchingCredentialsWithWalletData.getMatchingCredentialsResponse(), matchingCredentialsWithWalletData.getMatchingCredentials());
-
-        return ResponseEntity.status(HttpStatus.OK).body(matchingCredentialsWithWalletData.getMatchingCredentialsResponse());
     }
 }
