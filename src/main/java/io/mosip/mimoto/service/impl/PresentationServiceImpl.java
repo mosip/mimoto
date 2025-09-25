@@ -10,9 +10,9 @@ import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponseProof;
 import io.mosip.mimoto.dto.openid.presentation.*;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.ErrorConstants;
-import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.VerifierService;
@@ -23,6 +23,7 @@ import io.mosip.openID4VP.authorizationRequest.Verifier;
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata;
 import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions;
+import io.mosip.openID4VP.networkManager.NetworkResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -340,13 +341,17 @@ public class PresentationServiceImpl implements PresentationService {
     }
 
     @Override
-    public void rejectVerifier(String walletId, Map<String, Object> sessionData, ErrorDTO payload) {
-        OpenID4VP openID4VP = (OpenID4VP) sessionData.get("openID4VPInstance");
-        if (openID4VP == null) {
-            throw new InvalidRequestException(ErrorConstants.INVALID_REQUEST.getErrorCode(), "OpenID4VP instance not found for presentationId");
-        }
+    public void rejectVerifier(String walletId, VerifiablePresentationSessionData vpSessionData, ErrorDTO payload) throws VPErrorNotSentException {
+        try {
+            // OpenID4VP openID4VP = objectMapper.readValue(openID4VPJson, OpenID4VP.class);
+            OpenID4VP openID4VP = vpSessionData.getOpenID4VP();
 
-        OpenID4VPExceptions.AccessDenied accessDeniedException = new OpenID4VPExceptions.AccessDenied(payload.getErrorMessage(), "PresentationServiceImpl");
-        openID4VP.sendErrorToVerifier(accessDeniedException);
+            OpenID4VPExceptions.AccessDenied accessDeniedException = new OpenID4VPExceptions.AccessDenied(payload.getErrorMessage(), "PresentationServiceImpl");
+            NetworkResponse networkResponse = openID4VP.sendErrorToVerifier(accessDeniedException);
+            log.info("Sent rejection to verifier. Response: {}", networkResponse);
+        } catch (Exception e) {
+            log.error("Failed to send rejection to verifier for walletId: {} - Error: {}", walletId, e.getMessage(), e);
+            throw new VPErrorNotSentException("Failed to send rejection to verifier - " + e.getMessage());
+        }
     }
 }

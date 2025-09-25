@@ -15,6 +15,8 @@ import io.mosip.mimoto.dto.openid.presentation.InputDescriptorDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
 import io.mosip.mimoto.exception.ErrorConstants;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
+import io.mosip.mimoto.exception.VPErrorNotSentException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.impl.DataShareServiceImpl;
 import io.mosip.mimoto.service.impl.OpenID4VPService;
@@ -682,8 +684,11 @@ public class PresentationServiceTest {
         ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
 
         OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
-        Map<String, Object> sessionData = new HashMap<>();
-        sessionData.put("openID4VPInstance", mockOpenID4VP);
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                mockOpenID4VP,
+                Instant.now(),
+                null
+        );
 
         // Test that the method completes without throwing an exception
         presentationService.rejectVerifier(walletId, sessionData, payload);
@@ -692,24 +697,31 @@ public class PresentationServiceTest {
         verify(mockOpenID4VP, times(1)).sendErrorToVerifier(any());
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testRejectVerifierNullOpenID4VPInstance() {
+    @Test(expected = VPErrorNotSentException.class)
+    public void testRejectVerifierNullOpenID4VPInstance() throws Exception {
         String walletId = "wallet-123";
         ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
 
-        Map<String, Object> sessionData = new HashMap<>();
-        sessionData.put("openID4VPInstance", null);
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                null,
+                Instant.now(),
+                null
+        );
 
         presentationService.rejectVerifier(walletId, sessionData, payload);
     }
 
-    @Test(expected = RuntimeException.class)
-    public void testRejectVerifierMissingOpenID4VPInstance() {
+    @Test(expected = VPErrorNotSentException.class)
+    public void testRejectVerifierMissingOpenID4VPInstance() throws Exception {
         String walletId = "wallet-123";
         ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
 
-        Map<String, Object> sessionData = new HashMap<>();
-        // Don't put openID4VPInstance in session data
+        // Create session data with null OpenID4VP to simulate missing instance
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                null,
+                Instant.now(),
+                null
+        );
 
         presentationService.rejectVerifier(walletId, sessionData, payload);
     }
@@ -726,8 +738,11 @@ public class PresentationServiceTest {
     public void testRejectVerifierWithDifferentErrorCodes() throws Exception {
         String walletId = "wallet-123";
         OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
-        Map<String, Object> sessionData = new HashMap<>();
-        sessionData.put("openID4VPInstance", mockOpenID4VP);
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                mockOpenID4VP,
+                Instant.now(),
+                null
+        );
 
         // Test with different error codes
         ErrorDTO payload1 = new ErrorDTO("access_denied", "User denied authorization");

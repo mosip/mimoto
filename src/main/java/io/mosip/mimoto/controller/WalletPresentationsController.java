@@ -11,6 +11,7 @@ import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidRequestException;
+import io.mosip.mimoto.exception.VPErrorNotSentException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.CredentialMatchingService;
 import io.mosip.mimoto.service.PresentationService;
@@ -208,29 +209,7 @@ public class WalletPresentationsController {
         try {
             WalletUtil.validateWalletId(httpSession, walletId);
 
-            @SuppressWarnings("unchecked")
-            Map<String, String> presentations = (Map<String, String>) httpSession.getAttribute("presentations");
-
-            if (presentations == null || !presentations.containsKey(presentationId)) {
-                return Utilities.getErrorResponseEntityWithoutWrapper(
-                        new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "presentationId not found in session"),
-                        INVALID_REQUEST.getErrorCode(),
-                        HttpStatus.BAD_REQUEST,
-                        MediaType.APPLICATION_JSON
-                );
-            }
-
-            String vpSessionJson = presentations.get(presentationId);
-            Map<String, Object> vpSessionData = objectMapper.readValue(
-                    vpSessionJson, new TypeReference<Map<String, Object>>() {});
-
-            /*String redirectUri = presentationService.rejectVerifier(walletId, vpSessionData, payload);
-            if(StringUtils.isBlank(redirectUri)) {
-                log.warn("Redirect URI is blank after rejecting verifier for presentationId: {}", presentationId);
-                return Utilities.getErrorResponseEntityWithoutWrapper(
-                        new Exception("Redirect URI is blank"), REJECT_VERIFIER_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON
-                );
-            }*/
+            VerifiablePresentationSessionData vpSessionData = sessionManager.getPresentationDefinitionFromSession(httpSession, presentationId);
             presentationService.rejectVerifier(walletId, vpSessionData, payload);
 
             RejectedVerifierDTO rejectedVerifierDTO = new RejectedVerifierDTO();
@@ -242,13 +221,8 @@ public class WalletPresentationsController {
             return ResponseEntity.status(HttpStatus.OK).body(rejectedVerifierDTO);
         } catch (InvalidRequestException e) {
             log.error("Invalid request during user rejection for VP request: ", e);
-            return Utilities.getErrorResponseEntityWithoutWrapper(
-                    e, e.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
-        } catch (JsonProcessingException e) {
-            log.error("JSON processing error during user rejection for VP request: ", e);
-            return Utilities.getErrorResponseEntityWithoutWrapper(
-                    e, REJECT_VERIFIER_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
-        } catch (Exception e) {
+            throw e;
+        } catch (VPErrorNotSentException e) {
             log.error("Error during user rejection for VP request: ", e);
             return getErrorResponseEntity(e, REJECT_VERIFIER_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
