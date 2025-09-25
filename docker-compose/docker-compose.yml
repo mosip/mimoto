@@ -59,7 +59,7 @@ services:
 
   mimoto-service:
     container_name: 'mimoto-service'
-    image: 'mosipid/mimoto:0.19.1'
+    image: 'mosipdev/mimoto:release-0.19.x'
     user: root
     ports:
       - '8099:8099'
