@@ -15,6 +15,8 @@ import io.mosip.mimoto.dto.openid.presentation.InputDescriptorDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
 import io.mosip.mimoto.exception.ErrorConstants;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
+import io.mosip.mimoto.exception.VPErrorNotSentException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.impl.DataShareServiceImpl;
 import io.mosip.mimoto.service.impl.OpenID4VPService;
@@ -674,4 +676,82 @@ public class PresentationServiceTest {
         assertEquals(ErrorConstants.INVALID_REQUEST.getErrorCode() + " --> " + ErrorConstants.INVALID_REQUEST.getErrorMessage(), exception.getMessage());
     }
 
+    @Test
+    public void testRejectVerifierSuccess() throws Exception {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                mockOpenID4VP,
+                Instant.now(),
+                null
+        );
+
+        // Test that the method completes without throwing an exception
+        presentationService.rejectVerifier(walletId, sessionData, payload);
+
+        // Verify that sendErrorToVerifier was called on the OpenID4VP instance
+        verify(mockOpenID4VP, times(1)).sendErrorToVerifier(any());
+    }
+
+    @Test(expected = VPErrorNotSentException.class)
+    public void testRejectVerifierNullOpenID4VPInstance() throws Exception {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                null,
+                Instant.now(),
+                null
+        );
+
+        presentationService.rejectVerifier(walletId, sessionData, payload);
+    }
+
+    @Test(expected = VPErrorNotSentException.class)
+    public void testRejectVerifierMissingOpenID4VPInstance() throws Exception {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        // Create session data with null OpenID4VP to simulate missing instance
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                null,
+                Instant.now(),
+                null
+        );
+
+        presentationService.rejectVerifier(walletId, sessionData, payload);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testRejectVerifierNullSessionData() {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        presentationService.rejectVerifier(walletId, null, payload);
+    }
+
+    @Test
+    public void testRejectVerifierWithDifferentErrorCodes() throws Exception {
+        String walletId = "wallet-123";
+        OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                mockOpenID4VP,
+                Instant.now(),
+                null
+        );
+
+        // Test with different error codes
+        ErrorDTO payload1 = new ErrorDTO("access_denied", "User denied authorization");
+        ErrorDTO payload2 = new ErrorDTO("unsupported_request", "Request not supported");
+        ErrorDTO payload3 = new ErrorDTO("invalid_request", "Invalid request parameters");
+
+        presentationService.rejectVerifier(walletId, sessionData, payload1);
+        presentationService.rejectVerifier(walletId, sessionData, payload2);
+        presentationService.rejectVerifier(walletId, sessionData, payload3);
+
+        // Verify sendErrorToVerifier was called 3 times
+        verify(mockOpenID4VP, times(3)).sendErrorToVerifier(any());
+    }
 }
