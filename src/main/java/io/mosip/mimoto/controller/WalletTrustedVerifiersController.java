@@ -14,12 +14,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import io.mosip.mimoto.dto.TrustedVerifierResponseDTO;
 
@@ -27,6 +30,7 @@ import static io.mosip.mimoto.exception.ErrorConstants.ERROR_ADDING_TRUSTED_VERI
 
 @Slf4j
 @RestController
+@Validated
 @RequestMapping("/wallets/{walletId}/trusted-verifiers")
 public class WalletTrustedVerifiersController {
 
@@ -77,25 +81,13 @@ public class WalletTrustedVerifiersController {
     @ApiResponse(responseCode = "401", description = "Unauthorized - session invalid or missing user.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unauthorized", value = "{\"errorCode\":\"unauthorized\",\"errorMessage\":\"User ID not found in session\"}")))
     @ApiResponse(responseCode = "500", description = "Internal server error.", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Unexpected Server Error", value = "{\"errorCode\":\"internal_server_error\",\"errorMessage\":\"Failed to add trusted verifier\"}")))
     @PostMapping
-    public ResponseEntity<TrustedVerifierResponseDTO> addTrustedVerifier(@PathVariable(name = "walletId") String walletId, @RequestBody TrustedVerifierRequest trustedVerifierRequest, HttpSession httpSession) {
+    public ResponseEntity<TrustedVerifierResponseDTO> addTrustedVerifier(@PathVariable(name = "walletId") String walletId, @Valid @RequestBody TrustedVerifierRequest trustedVerifierRequest, HttpSession httpSession) {
         try {
             WalletUtil.validateWalletId(httpSession, walletId);
 
-            if (StringUtils.isBlank(trustedVerifierRequest.getVerifierId())) {
-                return Utilities.getErrorResponseEntityWithoutWrapper(new IllegalArgumentException("Missing Input: verifierId is required"), "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
-            }
-
             TrustedVerifierResponseDTO trustedVerifierResponseDTO = trustedVerifierService.addTrustedVerifier(walletId, trustedVerifierRequest);
-
             return ResponseEntity.status(HttpStatus.CREATED).body(trustedVerifierResponseDTO);
-        } catch (IllegalArgumentException e) {
-            log.warn("Validation error for walletId: {} - Message: {}", walletId, e.getMessage());
-            return Utilities.getErrorResponseEntityWithoutWrapper(e, "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
-
-        } catch (InvalidRequestException e) {
-            log.warn("Invalid request for walletId: {} - Message: {}", walletId, e.getMessage());
-            throw e;
-        } catch (Exception e) {
+        } catch (DataAccessException e) {
             log.error("Unexpected error while adding trusted verifier for walletId: {} - Error: {}", walletId, e.getMessage(), e);
             return Utilities.getErrorResponseEntityWithoutWrapper(e,
                     ERROR_ADDING_TRUSTED_VERIFIER.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
