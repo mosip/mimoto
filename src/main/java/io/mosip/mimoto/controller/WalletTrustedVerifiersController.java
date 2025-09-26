@@ -1,7 +1,6 @@
 package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.dto.*;
-import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.service.TrustedVerifierService;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.mimoto.util.WalletUtil;
@@ -16,7 +15,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;

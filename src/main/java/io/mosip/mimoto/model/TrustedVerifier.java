@@ -21,7 +21,7 @@ public class TrustedVerifier {
     @Column(name = "wallet_id", nullable = false)
     private String walletId; // Foreign key referencing wallets table
 
-    @Column(name = "verifier_id", nullable = false)
+    @Column(name = "verifier_id", nullable = false, length = 255)
     private String verifierId; // Storing the verifier client ID
 
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -357,11 +357,8 @@ public class PresentationServiceImpl implements PresentationService {
             rejectedVerifierDTO.setMessage(REJECTED_VERIFIER.getErrorMessage());
             rejectedVerifierDTO.setRedirectUri(redirectUri);
             return rejectedVerifierDTO;
-        } catch (ApiNotAccessibleException | IOException | URISyntaxException e) {
+        } catch (ApiNotAccessibleException | IOException | URISyntaxException | IllegalArgumentException e ) {
             log.error("Failed to send rejection to verifier for walletId: {} - Error: {}", walletId, e.getMessage(), e);
-            throw new VPErrorNotSentException("Failed to send rejection to verifier - " + e.getMessage());
-        } catch (Exception e) {
-            log.error("Unexpected failure while rejecting verifier for walletId: {} - Error: {}", walletId, e.getMessage(), e);
             throw new VPErrorNotSentException("Failed to send rejection to verifier - " + e.getMessage());
         }
     }

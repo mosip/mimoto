@@ -45,17 +45,17 @@ public class OpenID4VPService {
      *
      * @return The presentation definition if found, null otherwise.
      */
-    public PresentationDefinition resolvePresentationDefinition(String pesentationId, String authorationRequest, boolean isVerifierClientPreregistered) throws ApiNotAccessibleException, IOException {
-        if (pesentationId == null || authorationRequest == null) {
+    public PresentationDefinition resolvePresentationDefinition(String presentationId, String authRequest, boolean isVerifierClientPreregistered) throws ApiNotAccessibleException, IOException {
+        if (presentationId == null || authRequest == null) {
             log.warn("Session data or OpenID4VP is null");
             return null;
         }
-        OpenID4VP openID4VP = create(pesentationId);
+        OpenID4VP openID4VP = create(presentationId);
         List<Verifier> preRegisteredVerifiers = verifierService.getTrustedVerifiers().getVerifiers().stream()
                 .map(WalletPresentationUtil::mapToVerifier)
                 .toList();
 
-        AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(authorationRequest, preRegisteredVerifiers, isVerifierClientPreregistered);
+        AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(authRequest, preRegisteredVerifiers, isVerifierClientPreregistered);
         return authorizationRequest.getPresentationDefinition();
     }
 
@@ -79,10 +79,8 @@ public class OpenID4VPService {
                 .map(WalletPresentationUtil::mapToVerifier)
                 .toList();
 
-        boolean shouldValidateClient = verifierService.isVerifierClientPreregistered(preRegisteredVerifiers, sessionData.getAuthorizationRequest());
-
         // authenticateVerifier to populate internal state in OpenID4VP before sending error
-        AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(sessionData.getAuthorizationRequest(), preRegisteredVerifiers, shouldValidateClient);
+        AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(sessionData.getAuthorizationRequest(), preRegisteredVerifiers, sessionData.isVerifierClientPreregistered());
 
         OpenID4VPExceptions.AccessDenied accessDeniedException = new OpenID4VPExceptions.AccessDenied(payload.getErrorMessage(), "OpenID4VPService");
         NetworkResponse networkResponse = openID4VP.sendErrorToVerifier(accessDeniedException);

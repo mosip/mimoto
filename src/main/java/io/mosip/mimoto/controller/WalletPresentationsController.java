@@ -1,6 +1,5 @@
 package io.mosip.mimoto.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
@@ -51,9 +50,6 @@ public class WalletPresentationsController {
 
     @Autowired
     private SessionManager sessionManager;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     /**
      * Processes the Verifiable Presentation Authorization Request for a specific wallet.
