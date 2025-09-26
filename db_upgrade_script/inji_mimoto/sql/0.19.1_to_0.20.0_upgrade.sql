@@ -18,7 +18,7 @@
 CREATE TABLE IF NOT EXISTS trusted_verifiers (
     id character varying(36) PRIMARY KEY,  -- Primary key for the table
     wallet_id character varying(36) NOT NULL,  -- Foreign key referring to the wallet table (wallet.id)
-    verifier_id character varying(36) NOT NULL,  -- Stores the unique identifier (client_id) of the trusted verifier
+    verifier_id character varying(255) NOT NULL,  -- Stores the unique identifier (client_id) of the trusted verifier
     created_at TIMESTAMP DEFAULT now()  -- Timestamp of record creation (defaults to current time)
     );
 

@@ -1,13 +1,12 @@
 package io.mosip.mimoto.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mosip.mimoto.dto.VerifiablePresentationAuthorizationRequest;
-import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
-import io.mosip.mimoto.dto.VerifiablePresentationVerifierDTO;
+import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.CredentialMatchingService;
+import io.mosip.mimoto.exception.VPErrorNotSentException;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.impl.SessionManager;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
@@ -18,6 +17,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,18 +28,21 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.io.IOException;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {WalletPresentationsController.class, GlobalExceptionHandler.class})
@@ -156,7 +161,7 @@ public class WalletPresentationsControllerTest {
     @Test
     public void shouldThrowUnauthorizedWhenWalletKeyIsMissingFromSession() throws Exception {
         String presentationId = "presentation123";
-        
+
         when(httpSession.getAttribute("wallet_key")).thenReturn(null);
 
         mockMvc.perform(get("/wallets/{walletId}/presentations/{presentationId}/credentials", walletId, presentationId)
@@ -246,7 +251,7 @@ public class WalletPresentationsControllerTest {
     @Test
     public void shouldThrowBadRequestWhenWalletIdInSessionIsNull() throws Exception {
         String presentationId = "presentation123";
-        
+
         when(httpSession.getAttribute("wallet_id")).thenReturn(null);
 
         mockMvc.perform(get("/wallets/{walletId}/presentations/{presentationId}/credentials", walletId, presentationId)
@@ -261,7 +266,7 @@ public class WalletPresentationsControllerTest {
     public void shouldThrowBadRequestWhenWalletIdInSessionDoesNotMatchRequest() throws Exception {
         String presentationId = "presentation123";
         String differentWalletId = "differentWallet123";
-        
+
         when(httpSession.getAttribute("wallet_id")).thenReturn(differentWalletId);
 
         mockMvc.perform(get("/wallets/{walletId}/presentations/{presentationId}/credentials", walletId, presentationId)
@@ -276,7 +281,7 @@ public class WalletPresentationsControllerTest {
     @Test
     public void shouldThrowInternalServerErrorWhenSessionDataIsNull() throws Exception {
         String presentationId = "presentation123";
-        
+
         when(sessionManager.getPresentationSessionData(httpSession, walletId, presentationId)).thenReturn(null);
 
         mockMvc.perform(get("/wallets/{walletId}/presentations/{presentationId}/credentials", walletId, presentationId)
@@ -287,4 +292,121 @@ public class WalletPresentationsControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("internal_server_error"))
                 .andExpect(jsonPath("$.errorMessage").value("We are unable to process request now"));
     }
+
+    @Test
+    public void testUserRejectedVerifierSuccess() throws Exception {
+        String presentationId = "presentation-123";
+
+        // create a mock session data object (constructor signature may vary, so mock it)
+        VerifiablePresentationSessionData sessionData = mock(VerifiablePresentationSessionData.class);
+
+        // Mock the SessionManager to return the correct session data
+        when(sessionManager.getPresentationSessionData(any(HttpSession.class), eq(walletId), eq(presentationId)))
+                .thenReturn(sessionData);
+
+        // Prepare the expected RejectedVerifierDTO and stub the service to return it
+        RejectedVerifierDTO expectedRejected = new RejectedVerifierDTO("success", "", "Presentation request rejected. An OpenID4VP error response has been sent to the verifier.");
+        when(presentationService.rejectVerifier(eq(walletId), eq(sessionData), any(ErrorDTO.class)))
+                .thenReturn(expectedRejected);
+
+        mockMvc.perform(patch("/wallets/{walletId}/presentations/{presentationId}", walletId, presentationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"errorCode\":\"access_denied\",\"errorMessage\":\"User denied authorization\"}")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.message").value("Presentation request rejected. An OpenID4VP error response has been sent to the verifier."))
+                .andExpect(jsonPath("$.redirectUri").value(""));
+    }
+
+    @Test
+    public void testUserRejectedVerifierInvalidWalletId() throws Exception {
+        String presentationId = "presentation-123";
+        String invalidWalletId = "invalid-wallet";
+
+        mockMvc.perform(patch("/wallets/{walletId}/presentations/{presentationId}", invalidWalletId, presentationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"errorCode\":\"access_denied\",\"errorMessage\":\"User denied authorization\"}")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("Invalid Wallet ID. Session and request Wallet ID do not match"));
+
+        verifyNoInteractions(presentationService);
+    }
+
+    @Test
+    public void testUserRejectedVerifierServiceException() throws Exception {
+        String presentationId = "presentation-123";
+
+        VerifiablePresentationSessionData sessionData = mock(VerifiablePresentationSessionData.class);
+
+        when(sessionManager.getPresentationSessionData(any(HttpSession.class), eq(walletId), eq(presentationId)))
+                .thenReturn(sessionData);
+
+        doThrow(new VPErrorNotSentException("Service error")).when(presentationService)
+                .rejectVerifier(eq(walletId), eq(sessionData), any(ErrorDTO.class));
+
+        mockMvc.perform(patch("/wallets/{walletId}/presentations/{presentationId}", walletId, presentationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"errorCode\":\"access_denied\",\"errorMessage\":\"User denied authorization\"}")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value("Service error"));
+
+        verify(sessionManager).getPresentationSessionData(any(HttpSession.class), eq(walletId), eq(presentationId));
+        verify(presentationService).rejectVerifier(eq(walletId), eq(sessionData), any(ErrorDTO.class));
+    }
+
+    @Test
+    public void testUserRejectedVerifierNullSessionData() throws Exception {
+        String walletId = "wallet-123";
+        String presentationId = "presentation-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        // Arrange: make session manager return null to simulate missing session data
+        when(sessionManager.getPresentationSessionData(any(HttpSession.class), eq(walletId), eq(presentationId)))
+                .thenReturn(null);
+
+        // Serialize payload to ensure MockMvc .content(...) is not null
+        String content = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(payload);
+
+        mockMvc.perform(patch("/wallets/{walletId}/presentations/{presentationId}", walletId, presentationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(content))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void testUserRejectedVerifierInvalidRequestExceptionFromService() throws Exception {
+        String presentationId = "presentation-123";
+
+        VerifiablePresentationSessionData sessionData = mock(VerifiablePresentationSessionData.class);
+
+        when(sessionManager.getPresentationSessionData(any(HttpSession.class), eq(walletId), eq(presentationId)))
+                .thenReturn(sessionData);
+
+        doThrow(new InvalidRequestException("invalid_request", "Invalid payload")).when(presentationService)
+                .rejectVerifier(eq(walletId), eq(sessionData), any(ErrorDTO.class));
+
+        mockMvc.perform(patch("/wallets/{walletId}/presentations/{presentationId}", walletId, presentationId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"errorCode\":\"access_denied\",\"errorMessage\":\"User denied authorization\"}")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("invalid_request"))
+                .andExpect(jsonPath("$.errorMessage").value("Invalid payload"));
+
+        verify(presentationService).rejectVerifier(eq(walletId), eq(sessionData), any(ErrorDTO.class));
+    }
+
+
 }
