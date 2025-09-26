@@ -2,6 +2,9 @@ package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.dto.openid.VerifierDTO;
 import io.mosip.mimoto.dto.openid.VerifiersDTO;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
+import io.mosip.openID4VP.networkManager.NetworkResponse;
+import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.service.impl.OpenID4VPService;
 import io.mosip.openID4VP.OpenID4VP;
@@ -16,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
@@ -327,4 +331,98 @@ public class OpenID4VPServiceTest {
         verify(mockOpenID4VP).authenticateVerifier(eq("authorization-request"), anyList(), eq(true));
         verify(mockAuthorizationRequest).getPresentationDefinition();
     }
+
+    @Test
+    public void testSendErrorToVerifierSuccess() throws Exception {
+        // Setup mocks
+        when(verifierService.getTrustedVerifiers()).thenReturn(mockVerifiersDTO);
+
+        OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+        NetworkResponse mockResponse = mock(NetworkResponse.class);
+
+        when(mockOpenID4VP.authenticateVerifier(anyString(), anyList(), anyBoolean())).thenReturn(mockAuthorizationRequest);
+        when(mockOpenID4VP.sendErrorToVerifier(any())).thenReturn(mockResponse);
+
+        OpenID4VPService spyService = spy(openID4VPService);
+        doReturn(mockOpenID4VP).when(spyService).create(anyString());
+
+        VerifiablePresentationSessionData sessionData = mock(VerifiablePresentationSessionData.class);
+        when(sessionData.getPresentationId()).thenReturn("presentation-123");
+        when(sessionData.getAuthorizationRequest()).thenReturn("authorization-request");
+        when(sessionData.isVerifierClientPreregistered()).thenReturn(true);
+
+        ErrorDTO payload = mock(ErrorDTO.class);
+        when(payload.getErrorMessage()).thenReturn("access_denied");
+
+        // Execute
+        NetworkResponse response = spyService.sendErrorToVerifier(sessionData, payload);
+
+        // Verify
+        assertNotNull(response);
+        assertEquals(mockResponse, response);
+        verify(verifierService).getTrustedVerifiers();
+        verify(mockOpenID4VP).authenticateVerifier(eq("authorization-request"), anyList(), eq(true));
+        verify(mockOpenID4VP).sendErrorToVerifier(any());
+    }
+
+    @Test
+    public void testSendErrorToVerifierWithNullSessionData() {
+        // Setup
+        VerifiablePresentationSessionData sessionData = null;
+        ErrorDTO payload = mock(ErrorDTO.class);
+
+        // Execute and verify
+        assertThrows(IllegalArgumentException.class,
+                () -> openID4VPService.sendErrorToVerifier(sessionData, payload));
+        verifyNoInteractions(verifierService);
+    }
+
+    @Test
+    public void testSendErrorToVerifierWithNullPresentationId() {
+        // Setup
+        VerifiablePresentationSessionData sessionData = mock(VerifiablePresentationSessionData.class);
+        when(sessionData.getPresentationId()).thenReturn(null);
+
+        ErrorDTO payload = mock(ErrorDTO.class);
+
+        // Execute and verify
+        assertThrows(IllegalArgumentException.class,
+                () -> openID4VPService.sendErrorToVerifier(sessionData, payload));
+        verifyNoInteractions(verifierService);
+    }
+
+    @Test
+    public void testSendErrorToVerifierWithNullAuthorizationRequest() {
+        // Setup
+        VerifiablePresentationSessionData sessionData = mock(VerifiablePresentationSessionData.class);
+        when(sessionData.getPresentationId()).thenReturn("presentation-123");
+        when(sessionData.getAuthorizationRequest()).thenReturn(null);
+
+        ErrorDTO payload = mock(ErrorDTO.class);
+
+        // Execute and verify
+        assertThrows(IllegalArgumentException.class,
+                () -> openID4VPService.sendErrorToVerifier(sessionData, payload));
+        verifyNoInteractions(verifierService);
+    }
+
+    @Test
+    public void testSendErrorToVerifierPropagatesApiNotAccessibleException() throws Exception {
+        // Setup
+        when(verifierService.getTrustedVerifiers()).thenThrow(new ApiNotAccessibleException());
+
+        VerifiablePresentationSessionData sessionData = mock(VerifiablePresentationSessionData.class);
+        when(sessionData.getPresentationId()).thenReturn("presentation-123");
+        when(sessionData.getAuthorizationRequest()).thenReturn("auth-request");
+        // Remove this line - isVerifierClientPreregistered is never called due to early exception
+        // when(sessionData.isVerifierClientPreregistered()).thenReturn(false);
+
+        ErrorDTO payload = mock(ErrorDTO.class);
+
+        // Execute and verify
+        assertThrows(ApiNotAccessibleException.class,
+                () -> openID4VPService.sendErrorToVerifier(sessionData, payload));
+        verify(verifierService).getTrustedVerifiers();
+    }
+
 }
