@@ -3,6 +3,7 @@ package io.mosip.mimoto.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
+import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
@@ -14,6 +15,8 @@ import io.mosip.mimoto.dto.openid.presentation.InputDescriptorDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationDefinitionDTO;
 import io.mosip.mimoto.dto.openid.presentation.PresentationRequestDTO;
 import io.mosip.mimoto.exception.ErrorConstants;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
+import io.mosip.mimoto.exception.VPErrorNotSentException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.impl.DataShareServiceImpl;
 import io.mosip.mimoto.service.impl.OpenID4VPService;
@@ -23,6 +26,7 @@ import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.TestUtilities;
 import io.mosip.openID4VP.OpenID4VP;
 import io.mosip.openID4VP.authorizationRequest.Verifier;
+import io.mosip.openID4VP.networkManager.NetworkResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,17 +35,17 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
+import io.mosip.mimoto.dto.RejectedVerifierDTO;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 
+import static io.mosip.mimoto.exception.ErrorConstants.REJECTED_VERIFIER;
 import static io.mosip.mimoto.util.JwtUtils.parseJwtHeader;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -503,11 +507,11 @@ public class PresentationServiceTest {
     @Test
     public void testConstructPresentationDefinitionForSdJwtWithMapType() {
         VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("dc+sd-jwt");
-        
+
         // Create complex type structure with Map containing _value
         Map<String, Object> typeMap = new HashMap<>();
         typeMap.put("_value", "TestCredential");
-        
+
         Map<String, Object> jwtPayload = Map.of("type", Arrays.asList("VerifiableCredential", typeMap));
         Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
 
@@ -520,7 +524,7 @@ public class PresentationServiceTest {
             assertNotNull(result);
             assertEquals(1, result.getInputDescriptors().size());
             assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("dc+sd-jwt"));
-            
+
             // Verify the filter pattern is set to the extracted type
             InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
             FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
@@ -531,7 +535,7 @@ public class PresentationServiceTest {
     @Test
     public void testConstructPresentationDefinitionForSdJwtWithStringType() {
         VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("vc+sd-jwt");
-        
+
         // Create simple type structure with String
         Map<String, Object> jwtPayload = Map.of("type", Arrays.asList("VerifiableCredential", "TestCredential"));
         Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
@@ -545,7 +549,7 @@ public class PresentationServiceTest {
             assertNotNull(result);
             assertEquals(1, result.getInputDescriptors().size());
             assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("vc+sd-jwt"));
-            
+
             // Verify the filter pattern is set to the extracted type
             InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
             FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
@@ -556,7 +560,7 @@ public class PresentationServiceTest {
     @Test
     public void testConstructPresentationDefinitionForSdJwtWithNullType() {
         VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("vc+sd-jwt");
-        
+
         // Create payload with null type using HashMap to allow null values
         Map<String, Object> jwtPayload = new HashMap<>();
         jwtPayload.put("type", null);
@@ -571,7 +575,7 @@ public class PresentationServiceTest {
             assertNotNull(result);
             assertEquals(1, result.getInputDescriptors().size());
             assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("vc+sd-jwt"));
-            
+
             // Verify the filter pattern is null when type is null
             InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
             FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
@@ -582,7 +586,7 @@ public class PresentationServiceTest {
     @Test
     public void testConstructPresentationDefinitionForSdJwtWithEmptyTypeList() {
         VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("dc+sd-jwt");
-        
+
         // Create payload with empty type list
         Map<String, Object> jwtPayload = Map.of("type", Arrays.asList());
         Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
@@ -596,7 +600,7 @@ public class PresentationServiceTest {
             assertNotNull(result);
             assertEquals(1, result.getInputDescriptors().size());
             assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("dc+sd-jwt"));
-            
+
             // Verify the filter pattern is null when type list is empty
             InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
             FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
@@ -607,11 +611,11 @@ public class PresentationServiceTest {
     @Test
     public void testConstructPresentationDefinitionForSdJwtWithMapTypeNullValue() {
         VCCredentialResponse vcCredentialResponse = createSDJwtCredentialResponse("vc+sd-jwt");
-        
+
         // Create complex type structure with Map containing null _value
         Map<String, Object> typeMap = new HashMap<>();
         typeMap.put("_value", null);
-        
+
         Map<String, Object> jwtPayload = Map.of("type", Arrays.asList("VerifiableCredential", typeMap));
         Map<String, Object> jwtHeaders = Map.of("alg", "ES256", "typ", "JWT");
 
@@ -624,7 +628,7 @@ public class PresentationServiceTest {
             assertNotNull(result);
             assertEquals(1, result.getInputDescriptors().size());
             assertTrue(result.getInputDescriptors().get(0).getFormat().containsKey("vc+sd-jwt"));
-            
+
             // Verify the filter pattern is null when _value is null
             InputDescriptorDTO inputDescriptor = result.getInputDescriptors().get(0);
             FieldDTO field = inputDescriptor.getConstraints().getFields()[0];
@@ -663,7 +667,7 @@ public class PresentationServiceTest {
         when(dataShareService.downloadCredentialFromDataShare(eq(presentationRequestDTO))).thenReturn(vcCredentialResponse);
         when(objectMapper.convertValue(eq(vcCredentialResponse.getCredential()), eq(VCCredentialProperties.class)))
                 .thenReturn((VCCredentialProperties) vcCredentialResponse.getCredential());
-        
+
         // Mock objectMapper.writeValueAsString to throw JsonProcessingException
         when(objectMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("JSON processing error") {});
 
@@ -671,7 +675,143 @@ public class PresentationServiceTest {
         VPNotCreatedException exception = assertThrows(VPNotCreatedException.class, () -> {
             presentationService.authorizePresentation(presentationRequestDTO);
         });
-        
+
         assertEquals(ErrorConstants.INVALID_REQUEST.getErrorCode() + " --> " + ErrorConstants.INVALID_REQUEST.getErrorMessage(), exception.getMessage());
     }
+
+    @Test
+    public void testRejectVerifierSuccess() throws Exception {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        // Create session data using the actual constructor (presentationId, authorizationRequest, createdAt, isPreregisteredWithWallet, matchedCredentials)
+        String presentationId = "presentation-123";
+        String authorizationRequest = "authorization-request";
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                presentationId,
+                authorizationRequest,
+                Instant.now(),
+                true,
+                null
+        );
+
+        NetworkResponse mockResponse = mock(NetworkResponse.class);
+        when(openID4VPService.sendErrorToVerifier(eq(sessionData), eq(payload))).thenReturn(mockResponse);
+
+        // Should not throw
+        presentationService.rejectVerifier(walletId, sessionData, payload);
+
+        verify(openID4VPService).sendErrorToVerifier(eq(sessionData), eq(payload));
+    }
+
+    @Test(expected = VPErrorNotSentException.class)
+    public void testRejectVerifierNullOpenID4VPInstance() throws Exception {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        // Create session data that would cause underlying OpenID4VP to fail (simulate by making the mocked service throw)
+        String presentationId = "presentation-123";
+        String authorizationRequest = "authorization-request";
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                presentationId,
+                authorizationRequest,
+                Instant.now(),
+                false,
+                null
+        );
+
+        // Simulate underlying service throwing an exception which PresentationServiceImpl should wrap into VPErrorNotSentException
+        doThrow(new IllegalArgumentException("OpenID4VP instance is null")).when(openID4VPService).sendErrorToVerifier(eq(sessionData), eq(payload));
+
+        presentationService.rejectVerifier(walletId, sessionData, payload);
+    }
+
+    @Test(expected = VPErrorNotSentException.class)
+    public void testRejectVerifierMissingOpenID4VPInstance() throws Exception {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        String presentationId = "presentation-456";
+        String authorizationRequest = "authorization-request-2";
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                presentationId,
+                authorizationRequest,
+                Instant.now(),
+                true,
+                null
+        );
+
+        // Simulate sendErrorToVerifier throwing IOException
+        doThrow(new IOException("network failure")).when(openID4VPService).sendErrorToVerifier(eq(sessionData), eq(payload));
+
+        presentationService.rejectVerifier(walletId, sessionData, payload);
+    }
+
+    @Test(expected = VPErrorNotSentException.class)
+    public void testRejectVerifierNullSessionData() throws Exception {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        // Configure mock to throw when sendErrorToVerifier is invoked with null sessionData and the same payload instance
+        doThrow(new IllegalArgumentException("Invalid presentation session data"))
+                .when(openID4VPService).sendErrorToVerifier(isNull(), eq(payload));
+
+        // Call the service with null session data — PresentationServiceImpl should catch the underlying exception
+        // and rethrow VPErrorNotSentException, which this test now expects.
+        presentationService.rejectVerifier(walletId, null, payload);
+    }
+
+    @Test
+    public void testRejectVerifierWithDifferentErrorCodes() throws Exception {
+        String walletId = "wallet-123";
+        OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
+        String presentationId = "presentation-789";
+        String authorizationRequest = "authorization-request-3";
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                presentationId,
+                authorizationRequest,
+                Instant.now(),
+                true,
+                null
+        );
+
+        ErrorDTO payload = new ErrorDTO("interaction_required", "Interaction required from user");
+        NetworkResponse mockResponse = mock(NetworkResponse.class);
+        when(openID4VPService.sendErrorToVerifier(eq(sessionData), eq(payload))).thenReturn(mockResponse);
+
+        presentationService.rejectVerifier(walletId, sessionData, payload);
+
+        verify(openID4VPService).sendErrorToVerifier(eq(sessionData), eq(payload));
+    }
+
+    @Test
+    public void testRejectVerifierExtractsRedirectUriFromBody() throws Exception {
+        String walletId = "wallet-123";
+        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
+
+        String presentationId = "presentation-999";
+        String authorizationRequest = "authorization-request-xyz";
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                presentationId,
+                authorizationRequest,
+                Instant.now(),
+                true,
+                null
+        );
+
+        // Inject a real ObjectMapper so JSON parsing in extractRedirectUriFromBody works
+        ReflectionTestUtils.setField(presentationService, "objectMapper", new com.fasterxml.jackson.databind.ObjectMapper());
+
+        NetworkResponse mockResponse = mock(NetworkResponse.class);
+        when(mockResponse.getBody()).thenReturn("{\"redirect_uri\":\"https://verifier.example.com/success\"}");
+        when(openID4VPService.sendErrorToVerifier(eq(sessionData), eq(payload))).thenReturn(mockResponse);
+
+        RejectedVerifierDTO result = presentationService.rejectVerifier(walletId, sessionData, payload);
+
+        assertNotNull(result);
+        assertEquals("https://verifier.example.com/success", result.getRedirectUri());
+        assertEquals(REJECTED_VERIFIER.getErrorCode(), result.getStatus());
+        assertEquals(REJECTED_VERIFIER.getErrorMessage(), result.getMessage());
+    }
+
 }
