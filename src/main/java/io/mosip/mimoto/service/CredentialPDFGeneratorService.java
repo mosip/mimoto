@@ -4,6 +4,8 @@ import com.authlete.sd.Disclosure;
 import com.authlete.sd.SDJWT;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.github.jknack.handlebars.Handlebars;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
@@ -27,18 +29,20 @@ import io.mosip.mimoto.util.Utilities;
 import io.mosip.pixelpass.PixelPass;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import io.mosip.injivcrenderer.InjiVcRenderer;
+import org.springframework.web.client.RestTemplate;
+import io.mosip.mimoto.dto.CredentialResponse;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -68,6 +72,12 @@ public class CredentialPDFGeneratorService {
     @Autowired
     private CredentialFormatHandlerFactory credentialFormatHandlerFactory;
 
+    @Autowired
+    private InjiVcRenderer injiVcRenderer;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
     @Value("${mosip.inji.ovp.qrdata.pattern}")
     private String ovpQRDataPattern;
 
@@ -86,7 +96,13 @@ public class CredentialPDFGeneratorService {
     @Value("${mosip.injiweb.mask.disclosures:true}")
     private boolean maskDisclosures;
 
-    public ByteArrayInputStream generatePdfForVerifiableCredential(String credentialConfigurationId, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
+    public CredentialResponse generatePdfForVerifiableCredential(String credentialConfigurationId, VCCredentialResponse vcCredentialResponse, IssuerDTO issuerDTO, CredentialsSupportedResponse credentialsSupportedResponse, String dataShareUrl, String credentialValidity, String locale) throws Exception {
+        // ByteArrayInputStream renderedVcStream = renderVcWithHandlebars(vcCredentialResponse);
+        CredentialResponse credentialResponse = renderVcWithInjiRender(vcCredentialResponse);
+        if (credentialResponse != null) {
+            return credentialResponse;
+        }
+
         // Get the appropriate processor based on format
         CredentialFormatHandler processor = credentialFormatHandlerFactory.getHandler(vcCredentialResponse.getFormat());
 
@@ -232,7 +248,7 @@ public class CredentialPDFGeneratorService {
         return val != null ? val.toString() : "";
     }
 
-    private ByteArrayInputStream renderVCInCredentialTemplate(Map<String, Object> data, String issuerId, String credentialConfigurationId) {
+    private CredentialResponse renderVCInCredentialTemplate(Map<String, Object> data, String issuerId, String credentialConfigurationId) {
         String credentialTemplate = utilities.getCredentialSupportedTemplateString(issuerId, credentialConfigurationId);
         Properties props = new Properties();
         props.setProperty("resource.loader", "class");
@@ -251,7 +267,7 @@ public class CredentialPDFGeneratorService {
         ConverterProperties converterProperties = new ConverterProperties();
         converterProperties.setFontProvider(defaultFont);
         HtmlConverter.convertToPdf(mergedHtml, pdfwriter, converterProperties);
-        return new ByteArrayInputStream(outputStream.toByteArray());
+        return new CredentialResponse(new ByteArrayInputStream(outputStream.toByteArray()), MediaType.APPLICATION_PDF);
     }
 
     private String constructQRCodeWithVCData(VCCredentialResponse vcCredentialResponse) throws JsonProcessingException, WriterException {
@@ -275,5 +291,219 @@ public class CredentialPDFGeneratorService {
         BufferedImage qrImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
         return Utilities.encodeToString(qrImage, "png");
     }
+
+    private CredentialResponse renderVcWithInjiRender(VCCredentialResponse vcCredentialResponse) throws JsonProcessingException {
+        // Parsing renderMethod with strict typing
+        if (vcCredentialResponse.getCredential() == null) {
+            return null;
+        }
+        // Convert VCCredentialResponse.credential to JSON string
+        String vcJson = objectMapper.writeValueAsString(vcCredentialResponse.getCredential());
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> credentialMap = objectMapper.convertValue(vcCredentialResponse.getCredential(),
+                new TypeReference<Map<String, Object>>() {
+                });
+        List<Map<String, Object>> renderMethod = objectMapper.convertValue(credentialMap.get("renderMethod"),
+                new TypeReference<List<Map<String, Object>>>() {
+                });
+
+        if (CollectionUtils.isEmpty(renderMethod)) {
+            return null;
+        }
+
+        // Process first render method (assuming it's the primary one)
+        Map<String, Object> method = renderMethod.getFirst();
+        String renderSuite = (String) method.get("renderSuite");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> template = (Map<String, Object>) method.get("template");
+
+        if (template != null && "svg-mustache".equals(renderSuite)) {
+            List<String> svgImage = injiVcRenderer.renderSvg(vcJson);
+            // considering only first svg in the list
+            String svgContent = svgImage.getFirst();
+
+            return new CredentialResponse(new ByteArrayInputStream(svgContent.getBytes(StandardCharsets.UTF_8)), MediaType.valueOf("image/svg+xml"));
+        } else if (template != null && "pdf-mustache".equals(renderSuite)) {
+            // pdf template
+            return new CredentialResponse();
+        }
+        return null;
+    }
+
+    private CredentialResponse convertSvgToPdf(String svgContent, MediaType mediaType) {
+        if (StringUtils.isEmpty(svgContent)) {
+            return null;
+        }
+
+        // Convert SVG to PDF
+        try (ByteArrayOutputStream pdfOutputStream = new ByteArrayOutputStream();
+             PdfWriter pdfWriter = new PdfWriter(pdfOutputStream)) {
+
+            String html = "<html><body>" + svgContent + "</body></html>";
+            ConverterProperties converterProperties = new ConverterProperties();
+            converterProperties.setFontProvider(new DefaultFontProvider(true, false, false));
+            HtmlConverter.convertToPdf(html, pdfWriter, converterProperties);
+
+            return new CredentialResponse(new ByteArrayInputStream(pdfOutputStream.toByteArray()), mediaType);
+        } catch (IOException e) {
+            log.error("Error converting SVG to PDF: {}", e.getMessage());
+            throw new RuntimeException("Failed to convert SVG to PDF", e);
+        }
+    }
+
+    private CredentialResponse renderVcWithHandlebars(VCCredentialResponse vcCredentialResponse) {
+        // Parsing renderMethod with strict typing
+        if (vcCredentialResponse.getCredential() == null) {
+            return null;
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> credentialMap = objectMapper.convertValue(vcCredentialResponse.getCredential(),
+                new TypeReference<Map<String, Object>>() {
+                });
+        List<Map<String, Object>> renderMethod = objectMapper.convertValue(credentialMap.get("renderMethod"),
+                new TypeReference<List<Map<String, Object>>>() {
+                });
+        Map<String, Object> credentialSubject = objectMapper.convertValue(credentialMap.get("credentialSubject"),
+                new TypeReference<Map<String, Object>>() {
+                });
+
+        if (CollectionUtils.isEmpty(renderMethod) || MapUtils.isEmpty(credentialSubject)) {
+            return null;
+        }
+
+        // Process first render method (assuming it's the primary one)
+        Map<String, Object> method = renderMethod.getFirst();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> template = (Map<String, Object>) method.get("template");
+        String renderSuite = (String) method.get("renderSuite");
+
+        if (template != null && "svg-mustache".equals(renderSuite)) {
+            String svgTemplateUri = (String) template.get("id");
+            String svgTemplate = getSvgTemplate(svgTemplateUri);
+//            String svgTemplate = """
+//            Crops: {{/credentialSubject/crops/*/cropName}}
+//
+//            Single line access: {{/credentialSubject/phoneNumber}}
+//            """;
+            Map<String, Object> templateData = prepareTemplateData(credentialSubject);
+
+            String renderedSvg = renderSvgWithHandlebars(svgTemplate, templateData);
+            return convertSvgToPdf(renderedSvg, MediaType.valueOf("image/svg+xml"));
+        }
+        return null;
+    }
+
+    private String getSvgTemplate(String svgTemplateUri) {
+        try {
+            String svgTemplate = restTemplate.getForObject(svgTemplateUri, String.class);
+            if (svgTemplate == null) {
+                log.error("Failed to fetch SVG template from URI: {}", svgTemplateUri);
+                return null;
+            }
+            return svgTemplate;
+        } catch (Exception e) {
+            log.error("Error fetching SVG template from URI {}: {}", svgTemplateUri, e.getMessage());
+            throw new RuntimeException("Failed to fetch SVG template", e);
+        }
+    }
+
+    private Map<String, Object> prepareTemplateData(Map<String, Object> credentialSubject) {
+        Map<String, Object> credential = Map.of("credentialSubject", credentialSubject);
+        return credential;
+        /*
+        // Add all credential subject data directly
+        data.putAll(credentialSubject);
+
+        // todo: generalize based on type and flatten
+        // Handle special cases for nested objects
+        if (credentialSubject.get("address") instanceof Map) {
+            Map<String, Object> address = (Map<String, Object>) credentialSubject.get("address");
+            // Flatten address fields or keep as is based on template needs
+            data.put("address", address);
+        }
+
+        // Handle arrays/lists
+        if (credentialSubject.get("crops") instanceof List) {
+            List<String> crops = (List<String>) credentialSubject.get("crops");
+            data.put("crops", crops);
+        }
+
+        // Handle nested objects with units
+        if (credentialSubject.get("totalLandArea") instanceof Map) {
+            Map<String, Object> landArea = (Map<String, Object>) credentialSubject.get("totalLandArea");
+            // You might want to format this as a string with unit
+            data.put("totalLandArea", landArea);
+        }
+
+        // Handle special cases like face image
+        if (credentialSubject.containsKey("face")) {
+            data.put("face", credentialSubject.get("face"));
+        }
+
+        return data;
+         */
+    }
+
+    private String renderSvgWithHandlebars(String template, Map<String, Object> data) {
+        try {
+            Handlebars handlebars = new Handlebars();
+            handlebars.setStartDelimiter("{{");
+            handlebars.setEndDelimiter("}}");
+
+            // Register helper to handle forward slash notation
+            handlebars.registerHelper("get", (context, options) -> {
+                String path = options.fn.text();
+                if (path.startsWith("/")) {
+                    path = path.substring(1); // Remove leading slash
+                }
+                String[] parts = path.split("/");
+                Object current = context;
+
+                for (String part : parts) {
+                    if (part.equals("*")) {
+                        // Handle array wildcard
+                        if (current instanceof List<?>) {
+                            List<?> list = (List<?>) current;
+                            return list.stream()
+                                    .map(item -> String.valueOf(getValueForPath(item,
+                                            Arrays.copyOfRange(parts,
+                                                    Arrays.asList(parts).indexOf("*") + 1,
+                                                    parts.length))))
+                                    .filter(Objects::nonNull)
+                                    .collect(Collectors.joining(", "));
+                        }
+                    } else if (current instanceof Map) {
+                        current = ((Map<?, ?>) current).get(part);
+                    }
+                }
+                return current != null ? current.toString() : "";
+            });
+
+            // Convert template to use the custom helper
+            String modifiedTemplate = template.replaceAll("\\{\\{(/[^}]+)\\}\\}", "{{#get}}$1{{/get}}");
+
+            com.github.jknack.handlebars.Template hbsTemplate = handlebars.compileInline(modifiedTemplate);
+            return hbsTemplate.apply(data);
+        } catch (IOException e) {
+            log.error("Error rendering Handlebars template: {}", e.getMessage());
+            throw new RuntimeException("Failed to render Handlebars template", e);
+        }
+    }
+
+    private Object getValueForPath(Object obj, String[] remainingPath) {
+        Object current = obj;
+        for (String part : remainingPath) {
+            if (current instanceof Map) {
+                current = ((Map<?, ?>) current).get(part);
+            } else {
+                return null;
+            }
+        }
+        return current;
+    }
+
 }
 

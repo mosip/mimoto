@@ -241,10 +241,13 @@ public class WalletCredentialsController {
             String dispositionType = "download".equalsIgnoreCase(action) ? "attachment" : "inline";
             String contentDisposition = String.format("%s; filename=\"%s\"", dispositionType, walletCredentialResponseDTO.getFileName());
 
+            MediaType contentType = walletCredentialResponseDTO.getFileName().endsWith(".svg") ?
+                    MediaType.valueOf("image/svg+xml") : MediaType.APPLICATION_PDF;
+
             return ResponseEntity.ok()
                     .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
                     .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
-                    .contentType(MediaType.APPLICATION_PDF)
+                    .contentType(contentType)
                     .body(walletCredentialResponseDTO.getFileContentStream());
         } catch (CredentialNotFoundException e) {
             log.error("Credential not found for walletId: {} and credentialId: {}", walletId, credentialId, e);

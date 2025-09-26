@@ -2,6 +2,7 @@ package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.core.http.ResponseWrapper;
+import io.mosip.mimoto.dto.CredentialResponse;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
@@ -63,12 +64,12 @@ public class CredentialsController {
             TokenResponseDTO response = idpService.getTokenResponse(params);
 
             log.info("Initiated Download Credential Call");
-            ByteArrayInputStream inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response, credentialValidity, locale);
+            CredentialResponse inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response, credentialValidity, locale);
             return ResponseEntity
                     .ok()
-                    .contentType(MediaType.APPLICATION_PDF)
+                    .contentType(inputStream.getMediaType())
                     .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, "Content-Disposition")
-                    .body(new InputStreamResource(inputStream));
+                    .body(new InputStreamResource(inputStream.getContent()));
         } catch (ApiNotAccessibleException | IOException exception) {
             log.error("Exception occurred while fetching credential types ", exception);
             return Utilities.handleErrorResponse(exception, MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);

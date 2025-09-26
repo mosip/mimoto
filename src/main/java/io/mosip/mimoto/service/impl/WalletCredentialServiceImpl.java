@@ -2,6 +2,7 @@ package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.dto.CredentialResponse;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
@@ -186,7 +188,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
             // Generate PDF
             // keep the datashare url and credential validity as defaults in downloading VC as PDF as logged-in user
             // This is because generatePdfForVerifiableCredentials will be used by both logged-in and non-logged-in users
-            ByteArrayInputStream pdfStream = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+            CredentialResponse pdfStream = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
                     credentialMetadata.getCredentialType(),
                     vcCredentialResponse,
                     issuerDTO,
@@ -197,10 +199,14 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
             );
 
             // Construct response
-            String fileName = String.format("%s_credential.pdf", credentialMetadata.getCredentialType());
+            String fileExtension = "pdf";
+            if (MediaType.valueOf("image/svg+xml").equals(pdfStream.getMediaType())) {
+                fileExtension = "svg";
+            }
+            String fileName = String.format("%s_credential.%s", credentialMetadata.getCredentialType(), fileExtension);
             return WalletCredentialResponseDTO.builder()
                     .fileName(fileName)
-                    .fileContentStream(new InputStreamResource(pdfStream))
+                    .fileContentStream(new InputStreamResource(pdfStream.getContent()))
                     .build();
         } catch (JsonProcessingException e) {
             log.error("Failed to parse decrypted credential for issuerId: {}, credentialType: {}", credentialMetadata.getIssuerId(), credentialMetadata.getCredentialType(), e);
