@@ -1,2 +1,6 @@
 ##### JIRA number;testcase 
 #MOSIP-12456------Mimoto_AddIdentity_Binding_smoke_Pos
+INJIWEB-1619------Mimoto_DownloadIssuerCredentialWithGoogleLogin_IssuerMosip_NullInWallet_Neg
+INJIWEB-1624------Mimoto_FetchAllCredentials_Empty_WalletId_And_Empty_Accepted_claims_Neg
+INJIWEB-1666------Mimoto_BindingOtp_Valid_vid_All_Smoke
+INJIWEB-1666------Mimoto_WalletBinding_vid_OTP_Valid_Smoke
