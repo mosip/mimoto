@@ -83,7 +83,8 @@ public class VerifiersControllerTest {
                 .clientId("test-clientId")
                 .redirectUris(Collections.singletonList("https://test-redirectUri"))
                 .responseUris(Collections.singletonList("https://test-responseUri"))
-                .clientMetadata(metadata)
+                .jwksUri("https://test/.well-known/jwks.json")
+                .allowUnsignedRequest(true)
                 .build();
 
         VerifiersDTO trustedVerifiers = VerifiersDTO.builder()
@@ -94,8 +95,9 @@ public class VerifiersControllerTest {
 
         mockMvc.perform(get("/verifiers").accept(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.response.verifiers[0].allow_unsigned_request").value(true))
                 .andExpect(jsonPath("$.response.verifiers[0].client_id").value("test-clientId"))
-                .andExpect(jsonPath("$.response.verifiers[0].client_metadata.client_name").value("Test-Verifier"));
+                .andExpect(jsonPath("$.response.verifiers[0].jwks_uri").value("https://test/.well-known/jwks.json"));
     }
 
     @Test
@@ -104,7 +106,7 @@ public class VerifiersControllerTest {
                 .clientId("test-clientId")
                 .redirectUris(Collections.singletonList("https://test-redirectUri"))
                 .responseUris(Collections.singletonList("https://test-responseUri"))
-                .clientMetadata(Collections.emptyMap())
+                .jwksUri("https://test/.well-known/jwks.json")
                 .build();
 
         VerifiersDTO trustedVerifiers = VerifiersDTO.builder()
@@ -115,8 +117,9 @@ public class VerifiersControllerTest {
 
         mockMvc.perform(get("/verifiers").accept(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.response.verifiers[0].client_metadata").isMap())
-                .andExpect(jsonPath("$.response.verifiers[0].client_metadata").isEmpty());
+                .andExpect(jsonPath("$.response.verifiers[0].allow_unsigned_request").value(false))
+                .andExpect(jsonPath("$.response.verifiers[0].jwks_uri").isString())
+                .andExpect(jsonPath("$.response.verifiers[0].jwks_uri").value("https://test/.well-known/jwks.json"));
     }
 
 

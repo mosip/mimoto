@@ -5,11 +5,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.Map;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 @Data
 @NoArgsConstructor
@@ -28,9 +30,14 @@ public class VerifierDTO {
     @Schema(description = "Response URIs of the Verifier")
     List<String> responseUris;
 
-    @JsonProperty("client_metadata")
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @Schema(description = "Metadata of the Verifier")
-    Map<String,?> clientMetadata;
+    @JsonProperty("jwks_uri")
+    @Schema(description = "JWKS URI of the Verifier")
+    @JsonInclude(NON_NULL)
+    String jwksUri;
+
+    @JsonProperty("allow_unsigned_request")
+    @Schema(description = "Flag to indicate if unsigned Authorization Request is allowed")
+    @Default
+    Boolean allowUnsignedRequest = false;
 }
 
