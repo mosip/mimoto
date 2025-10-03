@@ -3,5 +3,5 @@ modules:
     enabled: true
     image:
       repository: mosipid/apitest-mimoto
-      tag: 0.19.1
+      tag: release-0.20.x
       pullPolicy: Always
