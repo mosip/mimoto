@@ -8,6 +8,15 @@
 		<listener class-name="io.mosip.testrig.apirig.report.EmailableReport" />
 	</listeners>
 
+	<test name="GenerateVID">
+		<parameter name="ymlFile"
+			value="mimoto/GenerateVID/createGenerateVID.yml" />
+		<parameter name="idKeyName" value="vid" />
+		<classes>
+			<class
+				name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithAutogenIdWithOtpGenerate" />
+		</classes>
+	</test>		
 	<test name="CreatePolicySunBirdR">
 		<parameter name="ymlFile"
 				   value="mimoto/SunBirdR/CreatePolicySunBirdR/CreatePolicySunBirdR.yml" />
