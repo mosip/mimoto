@@ -146,7 +146,7 @@ fileignoreconfig:
 - filename: src/main/java/io/mosip/mimoto/service/impl/SessionManager.java
   checksum: d88c08d3e5981286ace173e2b50ab6d87a55636b647a92829572a18999663e7c
 - filename: src/test/java/io/mosip/mimoto/controller/WalletPresentationsControllerTest.java
-  checksum: 559c0da4613e9eea58833a64bcbf47583eb2040f50771a99407a854a3ef1db52
+  checksum: 3aab4ade6ea8909b550d5dbe04a8af171ec36f249909535ce71dfd21ea37d0fb
 - filename: src/main/java/io/mosip/mimoto/controller/WalletPresentationsController.java
   checksum: 12fc0f8471554ca5025c37b1ee6d7c0045f36b57a8b3c0e528b3859c3de722f9
 - filename: db_upgrade_script/inji_mimoto/sql/0.14.x_to_0.15.x_upgrade.sql
@@ -172,7 +172,7 @@ fileignoreconfig:
 - filename: src/test/java/io/mosip/mimoto/service/CredentialMatchingServiceTest.java
   checksum: b1323c5b2d2209440ff2d4705d72d67cf93f3a790ef1a4bdeccc5c557686bd85
 - filename: src/test/java/io/mosip/mimoto/service/SessionManagerTest.java
-  checksum: 217f93d77186a5b9bf06c0f148d8c7f4ef9aaa334517108f573295c9a9e71c20
+  checksum: f541358ce3b674a8865592b8c899c2dac484730b8790f9a99b6a79a5b7953c9a
 - filename: src/main/java/io/mosip/mimoto/constant/OpenID4VPConstants.java
   checksum: 81ca55276277c00a7121ecc70444202bd30a8a7f0c88b40799ab1106f5bbf0e5
 - filename: src/main/java/io/mosip/mimoto/service/KeyPairService.java
@@ -183,4 +183,10 @@ fileignoreconfig:
   checksum: c52c3b8f803d8fb0cdc615012b5e675b1c6d83320594e860de741974f3cdb24f
 - filename: src/main/java/io/mosip/mimoto/service/impl/PresentationSubmissionServiceImpl.java
   checksum: fd412479483d92ae3efbd07aee42564152f8fd9da2a642643290cdab3c375dbe
+- filename: src/test/java/io/mosip/mimoto/util/Base64UtilTest.java
+  checksum: 700663d179554cec53962c6ed12957411c5960c32bc0b8d799f79c1b92191c33
+- filename: src/test/java/io/mosip/mimoto/service/PresentationSubmissionServiceTest.java
+  checksum: 99e26a013d61aa37e45bf3b858a511a4f12bfcde09aa18ed067f2926eb77f830
+- filename: src/test/java/io/mosip/mimoto/service/KeyPairServiceTest.java
+  checksum: fbc153d7259000e237268025c0bef540fb1f76259901d2cc633adf81e251a450
 version: ""
