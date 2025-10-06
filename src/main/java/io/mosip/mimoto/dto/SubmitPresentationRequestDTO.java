@@ -31,17 +31,22 @@ public class SubmitPresentationRequestDTO {
     private String errorMessage;
 
     /**
-     * Checks if this is a submission request (has selected credentials)
+     * Checks if this is a submission request (has selected credentials and NO error fields)
      */
     public boolean isSubmissionRequest() {
-        return selectedCredentials != null && !selectedCredentials.isEmpty();
+        boolean hasCredentials = selectedCredentials != null && !selectedCredentials.isEmpty();
+        boolean hasErrorFields = (errorCode != null && !errorCode.trim().isEmpty()) || 
+                                 (errorMessage != null && !errorMessage.trim().isEmpty());
+        return hasCredentials && !hasErrorFields;
     }
 
     /**
-     * Checks if this is a rejection request (has error code and message)
+     * Checks if this is a rejection request (has error code and message and NO credentials)
      */
     public boolean isRejectionRequest() {
-        return errorCode != null && !errorCode.trim().isEmpty() && 
-               errorMessage != null && !errorMessage.trim().isEmpty();
+        boolean hasErrorFields = errorCode != null && !errorCode.trim().isEmpty() && 
+                                errorMessage != null && !errorMessage.trim().isEmpty();
+        boolean hasCredentials = selectedCredentials != null && !selectedCredentials.isEmpty();
+        return hasErrorFields && !hasCredentials;
     }
 }

@@ -1,25 +1,19 @@
 package io.mosip.mimoto.controller;
 
-import com.nimbusds.jose.JOSEException;
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.dto.ErrorDTO;
 import io.mosip.mimoto.dto.MatchingCredentialsResponseDTO;
 import io.mosip.mimoto.dto.MatchingCredentialsWithWalletDataDTO;
 import io.mosip.mimoto.dto.SubmitPresentationRequestDTO;
-import io.mosip.mimoto.dto.SubmitPresentationResponseDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationAuthorizationRequest;
 import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
-import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.exception.KeyGenerationException;
-import io.mosip.mimoto.exception.VPErrorNotSentException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.CredentialMatchingService;
 import io.mosip.mimoto.service.PresentationService;
-import io.mosip.mimoto.service.PresentationSubmissionService;
+import io.mosip.mimoto.service.PresentationActionService;
 import io.mosip.mimoto.service.impl.SessionManager;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.mimoto.util.WalletUtil;
@@ -45,7 +39,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Instant;
 
-import static io.mosip.mimoto.constant.LoggerFileConstant.DELIMITER;
 import static io.mosip.mimoto.exception.ErrorConstants.*;
 
 @Slf4j
@@ -63,7 +56,7 @@ public class WalletPresentationsController {
     private SessionManager sessionManager;
 
     @Autowired
-    private PresentationSubmissionService presentationSubmissionService;
+    private PresentationActionService presentationActionService;
 
     /**
      * Processes the Verifiable Presentation Authorization Request for a specific wallet.
@@ -162,9 +155,9 @@ public class WalletPresentationsController {
         } catch (ApiNotAccessibleException | IOException | VPNotCreatedException exception) {
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     exception, WALLET_CREATE_VP_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException exception) {
             return Utilities.getErrorResponseEntityWithoutWrapper(
-                    e, INVALID_REQUEST.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+                    exception, INVALID_REQUEST.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
         }
 
     }
@@ -217,149 +210,29 @@ public class WalletPresentationsController {
     @ApiResponse(responseCode = "401", description = "Unauthorized user", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "unauthorized", value = "{\"errorCode\": \"unauthorized\", \"errorMessage\": \"User ID not found in session\"}")))
     @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = "Server error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")))
     @PatchMapping("/{presentationId}")
-    public ResponseEntity<?> handlePresentationAction(
-            @PathVariable("walletId") String walletId, 
-            HttpSession httpSession, 
-            @PathVariable("presentationId") String presentationId, 
-            @Valid @RequestBody SubmitPresentationRequestDTO request) {
-        
-        log.info("Processing presentation action for walletId: {}, presentationId: {}", walletId, presentationId);
+    public ResponseEntity<?> handlePresentationAction(@PathVariable("walletId") String walletId, HttpSession httpSession, @PathVariable("presentationId") String presentationId, @Valid @RequestBody SubmitPresentationRequestDTO request) {
 
         try {
-            // Validate wallet ID
             WalletUtil.validateWalletId(httpSession, walletId);
 
-            // Get session data
             VerifiablePresentationSessionData vpSessionData = sessionManager.getPresentationSessionData(httpSession, walletId, presentationId);
+
             if (vpSessionData == null) {
                 log.error("No presentation session data found in session for presentationId: {}", presentationId);
-                return getErrorResponseEntity(
-                        new InvalidRequestException("invalid_request", "presentationId not found in session"), 
-                        "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+                return Utilities.getErrorResponseEntityWithoutWrapper(new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "presentationId not found in session"), INVALID_REQUEST.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
             }
 
-            // Determine the action based on request content
-            if (request.isSubmissionRequest()) {
-                log.info("Processing presentation submission for presentationId: {}", presentationId);
-                return handlePresentationSubmission(walletId, presentationId, request, httpSession, vpSessionData);
-                
-            } else if (request.isRejectionRequest()) {
-                log.info("Processing verifier rejection for presentationId: {}", presentationId);
-                return handleVerifierRejection(walletId, vpSessionData, request);
-                
-            } else {
-                log.warn("Invalid request format - must contain either selectedCredentials or both errorCode and errorMessage");
-                return getErrorResponseEntity(
-                        new InvalidRequestException("invalid_request", "Request must contain either selectedCredentials or both errorCode and errorMessage"), 
-                        "invalid_request", HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+            String base64Key = (String) httpSession.getAttribute(SessionKeys.WALLET_KEY);
+            if (base64Key == null) {
+                log.warn("Wallet key not found in session for walletId: {}", walletId);
+                return Utilities.getErrorResponseEntityFromPlatformErrorMessage(UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED, MediaType.APPLICATION_JSON);
             }
 
-        } catch (Exception e) {
-            log.error("Unexpected error during presentation action for walletId: {}, presentationId: {}", walletId, presentationId, e);
-            return getErrorResponseEntity(e, "internal_server_error", HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
+            return presentationActionService.handlePresentationAction(walletId, presentationId, request, vpSessionData, base64Key);
+
+        } catch (Exception exception) {
+            log.error("Unexpected error during presentation action for walletId: {}, presentationId: {}", walletId, presentationId, exception);
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, INTERNAL_SERVER_ERROR.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         }
-    }
-
-    /**
-     * Handles presentation submission with selected credentials
-     */
-    private ResponseEntity<SubmitPresentationResponseDTO> handlePresentationSubmission(
-            String walletId, 
-            String presentationId, 
-            SubmitPresentationRequestDTO request, 
-            HttpSession httpSession, 
-            VerifiablePresentationSessionData sessionData) {
-
-        // Get wallet key from session
-        String base64Key = (String) httpSession.getAttribute(SessionKeys.WALLET_KEY);
-        if (base64Key == null) {
-            log.warn("Wallet key not found in session for walletId: {}", walletId);
-            return Utilities.getErrorResponseEntityFromPlatformErrorMessage(
-                    UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED, MediaType.APPLICATION_JSON);
-        }
-
-        try {
-            // Submit the presentation
-            SubmitPresentationResponseDTO response = presentationSubmissionService.submitPresentation(
-                    sessionData, walletId, presentationId, request, base64Key);
-
-            log.info("Presentation submission completed successfully for walletId: {}, presentationId: {}", 
-                    walletId, presentationId);
-
-            return ResponseEntity.status(HttpStatus.OK).body(response);
-
-        } catch (JOSEException e) {
-            log.error("JWT signing error during presentation submission for walletId: {}, presentationId: {}", 
-                    walletId, presentationId, e);
-            return Utilities.getErrorResponseEntityWithoutWrapper(
-                    e, "JWT_SIGNING_ERROR", 
-                    HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
-        } catch (KeyGenerationException e) {
-            log.error("Key generation/retrieval error during presentation submission for walletId: {}, presentationId: {}", 
-                    walletId, presentationId, e);
-            return Utilities.getErrorResponseEntityWithoutWrapper(
-                    e, "KEY_GENERATION_ERROR", 
-                    HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
-        } catch (DecryptionException e) {
-            log.error("Decryption error during presentation submission for walletId: {}, presentationId: {}", 
-                    walletId, presentationId, e);
-            return Utilities.getErrorResponseEntityWithoutWrapper(
-                    e, "DECRYPTION_ERROR", 
-                    HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
-        } catch (ApiNotAccessibleException | IOException exception) {
-            log.error("Error during presentation submission for walletId: {}, presentationId: {}", 
-                    walletId, presentationId, exception);
-            return Utilities.getErrorResponseEntityWithoutWrapper(
-                    exception, WALLET_CREATE_VP_EXCEPTION.getErrorCode(), 
-                    HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid argument during presentation submission for walletId: {}, presentationId: {}", 
-                    walletId, presentationId, e);
-            return Utilities.getErrorResponseEntityWithoutWrapper(
-                    e, INVALID_REQUEST.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
-        }
-    }
-
-    /**
-     * Handles verifier rejection with error details
-     */
-    private ResponseEntity<RejectedVerifierDTO> handleVerifierRejection(
-            String walletId, 
-            VerifiablePresentationSessionData vpSessionData, 
-            SubmitPresentationRequestDTO request) {
-
-        try {
-            // Create ErrorDTO from the request
-            ErrorDTO errorPayload = new ErrorDTO();
-            errorPayload.setErrorCode(request.getErrorCode());
-            errorPayload.setErrorMessage(request.getErrorMessage());
-
-            // Call the presentation service to reject the verifier
-            RejectedVerifierDTO rejectedVerifierDTO = presentationService.rejectVerifier(walletId, vpSessionData, errorPayload);
-
-            return ResponseEntity.status(HttpStatus.OK).body(rejectedVerifierDTO);
-        } catch (VPErrorNotSentException e) {
-            log.error("Error during user rejection for VP request: ", e);
-            return getErrorResponseEntity(e, REJECT_VERIFIER_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> ResponseEntity<T> getErrorResponseEntity(
-            Exception exception, String flowErrorCode, HttpStatus status, MediaType contentType) {
-        String errorMessage = exception.getMessage();
-        String errorCode = flowErrorCode;
-
-        if (errorMessage.contains(DELIMITER)) {
-            String[] errorSections = errorMessage.split(DELIMITER);
-            errorCode = errorSections[0];
-            errorMessage = errorSections[1];
-        }
-
-        ResponseEntity.BodyBuilder responseEntity = ResponseEntity.status(status);
-        if (contentType != null) {
-            responseEntity.contentType(contentType);
-        }
-        return (ResponseEntity<T>) responseEntity.body(new RejectedVerifierDTO(errorCode, null, errorMessage));
     }
 }

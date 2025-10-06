@@ -1,4 +1,5 @@
 package io.mosip.mimoto.service.impl;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.jwk.JWK;
@@ -22,7 +23,7 @@ import io.mosip.mimoto.model.VerifiablePresentation;
 import io.mosip.mimoto.service.PresentationSubmissionService;
 import io.mosip.mimoto.service.KeyPairService;
 import io.mosip.mimoto.service.VerifierService;
-import io.mosip.mimoto.repository.VerifiablePresentationRepository;
+import io.mosip.mimoto.repository.VerifiablePresentationsRepository;
 import io.mosip.mimoto.util.UrlParameterUtils;
 import io.mosip.mimoto.util.WalletPresentationUtil;
 import io.mosip.mimoto.util.Base64Util;
@@ -32,7 +33,6 @@ import io.mosip.openID4VP.constants.FormatType;
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,9 +53,7 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
     private static final String DEFAULT_SIGNATURE_SUITE = "JsonWebSignature2020";
     private static final String UNKNOWN_VERIFIER = "unknown";
     private static final String EMPTY_JSON = "{}";
-    
-    @Value("${mimoto.presentation.signing.algorithm:ED25519}")
-    private String defaultSigningAlgorithmName;
+    private static final String DEFAULT_SIGNING_ALGORITHM_NAME = "ED25519";
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -70,17 +68,16 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
     private KeyPairService keyPairService;
 
     @Autowired
-    private VerifiablePresentationRepository verifiablePresentationRepository;
+    private VerifiablePresentationsRepository verifiablePresentationsRepository;
 
     @Override
     public SubmitPresentationResponseDTO submitPresentation(VerifiablePresentationSessionData sessionData, String walletId, String presentationId, SubmitPresentationRequestDTO request, String base64Key) throws ApiNotAccessibleException, IOException, JOSEException, KeyGenerationException, DecryptionException {
 
-        // Validate all inputs before processing
-        validateInputs(sessionData, walletId, presentationId, request, base64Key);
-        
-        log.info("Starting presentation submission for walletId: {}, presentationId: {}", walletId, presentationId);
-
         LocalDateTime requestedAt = LocalDateTime.now();
+
+        validateInputs(request);
+
+        log.info("Starting presentation submission for walletId: {}, presentationId: {}", walletId, presentationId);
 
         // Step 1: Fetch full credentials by ID from cache
         List<DecryptedCredentialDTO> selectedCredentials = fetchSelectedCredentials(sessionData, request.getSelectedCredentials());
@@ -88,12 +85,11 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
         // Step 2: Create OpenID4VP instance and construct unsigned VP token
         OpenID4VP openID4VP = openID4VPService.create(presentationId);
         List<Verifier> preRegisteredVerifiers = verifierService.getTrustedVerifiers().getVerifiers().stream()
-                .map(WalletPresentationUtil::mapToVerifier).toList();
+                                                    .map(WalletPresentationUtil::mapToVerifier).toList();
         openID4VP.authenticateVerifier(sessionData.getAuthorizationRequest(), preRegisteredVerifiers, sessionData.isVerifierClientPreregistered());
 
         // Use configurable signing algorithm
-        SigningAlgorithm signingAlgorithm = SigningAlgorithm.valueOf(defaultSigningAlgorithmName);
-        log.debug("Using signing algorithm: {} for wallet: {}", signingAlgorithm, walletId);
+        SigningAlgorithm signingAlgorithm = SigningAlgorithm.valueOf(DEFAULT_SIGNING_ALGORITHM_NAME);
         KeyPair keyPair = keyPairService.getKeyPairFromDB(walletId, base64Key, signingAlgorithm);
         JWK jwk = JwtGeneratorUtil.generateJwk(signingAlgorithm, keyPair);
         Map<FormatType, UnsignedVPToken> unsignedVPToken = constructUnsignedVPToken(openID4VP, selectedCredentials, jwk);
@@ -111,58 +107,53 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
         // Step 6: Return success response
         return SubmitPresentationResponseDTO.builder().presentationId(presentationId)
                 .status(shareSuccess ? OpenID4VPConstants.STATUS_SUCCESS : OpenID4VPConstants.STATUS_ERROR)
-                .message(shareSuccess ? OpenID4VPConstants.MESSAGE_PRESENTATION_SUCCESS
-                        : OpenID4VPConstants.MESSAGE_PRESENTATION_SHARE_FAILED)
+                .message(shareSuccess ? OpenID4VPConstants.MESSAGE_PRESENTATION_SUCCESS : OpenID4VPConstants.MESSAGE_PRESENTATION_SHARE_FAILED)
                 .build();
     }
 
     /**
      * Signs VP token using JWSSigner for different format types
      * This method delegates to format-specific signing methods
-     * 
+     *
      * @param unsignedVPTokensMap Map of unsigned VP tokens by format type
-     * @param jwsSigner The JWS signer to use for signing operations (for LDP_VC)
-     * @param walletId The wallet ID for fetching keypairs (for MSO_MDOC)
-     * @param base64Key The base64 encoded wallet key for decryption (for MSO_MDOC)
+     * @param jwsSigner           The JWS signer to use for signing operations (for LDP_VC)
+     * @param walletId            The wallet ID for fetching keypairs (for MSO_MDOC)
+     * @param base64Key           The base64 encoded wallet key for decryption (for MSO_MDOC)
      * @return Map of signed VP token results by format type
-     * @throws JOSEException if JWT signing fails
-     * @throws IOException if I/O operations fail
+     * @throws JOSEException          if JWT signing fails
+     * @throws IOException            if I/O operations fail
      * @throws KeyGenerationException if key pair retrieval or generation fails
-     * @throws DecryptionException if decryption of private key fails
+     * @throws DecryptionException    if decryption of private key fails
      */
     private Map<FormatType, LdpVPTokenSigningResult> signVPToken(Map<FormatType, UnsignedVPToken> unsignedVPTokensMap, JWSSigner jwsSigner, String walletId, String base64Key) throws JOSEException, IOException, KeyGenerationException, DecryptionException {
         log.debug("Signing VP token for {} format types", unsignedVPTokensMap.size());
 
-        return unsignedVPTokensMap.entrySet().stream()
-                .map(entry -> {
-                    FormatType formatType = entry.getKey();
-                    UnsignedVPToken unsignedVPToken = entry.getValue();
+        return unsignedVPTokensMap.entrySet().stream().map(entry -> {
+            FormatType formatType = entry.getKey();
+            UnsignedVPToken unsignedVPToken = entry.getValue();
 
-                    try {
-                        LdpVPTokenSigningResult signingResult = switch (formatType) {
-                            case LDP_VC -> signLdpVcFormat(unsignedVPToken, jwsSigner);
-                            case MSO_MDOC -> signMsoMdocFormat(unsignedVPToken, walletId, base64Key);
-                            default -> {
-                                log.warn("Unsupported format type: {}", formatType);
-                                yield null;
-                            }
-                        };
-
-                        return signingResult != null ? Map.entry(formatType, signingResult) : null;
-                    } catch (JOSEException | IOException | KeyGenerationException | DecryptionException e) {
-                        // Wrap checked exceptions in unchecked for stream processing
-                        throw new RuntimeException("Failed to sign VP token for format: " + formatType, e);
+            try {
+                LdpVPTokenSigningResult signingResult = switch (formatType) {
+                    case LDP_VC -> signLdpVcFormat(unsignedVPToken, jwsSigner);
+                    case MSO_MDOC -> signMsoMdocFormat(unsignedVPToken, walletId, base64Key);
+                    default -> {
+                        log.warn("Unsupported format type: {}", formatType);
+                        yield null;
                     }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                };
+
+                return signingResult != null ? Map.entry(formatType, signingResult) : null;
+            } catch (JOSEException | IOException | KeyGenerationException | DecryptionException e) {
+                throw new RuntimeException("Failed to sign VP token for format: " + formatType, e);
+            }
+        }).filter(Objects::nonNull).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     /**
      * Signs LDP_VC format verifiable presentation using detached JWT
-     * 
+     *
      * @param unsignedVPToken The unsigned VP token
-     * @param jwsSigner The JWS signer (EdDSA) for signing
+     * @param jwsSigner       The JWS signer (EdDSA) for signing
      * @return Signing result with detached JWT proof
      * @throws JOSEException if JWT signing fails
      */
@@ -171,13 +162,8 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
 
         String dataToSign = ((UnsignedLdpVPToken) unsignedVPToken).getDataToSign();
 
-        // Create JWSHeader with critical parameters for detached JWT
-        JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.EdDSA)
-                .criticalParams(Set.of(OpenID4VPConstants.JWT_CRITICAL_PARAM_B64))
-                .base64URLEncodePayload(false)
-                .build();
+        JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.EdDSA).criticalParams(Set.of(OpenID4VPConstants.JWT_CRITICAL_PARAM_B64)).base64URLEncodePayload(false).build();
 
-        // Convert dataToSign from base64 to byte array
         byte[] vpTokenBytes = Base64Util.decodeFlexible(dataToSign);
 
         // Create header bytes for signing input
@@ -205,22 +191,21 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
     /**
      * Signs MSO_MDOC format verifiable presentation
      * Creates ES256 keypair and signs each document type
-     * 
+     *
      * @param unsignedVPToken The unsigned VP token
-     * @param walletId The wallet ID for fetching keypairs
-     * @param base64Key The base64 encoded wallet key for decryption
+     * @param walletId        The wallet ID for fetching keypairs
+     * @param base64Key       The base64 encoded wallet key for decryption
      * @return Signing result with document type signatures
-     * @throws JOSEException if JWT signing fails
-     * @throws IOException if I/O operations fail
+     * @throws JOSEException          if JWT signing fails
+     * @throws IOException            if I/O operations fail
      * @throws KeyGenerationException if key pair retrieval or generation fails
-     * @throws DecryptionException if decryption of private key fails
+     * @throws DecryptionException    if decryption of private key fails
      */
     private LdpVPTokenSigningResult signMsoMdocFormat(UnsignedVPToken unsignedVPToken, String walletId, String base64Key) throws JOSEException, IOException, KeyGenerationException, DecryptionException {
         log.debug("Signing MSO_MDOC format VP token");
 
         // Convert UnsignedVPToken to Map for MSO_MDOC format
-        @SuppressWarnings("unchecked")
-        Map<String, Object> credentials = objectMapper.convertValue(unsignedVPToken, Map.class);
+        @SuppressWarnings("unchecked") Map<String, Object> credentials = objectMapper.convertValue(unsignedVPToken, Map.class);
         Map<String, Map<String, Object>> documentTypeSignatures = new HashMap<>();
 
         // For MSO_MDOC format, look for docTypeToDeviceAuthenticationBytes
@@ -229,9 +214,7 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
             return createMsoMdocSigningResult(documentTypeSignatures);
         }
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> docTypeToDeviceAuthenticationBytes =
-                (Map<String, Object>) credentials.get(OpenID4VPConstants.DOC_TYPE_TO_DEVICE_AUTHENTICATION_BYTES);
+        @SuppressWarnings("unchecked") Map<String, Object> docTypeToDeviceAuthenticationBytes = (Map<String, Object>) credentials.get(OpenID4VPConstants.DOC_TYPE_TO_DEVICE_AUTHENTICATION_BYTES);
 
         if (docTypeToDeviceAuthenticationBytes == null) {
             return createMsoMdocSigningResult(documentTypeSignatures);
@@ -248,35 +231,31 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
         JWSSigner mdocSigner = JwtGeneratorUtil.createSigner(mdocSigningAlgorithm, mdocJwk);
 
         // Process each docType entry using streams
-        Map<String, Map<String, Object>> signedDocTypes = docTypeToDeviceAuthenticationBytes.entrySet().stream()
-                .map(docTypeEntry -> {
-                    String docType = docTypeEntry.getKey();
-                    Object payload = docTypeEntry.getValue();
+        Map<String, Map<String, Object>> signedDocTypes = docTypeToDeviceAuthenticationBytes.entrySet().stream().map(docTypeEntry -> {
+            String docType = docTypeEntry.getKey();
+            Object payload = docTypeEntry.getValue();
 
-                    log.debug("Processing MSO_MDOC docType: {} with algorithm: {}", docType, mdocAuthenticationAlgorithm);
+            log.debug("Processing MSO_MDOC docType: {} with algorithm: {}", docType, mdocAuthenticationAlgorithm);
 
-                    try {
-                        String signature = signMsoMdocDocType(payload, mdocSigner);
+            try {
+                String signature = signMsoMdocDocType(payload, mdocSigner);
 
-                        // If signature was created successfully
-                        if (signature != null && !signature.isEmpty()) {
-                            Map<String, Object> docTypeResult = new HashMap<>();
-                            docTypeResult.put(OpenID4VPConstants.SIGNATURE, signature);
-                            docTypeResult.put(OpenID4VPConstants.MDOC_AUTHENTICATION_ALGORITHM, mdocAuthenticationAlgorithm);
+                // If signature was created successfully
+                if (signature != null && !signature.isEmpty()) {
+                    Map<String, Object> docTypeResult = new HashMap<>();
+                    docTypeResult.put(OpenID4VPConstants.SIGNATURE, signature);
+                    docTypeResult.put(OpenID4VPConstants.MDOC_AUTHENTICATION_ALGORITHM, mdocAuthenticationAlgorithm);
 
-                            log.debug("Successfully signed MSO_MDOC docType: {} with algorithm: {}",
-                                    docType, mdocAuthenticationAlgorithm);
+                    log.debug("Successfully signed MSO_MDOC docType: {} with algorithm: {}", docType, mdocAuthenticationAlgorithm);
 
-                            return Map.entry(docType, docTypeResult);
-                        }
-                        return null;
-                    } catch (JOSEException | IOException e) {
-                        log.error("Failed to sign MSO_MDOC docType: {}", docType, e);
-                        throw new RuntimeException("Failed to sign docType: " + docType, e);
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    return Map.entry(docType, docTypeResult);
+                }
+                return null;
+            } catch (JOSEException | IOException e) {
+                log.error("Failed to sign MSO_MDOC docType: {}", docType, e);
+                throw new RuntimeException("Failed to sign docType: " + docType, e);
+            }
+        }).filter(Objects::nonNull).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         documentTypeSignatures.putAll(signedDocTypes);
 
@@ -285,12 +264,12 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
 
     /**
      * Signs a single MSO_MDOC document type payload
-     * 
-     * @param payload The payload to sign (string or object)
+     *
+     * @param payload    The payload to sign (string or object)
      * @param mdocSigner The ES256 signer
      * @return Base64URL encoded signature
      * @throws JOSEException if signing operation fails
-     * @throws IOException if payload serialization fails
+     * @throws IOException   if payload serialization fails
      */
     private String signMsoMdocDocType(Object payload, JWSSigner mdocSigner) throws JOSEException, IOException {
         // Create JWSHeader for ES256 algorithm
@@ -311,7 +290,7 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
 
     /**
      * Creates MSO_MDOC signing result from document type signatures
-     * 
+     *
      * @param documentTypeSignatures Map of document type to signature data
      * @return LdpVPTokenSigningResult
      */
@@ -380,27 +359,13 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
      */
     private Map<String, Map<FormatType, List<Object>>> convertCredentialsToJarFormat(List<DecryptedCredentialDTO> credentials) {
 
-        return credentials.stream()
-                .collect(Collectors.groupingBy(
-                        DecryptedCredentialDTO::getId,
-                        Collectors.collectingAndThen(
-                                Collectors.toList(),
-                                credList -> credList.stream()
-                                        .collect(Collectors.groupingBy(
-                                                credential -> {
-                                                    // Get format and credential data
-                                                    VCCredentialResponse vcCredentialResponse = credential.getCredential();
-                                                    String credentialFormat = vcCredentialResponse.getFormat();
-                                                    // Convert format string to FormatType enum
-                                                    return mapStringToFormatType(credentialFormat);
-                                                },
-                                                Collectors.mapping(
-                                                        credential -> credential.getCredential().getCredential(),
-                                                        Collectors.toList()
-                                                )
-                                        ))
-                        )
-                ));
+        return credentials.stream().collect(Collectors.groupingBy(DecryptedCredentialDTO::getId, Collectors.collectingAndThen(Collectors.toList(), credList -> credList.stream().collect(Collectors.groupingBy(credential -> {
+            // Get format and credential data
+            VCCredentialResponse vcCredentialResponse = credential.getCredential();
+            String credentialFormat = vcCredentialResponse.getFormat();
+            // Convert format string to FormatType enum
+            return mapStringToFormatType(credentialFormat);
+        }, Collectors.mapping(credential -> credential.getCredential().getCredential(), Collectors.toList()))))));
     }
 
     /**
@@ -412,10 +377,10 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
         }
 
         return switch (format.toLowerCase()) {
-            case OpenID4VPConstants.FORMAT_LDP_VC_UNDERSCORE, 
-                 OpenID4VPConstants.FORMAT_LDP_VC_HYPHEN -> FormatType.LDP_VC;
-            case OpenID4VPConstants.FORMAT_MSO_MDOC_UNDERSCORE, 
-                 OpenID4VPConstants.FORMAT_MSO_MDOC_HYPHEN -> FormatType.MSO_MDOC;
+            case OpenID4VPConstants.FORMAT_LDP_VC_UNDERSCORE, OpenID4VPConstants.FORMAT_LDP_VC_HYPHEN ->
+                    FormatType.LDP_VC;
+            case OpenID4VPConstants.FORMAT_MSO_MDOC_UNDERSCORE, OpenID4VPConstants.FORMAT_MSO_MDOC_HYPHEN ->
+                    FormatType.MSO_MDOC;
             // Add other supported formats as they become available in the OpenID4VP library
             default -> {
                 log.warn("Unknown credential format: {}, defaulting to LDP_VC", format);
@@ -466,23 +431,16 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
             String presentationData = createPresentationData(request, sessionData);
 
             // Create the presentation record
-            VerifiablePresentation presentation = VerifiablePresentation.builder().id(presentationId).walletId(walletId)
-                    .authRequest(authRequest).presentationData(presentationData).verifierId(verifierId)
-                    .status(success ? OpenID4VPConstants.DB_STATUS_SUCCESS : OpenID4VPConstants.DB_STATUS_ERROR).requestedAt(requestedAt)
-                    .consent(true)
-                    .build();
+            VerifiablePresentation presentation = VerifiablePresentation.builder().id(presentationId).walletId(walletId).authRequest(authRequest).presentationData(presentationData).verifierId(verifierId).status(success ? OpenID4VPConstants.DB_STATUS_SUCCESS : OpenID4VPConstants.DB_STATUS_ERROR).requestedAt(requestedAt).consent(true).build();
 
             // Save to database
-            verifiablePresentationRepository.save(presentation);
+            verifiablePresentationsRepository.save(presentation);
 
             log.info("Presentation record stored successfully - recordId: {}, walletId: {}, presentationId: {}, status: {}", presentationId, walletId, presentationId, success ? OpenID4VPConstants.DB_STATUS_SUCCESS : OpenID4VPConstants.DB_STATUS_ERROR);
 
         } catch (Exception e) {
             // Critical failure - log with high severity and include all context
-            log.error("CRITICAL: Failed to store presentation record - walletId: {}, presentationId: {}, verifierId: {}, success: {}", 
-                    walletId, presentationId, 
-                    sessionData != null ? extractVerifierId(sessionData) : "unknown", 
-                    success, e);
+            log.error("CRITICAL: Failed to store presentation record - walletId: {}, presentationId: {}, verifierId: {}, success: {}", walletId, presentationId, sessionData != null ? extractVerifierId(sessionData) : "unknown", success, e);
             // Note: Consider adding metrics/alerting here for production monitoring
             // Example: metrics.incrementCounter("presentation.storage.failures");
         }
@@ -538,44 +496,21 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
 
     /**
      * Validates all input parameters for presentation submission
-     * 
+     *
      * @throws IllegalArgumentException if any input is invalid
      */
-    private void validateInputs(VerifiablePresentationSessionData sessionData, 
-                                String walletId, 
-                                String presentationId, 
-                                SubmitPresentationRequestDTO request, 
-                                String base64Key) {
-        if (sessionData == null) {
-            log.error("Session data cannot be null");
-            throw new IllegalArgumentException("Session data cannot be null");
-        }
-        
-        if (walletId == null || walletId.isBlank()) {
-            log.error("Wallet ID cannot be null or empty");
-            throw new IllegalArgumentException("Wallet ID cannot be null or empty");
-        }
-        
-        if (presentationId == null || presentationId.isBlank()) {
-            log.error("Presentation ID cannot be null or empty");
-            throw new IllegalArgumentException("Presentation ID cannot be null or empty");
-        }
-        
+    private void validateInputs(SubmitPresentationRequestDTO request) {
+
         if (request == null) {
             log.error("Request cannot be null");
             throw new IllegalArgumentException("Request cannot be null");
         }
-        
+
         if (request.getSelectedCredentials() == null || request.getSelectedCredentials().isEmpty()) {
             log.error("Selected credentials cannot be null or empty");
             throw new IllegalArgumentException("Selected credentials cannot be null or empty");
         }
-        
-        if (base64Key == null || base64Key.isBlank()) {
-            log.error("Base64 key cannot be null or empty");
-            throw new IllegalArgumentException("Base64 key cannot be null or empty");
-        }
-        
-        log.debug("Input validation passed for walletId: {}, presentationId: {}", walletId, presentationId);
+
+        log.debug("Input validation passed for request: {}", request.toString());
     }
 }

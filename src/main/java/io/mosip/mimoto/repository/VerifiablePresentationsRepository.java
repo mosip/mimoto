@@ -9,6 +9,6 @@ import io.mosip.mimoto.model.VerifiablePresentation;
  * Repository interface for VerifiablePresentation entity
  */
 @Repository
-public interface VerifiablePresentationRepository extends JpaRepository<VerifiablePresentation, String> {
+public interface VerifiablePresentationsRepository extends JpaRepository<VerifiablePresentation, String> {
     
 }
