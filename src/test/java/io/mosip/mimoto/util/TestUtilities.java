@@ -8,6 +8,7 @@ import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.model.CredentialMetadata;
 import io.mosip.mimoto.model.PasscodeControl;
 import io.mosip.mimoto.model.VerifiableCredential;
@@ -21,6 +22,9 @@ import io.mosip.mimoto.dto.openid.datashare.DataShareResponseDTO;
 import io.mosip.mimoto.dto.openid.datashare.DataShareResponseWrapperDTO;
 import io.mosip.mimoto.dto.openid.presentation.*;
 import io.mosip.mimoto.model.WalletLockStatus;
+import io.mosip.openID4VP.OpenID4VP;
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
+import io.mosip.openID4VP.authorizationRequest.presentationDefinition.*;
 import org.springframework.util.ResourceUtils;
 
 import java.io.InputStream;
@@ -480,5 +484,72 @@ public class TestUtilities {
         passcodeControl.setCurrentCycleCount(currentCycleCount);
         passcodeControl.setRetryBlockedUntil(retryBlockedUntil);
         return passcodeControl;
+    }
+
+    public static VerifiablePresentationResponseDTO getVerifiablePresentationResponseDTO(String clientId, String clientName, String clientLogo, boolean isTrusted, boolean isPreRegisteredWithWallet, String redirectUri, OpenID4VP openID4VP, Instant time) {
+        VerifiablePresentationVerifierDTO presentationVerifierDTO = new VerifiablePresentationVerifierDTO(
+                clientId,
+                clientName,
+                clientLogo,
+                isTrusted,
+                isPreRegisteredWithWallet,
+                redirectUri
+        );
+        VerifiablePresentationSessionData presentationSessionData = new VerifiablePresentationSessionData("123e4567-e89b-12d3-a456-426614174000", "authorizationRequest", time, true,  null);
+
+        VerifiablePresentationResponseDTO presentationResponseDTO = new VerifiablePresentationResponseDTO(presentationSessionData.getPresentationId(), presentationVerifierDTO);
+
+        return presentationResponseDTO;
+    }
+
+    public static PresentationDefinition getPresentationDefinition() {
+        Map<String, List<String>> innerMap = new HashMap<>();
+        innerMap.put("jwt_vc", List.of("ES256", "EdDSA"));
+
+        Map<String, Map<String, List<String>>> vpFormats = new HashMap<>();
+        vpFormats.put("ldp_vc", innerMap);
+
+
+        Fields emailField = new Fields(
+                List.of("$.credentialSubject.email"),
+                null, null, null,
+                new Filter("String", "@gmail.com"),
+                null
+        );
+
+        Constraints constraints = new Constraints(List.of(emailField), null);
+
+        InputDescriptor inputDescriptor = new InputDescriptor(
+                "id123",
+                "",
+                "",
+                vpFormats,
+                constraints
+        );
+
+        return new PresentationDefinition(
+                "pd123",
+                List.of(inputDescriptor),
+                null,
+                "requesting your digital ID for the purpose of Self-Authentication",
+                vpFormats
+        );
+    }
+
+
+    public static AuthorizationRequest getPresentationAuthorizationRequest(String clientId, String responseUri) {
+        return new AuthorizationRequest(
+                clientId,
+                "vp_token",
+                "direct_post",
+                getPresentationDefinition(),
+                "https://test-responseUri",
+                responseUri,
+                "mock-nonce",
+                null,
+                "mock-state",
+                null,
+                "pre-registered"
+        );
     }
 }

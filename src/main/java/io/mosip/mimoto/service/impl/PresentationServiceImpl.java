@@ -3,14 +3,29 @@ package io.mosip.mimoto.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
+import io.mosip.mimoto.dto.ErrorDTO;
+import io.mosip.mimoto.dto.RejectedVerifierDTO;
+import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
+import io.mosip.mimoto.dto.VerifiablePresentationVerifierDTO;
 import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponseProof;
 import io.mosip.mimoto.dto.openid.presentation.*;
+import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
+import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.ErrorConstants;
+import io.mosip.mimoto.exception.VPErrorNotSentException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
+import io.mosip.mimoto.service.VerifierService;
+import io.mosip.mimoto.util.WalletPresentationUtil;
+import io.mosip.openID4VP.OpenID4VP;
+import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
+import io.mosip.openID4VP.authorizationRequest.Verifier;
+import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata;
 import io.mosip.mimoto.util.RestApiClient;
+import io.mosip.openID4VP.exceptions.OpenID4VPExceptions;
+import io.mosip.openID4VP.networkManager.NetworkResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,12 +33,14 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static io.mosip.mimoto.exception.ErrorConstants.REJECTED_VERIFIER;
 import static io.mosip.mimoto.util.JwtUtils.extractJwtPayloadFromSdJwt;
 import static io.mosip.mimoto.util.JwtUtils.parseJwtHeader;
 
@@ -40,11 +57,65 @@ public class PresentationServiceImpl implements PresentationService {
     @Autowired
     private RestApiClient restApiClient;
 
+    @Autowired
+    private VerifierService verifierService;
+
+    @Autowired
+    private OpenID4VPService openID4VPService;
+
     @Value("${mosip.inji.ovp.redirect.url.pattern}")
     private String injiOvpRedirectURLPattern;
 
     @Value("${server.tomcat.max-http-response-header-size:65536}")
     private Integer maximumResponseHeaderSize;
+
+    @Override
+    public VerifiablePresentationResponseDTO handleVPAuthorizationRequest(String urlEncodedVPAuthorizationRequest, String walletId) throws ApiNotAccessibleException, IOException, URISyntaxException {
+        String presentationId = UUID.randomUUID().toString();
+
+        //Initialize OpenID4VP instance with presentationId as traceability id for each new Verifiable Presentation request
+        OpenID4VP openID4VP = openID4VPService.create(presentationId);
+
+        List<Verifier> preRegisteredVerifiers = getPreRegisteredVerifiers();
+        boolean shouldValidateClient = verifierService.isVerifierClientPreregistered(preRegisteredVerifiers, urlEncodedVPAuthorizationRequest);
+        AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers, shouldValidateClient);
+        VerifiablePresentationVerifierDTO verifiablePresentationVerifierDTO = createVPResponseVerifierDTO(preRegisteredVerifiers, authorizationRequest, walletId);
+
+        return new VerifiablePresentationResponseDTO(presentationId, verifiablePresentationVerifierDTO);
+    }
+
+    private VerifiablePresentationVerifierDTO createVPResponseVerifierDTO(List<Verifier> preRegisteredVerifiers, AuthorizationRequest authorizationRequest, String walletId) {
+
+        boolean isVerifierPreRegisteredWithWallet = preRegisteredVerifiers.stream().map(
+                Verifier::getClientId).toList().contains(authorizationRequest.getClientId());
+
+        boolean isVerifierTrustedByWallet = verifierService.isVerifierTrustedByWallet(authorizationRequest.getClientId(), walletId);
+
+        String clientName = Optional.ofNullable(authorizationRequest.getClientMetadata())
+                .map(ClientMetadata::getClientName)
+                .filter(name -> !name.isBlank())
+                .orElse(authorizationRequest.getClientId());
+
+        String logo = Optional.ofNullable(authorizationRequest.getClientMetadata())
+                .map(ClientMetadata::getLogoUri)
+                .orElse(null);
+
+        return new VerifiablePresentationVerifierDTO(
+                authorizationRequest.getClientId(),
+                clientName,
+                logo,
+                isVerifierTrustedByWallet,
+                isVerifierPreRegisteredWithWallet,
+                authorizationRequest.getRedirectUri()
+        );
+    }
+
+    private List<Verifier> getPreRegisteredVerifiers() throws ApiNotAccessibleException, IOException {
+
+        return verifierService.getTrustedVerifiers().getVerifiers().stream()
+                .map(WalletPresentationUtil::mapToVerifier)
+                .toList();
+    }
 
     @Override
     public String authorizePresentation(PresentationRequestDTO presentationRequestDTO) throws IOException {
@@ -152,30 +223,27 @@ public class PresentationServiceImpl implements PresentationService {
         }
 
         log.info("Posting VP to response_uri: {}", responseUri);
-        Map<String, Object> postResponse = null;
         try {
-            postResponse = restApiClient.postApi(
+            Map<String, Object> postResponse = restApiClient.postApi(
                     responseUri,
                     MediaType.APPLICATION_JSON,
                     postRequest,
                     Map.class
             );
+            log.info("Response from verifier after POST: {}", postResponse);
+            // Check for redirect_uri in response
+            String redirectUri = (String) postResponse.get("redirect_uri");
+            if (redirectUri != null && !redirectUri.isEmpty()) {
+                return redirectUri;
+            }
+            // Fallback behavior if redirect_uri is not provided
+            log.warn("No redirect_uri received from verifier in POST response. Falling back to response_uri.");
+            return responseUri + "?status=vp_sent";
+
         } catch (Exception e) {
             log.error("Exception while submitting the vp_token to the response_uri", e);
             throw new VPNotCreatedException(ErrorConstants.INTERNAL_SERVER_ERROR.getErrorCode(), ErrorConstants.INTERNAL_SERVER_ERROR.getErrorMessage());
         }
-
-        log.info("Response from verifier after POST: {}", postResponse);
-
-        // Check for redirect_uri in response
-        String redirectUri = (String) postResponse.get("redirect_uri");
-        if (redirectUri != null && !redirectUri.isEmpty()) {
-            return redirectUri;
-        }
-
-        // Fallback behavior if redirect_uri is not provided
-        log.warn("No redirect_uri received from verifier in POST response. Falling back to response_uri.");
-        return responseUri + "?status=vp_sent";
     }
 
     private VerifiablePresentationDTO constructVerifiablePresentationString(VCCredentialProperties vcCredentialProperties) {
@@ -274,4 +342,48 @@ public class PresentationServiceImpl implements PresentationService {
                 .inputDescriptors(inputDescriptors)
                 .build();
     }
+
+    @Override
+    public RejectedVerifierDTO rejectVerifier(String walletId, VerifiablePresentationSessionData vpSessionData, ErrorDTO payload) throws VPErrorNotSentException {
+        try {
+            NetworkResponse networkResponse = openID4VPService.sendErrorToVerifier(vpSessionData, payload);
+            log.info("Sent rejection to verifier. Response: {}", networkResponse);
+
+            String redirectUri = extractRedirectUriFromBody(networkResponse != null ? networkResponse.getBody() : null)
+                    .orElse("");
+
+            RejectedVerifierDTO rejectedVerifierDTO = new RejectedVerifierDTO();
+            rejectedVerifierDTO.setStatus(REJECTED_VERIFIER.getErrorCode());
+            rejectedVerifierDTO.setMessage(REJECTED_VERIFIER.getErrorMessage());
+            rejectedVerifierDTO.setRedirectUri(redirectUri);
+            return rejectedVerifierDTO;
+        } catch (ApiNotAccessibleException | IOException | URISyntaxException | IllegalArgumentException e ) {
+            log.error("Failed to send rejection to verifier for walletId: {} - Error: {}", walletId, e.getMessage(), e);
+            throw new VPErrorNotSentException("Failed to send rejection to verifier - " + e.getMessage());
+        }
+    }
+
+    private java.util.Optional<String> extractRedirectUriFromBody(String body) {
+        if (body == null || body.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        try {
+            var jsonNode = objectMapper.readTree(body);
+            if (jsonNode.has("redirect_uri") && jsonNode.get("redirect_uri").isTextual()) {
+                return java.util.Optional.of(jsonNode.get("redirect_uri").asText());
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> map = objectMapper.readValue(body, Map.class);
+            Object ru = map.get("redirect_uri");
+            if (ru instanceof String) {
+                return java.util.Optional.of((String) ru);
+            }
+        } catch (com.fasterxml.jackson.core.JsonProcessingException jpe) {
+            log.debug("Response body not valid JSON or missing redirect_uri: {}", jpe.getMessage());
+        } catch (Exception ex) {
+            log.warn("Unexpected error while parsing response body for redirect_uri: {}", ex.getMessage(), ex);
+        }
+        return java.util.Optional.empty();
+    }
+
 }

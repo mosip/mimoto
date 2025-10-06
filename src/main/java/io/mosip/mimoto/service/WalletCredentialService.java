@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service;
 
+import io.mosip.mimoto.dto.DecryptedCredentialDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
@@ -55,5 +56,7 @@ public interface WalletCredentialService {
             throws CredentialNotFoundException, CredentialProcessingException;
 
     void deleteCredential(String credentialId, String walletId) throws CredentialNotFoundException;
+
+    List<DecryptedCredentialDTO> getDecryptedCredentials(String walletId, String base64Key);
 
 }

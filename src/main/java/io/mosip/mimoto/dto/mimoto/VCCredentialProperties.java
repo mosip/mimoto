@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +19,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class VCCredentialProperties {
+public class VCCredentialProperties implements Serializable {
     private String issuer;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
