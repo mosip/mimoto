@@ -208,7 +208,7 @@ public class SessionManagerTest {
         // Assert
         @SuppressWarnings("unchecked")
         Map<String, VerifiablePresentationSessionData> updatedPresentations = 
-                (Map<String, VerifiablePresentationSessionData>) session.getAttribute(SessionKeys.PRESENTATIONS);
+                (Map<String, VerifiablePresentationSessionData>) session.getAttribute(SessionKeys.PRESENTATIONS + "::" + walletId);
         
         assertNotNull(updatedPresentations);
         assertTrue(updatedPresentations.containsKey(presentationId));
@@ -328,7 +328,7 @@ public class SessionManagerTest {
         // Assert
         @SuppressWarnings("unchecked")
         Map<String, VerifiablePresentationSessionData> updatedPresentations = 
-                (Map<String, VerifiablePresentationSessionData>) session.getAttribute(SessionKeys.PRESENTATIONS);
+                (Map<String, VerifiablePresentationSessionData>) session.getAttribute(SessionKeys.PRESENTATIONS + "::" + walletId);
         
         assertNotNull(updatedPresentations);
         VerifiablePresentationSessionData updatedSessionData = updatedPresentations.get(presentationId);
@@ -357,7 +357,7 @@ public class SessionManagerTest {
         // Assert
         @SuppressWarnings("unchecked")
         Map<String, VerifiablePresentationSessionData> updatedPresentations = 
-                (Map<String, VerifiablePresentationSessionData>) session.getAttribute(SessionKeys.PRESENTATIONS);
+                (Map<String, VerifiablePresentationSessionData>) session.getAttribute(SessionKeys.PRESENTATIONS + "::" + walletId);
         
         assertNotNull(updatedPresentations);
         VerifiablePresentationSessionData updatedSessionData = updatedPresentations.get(presentationId);

@@ -3,12 +3,10 @@ package io.mosip.mimoto.service.impl;
 import io.mosip.mimoto.constant.SigningAlgorithm;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.mimoto.*;
-import io.mosip.mimoto.model.ProofSigningKey;
-import io.mosip.mimoto.repository.ProofSigningKeyRepository;
 import io.mosip.mimoto.service.CredentialFormatHandler;
 import io.mosip.mimoto.service.CredentialFormatHandlerFactory;
 import io.mosip.mimoto.service.CredentialRequestService;
-import io.mosip.mimoto.util.EncryptionDecryptionUtil;
+import io.mosip.mimoto.service.KeyPairService;
 import io.mosip.mimoto.util.JwtGeneratorUtil;
 import io.mosip.mimoto.util.KeyGenerationUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
 import java.security.KeyPair;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,11 +22,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CredentialRequestServiceImpl implements CredentialRequestService {
 
-    @Autowired
-    private ProofSigningKeyRepository proofSigningKeyRepository;
-
-    @Autowired
-    private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
     @Value("${signing.algorithms.priority.order:ED25519,ES256K,ES256,RS256}")
     private String signingAlgorithmsPriorityOrder;
@@ -44,6 +36,9 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
 
     @Autowired
     private CredentialFormatHandlerFactory credentialFormatHandlerFactory;
+
+    @Autowired
+    private KeyPairService keyPairService;
 
     @Override
     public VCCredentialRequest buildRequest(IssuerDTO issuerDTO,
@@ -114,13 +109,7 @@ public class CredentialRequestServiceImpl implements CredentialRequestService {
                                           IssuerDTO issuerDTO,
                                           String cNonce) throws Exception {
 
-        Optional<ProofSigningKey> proofSigningKey = proofSigningKeyRepository.findByWalletIdAndAlgorithm(walletId, signingAlgorithm.name());
-        byte[] decodedWalletKey = Base64.getDecoder().decode(base64EncodedWalletKey);
-        SecretKey walletKey = EncryptionDecryptionUtil.bytesToSecretKey(decodedWalletKey);
-        byte[] publicKeyBytes = Base64.getDecoder().decode(proofSigningKey.get().getPublicKey());
-        byte[] privateKeyInBytes = encryptionDecryptionUtil.decryptWithAES(walletKey, proofSigningKey.get().getEncryptedSecretKey());
-        KeyPair keyPair = KeyGenerationUtil.getKeyPairFromDBStoredKeys(signingAlgorithm, publicKeyBytes, privateKeyInBytes);
-        log.debug("Fetched KeyPair for signing signingAlgorithm: {} from database", signingAlgorithm);
+        KeyPair keyPair = keyPairService.getKeyPairFromDB(walletId, base64EncodedWalletKey, signingAlgorithm);
 
         return JwtGeneratorUtil.generateJwt(signingAlgorithm,
                 wellKnownResponse.getCredentialIssuer(),

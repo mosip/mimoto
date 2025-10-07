@@ -4251,7 +4251,7 @@
                                     }, "Response when an error occurs while submitting a rejection": {
                                         "value": {
                                             "status": "error",
-                                            "message": "Failed to submit Verifiable Presentation."
+                                            "message": "Failed to submit Verifiable Presentation"
                                         }
                                     }
                                 }
