@@ -426,9 +426,197 @@
 						"url": "{{HOST}}/wallets/<walletId>"
 					},
 					"response": []
+				},
+				{
+					"name": "Add Trusted Verifier",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Cookie",
+								"value": "SESSION={{SESSION_TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"verifierId\": \"mock-client\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HOST}}/wallets/{{walletId}}/trusted-verifiers",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"wallets",
+								"{{walletId}}",
+								"trusted-verifiers"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
+		{
+			"name": "Wallet Presentations",
+			"item": [
+				{
+					"name": "Create Presentation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Store the response body in a variable",
+									"let presentationResponse = pm.response.json();",
+									"",
+									"// Parse the response body to extract the presentationId",
+									"let presentationId = presentationResponse.presentationId;",
+									"",
+									"pm.environment.set(\"presentationId\", presentationId);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"authorizationRequestUrl\": \"{{verifierAuthorizationRequestUrl}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HOST}}/wallets/{{walletId}}/presentations",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"wallets",
+								"{{walletId}}",
+								"presentations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Matching Credentials",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{HOST}}/wallets/{{walletId}}/presentations/{{presentationId}}/credentials",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"wallets",
+								"{{walletId}}",
+								"presentations",
+								"{{presentationId}}",
+								"credentials"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Submit Presentation",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"selectedCredentials\": [\"{{credentialId1}}\", \"{{credentialId2}}\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HOST}}/wallets/{{walletId}}/presentations/{{presentationId}}",
+							"host": [
+								"{{HOST}}"
+							],
+							"path": [
+								"wallets",
+								"{{walletId}}",
+								"presentations",
+								"{{presentationId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+			{
+				"name": "User Reject Verifier",
+				"request": {
+					"method": "PATCH",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Cookie",
+							"value": "SESSION={{SESSION_TOKEN}}",
+							"type": "text"
+						}
+					],
+					"body": {
+						"mode": "raw",
+						"raw": "{\n  \"errorCode\": \"access_denied\",\n  \"errorMessage\": \"User denied authorization to share credentials\"\n}",
+						"options": {
+							"raw": {
+								"language": "json"
+							}
+						}
+					},
+					"url": {
+						"raw": "{{HOST}}/wallets/{{walletId}}/presentations/{{presentationId}}",
+						"host": [
+							"{{HOST}}"
+						],
+						"path": [
+							"wallets",
+							"{{walletId}}",
+							"presentations",
+							"{{presentationId}}"
+						]
+					}
+				},
+				"response": []
+			},
 		{
 			"name": "Users",
 			"item": [

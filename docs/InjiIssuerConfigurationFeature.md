@@ -52,6 +52,7 @@ The caching mechanism used in this project is Caffeine. Cache timeout properties
 - `cache.credential-issuer.wellknown.expiry-time-in-min`: Cache expiry time in minutes for the issuer's well-known endpoint response.
 - `cache.issuers-config.expiry-time-in-min`: Cache expiry time in minutes for issuers configurations read from a config file.
 - `cache.credential-issuer.authserver-wellknown.expiry-time-in-min`: Cache expiry time in minutes for the authentication server's well-known endpoint response.
+- `cache.pre-registered-trusted-verifiers.expiry-time-in-min`: Cache expiry time in minutes for the pre-registered trusted verifiers list.
 - `cache.default.expiry-time-in-min`: Default cache expiry time in minutes for other cache types.
 
 ### Increasing Cache Time
@@ -66,6 +67,8 @@ cache.credential-issuer.wellknown.expiry-time-in-min = 120
 cache.issuers-config.expiry-time-in-min = 120
 # Cache expiry time in minutes for the authentication server's well-known endpoint response.
 cache.credential-issuer.authserver-wellknown.expiry-time-in-min = 120
+# Cache expiry time in minutes for the pre-registered trusted verifiers list.
+cache.pre-registered-trusted-verifiers.expiry-time-in-min=60
 # Default cache expiry time in minutes for other cache types.
 cache.default.expiry-time-in-min = 120
 ```
