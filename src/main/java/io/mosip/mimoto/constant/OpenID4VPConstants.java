@@ -58,16 +58,12 @@ public class OpenID4VPConstants {
     public static final String DID_KEY_FRAGMENT = "#0";
     
     // Response status constants
-    public static final String STATUS_SUCCESS = "SUCCESS";
-    public static final String STATUS_ERROR = "ERROR";
-    
-    // Database record status constants (lowercase)
-    public static final String DB_STATUS_SUCCESS = "success";
-    public static final String DB_STATUS_ERROR = "error";
+    public static final String STATUS_SUCCESS = "success";
+    public static final String STATUS_ERROR = "error";
     
     // Response message constants
-    public static final String MESSAGE_PRESENTATION_SUCCESS = "Presentation successfully submitted and shared with verifier";
-    public static final String MESSAGE_PRESENTATION_SHARE_FAILED = "Presentation submitted but failed to share with verifier";
+    public static final String MESSAGE_PRESENTATION_SUCCESS = "Presentation successfully submitted";
+    public static final String MESSAGE_PRESENTATION_SHARE_FAILED = "Failed to submit Verifiable Presentation";
     
     // Credential selection keys
     public static final String SELECTED_CREDENTIALS = "selectedCredentials";

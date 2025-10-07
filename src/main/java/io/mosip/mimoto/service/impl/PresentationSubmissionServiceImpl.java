@@ -26,7 +26,6 @@ import io.mosip.mimoto.service.KeyPairService;
 import io.mosip.mimoto.service.VerifierService;
 import io.mosip.mimoto.repository.VerifiablePresentationsRepository;
 import io.mosip.mimoto.util.UrlParameterUtils;
-import io.mosip.mimoto.util.WalletPresentationUtil;
 import io.mosip.mimoto.util.Base64Util;
 import io.mosip.openID4VP.OpenID4VP;
 import io.mosip.openID4VP.authorizationRequest.Verifier;
@@ -86,7 +85,8 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
         // Step 2: Create OpenID4VP instance and construct unsigned VP token
         OpenID4VP openID4VP = openID4VPService.create(presentationId);
         List<Verifier> preRegisteredVerifiers = verifierService.getTrustedVerifiers().getVerifiers().stream()
-                                                    .map(WalletPresentationUtil::mapToVerifier).toList();
+                                                    .map(verifierDTO -> new Verifier(verifierDTO.getClientId(), verifierDTO.getResponseUris(), verifierDTO.getJwksUri(), verifierDTO.getAllowUnsignedRequest()))
+                                                    .toList();
         openID4VP.authenticateVerifier(sessionData.getAuthorizationRequest(), preRegisteredVerifiers, sessionData.isVerifierClientPreregistered());
 
         // Use configurable signing algorithm
@@ -423,12 +423,12 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
             String presentationData = createPresentationData(request, sessionData);
 
             // Create the presentation record
-            VerifiablePresentation presentation = VerifiablePresentation.builder().id(presentationId).walletId(walletId).authRequest(authRequest).presentationData(presentationData).verifierId(verifierId).status(success ? OpenID4VPConstants.DB_STATUS_SUCCESS : OpenID4VPConstants.DB_STATUS_ERROR).requestedAt(requestedAt).consent(true).build();
+            VerifiablePresentation presentation = VerifiablePresentation.builder().id(presentationId).walletId(walletId).authRequest(authRequest).presentationData(presentationData).verifierId(verifierId).status(success ? OpenID4VPConstants.STATUS_SUCCESS : OpenID4VPConstants.STATUS_ERROR).requestedAt(requestedAt).consent(true).build();
 
             // Save to database
             verifiablePresentationsRepository.save(presentation);
 
-            log.info("Presentation record stored successfully - recordId: {}, walletId: {}, presentationId: {}, status: {}", presentationId, walletId, presentationId, success ? OpenID4VPConstants.DB_STATUS_SUCCESS : OpenID4VPConstants.DB_STATUS_ERROR);
+            log.info("Presentation record stored successfully - recordId: {}, walletId: {}, presentationId: {}, status: {}", presentationId, walletId, presentationId, success ? OpenID4VPConstants.STATUS_SUCCESS : OpenID4VPConstants.STATUS_ERROR);
 
         } catch (Exception e) {
             log.error("CRITICAL: Failed to store presentation record - walletId: {}, presentationId: {}, verifierId: {}, success: {}", walletId, presentationId, sessionData != null ? extractVerifierId(sessionData) : "unknown", success, e);

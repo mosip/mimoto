@@ -83,7 +83,7 @@ public class PresentationSubmissionServiceTest {
     @Before
     public void setUp() throws Exception {
         // Note: defaultSigningAlgorithmName is now a constant in the implementation
-        
+
         walletId = "8a3d2c1b-4e5f-6a7b-8c9d-0e1f2a3b4c5d";
         presentationId = "vp-presentation-" + System.currentTimeMillis();
         base64Key = "VGhpc0lzQVNhbXBsZUJhc2U2NEVuY29kZWRXYWxsZXRLZXlGb3JUZXN0aW5nUHVycG9zZXM=";
@@ -201,7 +201,7 @@ public class PresentationSubmissionServiceTest {
 
         ArgumentCaptor<VerifiablePresentation> captor = ArgumentCaptor.forClass(VerifiablePresentation.class);
         verify(verifiablePresentationsRepository).save(captor.capture());
-        assertEquals(OpenID4VPConstants.DB_STATUS_ERROR, captor.getValue().getStatus());
+        assertEquals(OpenID4VPConstants.STATUS_ERROR, captor.getValue().getStatus());
     }
 
 
@@ -346,7 +346,7 @@ public class PresentationSubmissionServiceTest {
         VerifiablePresentation saved = captor.getValue();
         assertEquals(presentationId, saved.getId());
         assertEquals(walletId, saved.getWalletId());
-        assertEquals(OpenID4VPConstants.DB_STATUS_SUCCESS, saved.getStatus());
+        assertEquals(OpenID4VPConstants.STATUS_SUCCESS, saved.getStatus());
         assertTrue(saved.getConsent());
         assertNotNull(saved.getAuthRequest());
         assertNotNull(saved.getPresentationData());
@@ -388,7 +388,7 @@ public class PresentationSubmissionServiceTest {
 
         verify(verifiablePresentationsRepository).save(captor.capture());
         VerifiablePresentation saved = captor.getValue();
-        assertEquals(OpenID4VPConstants.DB_STATUS_ERROR, saved.getStatus());
+        assertEquals(OpenID4VPConstants.STATUS_ERROR, saved.getStatus());
     }
 
 

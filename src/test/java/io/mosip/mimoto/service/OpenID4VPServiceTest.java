@@ -51,15 +51,8 @@ public class OpenID4VPServiceTest {
         mockVerifierDTO = VerifierDTO.builder()
                 .clientId("test-client-id")
                 .responseUris(List.of("https://example.com/response"))
-                .clientMetadata(Map.of(
-                        "client_name", "Test Verifier",
-                        "logo_uri", "https://example.com/logo.png",
-                        "vp_formats", Map.of(
-                                "ldp_vc", Map.of(
-                                        "proof_type", List.of("Ed25519Signature2020")
-                                )
-                        )
-                ))
+                .jwksUri("https://example.com/.well-known/jwks.json")
+                .allowUnsignedRequest(true)
                 .build();
 
         // Setup mock VerifiersDTO

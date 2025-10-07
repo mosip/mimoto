@@ -18,7 +18,6 @@ import io.mosip.mimoto.exception.VPErrorNotSentException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.VerifierService;
-import io.mosip.mimoto.util.WalletPresentationUtil;
 import io.mosip.openID4VP.OpenID4VP;
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
 import io.mosip.openID4VP.authorizationRequest.Verifier;
@@ -112,7 +111,7 @@ public class PresentationServiceImpl implements PresentationService {
     private List<Verifier> getPreRegisteredVerifiers() throws ApiNotAccessibleException, IOException {
 
         return verifierService.getTrustedVerifiers().getVerifiers().stream()
-                .map(WalletPresentationUtil::mapToVerifier)
+                .map(verifierDTO -> new Verifier(verifierDTO.getClientId(), verifierDTO.getResponseUris(), verifierDTO.getJwksUri(), verifierDTO.getAllowUnsignedRequest()))
                 .toList();
     }
 
