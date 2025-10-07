@@ -49,7 +49,10 @@ public enum ErrorConstants {
     DUPLICATE_VERIFIER("duplicate_verifier", "This verifier is already trusted."),
     ERROR_ADDING_TRUSTED_VERIFIER("error", "Failed to add trusted verifier"),
     REJECT_VERIFIER_EXCEPTION("error", "Failed to submit Verifiable Presentation."),
-    REJECTED_VERIFIER("success", "Presentation request rejected. An OpenID4VP error response has been sent to the verifier."),;
+    REJECTED_VERIFIER("success", "Presentation request rejected. An OpenID4VP error response has been sent to the verifier."),
+    JWT_SIGNING_ERROR("jwt_signing_error", "Failed to sign JWT token during presentation submission"),
+    KEY_GENERATION_ERROR("key_generation_error", "Failed to generate or retrieve cryptographic key"),
+    DECRYPTION_ERROR("decryption_error", "Failed to decrypt data");
 
     private final String errorCode;
     private final String errorMessage;

@@ -76,7 +76,7 @@ fileignoreconfig:
 - filename: src/test/java/io/mosip/mimoto/util/WalletValidatorTest.java
   checksum: 90dce7daa19f0eb9050194a3c77a88d449a83c337d9041bfdeb7bfded3bbd12c
 - filename: src/main/java/io/mosip/mimoto/exception/ErrorConstants.java
-  checksum: 85fd3ab5d0023e31611da20ad3376921180aa8b1e526d452803d9cecade07221
+  checksum: 3766d9f0726f6f527aeca768ac173a6ea56f7df979e16e04a5a20d5ebe98eaf6
 - filename: src/test/java/io/mosip/mimoto/util/TestUtilities.java
   checksum: 90d5310d9499acf98fd3d14230f70e8c378339ed46f384f02d170811a9b05dd5
 - filename: src/main/java/io/mosip/mimoto/controller/WalletCredentialsController.java
@@ -110,7 +110,7 @@ fileignoreconfig:
 - filename: src/main/java/io/mosip/mimoto/util/JwtGeneratorUtil.java
   checksum: c8533dd38f79879119ba2895afca75d60e9704d5a0df4a0e79bc3b9292bd0d38
 - filename: src/main/java/io/mosip/mimoto/service/impl/CredentialRequestServiceImpl.java
-  checksum: c2f731cdd77977bee05fade0751e2c7bac67d07b894a0746d984bbcaa82206f6
+  checksum: e149260fd0607baad68daa20d8d14b320951497e932e13e6e148045673cd6257
 - filename: src/test/java/io/mosip/mimoto/service/CredentialRequestServiceTest.java
   checksum: c669189f60e8fa5f0cb47d3c7cbb4ab34d87afbb6fb4de65b7eb06c691a41034
 - filename: src/main/java/io/mosip/mimoto/constant/SigningAlgorithm.java
@@ -134,19 +134,21 @@ fileignoreconfig:
 - filename: src/test/java/io/mosip/mimoto/service/VcSdJwtCredentialFormatHandlerTest.java
   checksum: e91aa11aa049453a3a7cd542386dbb813f5c868678f68d6bd71af92149e0d5db
 - filename: db_scripts/inji_mimoto/ddl.sql
-  checksum: 781b2f4be76597455a7768453a71d26ee3fe62e7c3fd5d3e7c490ac9122c8a5f
+  checksum: 51cd2efbe5220b995ae7cff7d70797b2c1bde0ce3325b70d62a31a1f4f41aa47
 - filename: db_scripts/inji_mimoto/ddl/mimoto-trusted-verifiers.sql
   checksum: bbb73e09a9669a8bf78a30b1a72ffdcdffee3f3eb92c5f39ffb5f6ae37e748d2
+- filename: db_scripts/inji_mimoto/ddl/mimoto-verifiable_presentations.sql
+  checksum: 61bba5988812b323c27f3a8fbdd4b802e09efe42772cbd4263a1bff814c74886
 - filename: src/main/java/io/mosip/mimoto/controller/OpenID4VPController.java
   checksum: eef302db396aa1d46d128ef7422d5aeb00c9173af32f61effdf31a0762ddff83
 - filename: src/main/java/io/mosip/mimoto/service/impl/VerifierServiceImpl.java
   checksum: 04d143cb4cb10b7dd4d66344c412681a4888983e232f85e4a0e56237e5248325
 - filename: src/main/java/io/mosip/mimoto/service/impl/SessionManager.java
-  checksum: f06c77aef3e5c6b4edf3c006124ff36cd1638f46b9763c1ef95bd51374422bbc
+  checksum: d88c08d3e5981286ace173e2b50ab6d87a55636b647a92829572a18999663e7c
 - filename: src/test/java/io/mosip/mimoto/controller/WalletPresentationsControllerTest.java
-  checksum: 559c0da4613e9eea58833a64bcbf47583eb2040f50771a99407a854a3ef1db52
+  checksum: 9e8d06af154c14fa40f16193aaee9c905fa5b03c99cb901a8a0b28b0b09121ba
 - filename: src/main/java/io/mosip/mimoto/controller/WalletPresentationsController.java
-  checksum: 8a1fb8a7bfa27d87633760565a8ab095a83dc94db0a654a89125b2eab32b6b15
+  checksum: 9e8d06af154c14fa40f16193aaee9c905fa5b03c99cb901a8a0b28b0b09121ba
 - filename: db_upgrade_script/inji_mimoto/sql/0.14.x_to_0.15.x_upgrade.sql
   checksum: 32d62be953744f5307f5807f434c1f98e040f9d85b2760d26605a65adbbd162f
 - filename: src/test/java/io/mosip/mimoto/service/VerifierServiceTest.java
@@ -170,7 +172,25 @@ fileignoreconfig:
 - filename: src/test/java/io/mosip/mimoto/service/CredentialMatchingServiceTest.java
   checksum: b1323c5b2d2209440ff2d4705d72d67cf93f3a790ef1a4bdeccc5c557686bd85
 - filename: src/test/java/io/mosip/mimoto/service/SessionManagerTest.java
-  checksum: 217f93d77186a5b9bf06c0f148d8c7f4ef9aaa334517108f573295c9a9e71c20
+  checksum: f541358ce3b674a8865592b8c899c2dac484730b8790f9a99b6a79a5b7953c9a
 - filename: src/main/java/io/mosip/mimoto/constant/OpenID4VPConstants.java
   checksum: 81ca55276277c00a7121ecc70444202bd30a8a7f0c88b40799ab1106f5bbf0e5
+- filename: src/main/java/io/mosip/mimoto/service/KeyPairService.java
+  checksum: e2c4dbcdcf131b3026ba47cf8f7dddbd2cd71259888dad9160afd86b9aa7ea6d
+- filename: src/main/java/io/mosip/mimoto/service/PresentationSubmissionService.java
+  checksum: f4cc9853d567931ae629ccf84568f148469e2853e477ea366e79585b9330a04d
+- filename: src/main/java/io/mosip/mimoto/service/impl/KeyPairServiceImpl.java
+  checksum: f55561ba31c6710904b53502fde71564406e0f5102b8234f07e8789d7a313230
+- filename: src/main/java/io/mosip/mimoto/service/impl/PresentationSubmissionServiceImpl.java
+  checksum: 62fe8f55d40078eb88ca4bbf0f6b453f4be47a37e048796f08d94e9cd0aed1fb
+- filename: src/test/java/io/mosip/mimoto/util/Base64UtilTest.java
+  checksum: 700663d179554cec53962c6ed12957411c5960c32bc0b8d799f79c1b92191c33
+- filename: src/test/java/io/mosip/mimoto/service/PresentationSubmissionServiceTest.java
+  checksum: 42154b3c9b9b392ad530d6edc5bb58bfa46a8f55ff744e50ab8ab1880a325bee
+- filename: src/test/java/io/mosip/mimoto/service/KeyPairServiceTest.java
+  checksum: fbc153d7259000e237268025c0bef540fb1f76259901d2cc633adf81e251a450
+- filename: src/main/java/io/mosip/mimoto/service/impl/PresentationActionServiceImpl.java
+  checksum: 13f3da2b60a6319b1f48d5a98a726f5cad571865762626a06b432061097dafe3
+- filename: src/test/java/io/mosip/mimoto/service/PresentationActionServiceTest.java
+  checksum: f79257d43d522d4076e78fbe802c2e29184e8ff3a3347016578ffca56015a696
 version: ""
