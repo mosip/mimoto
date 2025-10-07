@@ -193,4 +193,10 @@ fileignoreconfig:
   checksum: 13f3da2b60a6319b1f48d5a98a726f5cad571865762626a06b432061097dafe3
 - filename: src/test/java/io/mosip/mimoto/service/PresentationActionServiceTest.java
   checksum: f79257d43d522d4076e78fbe802c2e29184e8ff3a3347016578ffca56015a696
+- filename: db_upgrade_script/inji_mimoto/sql/0.19.1_to_0.20.0_rollback.sql
+  checksum: cbb93a2eadd7e1e1ee2ddf8d34466d20a835f9a63b598e5c9d1a1b425106a1a9
+- filename: db_upgrade_script/inji_mimoto/sql/0.19.1_to_0.20.0_upgrade.sql
+  checksum: a29f09c5c830e25f8535dc03e37fb763e986c198a2ab9ed39cbf7d5a839a831e
+- filename: docker-compose/mimoto_init.sql
+  checksum: 56b62e7614c1a1dc5cb6ec29344c44e44b2dea2fb00a947e64633be4428a1ef1
 version: ""

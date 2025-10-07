@@ -10,8 +10,12 @@
 -- Created Date	: 11-sep-2025
 --
 -- Modified Date        Modified By         Comments / Remarks
+-- 07-Oct-2025          Durgesh Konga       Added verifiable_presentations table to make it backward compatibility
 -- ------------------------------------------------------------------------------------------
 -- ------------------------------------
 
 -- Drop table for trusted_verifiers
 DROP TABLE trusted_verifiers;
+
+-- Drop table for verifiable_presentations
+DROP TABLE verifiable_presentations;
