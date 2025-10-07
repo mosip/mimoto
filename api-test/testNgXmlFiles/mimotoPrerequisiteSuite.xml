@@ -15,6 +15,15 @@
 			<class name="io.mosip.testrig.apirig.mimoto.testscripts.AddIdentity" />
 		</classes>
 	</test>
+	<test name="GenerateVID">
+		<parameter name="ymlFile"
+			value="mimoto/GenerateVID/createGenerateVID.yml" />
+		<parameter name="idKeyName" value="vid" />
+		<classes>
+			<class
+				name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithAutogenIdWithOtpGenerate" />
+		</classes>
+	</test>
 	<test name="CreateVID">
 		<parameter name="ymlFile" value="mimoto/CreateVID/CreateVid.yml" />
 		<parameter name="idKeyName" value="VID" />
