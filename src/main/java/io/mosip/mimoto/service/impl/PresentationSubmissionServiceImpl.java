@@ -1,5 +1,6 @@
 package io.mosip.mimoto.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.jwk.JWK;
@@ -319,38 +320,29 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
     /**
      * Constructs unsigned VP token using the OpenID4VP JAR
      */
-    private Map<FormatType, UnsignedVPToken> constructUnsignedVPToken(OpenID4VP openID4VP, List<DecryptedCredentialDTO> credentials, JWK jwk) throws IOException {
+    private Map<FormatType, UnsignedVPToken> constructUnsignedVPToken(OpenID4VP openID4VP, List<DecryptedCredentialDTO> credentials, JWK jwk) throws JsonProcessingException {
 
         log.debug("Constructing unsigned VP token for {} credentials", credentials.size());
 
-        try {
-            Map<String, Map<FormatType, List<Object>>> verifiableCredentials = convertCredentialsToJarFormat(credentials);
-            String holderId = resolveHolderId(jwk);
-            return openID4VP.constructUnsignedVPToken(verifiableCredentials, holderId, DEFAULT_SIGNATURE_SUITE);
-        } catch (Exception e) {
-            log.error("Failed to construct unsigned VP token", e);
-            throw new IOException("Failed to construct VP token: " + e.getMessage(), e);
-        }
+        Map<String, Map<FormatType, List<Object>>> verifiableCredentials = convertCredentialsToJarFormat(credentials);
+        String holderId = resolveHolderId(jwk);
+        return openID4VP.constructUnsignedVPToken(verifiableCredentials, holderId, DEFAULT_SIGNATURE_SUITE);
+        
     }
 
     /**
      * Resolves holderId from the user's public key using JWK format
      */
-    private String resolveHolderId(JWK jwk) throws IOException {
-        try {
-            // Convert JWK to JSON string
-            String jwkJson = objectMapper.writeValueAsString(jwk.toPublicJWK().toJSONObject());
+    private String resolveHolderId(JWK jwk) throws JsonProcessingException{
+    
+        // Convert JWK to JSON string
+        String jwkJson = objectMapper.writeValueAsString(jwk.toPublicJWK().toJSONObject());
 
-            // Base64URL encode the JWK JSON
-            String base64UrlEncodedJwk = Base64Util.encode(jwkJson);
+        // Base64URL encode the JWK JSON
+        String base64UrlEncodedJwk = Base64Util.encode(jwkJson);
 
-            // Construct holderId: did:jwk:{base64url(jwk)}#0
-            return OpenID4VPConstants.DID_JWK_PREFIX + base64UrlEncodedJwk + OpenID4VPConstants.DID_KEY_FRAGMENT;
-
-        } catch (Exception e) {
-            log.error("Failed to resolve holderId from public key", e);
-            throw new IOException("Failed to resolve holderId: " + e.getMessage(), e);
-        }
+        // Construct holderId: did:jwk:{base64url(jwk)}#0
+        return OpenID4VPConstants.DID_JWK_PREFIX + base64UrlEncodedJwk + OpenID4VPConstants.DID_KEY_FRAGMENT;
     }
 
     /**
@@ -439,10 +431,7 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
             log.info("Presentation record stored successfully - recordId: {}, walletId: {}, presentationId: {}, status: {}", presentationId, walletId, presentationId, success ? OpenID4VPConstants.DB_STATUS_SUCCESS : OpenID4VPConstants.DB_STATUS_ERROR);
 
         } catch (Exception e) {
-            // Critical failure - log with high severity and include all context
             log.error("CRITICAL: Failed to store presentation record - walletId: {}, presentationId: {}, verifierId: {}, success: {}", walletId, presentationId, sessionData != null ? extractVerifierId(sessionData) : "unknown", success, e);
-            // Note: Consider adding metrics/alerting here for production monitoring
-            // Example: metrics.incrementCounter("presentation.storage.failures");
         }
     }
 
