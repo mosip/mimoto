@@ -334,7 +334,7 @@ public class OpenID4VPServiceTest {
         NetworkResponse mockResponse = mock(NetworkResponse.class);
 
         when(mockOpenID4VP.authenticateVerifier(anyString(), anyList(), anyBoolean())).thenReturn(mockAuthorizationRequest);
-        when(mockOpenID4VP.sendErrorToVerifier(any())).thenReturn(mockResponse);
+        when(mockOpenID4VP.sendErrorResponseToVerifier(any())).thenReturn(mockResponse);
 
         OpenID4VPService spyService = spy(openID4VPService);
         doReturn(mockOpenID4VP).when(spyService).create(anyString());
@@ -355,7 +355,7 @@ public class OpenID4VPServiceTest {
         assertEquals(mockResponse, response);
         verify(verifierService).getTrustedVerifiers();
         verify(mockOpenID4VP).authenticateVerifier(eq("authorization-request"), anyList(), eq(true));
-        verify(mockOpenID4VP).sendErrorToVerifier(any());
+        verify(mockOpenID4VP).sendErrorResponseToVerifier(any());
     }
 
     @Test
