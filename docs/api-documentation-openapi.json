@@ -4028,6 +4028,578 @@
                 }
             }
         },
+        "/wallets/{walletId}/presentations": {
+            "post": {
+                "tags": [
+                    "Wallet Presentations"
+                ],
+                "summary": "Processes Verifiable Presentation Authorization Request and provides details about the verifier and presentation.",
+                "description": "This API is secured using session-based authentication. Upon receiving a request, the session is first retrieved using the session ID extracted from the Cookie header to authenticate the user. Once authenticated, the API processes the received Verifiable Presentation Authorization Request from the Verifier for a specific wallet. It validates the session, verifies the authenticity of the request, and checks if the Verifier is pre-registered and trusted by the wallet. If all validations pass, the API returns a response containing the presentation details; otherwise, an appropriate error response is returned.",
+                "operationId": "processVPAuthorizationRequest",
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unique identifier of the Wallet."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifiablePresentationAuthorizationRequest"
+                            },
+                            "examples": {
+                                "Verifier Verifiable Presentation Authorization Request": {
+                                    "value": {
+                                        "authorizationRequestUrl": "client_id=mock-client&presentation_definition_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fpresentation_definition_uri&response_type=vp_token&response_mode=direct_post&nonce=NHgLcWlae745DpfJbUyfdg%253D%253D&response_uri=https%3A%2F%2Finji-verify.collab.mosip.net%2Fverifier%2Fvp-response&state=pcmxBfvdPEcjFObgt%252BLekA%253D%253D"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successfully processed the Verifiable Presentation Authorization Request.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VerifiablePresentationResponseDTO"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "presentationId": "123e4567-e89b-12d3-a456-426614174000",
+                                            "verifier": {
+                                                "id": "mock-client",
+                                                "name": "Requester name",
+                                                "logo": "https://api.collab.mosip.net/inji/verifier-logo.png",
+                                                "isTrusted": true,
+                                                "isPreregisteredWithWallet": true,
+                                                "redirectUri": "https://injiverify.collab.mosip.net/redirect"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing required parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "response_type is missing in Authorization request": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Missing Input: response_type param is required"
+                                        }
+                                    },
+                                    "Invalid Wallet ID": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                        }
+                                    },
+                                    "Wallet ID not found in session": {
+                                        "value": {
+                                            "errorCode": "wallet_locked",
+                                            "errorMessage": "Wallet is locked"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized user performing the Verifiable Presentation flow",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User ID is not present in session": {
+                                        "value": {
+                                            "errorCode": "unauthorized",
+                                            "errorMessage": "User ID not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Failed to fetch pre-registered trusted verifiers": {
+                                        "value": {
+                                            "errorCode": "RESIDENT-APP-026",
+                                            "errorMessage": "Api not accessible failure"
+                                        }
+                                    },
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ]
+            }
+        },
+        "/wallets/{walletId}/presentations/{presentationId}": {
+            "patch": {
+                "tags": [
+                    "Wallet Presentations"
+                ],
+                "summary": "Handles user submission or rejection of a presentation",
+                "description": "This API allows users to accept or reject a presentation request by selecting specific credentials. Upon acceptance, the system fetches the selected credentials, constructs and signs a VP token, shares it with the verifier, and stores the presentation record in the database.",
+                "operationId": "handlePresentationSubmission",
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unique identifier of the Wallet."
+                    },
+                    {
+                        "name": "presentationId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unique identifier of the Presentation."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    { "$ref": "#/components/schemas/PresentationSubmissionRequestDTO" },
+                                    { "$ref": "#/components/schemas/Error" }
+                                ]
+                            },
+                            "examples": {
+                                "Presentation Submission Request": {
+                                    "value": {
+                                        "selectedCredentials": ["cred-123", "cred-456"]
+                                    }
+                                },
+                                "Rejection payload": {
+                                    "value": {
+                                        "errorCode": "access_denied",
+                                        "errorMessage": "User denied authorization to share credentials"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successfully processed the presentation submission.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        { "$ref": "#/components/schemas/PresentationSubmissionResponseDTO" },
+                                        { "$ref": "#/components/schemas/RejectedVerifierDTO" }
+                                    ]
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "presentationId": "123e4567-e89b-12d3-a456-426614174000",
+                                            "status": "success",
+                                            "message": "Presentation submitted successfully"
+                                        }
+                                    }, "Response when successfully rejected": {
+                                        "value": {
+                                            "status": "success",
+                                            "message": "Presentation request rejected. An OpenID4VP error response has been sent to the verifier.",
+                                            "redirectUri": "https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee"
+                                        }
+                                    }, "Response when an error occurs while submitting a rejection": {
+                                        "value": {
+                                            "status": "error",
+                                            "message": "Failed to submit Verifiable Presentation"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing required parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Invalid Wallet ID": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                        }
+                                    },
+                                    "Wallet ID not found in session": {
+                                        "value": {
+                                            "errorCode": "wallet_locked",
+                                            "errorMessage": "Wallet is locked"
+                                        }
+                                    },
+                                    "Credential not found": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Credential not found: cred-123"
+                                        }
+                                    },
+                                    "presentationId not found in session": {
+                                        "value": { 
+                                            "errorCode": "invalid_request", 
+                                            "errorMessage": "presentationId not found in session" 
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized user performing the presentation submission",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User ID is not present in session": {
+                                        "value": {
+                                            "errorCode": "unauthorized",
+                                            "errorMessage": "User ID not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Failed to process presentation submission": {
+                                        "value": {
+                                            "errorCode": "wallet_vp_submission_error",
+                                            "errorMessage": "Failed to process presentation submission: Error message"
+                                        }
+                                    },
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    },
+                                    "Failed to reject verifier": {
+                                        "value": { 
+                                            "errorCode": "error", 
+                                            "errorMessage": "Unable to process reject verifier request" 
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ]
+            }
+        },
+        "/wallets/{walletId}/presentations/{presentationId}/credentials": {
+            "get": {
+                "tags": [
+                    "Wallet Presentations"
+                ],
+                "summary": "Get matching credentials for a presentation request",
+                "description": "This API retrieves credentials from the wallet that match the presentation definition requirements. It returns available credentials that can satisfy the presentation request along with any missing claims that are required but not available.",
+                "operationId": "getMatchingCredentials",
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unique identifier of the Wallet."
+                    },
+                    {
+                        "name": "presentationId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unique identifier of the Presentation."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved matching credentials.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MatchingCredentialsResponseDTO"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "availableCredentials": [
+                                                {
+                                                    "credentialId": "cred-123",
+                                                    "credentialTypeDisplayName": "Mock Verifiable Credential (SD-JWT)",
+                                                    "credentialTypeLogo": "https://mosip.github.io/inji-config/logos/mosipid-logo.png",
+                                                    "format": "ldp_vc"
+                                                }
+                                            ],
+                                            "missingClaims": ["$.type"]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing required parameters.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Invalid Wallet ID": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                        }
+                                    },
+                                    "Presentation not found": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Presentation not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized user performing the Verifiable Presentation flow",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "User ID is not present in session": {
+                                        "value": {
+                                            "errorCode": "unauthorized",
+                                            "errorMessage": "User ID not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ]
+            }
+        },
+        "/wallets/{walletId}/trusted-verifiers": {
+            "post": {
+                "tags": [
+                    "Wallet Trusted Verifiers"
+                ],
+                "summary": "Add a trusted verifier to a wallet",
+                "description": "Adds a trusted verifier for the specified wallet after validating the session and request. Requires an active session; the path walletId must match the wallet in session.",
+                "operationId": "addTrustedVerifier",
+                "security": [
+                    {
+                        "SessionAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "walletId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The unique identifier of the wallet."
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TrustedVerifierRequest"
+                            },
+                            "examples": {
+                                "Trusted Verifier Request": {
+                                    "value": {
+                                        "verifierId": "mock-client"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Trusted verifier created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TrustedVerifierResponseDTO"
+                                },
+                                "examples": {
+                                    "Success response": {
+                                        "value": {
+                                            "id": "uuid"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing required parameters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Missing verifierId": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Missing Input: verifierId is required"
+                                        }
+                                    },
+                                    "Invalid Wallet ID": {
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Invalid Wallet ID. Session and request Wallet ID do not match"
+                                        }
+                                    },
+                                    "Duplicate verifier": {
+                                        "value": {
+                                            "errorCode": "duplicate_verifier",
+                                            "errorMessage": "Verifier is already trusted for this wallet"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - session invalid or missing user",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Unauthorized": {
+                                        "value": {
+                                            "errorCode": "unauthorized",
+                                            "errorMessage": "User ID not found in session"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                },
+                                "examples": {
+                                    "Unexpected Server Error": {
+                                        "value": {
+                                            "errorCode": "internal_server_error",
+                                            "errorMessage": "We are unable to process request now"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/auth/{provider}/token-login": {
             "post": {
                 "tags": ["OAuth2 Authentication"],
@@ -4302,6 +4874,103 @@
                     }
                 }
             },
+            "VerifiablePresentationAuthorizationRequest": {
+                "type": "object",
+                "properties": {
+                    "authorizationRequestUrl": {
+                        "type": "string",
+                        "description": "The complete authorization request URL received from the Verifier"
+                    }
+                },
+                "required": [
+                    "authorizationRequestUrl"
+                ]
+            },
+            "VerifiablePresentationResponseDTO": {
+                "type": "object",
+                "properties": {
+                    "presentationId": {
+                        "type": "string",
+                        "description": "Unique identifier for the verifiable presentation request"
+                    },
+                    "verifier": {
+                        "$ref": "#/components/schemas/VerifiablePresentationVerifierDTO"
+                    }
+                }
+            },
+            "VerifiablePresentationVerifierDTO": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "The client ID of the verifier"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the verifier"
+                    },
+                    "logo": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "The logo URI of the verifier"
+                    },
+                    "isTrusted": {
+                        "type": "boolean",
+                        "description": "Indicates if the verifier is trusted by the wallet"
+                    },
+                    "isPreregisteredWithWallet": {
+                        "type": "boolean",
+                        "description": "Indicates if the verifier is pre-registered with the wallet"
+                    },
+                    "redirectUri": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "The redirect URI provided in the authorization request to redirect the User back to Verifier"
+                    }
+                }
+            },
+            "PresentationSubmissionRequestDTO": {
+                "type": "object",
+                "properties": {
+                    "selectedCredentials": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "List of selected credential IDs for presentation",
+                        "example": ["cred-123", "cred-456"]
+                    }
+                },
+                "required": [
+                    "selectedCredentials"
+                ]
+            },
+            "PresentationSubmissionResponseDTO": {
+                "type": "object",
+                "properties": {
+                    "presentationId": {
+                        "type": "string",
+                        "description": "Unique identifier for the presentation",
+                        "example": "123e4567-e89b-12d3-a456-426614174000"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Status of the presentation submission",
+                        "example": "success",
+                        "enum": ["success", "error"]
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "Response message",
+                        "example": "Presentation submitted successfully"
+                    }
+                },
+                "required": [
+                    "presentationId",
+                    "status",
+                    "message"
+                ]
+            },
             "IssuerConfigurationSuccessResponse": {
                 "type": "object",
                 "properties": {
@@ -4563,6 +5232,82 @@
                         "type": "string"
                     }
                 }
+            },
+            "MatchingCredentialsResponseDTO": {
+                "type": "object",
+                "properties": {
+                    "availableCredentials": {
+                        "type": "array",
+                        "description": "List of credentials that match the presentation definition",
+                        "items": {
+                            "$ref": "#/components/schemas/AvailableCredentialDTO"
+                        }
+                    },
+                    "missingClaims": {
+                        "type": "array",
+                        "description": "List of claims that are required but not available in any credential",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "AvailableCredentialDTO": {
+                "type": "object",
+                "properties": {
+                    "credentialId": {
+                        "type": "string",
+                        "description": "Unique identifier of the credential"
+                    },
+                    "credentialTypeDisplayName": {
+                        "type": "string",
+                        "description": "Display name of the credential type"
+                    },
+                    "credentialTypeLogo": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Logo URL for the credential type"
+                    },
+                    "format": {
+                        "type": "string",
+                        "description": "Format of the credential (e.g., ldp_vc, vc+sd-jwt, dc+sd-jwt)",
+                        "example": "ldp_vc"
+                    }
+                }
+            },
+            "TrustedVerifierRequest": {
+                "type": "object",
+                "properties": {
+                    "verifierId": {
+                        "type": "string",
+                        "description": "Unique client id of the verifier"
+                    }
+                },
+                "required": [
+                    "verifierId"
+                ]
+            },
+            "TrustedVerifierResponseDTO": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "UUID of the trusted verifier"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            }
+            ,
+            "RejectedVerifierDTO": {
+                "type": "object",
+                "properties": {
+                    "status": { "type": "string", "description": "Status of the rejection request (for example success)" },
+                    "message": { "type": "string", "description": "Human readable message describing the result" },
+                    "redirectUri": { "type": "string", "description": "Redirect URI provided to the verifier" }
+                },
+                "required": [ "status", "message", "redirectUri" ]
             }
         }
     },

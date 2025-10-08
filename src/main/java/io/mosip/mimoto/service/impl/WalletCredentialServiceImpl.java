@@ -2,6 +2,7 @@ package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mosip.mimoto.dto.DecryptedCredentialDTO;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
@@ -28,8 +29,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.lang.IllegalArgumentException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -214,4 +217,49 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
             throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to generate credential PDF");
         }
     }
+
+    @Override
+    public List<DecryptedCredentialDTO> getDecryptedCredentials(String walletId, String base64Key) {
+        List<VerifiableCredential> walletCredentials = repository.findByWalletIdOrderByCreatedAtDesc(walletId);
+        List<DecryptedCredentialDTO> decryptedCredentials = walletCredentials.stream().map(credential -> {
+                    try {
+                        VCCredentialResponse decryptedCredential = decryptAndParseCredential(credential, base64Key);
+                        return Optional.of(DecryptedCredentialDTO.builder()
+                                .id(credential.getId())
+                                .walletId(credential.getWalletId())
+                                .credential(decryptedCredential)
+                                .credentialMetadata(credential.getCredentialMetadata())
+                                .createdAt(credential.getCreatedAt())
+                                .updatedAt(credential.getUpdatedAt())
+                                .build());
+                    } catch (IOException | IllegalArgumentException | DecryptionException e) {
+                        log.warn("Failed to decrypt credential {}: {}", credential.getId(), e.getMessage());
+                        return Optional.<DecryptedCredentialDTO>empty();
+                    }
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+        log.info("Successfully decrypted {} out of {} credentials", decryptedCredentials.size(), walletCredentials.size());
+        return decryptedCredentials;
+    }
+
+    private VCCredentialResponse decryptAndParseCredential(VerifiableCredential credential, String base64Key) throws IOException, IllegalArgumentException, DecryptionException {
+        if (credential == null) {
+            throw new IllegalArgumentException("Credential cannot be null");
+        }
+
+        if (credential.getCredential() == null) {
+            throw new IllegalArgumentException("Credential data cannot be null");
+        }
+
+        String decryptedCredential = encryptionDecryptionUtil.decryptCredential(credential.getCredential(), base64Key);
+        if (decryptedCredential == null || decryptedCredential.trim().isEmpty()) {
+            throw new IllegalArgumentException("Failed to decrypt credential or decrypted data is empty");
+        }
+
+        return objectMapper.readValue(decryptedCredential, VCCredentialResponse.class);
+    }
+
 }

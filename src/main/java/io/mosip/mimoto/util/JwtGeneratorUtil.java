@@ -60,7 +60,7 @@ public class JwtGeneratorUtil {
     }
 
 
-    private static JWK generateJwk(SigningAlgorithm algorithm, KeyPair keyPair) {
+    public static JWK generateJwk(SigningAlgorithm algorithm, KeyPair keyPair) {
         PublicKey publicKey = keyPair.getPublic();
         PrivateKey privateKey = keyPair.getPrivate();
 
@@ -99,7 +99,7 @@ public class JwtGeneratorUtil {
         };
     }
 
-    private static JWSSigner createSigner(SigningAlgorithm algorithm, JWK jwk) throws JOSEException {
+    public static JWSSigner createSigner(SigningAlgorithm algorithm, JWK jwk) throws JOSEException {
         return switch (algorithm) {
             case RS256 -> {
                 RSASSASigner signer = new RSASSASigner((RSAKey) jwk);

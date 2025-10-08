@@ -44,6 +44,9 @@ public class CredentialRequestServiceTest {
     @MockBean
     private CredentialFormatHandlerFactory credentialFormatHandlerFactory;
 
+    @MockBean
+    private KeyPairService keyPairService;
+
     private final MockedStatic<KeyGenerationUtil> keyGenerationUtilMockedStatic = Mockito.mockStatic(KeyGenerationUtil.class, Mockito.withSettings().defaultAnswer(Mockito.CALLS_REAL_METHODS));
 
     IssuerDTO issuerDTO;
