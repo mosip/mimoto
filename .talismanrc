@@ -193,7 +193,7 @@ fileignoreconfig:
 - filename: db_upgrade_script/inji_mimoto/sql/0.19.1_to_0.20.0_rollback.sql
   checksum: cbb93a2eadd7e1e1ee2ddf8d34466d20a835f9a63b598e5c9d1a1b425106a1a9
 - filename: db_upgrade_script/inji_mimoto/sql/0.19.1_to_0.20.0_upgrade.sql
-  checksum: a29f09c5c830e25f8535dc03e37fb763e986c198a2ab9ed39cbf7d5a839a831e
+  checksum: fabe688963b37c6b479b289f9e988107dc76358a1ea57b9aeee150c02bc4c9a2
 - filename: docker-compose/mimoto_init.sql
-  checksum: 56b62e7614c1a1dc5cb6ec29344c44e44b2dea2fb00a947e64633be4428a1ef1
+  checksum: 14ac202ae6b04f89b61708ea81bbc59a1819ad164800d0d016c1f6051e68a0d6
 version: ""

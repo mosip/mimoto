@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS verifiable_presentations (
     status character varying(32) NOT NULL,
     requested_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT now(),
-    consent BOOLEAN NOT NULL DEFAULT TRUE,
+    consent BOOLEAN NOT NULL DEFAULT TRUE
 );
 COMMENT ON TABLE verifiable_presentations IS 'Verifiable Presentations: Records of presentations shared with verifiers';
 COMMENT ON COLUMN verifiable_presentations.id IS 'Primary Key: Unique identifier for the presentation (presentationId)';

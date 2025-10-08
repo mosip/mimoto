@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS verifiable_presentations (
     status character varying(32) NOT NULL,
     requested_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT now(),
-    consent BOOLEAN NOT NULL DEFAULT TRUE,
+    consent BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 INSERT INTO mimoto.key_policy_def(APP_ID,KEY_VALIDITY_DURATION,PRE_EXPIRE_DAYS,ACCESS_ALLOWED,IS_ACTIVE,CR_BY,CR_DTIMES) VALUES('ROOT', 2920, 1125, 'NA', true, 'mosipadmin', now());
