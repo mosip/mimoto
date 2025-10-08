@@ -82,7 +82,7 @@ public class OpenID4VPService {
         AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(sessionData.getAuthorizationRequest(), preRegisteredVerifiers, sessionData.isVerifierClientPreregistered());
 
         OpenID4VPExceptions.AccessDenied accessDeniedException = new OpenID4VPExceptions.AccessDenied(payload.getErrorMessage(), "OpenID4VPService");
-        NetworkResponse networkResponse = openID4VP.sendErrorToVerifier(accessDeniedException);
+        NetworkResponse networkResponse = openID4VP.sendErrorResponseToVerifier(accessDeniedException);
         log.info("Sent rejection to verifier for presentationId {}. Response: {}", sessionData.getPresentationId(), networkResponse);
         return networkResponse;
     }
