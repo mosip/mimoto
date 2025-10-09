@@ -4232,26 +4232,28 @@
                                 "schema": {
                                     "oneOf": [
                                         { "$ref": "#/components/schemas/PresentationSubmissionResponseDTO" },
-                                        { "$ref": "#/components/schemas/RejectedVerifierDTO" }
+                                        { "$ref": "#/components/schemas/SubmitPresentationResponseDTO" }
                                     ]
                                 },
                                 "examples": {
                                     "Success response": {
                                         "value": {
-                                            "presentationId": "123e4567-e89b-12d3-a456-426614174000",
                                             "status": "success",
-                                            "message": "Presentation submitted successfully"
+                                            "redirectUri": "https://verifier.example.com/callback?state=af0ifjsldkj",
+                                            "message": "Presentation successfully submitted"
                                         }
-                                    }, "Response when successfully rejected": {
+                                    },
+                                    "Response when successfully rejected": {
                                         "value": {
                                             "status": "success",
-                                            "message": "Presentation request rejected. An OpenID4VP error response has been sent to the verifier.",
-                                            "redirectUri": "https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee"
+                                            "redirectUri": "https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee",
+                                            "message": "Presentation request rejected. An OpenID4VP error response has been sent to the verifier."
                                         }
-                                    }, "Response when an error occurs while submitting a rejection": {
+                                    },
+                                    "Response when an error occurs while submitting a rejection": {
                                         "value": {
                                             "status": "error",
-                                            "message": "Failed to submit Verifiable Presentation"
+                                            "message": "Failed to submit Verifiable Presentation."
                                         }
                                     }
                                 }
@@ -4320,6 +4322,24 @@
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
+                                    "JWT signing error": {
+                                        "value": {
+                                            "errorCode": "JWT_SIGNING_ERROR",
+                                            "errorMessage": "Failed to sign JWT token during presentation submission"
+                                        }
+                                    },
+                                    "Key generation error": {
+                                        "value": {
+                                            "errorCode": "KEY_GENERATION_ERROR",
+                                            "errorMessage": "Failed to generate or retrieve key pair for signing"
+                                        }
+                                    },
+                                    "Decryption error": {
+                                        "value": {
+                                            "errorCode": "DECRYPTION_ERROR",
+                                            "errorMessage": "Failed to decrypt private key for signing"
+                                        }
+                                    },
                                     "Failed to process presentation submission": {
                                         "value": {
                                             "errorCode": "wallet_vp_submission_error",
@@ -4948,25 +4968,25 @@
             "PresentationSubmissionResponseDTO": {
                 "type": "object",
                 "properties": {
-                    "presentationId": {
-                        "type": "string",
-                        "description": "Unique identifier for the presentation",
-                        "example": "123e4567-e89b-12d3-a456-426614174000"
-                    },
                     "status": {
                         "type": "string",
                         "description": "Status of the presentation submission",
-                        "example": "success",
-                        "enum": ["success", "error"]
+                        "example": "SUCCESS",
+                        "enum": ["SUCCESS", "ERROR"]
+                    },
+                    "redirectUri": {
+                        "type": "string",
+                        "description": "Redirection URI to which the user-agent should be redirected after submission",
+                        "example": "https://verifier.example.com/callback?state=af0ifjsldkj",
+                        "nullable": true
                     },
                     "message": {
                         "type": "string",
-                        "description": "Response message",
-                        "example": "Presentation submitted successfully"
+                        "description": "Message indicating the result of the submission",
+                        "example": "Presentation successfully submitted and shared with verifier"
                     }
                 },
                 "required": [
-                    "presentationId",
                     "status",
                     "message"
                 ]
@@ -5300,14 +5320,14 @@
                 ]
             }
             ,
-            "RejectedVerifierDTO": {
+            "SubmitPresentationResponseDTO": {
                 "type": "object",
                 "properties": {
-                    "status": { "type": "string", "description": "Status of the rejection request (for example success)" },
-                    "message": { "type": "string", "description": "Human readable message describing the result" },
-                    "redirectUri": { "type": "string", "description": "Redirect URI provided to the verifier" }
+                    "status": { "type": "string", "description": "Status of the presentation submission request (for example success, error)" },
+                    "message": { "type": "string", "description": "Human readable message describing the result for successful submission or rejected by user" },
+                    "redirectUri": { "type": "string", "description": "Redirect URI provided to the verifier", "nullable": true }
                 },
-                "required": [ "status", "message", "redirectUri" ]
+                "required": [ "status", "message" ]
             }
         }
     },
