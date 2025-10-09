@@ -99,8 +99,6 @@ public class MosipTestRunner {
 
 			// Generate device certificates to be consumed by Mock-MDS
 			PartnerRegistration.deleteCertificates();
-			AdminTestUtil.createAndPublishPolicy();
-			AdminTestUtil.createEditAndPublishPolicy();
 			PartnerRegistration.deviceGeneration();
 
 			// Generating biometric details with mock MDS
