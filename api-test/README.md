@@ -175,7 +175,7 @@ Update the below **config maps** while running the automation in rancher or in m
 3. google.refresh.token
 
 Update the below **config maps** if required 
-1. testCasesToExecute=TC_Mimoto_GetAllIssuers_01 (Pass the unique Identifier for which testcase has to be ran)
+1. testCasesToExecute=TC_Mimoto_GetAllIssuers_01 (Pass the unique Identifier of the testcase that has to be ran)
 
 ---
 
