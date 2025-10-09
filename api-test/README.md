@@ -157,7 +157,7 @@ To execute the tests using Eclipse IDE, use the following steps:
 - **env.user**: Replace `<env_name>` with the appropriate environment name (e.g., `dev`, `qa`, etc.).
 - **env.endpoint**: The environment where the application under test is deployed. Replace `<base_env>` with the correct base URL for the environment (e.g., `https://api-internal.<env_name>.mosip.net`).
 - **env.testLevel**: Set this to `smoke` to run only smoke test cases, or `smokeAndRegression` to run both smoke and regression tests.
-- **jar**: Specify the name of the JAR file to execute. The version will change according to the development code version. For example, the current version may look like `apitest-mimoto-0.15.0-SNAPSHOT-jar-with-dependencies.jar`.
+- **jar**: Specify the name of the JAR file to execute. The version will change according to the development code version. For example, the current version may look like `apitest-mimoto-0.20.0-SNAPSHOT-jar-with-dependencies.jar`.
 
 ### Build and Run Info
 
@@ -173,6 +173,9 @@ Update the below **config maps** while running the automation in rancher or in m
 1. google.client.id
 2. google.client.secret
 3. google.refresh.token
+
+Update the below **config maps** if required 
+1. testCasesToExecute=TC_Mimoto_GetAllIssuers_01 (Pass the unique Identifier for which testcase has to be ran)
 
 ---
 
