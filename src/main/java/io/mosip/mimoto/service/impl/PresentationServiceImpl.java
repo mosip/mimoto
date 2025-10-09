@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.CredentialFormat;
 import io.mosip.mimoto.dto.ErrorDTO;
-import io.mosip.mimoto.dto.RejectedVerifierDTO;
+import io.mosip.mimoto.dto.SubmitPresentationResponseDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationResponseDTO;
 import io.mosip.mimoto.dto.VerifiablePresentationVerifierDTO;
 import io.mosip.mimoto.dto.mimoto.VCCredentialProperties;
@@ -342,7 +342,7 @@ public class PresentationServiceImpl implements PresentationService {
     }
 
     @Override
-    public RejectedVerifierDTO rejectVerifier(String walletId, VerifiablePresentationSessionData vpSessionData, ErrorDTO payload) throws VPErrorNotSentException {
+    public SubmitPresentationResponseDTO rejectVerifier(String walletId, VerifiablePresentationSessionData vpSessionData, ErrorDTO payload) throws VPErrorNotSentException {
         try {
             NetworkResponse networkResponse = openID4VPService.sendErrorToVerifier(vpSessionData, payload);
             log.info("Sent rejection to verifier. Response: {}", networkResponse);
@@ -350,11 +350,11 @@ public class PresentationServiceImpl implements PresentationService {
             String redirectUri = extractRedirectUriFromBody(networkResponse != null ? networkResponse.getBody() : null)
                     .orElse("");
 
-            RejectedVerifierDTO rejectedVerifierDTO = new RejectedVerifierDTO();
-            rejectedVerifierDTO.setStatus(REJECTED_VERIFIER.getErrorCode());
-            rejectedVerifierDTO.setMessage(REJECTED_VERIFIER.getErrorMessage());
-            rejectedVerifierDTO.setRedirectUri(redirectUri);
-            return rejectedVerifierDTO;
+            SubmitPresentationResponseDTO submitPresentationResponseDTO = new SubmitPresentationResponseDTO();
+            submitPresentationResponseDTO.setStatus(REJECTED_VERIFIER.getErrorCode());
+            submitPresentationResponseDTO.setMessage(REJECTED_VERIFIER.getErrorMessage());
+            submitPresentationResponseDTO.setRedirectUri(redirectUri);
+            return submitPresentationResponseDTO;
         } catch (ApiNotAccessibleException | IOException | URISyntaxException | IllegalArgumentException e ) {
             log.error("Failed to send rejection to verifier for walletId: {} - Error: {}", walletId, e.getMessage(), e);
             throw new VPErrorNotSentException("Failed to send rejection to verifier - " + e.getMessage());

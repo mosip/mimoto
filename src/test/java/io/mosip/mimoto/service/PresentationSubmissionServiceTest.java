@@ -1,7 +1,6 @@
 package io.mosip.mimoto.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.*;
 import io.mosip.mimoto.constant.OpenID4VPConstants;
 import io.mosip.mimoto.constant.SigningAlgorithm;
 import io.mosip.mimoto.dto.DecryptedCredentialDTO;
@@ -24,6 +23,7 @@ import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken;
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPToken;
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult;
 import io.mosip.openID4VP.constants.FormatType;
+import io.mosip.openID4VP.networkManager.NetworkResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,9 +68,6 @@ public class PresentationSubmissionServiceTest {
 
     @Mock
     private OpenID4VP openID4VP;
-
-    @Mock
-    private JWSSigner jwsSigner;
 
     private VerifiablePresentationSessionData sessionData;
     private String walletId;
@@ -131,7 +128,6 @@ public class PresentationSubmissionServiceTest {
                 sessionData, walletId, presentationId, request, base64Key);
 
         assertNotNull(response);
-        assertEquals(presentationId, response.getPresentationId());
         assertEquals(OpenID4VPConstants.STATUS_SUCCESS, response.getStatus());
         assertEquals(OpenID4VPConstants.MESSAGE_PRESENTATION_SUCCESS, response.getMessage());
 
@@ -195,7 +191,6 @@ public class PresentationSubmissionServiceTest {
                 sessionData, walletId, presentationId, request, base64Key);
 
         assertNotNull(response);
-        assertEquals(presentationId, response.getPresentationId());
         assertEquals(OpenID4VPConstants.STATUS_ERROR, response.getStatus());
         assertEquals(OpenID4VPConstants.MESSAGE_PRESENTATION_SHARE_FAILED, response.getMessage());
 
@@ -607,18 +602,18 @@ public class PresentationSubmissionServiceTest {
 
 
     @Test
-    public void testShareVerifiablePresentationReturnsTrue() throws Exception {
+    public void testsendAuthorizationResponseToVerifierReturnsTrue() throws Exception {
         setupSuccessfulMocks();
 
         SubmitPresentationResponseDTO response = presentationSubmissionService.submitPresentation(
                 sessionData, walletId, presentationId, request, base64Key);
 
         assertEquals(OpenID4VPConstants.STATUS_SUCCESS, response.getStatus());
-        verify(openID4VP).shareVerifiablePresentation(anyMap());
+        verify(openID4VP).sendAuthorizationResponseToVerifier(anyMap());
     }
 
     @Test
-    public void testShareVerifiablePresentationReturnsFalse() throws Exception {
+    public void testsendAuthorizationResponseToVerifierReturnsFalse() throws Exception {
         setupMocksForShareFailure();
 
         SubmitPresentationResponseDTO response = presentationSubmissionService.submitPresentation(
@@ -629,7 +624,7 @@ public class PresentationSubmissionServiceTest {
     }
 
     @Test
-    public void testShareVerifiablePresentationHandlesException() throws Exception {
+    public void testsendAuthorizationResponseToVerifierHandlesException() throws Exception {
         setupMocksForShareException();
 
         SubmitPresentationResponseDTO response = presentationSubmissionService.submitPresentation(
@@ -710,7 +705,6 @@ public class PresentationSubmissionServiceTest {
                 sessionData, walletId, longPresentationId, request, base64Key);
 
         assertNotNull(response);
-        assertEquals(longPresentationId, response.getPresentationId());
     }
 
     @Test
@@ -763,7 +757,7 @@ public class PresentationSubmissionServiceTest {
                 .thenReturn(unsignedVPTokenMap);
 
 
-        when(openID4VP.shareVerifiablePresentation(anyMap())).thenReturn("");
+        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenReturn(new NetworkResponse(200, "", new HashMap<>()));
 
         when(objectMapper.convertValue(any(), eq(LdpVPTokenSigningResult.class)))
                 .thenReturn(mock(LdpVPTokenSigningResult.class));
@@ -783,12 +777,12 @@ public class PresentationSubmissionServiceTest {
 
     private void setupMocksForShareFailure() throws Exception {
         setupSuccessfulMocks();
-        when(openID4VP.shareVerifiablePresentation(anyMap())).thenReturn("error-response");
+        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenReturn(new NetworkResponse(400, "", new HashMap<>()));
     }
 
     private void setupMocksForShareException() throws Exception {
         setupSuccessfulMocks();
-        when(openID4VP.shareVerifiablePresentation(anyMap())).thenThrow(new RuntimeException("Share failed"));
+        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenThrow(new RuntimeException("Share failed"));
     }
 
     private void setupSuccessfulMocksForMsoMdoc() throws Exception {
@@ -819,7 +813,7 @@ public class PresentationSubmissionServiceTest {
                 .thenReturn(mock(LdpVPTokenSigningResult.class));
         when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
-        when(openID4VP.shareVerifiablePresentation(anyMap())).thenReturn("");
+        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenReturn(new NetworkResponse(200, "", new HashMap<>()));
 
         when(verifiablePresentationsRepository.save(any(VerifiablePresentation.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -856,7 +850,7 @@ public class PresentationSubmissionServiceTest {
                 .thenReturn(mock(LdpVPTokenSigningResult.class));
         when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
-        when(openID4VP.shareVerifiablePresentation(anyMap())).thenReturn("");
+        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenReturn(new NetworkResponse(200, "", new HashMap<>()));
 
         when(verifiablePresentationsRepository.save(any(VerifiablePresentation.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -1099,16 +1093,16 @@ public class PresentationSubmissionServiceTest {
     }
 
     @Test
-    public void testShareVerifiablePresentationReturnsNonEmptyString() throws Exception {
+    public void testsendAuthorizationResponseToVerifierReturnsNonEmptyString() throws Exception {
         sessionData.setMatchingCredentials(createMockDecryptedCredentials());
         setupSuccessfulMocks();
-        when(openID4VP.shareVerifiablePresentation(anyMap())).thenReturn("error-response-non-empty"); // non-empty string
+        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenReturn(new NetworkResponse(400, "", new HashMap<>())); // non-empty string
         
         SubmitPresentationResponseDTO response = presentationSubmissionService.submitPresentation(
                 sessionData, walletId, presentationId, request, base64Key);
         
         assertNotNull(response);
-        // Should return ERROR status when vpToken is not empty (shareVerifiablePresentation returns false when non-empty)
+        // Should return ERROR status when vpToken is not empty (sendAuthorizationResponseToVerifier returns false when non-empty)
         assertEquals(OpenID4VPConstants.STATUS_ERROR, response.getStatus());
         assertEquals(OpenID4VPConstants.MESSAGE_PRESENTATION_SHARE_FAILED, response.getMessage());
     }
@@ -1190,7 +1184,7 @@ public class PresentationSubmissionServiceTest {
 
         when(openID4VP.constructUnsignedVPToken(anyMap(), anyString(), anyString()))
                 .thenReturn(unsignedVPTokenMap);
-        when(openID4VP.shareVerifiablePresentation(anyMap())).thenReturn("");
+        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenReturn(new NetworkResponse(200, "", new HashMap<>()));
 
         when(objectMapper.convertValue(any(), eq(LdpVPTokenSigningResult.class)))
                 .thenReturn(mock(LdpVPTokenSigningResult.class));

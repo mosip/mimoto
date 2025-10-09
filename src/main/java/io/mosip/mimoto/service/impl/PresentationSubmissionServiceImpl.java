@@ -2,43 +2,46 @@ package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.*;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.util.Base64URL;
-
-import io.mosip.mimoto.constant.SigningAlgorithm;
 import io.mosip.mimoto.constant.OpenID4VPConstants;
+import io.mosip.mimoto.constant.SigningAlgorithm;
 import io.mosip.mimoto.dto.DecryptedCredentialDTO;
 import io.mosip.mimoto.dto.SubmitPresentationRequestDTO;
 import io.mosip.mimoto.dto.SubmitPresentationResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
-import io.mosip.mimoto.util.JwtGeneratorUtil;
-import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPToken;
-import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult;
-import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.DecryptionException;
 import io.mosip.mimoto.exception.KeyGenerationException;
 import io.mosip.mimoto.model.VerifiablePresentation;
-import io.mosip.mimoto.service.PresentationSubmissionService;
-import io.mosip.mimoto.service.KeyPairService;
-import io.mosip.mimoto.service.VerifierService;
 import io.mosip.mimoto.repository.VerifiablePresentationsRepository;
-import io.mosip.mimoto.util.UrlParameterUtils;
+import io.mosip.mimoto.service.KeyPairService;
+import io.mosip.mimoto.service.PresentationSubmissionService;
+import io.mosip.mimoto.service.VerifierService;
 import io.mosip.mimoto.util.Base64Util;
+import io.mosip.mimoto.util.JwtGeneratorUtil;
+import io.mosip.mimoto.util.UrlParameterUtils;
 import io.mosip.openID4VP.OpenID4VP;
 import io.mosip.openID4VP.authorizationRequest.Verifier;
-import io.mosip.openID4VP.constants.FormatType;
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken;
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPToken;
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult;
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult;
+import io.mosip.openID4VP.constants.FormatType;
+import io.mosip.openID4VP.networkManager.NetworkResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.KeyPair;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -100,16 +103,30 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
         Map<FormatType, LdpVPTokenSigningResult> vpTokenSigningResults = signVPToken(unsignedVPToken, jwsSigner, walletId, base64Key);
 
         // Step 4: Share verifiable presentation with verifier using OpenID4VP JAR
-        boolean shareSuccess = shareVerifiablePresentation(vpTokenSigningResults, sessionData, openID4VP);
-
-        // Step 5: Store presentation record in database
-        storePresentationRecord(walletId, presentationId, request, sessionData, shareSuccess, requestedAt);
-
-        // Step 6: Return success response
-        return SubmitPresentationResponseDTO.builder().presentationId(presentationId)
-                .status(shareSuccess ? OpenID4VPConstants.STATUS_SUCCESS : OpenID4VPConstants.STATUS_ERROR)
-                .message(shareSuccess ? OpenID4VPConstants.MESSAGE_PRESENTATION_SUCCESS : OpenID4VPConstants.MESSAGE_PRESENTATION_SHARE_FAILED)
-                .build();
+        log.debug("Calling OpenID4VP JAR's shareVerifiablePresentation method");
+        // Cast to the expected type for the JAR method
+        @SuppressWarnings({"unchecked", "rawtypes"}) Map<FormatType, VPTokenSigningResult> jarMap = (Map) vpTokenSigningResults;
+        try {
+            NetworkResponse response = openID4VP.sendAuthorizationResponseToVerifier(jarMap);
+            boolean shareSuccess = response.getStatusCode() >= 200 && response.getStatusCode() < 300;
+            // Step 5: Store presentation record in database
+            storePresentationRecord(walletId, presentationId, request, sessionData, shareSuccess, requestedAt);
+            // Step 6: Return success response
+            return SubmitPresentationResponseDTO.builder()
+                    .redirectUri(extractRedirectUri(response.getBody()))
+                    .status(shareSuccess ? OpenID4VPConstants.STATUS_SUCCESS : OpenID4VPConstants.STATUS_ERROR)
+                    .message(shareSuccess ? OpenID4VPConstants.MESSAGE_PRESENTATION_SUCCESS : OpenID4VPConstants.MESSAGE_PRESENTATION_SHARE_FAILED)
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to share verifiable presentation with verifier", e);
+            // Store failed presentation record
+            storePresentationRecord(walletId, presentationId, request, sessionData, false, requestedAt);
+            return SubmitPresentationResponseDTO.builder()
+                    .redirectUri(null)
+                    .status(OpenID4VPConstants.STATUS_ERROR)
+                    .message(OpenID4VPConstants.MESSAGE_PRESENTATION_SHARE_FAILED)
+                    .build();
+        }
     }
 
     /**
@@ -121,12 +138,9 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
      * @param walletId            The wallet ID for fetching keypairs (for MSO_MDOC)
      * @param base64Key           The base64 encoded wallet key for decryption (for MSO_MDOC)
      * @return Map of signed VP token results by format type
-     * @throws JOSEException          if JWT signing fails
-     * @throws IOException            if I/O operations fail
      * @throws KeyGenerationException if key pair retrieval or generation fails
-     * @throws DecryptionException    if decryption of private key fails
      */
-    private Map<FormatType, LdpVPTokenSigningResult> signVPToken(Map<FormatType, UnsignedVPToken> unsignedVPTokensMap, JWSSigner jwsSigner, String walletId, String base64Key) throws JOSEException, IOException, KeyGenerationException, DecryptionException {
+    private Map<FormatType, LdpVPTokenSigningResult> signVPToken(Map<FormatType, UnsignedVPToken> unsignedVPTokensMap, JWSSigner jwsSigner, String walletId, String base64Key) throws KeyGenerationException {
         log.debug("Signing VP token for {} format types", unsignedVPTokensMap.size());
 
         return unsignedVPTokensMap.entrySet().stream().map(entry -> {
@@ -382,32 +396,9 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
     }
 
     /**
-     * Shares the verifiable presentation with the verifier
-     * First calls OpenID4VP JAR's shareVerifiablePresentation method, then makes HTTP POST
-     */
-    private boolean shareVerifiablePresentation(Map<FormatType, LdpVPTokenSigningResult> vpTokenSigningResults, VerifiablePresentationSessionData sessionData, OpenID4VP openID4VP) {
-        log.debug("Sharing verifiable presentation with verifier");
-
-        try {
-            // Step 1: Call OpenID4VP JAR's shareVerifiablePresentation method
-            log.debug("Calling OpenID4VP JAR's shareVerifiablePresentation method");
-            // Cast to the expected type for the JAR method
-            @SuppressWarnings({"unchecked", "rawtypes"}) Map<FormatType, VPTokenSigningResult> jarMap = (Map) vpTokenSigningResults;
-            String vpToken = openID4VP.shareVerifiablePresentation(jarMap);
-
-            return vpToken.trim().isEmpty();
-
-        } catch (Exception e) {
-            log.error("Failed to share verifiable presentation with verifier", e);
-            return false;
-        }
-    }
-
-    /**
      * Stores presentation record in the database
      * Uses @Transactional to ensure atomicity of database operations
      */
-    @Transactional
     private void storePresentationRecord(String walletId, String presentationId, SubmitPresentationRequestDTO request, VerifiablePresentationSessionData sessionData, boolean success, LocalDateTime requestedAt) {
         log.debug("Storing presentation record in database - success: {}", success);
 
@@ -420,7 +411,7 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
             // Extract verifier information from OpenID4VP object
             String verifierId = extractVerifierId(sessionData);
             String authRequest = extractVerifierAuthRequest(sessionData);
-            String presentationData = createPresentationData(request, sessionData);
+            String presentationData = createPresentationData(request);
 
             // Create the presentation record
             VerifiablePresentation presentation = VerifiablePresentation.builder().id(presentationId).walletId(walletId).authRequest(authRequest).presentationData(presentationData).verifierId(verifierId).status(success ? OpenID4VPConstants.STATUS_SUCCESS : OpenID4VPConstants.STATUS_ERROR).requestedAt(requestedAt).consent(true).build();
@@ -471,7 +462,7 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
     /**
      * Creates presentation data JSON with selected credentials and metadata
      */
-    private String createPresentationData(SubmitPresentationRequestDTO request, VerifiablePresentationSessionData sessionData) {
+    private String createPresentationData(SubmitPresentationRequestDTO request) {
         try {
             Map<String, Object> presentationData = new HashMap<>();
             presentationData.put(OpenID4VPConstants.SELECTED_CREDENTIALS, request.getSelectedCredentials());
@@ -500,6 +491,18 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
             throw new IllegalArgumentException("Selected credentials cannot be null or empty");
         }
 
-        log.debug("Input validation passed for request: {}", request.toString());
+        log.debug("Input validation passed for request: {}", request);
+    }
+
+    public String extractRedirectUri(String body) {
+        try {
+            JSONObject jsonObject = new JSONObject(body);
+            if (jsonObject.has("redirect_uri")) {
+                return jsonObject.getString("redirect_uri");
+            }
+        } catch (Exception e) {
+            log.error("Cannot parse the body of response from verifier", e);
+        }
+        return null;
     }
 }
