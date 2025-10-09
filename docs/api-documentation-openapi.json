@@ -4230,10 +4230,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "oneOf": [
-                                        { "$ref": "#/components/schemas/PresentationSubmissionResponseDTO" },
-                                        { "$ref": "#/components/schemas/SubmitPresentationResponseDTO" }
-                                    ]
+                                    "$ref": "#/components/schemas/SubmitPresentationResponseDTO"
                                 },
                                 "examples": {
                                     "Success response": {
@@ -4322,24 +4319,6 @@
                                     "$ref": "#/components/schemas/Error"
                                 },
                                 "examples": {
-                                    "JWT signing error": {
-                                        "value": {
-                                            "errorCode": "JWT_SIGNING_ERROR",
-                                            "errorMessage": "Failed to sign JWT token during presentation submission"
-                                        }
-                                    },
-                                    "Key generation error": {
-                                        "value": {
-                                            "errorCode": "KEY_GENERATION_ERROR",
-                                            "errorMessage": "Failed to generate or retrieve key pair for signing"
-                                        }
-                                    },
-                                    "Decryption error": {
-                                        "value": {
-                                            "errorCode": "DECRYPTION_ERROR",
-                                            "errorMessage": "Failed to decrypt private key for signing"
-                                        }
-                                    },
                                     "Failed to process presentation submission": {
                                         "value": {
                                             "errorCode": "wallet_vp_submission_error",
@@ -4963,32 +4942,6 @@
                 },
                 "required": [
                     "selectedCredentials"
-                ]
-            },
-            "PresentationSubmissionResponseDTO": {
-                "type": "object",
-                "properties": {
-                    "status": {
-                        "type": "string",
-                        "description": "Status of the presentation submission",
-                        "example": "SUCCESS",
-                        "enum": ["SUCCESS", "ERROR"]
-                    },
-                    "redirectUri": {
-                        "type": "string",
-                        "description": "Redirection URI to which the user-agent should be redirected after submission",
-                        "example": "https://verifier.example.com/callback?state=af0ifjsldkj",
-                        "nullable": true
-                    },
-                    "message": {
-                        "type": "string",
-                        "description": "Message indicating the result of the submission",
-                        "example": "Presentation successfully submitted and shared with verifier"
-                    }
-                },
-                "required": [
-                    "status",
-                    "message"
                 ]
             },
             "IssuerConfigurationSuccessResponse": {
