@@ -47,13 +47,13 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 @Slf4j
 public class CacheConfig {
 
-    @Value("${spring.cloud.config.label:injiweb}")
-    private String injiwebCacheNamespace;
+    @Value("${spring.cloud.config.label}")
+    private String cachePrefix;
 
-    private final String ISSUER_WELLKNOWN_CACHE = injiwebCacheNamespace + "issuerWellknown";
-    private final String ISSUERS_CONFIG_CACHE = injiwebCacheNamespace + "issuersConfig";
-    private final String AUTH_SERVER_WELLKNOWN_CACHE = injiwebCacheNamespace + "authServerWellknown";
-    private final String PRE_REGISTERED_TRUSTED_VERIFIERS_CACHE = injiwebCacheNamespace + "preRegisteredTrustedVerifiers";
+    private static final String ISSUER_WELLKNOWN_CACHE = "issuerWellknown";
+    private static final String ISSUERS_CONFIG_CACHE   = "issuersConfig";
+    private static final String AUTH_SERVER_WELLKNOWN_CACHE = "authServerWellknown";
+    private static final String PRE_REGISTERED_TRUSTED_VERIFIERS_CACHE = "preRegisteredTrustedVerifiers";
 
     @Value("${cache.credential-issuer.wellknown.expiry-time-in-min:60}")
     private Long issuerWellknownExpiryTimeInMin;
@@ -137,6 +137,9 @@ public class CacheConfig {
                     .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(jacksonSerializer))
                     .entryTtl(Duration.ofMinutes(defaultCacheExpiryTimeInMin))
                     .disableCachingNullValues();
+            if (cachePrefix != null && !cachePrefix.isEmpty()) {
+                defaultCacheConfig = defaultCacheConfig.prefixCacheNameWith(cachePrefix);
+            }
 
             // Per-cache configs
             Map<String, RedisCacheConfiguration> cacheConfigurations = Map.of(
