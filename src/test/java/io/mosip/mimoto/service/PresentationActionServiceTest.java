@@ -2,9 +2,8 @@ package io.mosip.mimoto.service;
 
 import com.nimbusds.jose.JOSEException;
 import io.mosip.mimoto.dto.ErrorDTO;
-import io.mosip.mimoto.dto.RejectedVerifierDTO;
-import io.mosip.mimoto.dto.SubmitPresentationRequestDTO;
 import io.mosip.mimoto.dto.SubmitPresentationResponseDTO;
+import io.mosip.mimoto.dto.SubmitPresentationRequestDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.DecryptionException;
@@ -27,7 +26,8 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -69,7 +69,6 @@ public class PresentationActionServiceTest {
                 .build();
 
         SubmitPresentationResponseDTO expectedResponse = SubmitPresentationResponseDTO.builder()
-                .presentationId(PRESENTATION_ID)
                 .status("SUCCESS")
                 .message("Presentation successfully submitted and shared with verifier")
                 .build();
@@ -87,7 +86,6 @@ public class PresentationActionServiceTest {
         assertNotNull(response.getBody());
         assertTrue(response.getBody() instanceof SubmitPresentationResponseDTO);
         SubmitPresentationResponseDTO responseBody = (SubmitPresentationResponseDTO) response.getBody();
-        assertEquals(PRESENTATION_ID, responseBody.getPresentationId());
         assertEquals("SUCCESS", responseBody.getStatus());
 
         verify(presentationSubmissionService, times(1)).submitPresentation(
@@ -103,7 +101,7 @@ public class PresentationActionServiceTest {
                 .errorMessage("User denied authorization to share credentials")
                 .build();
 
-        RejectedVerifierDTO expectedResponse = new RejectedVerifierDTO(
+        SubmitPresentationResponseDTO expectedResponse = new SubmitPresentationResponseDTO(
                 "success",
                 null,
                 "Presentation request rejected. An OpenID4VP error response has been sent to the verifier."
@@ -119,8 +117,8 @@ public class PresentationActionServiceTest {
         // Then
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody() instanceof RejectedVerifierDTO);
-        RejectedVerifierDTO responseBody = (RejectedVerifierDTO) response.getBody();
+        assertTrue(response.getBody() instanceof SubmitPresentationResponseDTO);
+        SubmitPresentationResponseDTO responseBody = (SubmitPresentationResponseDTO) response.getBody();
         assertEquals("success", responseBody.getStatus());
 
         verify(presentationService, times(1)).rejectVerifier(eq(WALLET_ID), eq(sessionData), any(ErrorDTO.class));
@@ -312,7 +310,7 @@ public class PresentationActionServiceTest {
                 .errorMessage("User denied authorization")
                 .build();
 
-        RejectedVerifierDTO expectedResponse = new RejectedVerifierDTO(
+        SubmitPresentationResponseDTO expectedResponse = new SubmitPresentationResponseDTO(
                 "success",
                 null,
                 "Presentation request rejected."
@@ -338,7 +336,6 @@ public class PresentationActionServiceTest {
                 .build();
 
         SubmitPresentationResponseDTO expectedResponse = SubmitPresentationResponseDTO.builder()
-                .presentationId(PRESENTATION_ID)
                 .status("SUCCESS")
                 .message("Presentation successfully submitted")
                 .build();

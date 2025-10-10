@@ -1,8 +1,8 @@
 package io.mosip.mimoto.service;
 
 import com.nimbusds.jose.JOSEException;
-import io.mosip.mimoto.dto.SubmitPresentationRequestDTO;
 import io.mosip.mimoto.dto.SubmitPresentationResponseDTO;
+import io.mosip.mimoto.dto.SubmitPresentationRequestDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.DecryptionException;

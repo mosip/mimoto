@@ -35,7 +35,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
-import io.mosip.mimoto.dto.RejectedVerifierDTO;
+import io.mosip.mimoto.dto.SubmitPresentationResponseDTO;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -806,7 +806,7 @@ public class PresentationServiceTest {
         when(mockResponse.getBody()).thenReturn("{\"redirect_uri\":\"https://verifier.example.com/success\"}");
         when(openID4VPService.sendErrorToVerifier(eq(sessionData), eq(payload))).thenReturn(mockResponse);
 
-        RejectedVerifierDTO result = presentationService.rejectVerifier(walletId, sessionData, payload);
+        SubmitPresentationResponseDTO result = presentationService.rejectVerifier(walletId, sessionData, payload);
 
         assertNotNull(result);
         assertEquals("https://verifier.example.com/success", result.getRedirectUri());

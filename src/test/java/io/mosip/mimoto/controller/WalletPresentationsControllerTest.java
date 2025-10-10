@@ -1,12 +1,13 @@
 package io.mosip.mimoto.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.VPNotCreatedException;
 import io.mosip.mimoto.service.CredentialMatchingService;
-import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.PresentationActionService;
+import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.impl.SessionManager;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions;
@@ -16,9 +17,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -29,18 +27,16 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.io.IOException;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -308,7 +304,7 @@ public class WalletPresentationsControllerTest {
                 .thenReturn(sessionData);
 
         // Prepare the expected RejectedVerifierDTO and stub the service to return it
-        RejectedVerifierDTO expectedRejected = new RejectedVerifierDTO("success", "", "Presentation request rejected. An OpenID4VP error response has been sent to the verifier.");
+        SubmitPresentationResponseDTO expectedRejected = new SubmitPresentationResponseDTO("success", "", "Presentation request rejected. An OpenID4VP error response has been sent to the verifier.");
         doReturn(ResponseEntity.ok(expectedRejected))
                 .when(presentationActionService).handlePresentationAction(
                         eq(walletId), eq(presentationId), any(SubmitPresentationRequestDTO.class), eq(sessionData), eq(walletKey));
@@ -515,7 +511,6 @@ public class WalletPresentationsControllerTest {
 
         SubmitPresentationResponseDTO submitResponse = new SubmitPresentationResponseDTO();
         submitResponse.setStatus("SUCCESS");
-        submitResponse.setPresentationId(presentationId);
 
         when(sessionManager.getPresentationSessionData(any(HttpSession.class), eq(walletId), eq(presentationId)))
                 .thenReturn(sessionData);
@@ -530,8 +525,7 @@ public class WalletPresentationsControllerTest {
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.presentationId").value(presentationId));
+                .andExpect(jsonPath("$.status").value("SUCCESS"));
 
         verify(presentationActionService).handlePresentationAction(
                 eq(walletId), eq(presentationId), any(SubmitPresentationRequestDTO.class), eq(sessionData), eq(walletKey));

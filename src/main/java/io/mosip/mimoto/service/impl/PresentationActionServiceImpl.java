@@ -2,15 +2,10 @@ package io.mosip.mimoto.service.impl;
 
 import com.nimbusds.jose.JOSEException;
 import io.mosip.mimoto.dto.ErrorDTO;
-import io.mosip.mimoto.dto.RejectedVerifierDTO;
-import io.mosip.mimoto.dto.SubmitPresentationRequestDTO;
 import io.mosip.mimoto.dto.SubmitPresentationResponseDTO;
+import io.mosip.mimoto.dto.SubmitPresentationRequestDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
-import io.mosip.mimoto.exception.ApiNotAccessibleException;
-import io.mosip.mimoto.exception.DecryptionException;
-import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.exception.KeyGenerationException;
-import io.mosip.mimoto.exception.VPErrorNotSentException;
+import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.service.PresentationActionService;
 import io.mosip.mimoto.service.PresentationService;
 import io.mosip.mimoto.service.PresentationSubmissionService;
@@ -23,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.lang.IllegalArgumentException;
 
 import static io.mosip.mimoto.exception.ErrorConstants.*;
 
@@ -40,7 +36,7 @@ public class PresentationActionServiceImpl implements PresentationActionService 
     private PresentationService presentationService;
 
     @Override
-    public ResponseEntity<?> handlePresentationAction(String walletId, String presentationId, SubmitPresentationRequestDTO request, VerifiablePresentationSessionData vpSessionData, String base64Key) {
+    public ResponseEntity<SubmitPresentationResponseDTO> handlePresentationAction(String walletId, String presentationId, SubmitPresentationRequestDTO request, VerifiablePresentationSessionData vpSessionData, String base64Key) {
 
         log.info("Processing presentation action for walletId: {}, presentationId: {}", walletId, presentationId);
 
@@ -106,7 +102,7 @@ public class PresentationActionServiceImpl implements PresentationActionService 
     /**
      * Handles verifier rejection with error details
      */
-    private ResponseEntity<RejectedVerifierDTO> handleVerifierRejection(String walletId, VerifiablePresentationSessionData vpSessionData, SubmitPresentationRequestDTO request) throws VPErrorNotSentException {
+    private ResponseEntity<SubmitPresentationResponseDTO> handleVerifierRejection(String walletId, VerifiablePresentationSessionData vpSessionData, SubmitPresentationRequestDTO request) throws VPErrorNotSentException {
 
         log.debug("Rejecting verifier for walletId: {}", walletId);
 
@@ -116,11 +112,11 @@ public class PresentationActionServiceImpl implements PresentationActionService 
         errorPayload.setErrorMessage(request.getErrorMessage());
 
         // Call the presentation service to reject the verifier
-        RejectedVerifierDTO rejectedVerifierDTO = presentationService.rejectVerifier(walletId, vpSessionData, errorPayload);
+        SubmitPresentationResponseDTO submitPresentationResponseDTO = presentationService.rejectVerifier(walletId, vpSessionData, errorPayload);
 
         log.info("Verifier rejection completed successfully for walletId: {}", walletId);
 
-        return ResponseEntity.status(HttpStatus.OK).body(rejectedVerifierDTO);
+        return ResponseEntity.status(HttpStatus.OK).body(submitPresentationResponseDTO);
     }
 }
 
