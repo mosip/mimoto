@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.cache.CacheManagerCustomizer;
 import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
@@ -50,7 +51,12 @@ public class CacheConfig {
     @Value("${spring.cloud.config.label}")
     private String springConfigLabel;
 
-    private final String cachePrefix = "injiweb:"+ springConfigLabel;
+    private String cachePrefix;
+
+    @PostConstruct
+    public void init() {
+        cachePrefix = "injiweb:" + springConfigLabel;
+    }
 
     private static final String ISSUER_WELLKNOWN_CACHE = "issuerWellknown";
     private static final String ISSUERS_CONFIG_CACHE   = "issuersConfig";
