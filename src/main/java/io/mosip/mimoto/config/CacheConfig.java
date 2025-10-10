@@ -47,10 +47,13 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 @Slf4j
 public class CacheConfig {
 
-    private static final String ISSUER_WELLKNOWN_CACHE = "issuerWellknown";
-    private static final String ISSUERS_CONFIG_CACHE   = "issuersConfig";
-    private static final String AUTH_SERVER_WELLKNOWN_CACHE = "authServerWellknown";
-    private static final String PRE_REGISTERED_TRUSTED_VERIFIERS_CACHE = "preRegisteredTrustedVerifiers";
+    @Value("${spring.cloud.config.label:injiweb}")
+    private String injiwebCacheNamespace;
+
+    private final String ISSUER_WELLKNOWN_CACHE = injiwebCacheNamespace + "issuerWellknown";
+    private final String ISSUERS_CONFIG_CACHE = injiwebCacheNamespace + "issuersConfig";
+    private final String AUTH_SERVER_WELLKNOWN_CACHE = injiwebCacheNamespace + "authServerWellknown";
+    private final String PRE_REGISTERED_TRUSTED_VERIFIERS_CACHE = injiwebCacheNamespace + "preRegisteredTrustedVerifiers";
 
     @Value("${cache.credential-issuer.wellknown.expiry-time-in-min:60}")
     private Long issuerWellknownExpiryTimeInMin;
