@@ -47,6 +47,11 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 @Slf4j
 public class CacheConfig {
 
+    @Value("${spring.cloud.config.label}")
+    private String springConfigLabel;
+
+    private final String cachePrefix = "injiweb:"+ springConfigLabel;
+
     private static final String ISSUER_WELLKNOWN_CACHE = "issuerWellknown";
     private static final String ISSUERS_CONFIG_CACHE   = "issuersConfig";
     private static final String AUTH_SERVER_WELLKNOWN_CACHE = "authServerWellknown";
@@ -134,6 +139,9 @@ public class CacheConfig {
                     .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(jacksonSerializer))
                     .entryTtl(Duration.ofMinutes(defaultCacheExpiryTimeInMin))
                     .disableCachingNullValues();
+            if (cachePrefix != null && !cachePrefix.isEmpty()) {
+                defaultCacheConfig = defaultCacheConfig.prefixCacheNameWith(cachePrefix);
+            }
 
             // Per-cache configs
             Map<String, RedisCacheConfiguration> cacheConfigurations = Map.of(
