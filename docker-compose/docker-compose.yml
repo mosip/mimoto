@@ -24,7 +24,7 @@ services:
       - DATASHARE_DOMAIN=datashare-service:8097
     volumes:
       - ./config/data-share-inji-default.properties:/home/mosip/data-share-inji-default.properties
-      - ./config/data-share-standal-developone.properties:/home/mosip/data-share-standalone.properties
+      - ./config/data-share-standalone.properties:/home/mosip/data-share-standalone.properties
     depends_on:
       - minio
 
