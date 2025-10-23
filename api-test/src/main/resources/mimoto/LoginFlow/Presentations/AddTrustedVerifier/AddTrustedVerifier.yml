@@ -1,0 +1,128 @@
+AddTrustedVerifier:
+   Mimoto_AddTrustedVerifier_all_Valid_Smoke_sid:
+      endPoint: /v1/mimoto/wallets/{walletId}/trusted-verifiers
+      description: Add trusted verifier with valid data
+      uniqueIdentifier: TC_Mimoto_AddTrustedVerifier_01
+      role: userDefinedCookie
+      restMethod: post
+      checkErrorsOnlyInResponse: true
+      inputTemplate: mimoto/LoginFlow/Presentations/AddTrustedVerifier/AddTrustedVerifier
+      outputTemplate: mimoto/LoginFlow/Presentations/AddTrustedVerifier/AddTrustedVerifierResult
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+        "verifierId": "$ID:VerifiablePresentationAuthorization_all_Valid_Smoke_sid_id$"
+}'
+      output: '{
+}'
+
+   Mimoto_AddTrustedVerifier_withEmpty_verifierId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/trusted-verifiers
+      description: Add trusted verifier with empty verifierId
+      uniqueIdentifier: TC_Mimoto_AddTrustedVerifier_02
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/AddTrustedVerifier/AddTrustedVerifier
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+        "verifierId": ""
+}'
+      output: '{
+        "errorCode": "invalid_request"
+}'
+
+   Mimoto_AddTrustedVerifier_withInvalid_walletId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/trusted-verifiers
+      description: Add trusted verifier with invalid walletId - fail
+      uniqueIdentifier: TC_Mimoto_AddTrustedVerifier_03
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/AddTrustedVerifier/AddTrustedVerifier
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "invalidWalletID",
+        "verifierId": "$ID:VerifiablePresentationAuthorization_all_Valid_Smoke_sid_id$"
+}'
+      output: '{
+        "errorCode": "invalid_request"
+}'
+
+   Mimoto_AddTrustedVerifier_withEmptyWalletID_walletId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/trusted-verifiers
+      description: Add trusted verifier with empty walletId
+      uniqueIdentifier: TC_Mimoto_AddTrustedVerifier_04
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/AddTrustedVerifier/AddTrustedVerifier
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "",
+        "verifierId": "$ID:VerifiablePresentationAuthorization_all_Valid_Smoke_sid_id$"
+}'
+      output: '{
+        "errorCode": "invalid_request"
+}'
+
+
+   Mimoto_AddTrustedVerifier_withLocked_walletId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/trusted-verifiers
+      description: Add trusted verifier with empty walletId
+      uniqueIdentifier: TC_Mimoto_AddTrustedVerifier_05
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/AddTrustedVerifier/AddTrustedVerifier
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_WithoutUnlock_all_Valid_Smoke_sid_walletId$",
+        "verifierId": "$ID:VerifiablePresentationAuthorization_all_Valid_Smoke_sid_id$"
+}'
+      output: '{
+        "errorCode": "wallet_locked"
+}'
+
+   Mimoto_AddTrustedVerifier_withInvalidSession_unAuthorized_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/trusted-verifiers
+      description: Add trusted verifier with invalid session
+      uniqueIdentifier: TC_Mimoto_AddTrustedVerifier_06
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Presentations/AddTrustedVerifier/AddTrustedVerifier
+      outputTemplate: mimoto/responseCode
+      input: '{
+        "cookie": "OGYwNWI5YWQtZjg0MS00NmM2LWJiZTgtOGRmMWYwMGYzNzcy",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+        "verifierId": "$ID:VerifiablePresentationAuthorization_all_Valid_Smoke_sid_id$"
+}'
+      output: '{
+        "responseCode": "401"
+}'
+
+   Mimoto_AddTrustedVerifier_all_Valid_duplicateVerifierID_Smoke_sid:
+      endPoint: /v1/mimoto/wallets/{walletId}/trusted-verifiers
+      description: Add trusted verifier with valid data for duplicate verifier ID scenario
+      uniqueIdentifier: TC_Mimoto_AddTrustedVerifier_07
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/AddTrustedVerifier/AddTrustedVerifier
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+        "verifierId": "$ID:VerifiablePresentationAuthorization_all_Valid_Smoke_sid_id$"
+}'
+      output: '{
+        "errorCode": "duplicate_verifier"
+}'

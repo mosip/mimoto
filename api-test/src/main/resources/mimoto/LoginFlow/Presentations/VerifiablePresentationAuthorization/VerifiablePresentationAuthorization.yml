@@ -1,0 +1,127 @@
+VerifiablePresentationAuthorization:
+   Mimoto_VerifiablePresentationAuthorization_all_Valid_Smoke_sid:
+      endPoint: /v1/mimoto/wallets/{walletId}/presentations
+      description: Creating verifiable presentation with valid data
+      uniqueIdentifier: TC_Mimoto_VerifiablePresentationAuthorization_01
+      role: userDefinedCookie
+      restMethod: post
+      checkErrorsOnlyInResponse: true
+      inputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization
+      outputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorizationResult
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+        "authorizationRequestUrl": "$AUTHORIZATION_REQUEST_URL$$ID:InjiVerifyVpRequest_all_Valid_Smoke_sid_requestId$"
+}'
+      output: '{
+}'
+
+   Mimoto_VerifiablePresentationAuthorization_withInvalid_authorizationRequestUrl_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/presentations
+      description: Creating verifiable presentation with invalid authorizationRequestUrl
+      uniqueIdentifier: TC_Mimoto_VerifiablePresentationAuthorization_02
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+        "authorizationRequestUrl": "invalidRequest"
+}'
+      output: '{
+        "errorCode": "invalid_request"
+}'
+
+   Mimoto_VerifiablePresentationAuthorization_withInvalid_walletId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/presentations
+      description: Creating verifiable presentation with invalid walletId
+      uniqueIdentifier: TC_Mimoto_VerifiablePresentationAuthorization_03
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "invalidWalletID",
+        "authorizationRequestUrl": "openid4vp://authorize?client_id=injiverify.qa-inji1.mosip.net%2F&state=req_585853ee-c822-4601-bcfc-9f3760cfa70c&response_mode=direct_post&response_type=vp_token&nonce=MTc1OTk4Mjk4MDc1OQ%3D%3D&response_uri=https%3A%2F%2Finjiverify.qa-inji1.mosip.net%2Fv1%2Fverify%2Fvp-submission%2Fdirect-post&presentation_definition=%7B%22id%22%3A%22c4822b58-7fb4-454e-b827-f8758fe27f9a%22%2C%22input_descriptors%22%3A%5B%7B%22id%22%3A%22id+card+credential%22%2C%22format%22%3A%7B%22ldp_vc%22%3A%7B%22proof_type%22%3A%5B%22Ed25519Signature2020%22%5D%7D%7D%2C%22constraints%22%3A%7B%22fields%22%3A%5B%7B%22path%22%3A%5B%22%24.type%22%5D%2C%22filter%22%3A%7B%22type%22%3A%22object%22%2C%22pattern%22%3A%22InsuranceCredential%22%7D%7D%5D%7D%7D%5D%2C%22purpose%22%3A%22Relying+party+is+requesting+your+digital+ID+for+the+purpose+of+Self-Authentication%22%7D&client_metadata=%7B%22client_name%22%3A%22injiverify.qa-inji1.mosip.net%2F%22%2C%22vp_formats%22%3A%7B%22ldp_vp%22%3A%7B%22proof_type%22%3A%5B%22Ed25519Signature2018%22%2C%22Ed25519Signature2020%22%2C%22RsaSignature2018%22%5D%7D%2C%22vc%2Bsd-jwt%22%3A%7B%22sd-jwt_alg_values%22%3A%5B%22RS256%22%2C%22ES256%22%2C%22ES256K%22%2C%22EdDSA%22%5D%2C%22kb-jwt_alg_values%22%3A%5B%22RS256%22%2C%22ES256%22%2C%22ES256K%22%2C%22EdDSA%22%5D%7D%7D%7D"
+}'
+      output: '{
+        "errorCode": "invalid_request"
+}'
+
+   Mimoto_VerifiablePresentationAuthorization_withoutResponseTypeFrom_authorizationRequestUrl_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/presentations
+      description: Creating verifiable presentation without response_type from authorizationRequestUrl
+      uniqueIdentifier: TC_Mimoto_VerifiablePresentationAuthorization_04
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+        "authorizationRequestUrl": "openid4vp://authorize?client_id=injiverify.qa-inji1.mosip.net%2F&state=req_585853ee-c822-4601-bcfc-9f3760cfa70c&response_mode=direct_post&nonce=MTc1OTk4Mjk4MDc1OQ%3D%3D&response_uri=https%3A%2F%2Finjiverify.qa-inji1.mosip.net%2Fv1%2Fverify%2Fvp-submission%2Fdirect-post&presentation_definition=%7B%22id%22%3A%22c4822b58-7fb4-454e-b827-f8758fe27f9a%22%2C%22input_descriptors%22%3A%5B%7B%22id%22%3A%22id+card+credential%22%2C%22format%22%3A%7B%22ldp_vc%22%3A%7B%22proof_type%22%3A%5B%22Ed25519Signature2020%22%5D%7D%7D%2C%22constraints%22%3A%7B%22fields%22%3A%5B%7B%22path%22%3A%5B%22%24.type%22%5D%2C%22filter%22%3A%7B%22type%22%3A%22object%22%2C%22pattern%22%3A%22InsuranceCredential%22%7D%7D%5D%7D%7D%5D%2C%22purpose%22%3A%22Relying+party+is+requesting+your+digital+ID+for+the+purpose+of+Self-Authentication%22%7D&client_metadata=%7B%22client_name%22%3A%22injiverify.qa-inji1.mosip.net%2F%22%2C%22vp_formats%22%3A%7B%22ldp_vp%22%3A%7B%22proof_type%22%3A%5B%22Ed25519Signature2018%22%2C%22Ed25519Signature2020%22%2C%22RsaSignature2018%22%5D%7D%2C%22vc%2Bsd-jwt%22%3A%7B%22sd-jwt_alg_values%22%3A%5B%22RS256%22%2C%22ES256%22%2C%22ES256K%22%2C%22EdDSA%22%5D%2C%22kb-jwt_alg_values%22%3A%5B%22RS256%22%2C%22ES256%22%2C%22ES256K%22%2C%22EdDSA%22%5D%7D%7D%7D"
+}'
+      output: '{
+         "errorCode": "invalid_request"
+}'
+
+   Mimoto_VerifiablePresentationAuthorization_withLocked_walletId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/presentations
+      description: Creating verifiable presentation with locked walletId
+      uniqueIdentifier: TC_Mimoto_VerifiablePresentationAuthorization_05
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_WithoutUnlock_all_Valid_Smoke_sid_walletId$",
+        "authorizationRequestUrl": "openid4vp://authorize?client_id=injiverify.qa-inji1.mosip.net%2F&state=req_585853ee-c822-4601-bcfc-9f3760cfa70c&response_mode=direct_post&response_type=vp_token&nonce=MTc1OTk4Mjk4MDc1OQ%3D%3D&response_uri=https%3A%2F%2Finjiverify.qa-inji1.mosip.net%2Fv1%2Fverify%2Fvp-submission%2Fdirect-post&presentation_definition=%7B%22id%22%3A%22c4822b58-7fb4-454e-b827-f8758fe27f9a%22%2C%22input_descriptors%22%3A%5B%7B%22id%22%3A%22id+card+credential%22%2C%22format%22%3A%7B%22ldp_vc%22%3A%7B%22proof_type%22%3A%5B%22Ed25519Signature2020%22%5D%7D%7D%2C%22constraints%22%3A%7B%22fields%22%3A%5B%7B%22path%22%3A%5B%22%24.type%22%5D%2C%22filter%22%3A%7B%22type%22%3A%22object%22%2C%22pattern%22%3A%22InsuranceCredential%22%7D%7D%5D%7D%7D%5D%2C%22purpose%22%3A%22Relying+party+is+requesting+your+digital+ID+for+the+purpose+of+Self-Authentication%22%7D&client_metadata=%7B%22client_name%22%3A%22injiverify.qa-inji1.mosip.net%2F%22%2C%22vp_formats%22%3A%7B%22ldp_vp%22%3A%7B%22proof_type%22%3A%5B%22Ed25519Signature2018%22%2C%22Ed25519Signature2020%22%2C%22RsaSignature2018%22%5D%7D%2C%22vc%2Bsd-jwt%22%3A%7B%22sd-jwt_alg_values%22%3A%5B%22RS256%22%2C%22ES256%22%2C%22ES256K%22%2C%22EdDSA%22%5D%2C%22kb-jwt_alg_values%22%3A%5B%22RS256%22%2C%22ES256%22%2C%22ES256K%22%2C%22EdDSA%22%5D%7D%7D%7D"
+}'
+      output: '{
+        "errorCode": "wallet_locked"
+}'
+
+   Mimoto_VerifiablePresentationAuthorization_withInvalidSession_unAuthorized_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/presentations
+      description: Creating verifiable presentation with invalid session
+      uniqueIdentifier: TC_Mimoto_VerifiablePresentationAuthorization_06
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization
+      outputTemplate: mimoto/responseCode
+      input: '{
+        "cookie": "OGYwNWI5YWQtZjg0MS00NmM2LWJiZTgtOGRmMWYwMGYzNzcy",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+        "authorizationRequestUrl": "openid4vp://authorize?client_id=injiverify.qa-inji1.mosip.net%2F&state=req_585853ee-c822-4601-bcfc-9f3760cfa70c&response_mode=direct_post&response_type=vp_token&nonce=MTc1OTk4Mjk4MDc1OQ%3D%3D&response_uri=https%3A%2F%2Finjiverify.qa-inji1.mosip.net%2Fv1%2Fverify%2Fvp-submission%2Fdirect-post&presentation_definition=%7B%22id%22%3A%22c4822b58-7fb4-454e-b827-f8758fe27f9a%22%2C%22input_descriptors%22%3A%5B%7B%22id%22%3A%22id+card+credential%22%2C%22format%22%3A%7B%22ldp_vc%22%3A%7B%22proof_type%22%3A%5B%22Ed25519Signature2020%22%5D%7D%7D%2C%22constraints%22%3A%7B%22fields%22%3A%5B%7B%22path%22%3A%5B%22%24.type%22%5D%2C%22filter%22%3A%7B%22type%22%3A%22object%22%2C%22pattern%22%3A%22InsuranceCredential%22%7D%7D%5D%7D%7D%5D%2C%22purpose%22%3A%22Relying+party+is+requesting+your+digital+ID+for+the+purpose+of+Self-Authentication%22%7D&client_metadata=%7B%22client_name%22%3A%22injiverify.qa-inji1.mosip.net%2F%22%2C%22vp_formats%22%3A%7B%22ldp_vp%22%3A%7B%22proof_type%22%3A%5B%22Ed25519Signature2018%22%2C%22Ed25519Signature2020%22%2C%22RsaSignature2018%22%5D%7D%2C%22vc%2Bsd-jwt%22%3A%7B%22sd-jwt_alg_values%22%3A%5B%22RS256%22%2C%22ES256%22%2C%22ES256K%22%2C%22EdDSA%22%5D%2C%22kb-jwt_alg_values%22%3A%5B%22RS256%22%2C%22ES256%22%2C%22ES256K%22%2C%22EdDSA%22%5D%7D%7D%7D"
+}'
+      output: '{
+        "responseCode": "401"
+}'
+
+   Mimoto_VerifiablePresentationAuthorization_withNullWalletID_walletId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/presentations
+      description: Creating verifiable presentation with null walletId
+      uniqueIdentifier: TC_Mimoto_VerifiablePresentationAuthorization_07
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "null",
+        "authorizationRequestUrl": "openid4vp://authorize?client_id=injiverify.qa-inji1.mosip.net%2F&state=req_585853ee-c822-4601-bcfc-9f3760cfa70c&response_mode=direct_post&response_type=vp_token&nonce=MTc1OTk4Mjk4MDc1OQ%3D%3D&response_uri=https%3A%2F%2Finjiverify.qa-inji1.mosip.net%2Fv1%2Fverify%2Fvp-submission%2Fdirect-post&presentation_definition=%7B%22id%22%3A%22c4822b58-7fb4-454e-b827-f8758fe27f9a%22%2C%22input_descriptors%22%3A%5B%7B%22id%22%3A%22id+card+credential%22%2C%22format%22%3A%7B%22ldp_vc%22%3A%7B%22proof_type%22%3A%5B%22Ed25519Signature2020%22%5D%7D%7D%2C%22constraints%22%3A%7B%22fields%22%3A%5B%7B%22path%22%3A%5B%22%24.type%22%5D%2C%22filter%22%3A%7B%22type%22%3A%22object%22%2C%22pattern%22%3A%22InsuranceCredential%22%7D%7D%5D%7D%7D%5D%2C%22purpose%22%3A%22Relying+party+is+requesting+your+digital+ID+for+the+purpose+of+Self-Authentication%22%7D&client_metadata=%7B%22client_name%22%3A%22injiverify.qa-inji1.mosip.net%2F%22%2C%22vp_formats%22%3A%7B%22ldp_vp%22%3A%7B%22proof_type%22%3A%5B%22Ed25519Signature2018%22%2C%22Ed25519Signature2020%22%2C%22RsaSignature2018%22%5D%7D%2C%22vc%2Bsd-jwt%22%3A%7B%22sd-jwt_alg_values%22%3A%5B%22RS256%22%2C%22ES256%22%2C%22ES256K%22%2C%22EdDSA%22%5D%2C%22kb-jwt_alg_values%22%3A%5B%22RS256%22%2C%22ES256%22%2C%22ES256K%22%2C%22EdDSA%22%5D%7D%7D%7D"
+}'
+      output: '{
+        "errorCode": "invalid_request"
+}'
