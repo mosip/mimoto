@@ -224,47 +224,47 @@
 					name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithPathParamsAndCookie" />
 		</classes>
 	</test>
-		<test name="VerifiablePresentationAuthorization">
+	<test name="VerifiablePresentationAuthorization">
 		<parameter name="headers" value="Accept-Language" />
 		<parameter name="ymlFile"
 			value="mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization.yml" />
+		<parameter name="pathParams" value="walletId" />
+		<parameter name="idKeyName" value="presentationId,id" />
 		<classes>
 			<class
 				name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithPathParamsHeadersAndCookieForAutoGenId" />
-			<parameter name="pathParams" value="walletId" />
-			<parameter name="idKeyName" value="presentationId,id" />
 		</classes>
 	</test>
- 	 <test name="GetCredentialsForPresentation">
+	<test name="GetCredentialsForPresentation">
 		<parameter name="headers" value="Accept-Language" />
 		<parameter name="ymlFile"
 			value="mimoto/LoginFlow/Presentations/GetCredentialsForPresentation/GetCredentialsForPresentation.yml" />
+		<parameter name="pathParams" value="walletId,presentationId" />
+		<parameter name="idKeyName" value="availableCredentials" />
 		<classes>
 			<class
 				name="io.mosip.testrig.apirig.mimoto.testscripts.GetWithPathParamAndCookieForAutoGenId" />
-			<parameter name="pathParams" value="walletId,presentationId" />
-			<parameter name="idKeyName" value="availableCredentials" />
 		</classes>
-	</test> 
+	</test>
 	<test name="AddTrustedVerifier">
 		<parameter name="headers" value="Accept-Language" />
 		<parameter name="ymlFile"
 			value="mimoto/LoginFlow/Presentations/AddTrustedVerifier/AddTrustedVerifier.yml" />
+		<parameter name="pathParams" value="walletId" />
+		<parameter name="idKeyName" value="presentationId" />
 		<classes>
 			<class
 				name="io.mosip.testrig.apirig.mimoto.testscripts.PostWithPathParamsHeadersAndCookieForAutoGenId" />
-			<parameter name="pathParams" value="walletId" />
-			<parameter name="idKeyName" value="presentationId" />
 		</classes>
 	</test>
 	<test name="RejectPresentation">
 		<parameter name="headers" value="Accept-Language" />
 		<parameter name="ymlFile"
 			value="mimoto/LoginFlow/Presentations/RejectPresentation/RejectPresentation.yml" />
+		<parameter name="pathParams" value="walletId,presentationId" />
 		<classes>
 			<class
 				name="io.mosip.testrig.apirig.mimoto.testscripts.PatchWithPathParamsBodyAndCookie" />
-			<parameter name="pathParams" value="walletId,presentationId" />
 		</classes>
 	</test>
 	<test name="OAuthDetailsRequestForGoogleLogin">

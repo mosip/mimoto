@@ -246,35 +246,32 @@ public class MimotoUtil extends AdminTestUtil {
 
 			jsonString = replaceKeywordValue(jsonString, "$CHALLENGEVALUEFORSUNBIRDC$", challengeValue);
 		}
-
+		
 		if (jsonString.contains("$PUBLICKEYFORBINDING$")) {
-			jsonString = replaceKeywordValue(jsonString, "$PUBLICKEYFORBINDING$", generatePublicKeyForMimoto());
+			jsonString = replaceKeywordValue(jsonString, "$PUBLICKEYFORBINDING$",
+					generatePublicKeyForMimoto());
 		}
-
+		
 		if (jsonString.contains("$INJIREDIRECTURI$")) {
 			jsonString = replaceKeywordValue(jsonString, "$INJIREDIRECTURI$",
 					ApplnURI.replace(GlobalConstants.API_INTERNAL, "injiweb") + "/redirect");
 		}
+		if (jsonString.contains("$AUTHORIZATION_REQUEST_URL$")) {
+			jsonString = replaceKeywordValue(jsonString, "$AUTHORIZATION_REQUEST_URL$",
+					getAuthorizationRequestUrlMock());
 
+		}
+		if (jsonString.contains("$CLIENT_ID_INJI_VERIFY$")) {
+			jsonString = replaceKeywordValue(jsonString, "$CLIENT_ID_INJI_VERIFY$", getClientIdForInjiVerify());
+		}
 		if (jsonString.contains("$GETCLIENTIDFORMOSIPIDFROMMIMOTOACTUATOR$")) {
 			String clientIdSection = MimotoConfigManager.getproperty("mimoto-oidc-mosipid-partner-clientid");
 			jsonString = replaceKeywordWithValue(jsonString, "$GETCLIENTIDFORMOSIPIDFROMMIMOTOACTUATOR$",
 					getValueFromMimotoActuator("overrides", clientIdSection));
-		}
-		if (jsonString.contains("$GETCLIENTIDFORINSURANCEFROMMIMOTOACTUATOR$")) {
+		} else if (jsonString.contains("$GETCLIENTIDFORINSURANCEFROMMIMOTOACTUATOR$")) {
 			String clientIdSection = MimotoConfigManager.getproperty("mimoto-oidc-sunbird-partner-clientid");
 			jsonString = replaceKeywordWithValue(jsonString, "$GETCLIENTIDFORINSURANCEFROMMIMOTOACTUATOR$",
 					getValueFromMimotoActuator("overrides", clientIdSection));
-		}
-		if (jsonString.contains("$AUTHORIZATION_REQUEST_URL$")) {
-
-			jsonString = replaceKeywordValue(jsonString, "$AUTHORIZATION_REQUEST_URL$",
-					getAuthorizationRequestUrlMock());
-
-		} else if (jsonString.contains("$CLIENT_ID_INJI_VERIFY$")) {
-
-			jsonString = replaceKeywordValue(jsonString, "$CLIENT_ID_INJI_VERIFY$", getClientIdForInjiVerify());
-
 		}
 
 		return jsonString;
@@ -410,65 +407,31 @@ public class MimotoUtil extends AdminTestUtil {
 
 	}
 
-	private static String getClientIdForInjiVerify() {
-
+	private static String extractEnvironmentName() {
 		final String startMarker = "api-internal.";
-
 		final String endMarker = ".mosip.net";
-
+		
 		int startIndex = ApplnURI.indexOf(startMarker);
-
 		int endIndex = ApplnURI.indexOf(endMarker);
-
+		
 		if (startIndex == -1 || endIndex == -1 || startIndex >= endIndex) {
-
 			throw new IllegalArgumentException(
-
-					"Failed to extract environment name."
-
+				"Failed to extract environment name from ApplnURI: " + ApplnURI
 			);
-
 		}
-
+		
 		startIndex += startMarker.length();
+		return ApplnURI.substring(startIndex, endIndex);
+	}
 
-		String env_name = ApplnURI.substring(startIndex, endIndex);
-
-		String client_id = "did:web:injiverify." + env_name + ".mosip.net:v1:verify";
-
-		return client_id;
-
+	private static String getClientIdForInjiVerify() {
+		String env_name = extractEnvironmentName();
+		return "did:web:injiverify." + env_name + ".mosip.net:v1:verify";
 	}
 
 	private static String getAuthorizationRequestUrlMock() {
-
-		final String startMarker = "api-internal.";
-
-		final String endMarker = ".mosip.net";
-
-		int startIndex = ApplnURI.indexOf(startMarker);
-
-		int endIndex = ApplnURI.indexOf(endMarker);
-
-		if (startIndex == -1 || endIndex == -1 || startIndex >= endIndex) {
-
-			throw new IllegalArgumentException(
-
-					"Failed to extract environment name."
-
-			);
-
-		}
-
-		startIndex += startMarker.length();
-
-		String env_name = ApplnURI.substring(startIndex, endIndex);
-
-		String authorizationRequestUrl = "openid4vp://authorize?client_id=" + getClientIdForInjiVerify()
-				+ "&request_uri=" + "https://injiverify." + env_name + ".mosip.net/v1/verify/vp-request/";
-
-		return authorizationRequestUrl;
-
+		String env_name = extractEnvironmentName();
+		return "openid4vp://authorize?client_id=" + getClientIdForInjiVerify()
+			+ "&request_uri=" + "https://injiverify." + env_name + ".mosip.net/v1/verify/vp-request/";
 	}
-
 }

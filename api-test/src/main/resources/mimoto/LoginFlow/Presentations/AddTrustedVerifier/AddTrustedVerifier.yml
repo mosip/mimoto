@@ -74,7 +74,7 @@ AddTrustedVerifier:
 
    Mimoto_AddTrustedVerifier_withLocked_walletId_Neg:
       endPoint: /v1/mimoto/wallets/{walletId}/trusted-verifiers
-      description: Add trusted verifier with empty walletId
+      description: Add trusted verifier with locked walletId
       uniqueIdentifier: TC_Mimoto_AddTrustedVerifier_05
       role: userDefinedCookie
       restMethod: post
