@@ -1,0 +1,109 @@
+VerifiablePresentationAuthorization:
+   Mimoto_VerifiablePresentationAuthorization_all_Valid_Smoke_sid:
+      endPoint: /v1/mimoto/wallets/{walletId}/presentations
+      description: Creating verifiable presentation with valid data
+      uniqueIdentifier: TC_Mimoto_VerifiablePresentationAuthorization_01
+      role: userDefinedCookie
+      restMethod: post
+      checkErrorsOnlyInResponse: true
+      inputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization
+      outputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorizationResult
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+        "authorizationRequestUrl": "$AUTHORIZATION_REQUEST_URL$$ID:InjiVerifyVpRequest_all_Valid_Smoke_sid_requestId$"
+}'
+      output: '{
+}'
+
+   Mimoto_VerifiablePresentationAuthorization_withInvalid_authorizationRequestUrl_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/presentations
+      description: Creating verifiable presentation with invalid authorizationRequestUrl
+      uniqueIdentifier: TC_Mimoto_VerifiablePresentationAuthorization_02
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+        "authorizationRequestUrl": "invalidRequest"
+}'
+      output: '{
+        "errorCode": "invalid_request"
+}'
+
+   Mimoto_VerifiablePresentationAuthorization_withInvalid_walletId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/presentations
+      description: Creating verifiable presentation with invalid walletId
+      uniqueIdentifier: TC_Mimoto_VerifiablePresentationAuthorization_03
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "invalidWalletID",
+        "authorizationRequestUrl": "$AUTHORIZATION_REQUEST_URL$$ID:InjiVerifyVpRequest_all_Valid_Smoke_sid_requestId$"
+}'
+      output: '{
+        "errorCode": "invalid_request"
+}'
+
+   Mimoto_VerifiablePresentationAuthorization_withLocked_walletId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/presentations
+      description: Creating verifiable presentation with locked walletId
+      uniqueIdentifier: TC_Mimoto_VerifiablePresentationAuthorization_04
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_WithoutUnlock_all_Valid_Smoke_sid_walletId$",
+        "authorizationRequestUrl": "$AUTHORIZATION_REQUEST_URL$$ID:InjiVerifyVpRequest_all_Valid_Smoke_sid_requestId$"
+}'
+      output: '{
+        "errorCode": "wallet_locked"
+}'
+
+   Mimoto_VerifiablePresentationAuthorization_withInvalidSession_unAuthorized_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/presentations
+      description: Creating verifiable presentation with invalid session
+      uniqueIdentifier: TC_Mimoto_VerifiablePresentationAuthorization_05
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization
+      outputTemplate: mimoto/responseCode
+      input: '{
+        "cookie": "OGYwNWI5YWQtZjg0MS00NmM2LWJiZTgtOGRmMWYwMGYzNzcy",
+        "cookieName": "SESSION",
+        "walletId": "$ID:CreateWallet_all_Valid_Smoke_sid_walletId$",
+        "authorizationRequestUrl": "$AUTHORIZATION_REQUEST_URL$$ID:InjiVerifyVpRequest_all_Valid_Smoke_sid_requestId$"
+}'
+      output: '{
+        "responseCode": "401"
+}'
+
+   Mimoto_VerifiablePresentationAuthorization_withNullWalletID_walletId_Neg:
+      endPoint: /v1/mimoto/wallets/{walletId}/presentations
+      description: Creating verifiable presentation with null walletId
+      uniqueIdentifier: TC_Mimoto_VerifiablePresentationAuthorization_06
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Presentations/VerifiablePresentationAuthorization/VerifiablePresentationAuthorization
+      outputTemplate: mimoto/error2
+      input: '{
+        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookieName": "SESSION",
+        "walletId": "null",
+        "authorizationRequestUrl": "$AUTHORIZATION_REQUEST_URL$$ID:InjiVerifyVpRequest_all_Valid_Smoke_sid_requestId$"
+}'
+      output: '{
+        "errorCode": "invalid_request"
+}'
