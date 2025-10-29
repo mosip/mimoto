@@ -36,7 +36,6 @@
 		<parameter name="ymlFile"
 				   value="mimoto/LoginFlow/Presentations/InjiVerifyVpRequest/InjiVerifyVpRequest.yml" />
 		<parameter name="idKeyName" value="requestId" />
-		<parameter name="prerequisite" value="Yes" />
 		<classes>
 			<class
 					name="io.mosip.testrig.apirig.mimoto.testscripts.SimplePostForAutoGenId" />
