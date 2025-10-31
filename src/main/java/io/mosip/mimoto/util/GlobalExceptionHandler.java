@@ -35,15 +35,15 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
     public ErrorDTO handleUnsupportedRequestException(HttpRequestMethodNotSupportedException ex) {
         log.error("HTTP method not supported: {}", ex.getMessage(), ex);
         return new ErrorDTO(ErrorConstants.INVALID_REQUEST.getErrorCode(), ex.getMessage());
     }
 
-    @ExceptionHandler(NoResourceFoundException.class)  // Catch-all for unexpected exceptions
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorDTO handleUnsupportedRequestException(Exception ex) {
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorDTO handleNoResourceFoundException(NoResourceFoundException ex) {
         log.error("An unexpected error occurred: ", ex);
         return new ErrorDTO(ErrorConstants.INVALID_REQUEST.getErrorCode(), ex.getMessage());
     }
