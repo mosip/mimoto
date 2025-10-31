@@ -74,3 +74,18 @@ GoogleLoginToken:
       output: '{
        "errorCode": "invalid_request"
 }'
+   Mimoto_GoogleLoginToken_all_ValidForLockedWallet_Smoke:
+      endPoint: /v1/mimoto/auth/google/token-login
+      description: Creating the sesion token for google login for locked wallet scenarios
+      uniqueIdentifier: TC_Mimoto_GoogleLoginToken_06
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/Authorization/GoogleLoginToken/GoogleLoginToken
+      outputTemplate: mimoto/responseCode
+      input: '{
+      	"cookie": "$GOOGLE_IDT_TOKEN$"
+}'
+      output: '{
+       "responseCode": "200"
+}'
