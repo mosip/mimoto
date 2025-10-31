@@ -332,7 +332,7 @@ public class WalletPresentationsControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
 
         verifyNoInteractions(presentationActionService);
     }
