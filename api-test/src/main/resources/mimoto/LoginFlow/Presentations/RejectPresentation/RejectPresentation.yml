@@ -108,9 +108,9 @@ RejectPresentation:
       inputTemplate: mimoto/LoginFlow/Presentations/RejectPresentation/RejectPresentation
       outputTemplate: mimoto/error2
       input: '{
-        "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+        "cookie": "$ID:GoogleLoginToken_all_ValidForLockedWallet_Smoke_sessionCookie$",
         "cookieName": "SESSION",
-        "walletId": "$ID:CreateWallet_WithoutUnlock_all_Valid_Smoke_sid_walletId$",
+        "walletId": "$ID:CreateWallet_all_ValidForLockedWallet_Smoke_sid_walletId$",
         "presentationId": "$ID:VerifiablePresentationAuthorization_all_Valid_Smoke_sid_presentationId$",
         "errorCode": "access_denied",
         "errorMessage": "User denied authorization to share credentials"

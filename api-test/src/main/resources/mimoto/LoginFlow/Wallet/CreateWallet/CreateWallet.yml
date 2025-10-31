@@ -419,3 +419,22 @@ CreateWallet:
       output: '{
       "errorCode": "invalid_request"
 }'
+
+   Mimoto_CreateWallet_all_ValidForLockedWallet_Smoke_sid:
+      endPoint: /v1/mimoto/wallets
+      description: Creating new wallet with successful login for locked wallet scenarios
+      uniqueIdentifier: TC_Mimoto_CreateWallet_23
+      role: userDefinedCookie
+      restMethod: post
+      inputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWallet
+      outputTemplate: mimoto/LoginFlow/Wallet/CreateWallet/CreateWalletResult
+      input: '{
+      	"cookie": "$ID:GoogleLoginToken_all_ValidForLockedWallet_Smoke_sessionCookie$",
+      	"cookieName": "SESSION",
+      	"walletName": "AutomationWallet",
+      	"walletPin": "123456",
+      	"confirmWalletPin": "123456"
+}'
+      output: '{
+      "walletName": "AutomationWallet"
+}'
