@@ -48,20 +48,24 @@ public class SessionManager {
      * @return The verifiable presentation session data if found, null otherwise.
      */
     public VerifiablePresentationSessionData getPresentationSessionData(HttpSession httpSession, String walletId, String presentationId) {
-        try {
-            Map<String, VerifiablePresentationSessionData> presentations = (Map<String, VerifiablePresentationSessionData>) httpSession.getAttribute(SessionKeys.PRESENTATIONS  + "::" + walletId);
-            if (presentations == null || !presentations.containsKey(presentationId)) {
-                log.warn("No presentation found in session for presentationId: {}", presentationId);
-                return null;
-            }
 
-            VerifiablePresentationSessionData sessionData = presentations.get(presentationId);
+        validateInputParameters(httpSession, walletId, presentationId);
 
-            return sessionData;
+        Map<String, VerifiablePresentationSessionData> presentations = (Map<String, VerifiablePresentationSessionData>) httpSession.getAttribute(SessionKeys.PRESENTATIONS + "::" + walletId);
+        if (presentations == null || !presentations.containsKey(presentationId))
+            throw new IllegalArgumentException("presentationId not found in session");
+        return presentations.get(presentationId);
+    }
 
-        } catch (Exception e) {
-            log.error("Failed to retrieve presentation session data from session for presentationId: {}", presentationId, e);
-            return null;
+    private void validateInputParameters(HttpSession httpSession, String walletId, String presentationId) {
+        if (httpSession == null) {
+            throw new IllegalArgumentException("HTTP session is invalid");
+        }
+        if (walletId == null || walletId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Wallet ID is invalid");
+        }
+        if (presentationId == null || presentationId.trim().isEmpty()) {
+            throw new IllegalArgumentException("presentationId not found in session");
         }
     }
 

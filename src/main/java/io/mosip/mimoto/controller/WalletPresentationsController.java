@@ -144,10 +144,8 @@ public class WalletPresentationsController {
             log.warn("Wallet key not found in session for walletId: {}", walletId);
             return Utilities.getErrorResponseEntityFromPlatformErrorMessage(UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED, MediaType.APPLICATION_JSON);
         }
-
-        VerifiablePresentationSessionData sessionData = sessionManager.getPresentationSessionData(httpSession, walletId, presentationId);
-
         try {
+            VerifiablePresentationSessionData sessionData = sessionManager.getPresentationSessionData(httpSession, walletId, presentationId);
             MatchingCredentialsWithWalletDataDTO matchingCredentialsWithWalletData = credentialMatchingService.getMatchingCredentials(sessionData, walletId, base64Key);
             // Store the matching credentials and pre-filtered matched credentials in session cache before returning
             sessionManager.storeMatchingWalletCredentialsInPresentationSessionData(httpSession, walletId, sessionData, matchingCredentialsWithWalletData.getMatchingCredentials());
@@ -156,8 +154,7 @@ public class WalletPresentationsController {
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     exception, WALLET_CREATE_VP_EXCEPTION.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         } catch (IllegalArgumentException exception) {
-            return Utilities.getErrorResponseEntityWithoutWrapper(
-                    exception, INVALID_REQUEST.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, INVALID_REQUEST.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
         }
 
     }
@@ -230,9 +227,9 @@ public class WalletPresentationsController {
 
             return presentationActionService.handlePresentationAction(walletId, presentationId, request, vpSessionData, base64Key);
 
-        } catch (Exception exception) {
-            log.error("Unexpected error during presentation action for walletId: {}, presentationId: {}", walletId, presentationId, exception);
-            return Utilities.getErrorResponseEntityWithoutWrapper(exception, INTERNAL_SERVER_ERROR.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
+        }
+        catch (IllegalArgumentException exception){
+            return Utilities.getErrorResponseEntityWithoutWrapper(exception, INVALID_REQUEST.getErrorCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
         }
     }
 }

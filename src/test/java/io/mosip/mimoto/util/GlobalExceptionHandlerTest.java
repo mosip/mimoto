@@ -13,11 +13,15 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.lang.reflect.Method;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GlobalExceptionHandlerTest {
@@ -159,6 +163,84 @@ public class GlobalExceptionHandlerTest {
         org.junit.Assert.assertNotNull(body);
         org.junit.Assert.assertEquals("invalid_request", body.getErrorCode());
         org.junit.Assert.assertTrue(body.getErrorMessage().contains("errorCode"));
+    }
+
+    @Test
+    public void testHandleUnsupportedRequestExceptionReturnsMethodNotAllowed() throws Exception {
+        // Arrange
+        String errorMessage = "Request method 'DELETE' not supported";
+        HttpRequestMethodNotSupportedException ex = mock(HttpRequestMethodNotSupportedException.class);
+        when(ex.getMessage()).thenReturn(errorMessage);
+        String expectedErrorCode = ErrorConstants.INVALID_REQUEST.getErrorCode();
+
+        // Act
+        ErrorDTO result = globalExceptionHandler.handleUnsupportedRequestException(ex);
+
+        // Assert
+        assertEquals(expectedErrorCode, result.getErrorCode());
+        assertEquals(errorMessage, result.getErrorMessage());
+
+        // Verify ResponseStatus annotation
+        Method method = GlobalExceptionHandler.class.getMethod("handleUnsupportedRequestException", HttpRequestMethodNotSupportedException.class);
+        ResponseStatus responseStatus = method.getAnnotation(ResponseStatus.class);
+        assertNotNull(responseStatus);
+        assertEquals(HttpStatus.METHOD_NOT_ALLOWED, responseStatus.value());
+    }
+
+    @Test
+    public void testHandleUnsupportedRequestExceptionWithExceptionMessage() throws Exception {
+        // Arrange
+        String errorMessage = "Request method 'PATCH' not supported. Supported methods are: GET, POST";
+        HttpRequestMethodNotSupportedException ex = mock(HttpRequestMethodNotSupportedException.class);
+        when(ex.getMessage()).thenReturn(errorMessage);
+        String expectedErrorCode = ErrorConstants.INVALID_REQUEST.getErrorCode();
+
+        // Act
+        ErrorDTO result = globalExceptionHandler.handleUnsupportedRequestException(ex);
+
+        // Assert
+        assertEquals(expectedErrorCode, result.getErrorCode());
+        assertNotNull(result.getErrorMessage());
+        assertEquals(errorMessage, result.getErrorMessage());
+    }
+
+    @Test
+    public void testHandleNoResourceFoundExceptionReturnsNotFound() throws Exception {
+        // Arrange
+        String errorMessage = "No static resource found at path /api/invalid";
+        NoResourceFoundException ex = mock(NoResourceFoundException.class);
+        when(ex.getMessage()).thenReturn(errorMessage);
+        String expectedErrorCode = ErrorConstants.INVALID_REQUEST.getErrorCode();
+
+        // Act
+        ErrorDTO result = globalExceptionHandler.handleNoResourceFoundException(ex);
+
+        // Assert
+        assertEquals(expectedErrorCode, result.getErrorCode());
+        assertEquals(errorMessage, result.getErrorMessage());
+
+        // Verify ResponseStatus annotation
+        Method method = GlobalExceptionHandler.class.getMethod("handleNoResourceFoundException", NoResourceFoundException.class);
+        ResponseStatus responseStatus = method.getAnnotation(ResponseStatus.class);
+        assertNotNull(responseStatus);
+        assertEquals(HttpStatus.NOT_FOUND, responseStatus.value());
+    }
+
+    @Test
+    public void testHandleNoResourceFoundExceptionWithExceptionMessage() throws Exception {
+        // Arrange
+        String errorMessage = "No static resource found at path /api/test/resource";
+        NoResourceFoundException ex = mock(NoResourceFoundException.class);
+        when(ex.getMessage()).thenReturn(errorMessage);
+        String expectedErrorCode = ErrorConstants.INVALID_REQUEST.getErrorCode();
+
+        // Act
+        ErrorDTO result = globalExceptionHandler.handleNoResourceFoundException(ex);
+
+        // Assert
+        assertEquals(expectedErrorCode, result.getErrorCode());
+        assertNotNull(result.getErrorMessage());
+        assertEquals(errorMessage, result.getErrorMessage());
     }
 
 }

@@ -140,18 +140,16 @@ public class SessionManagerTest {
         assertEquals(fixedInstant, result.getCreatedAt());
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void shouldReturnNullWhenNoPresentationsInSession() {
         String presentationId = "test-presentation-id";
         String walletId = "wallet123";
         MockHttpSession session = new MockHttpSession();
 
-        VerifiablePresentationSessionData result = sessionManager.getPresentationSessionData(session, walletId, presentationId);
-
-        assertNull(result);
+        sessionManager.getPresentationSessionData(session, walletId, presentationId);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void shouldReturnNullWhenPresentationIdNotFound() {
         String presentationId = "non-existent-id";
         String walletId = "wallet123";
@@ -160,12 +158,10 @@ public class SessionManagerTest {
         Map<String, VerifiablePresentationSessionData> presentations = new HashMap<>();
         session.setAttribute(SessionKeys.PRESENTATIONS + "::" + walletId, presentations);
 
-        VerifiablePresentationSessionData result = sessionManager.getPresentationSessionData(session, walletId, presentationId);
-
-        assertNull(result);
+        sessionManager.getPresentationSessionData(session, walletId, presentationId);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void shouldHandleExceptionWhenRetrievingPresentationSessionData() {
         // Arrange
         String presentationId = "test-presentation-id";
@@ -173,13 +169,10 @@ public class SessionManagerTest {
         HttpSession session = mock(HttpSession.class);
         
         // Mock session to throw exception when getting attribute
-        when(session.getAttribute(anyString())).thenThrow(new RuntimeException("Session error"));
+        when(session.getAttribute(anyString())).thenThrow(new IllegalArgumentException("Session error"));
 
         // Act
-        VerifiablePresentationSessionData result = sessionManager.getPresentationSessionData(session, walletId, presentationId);
-
-        // Assert
-        assertNull(result);
+        sessionManager.getPresentationSessionData(session, walletId, presentationId);
     }
 
     @Test
