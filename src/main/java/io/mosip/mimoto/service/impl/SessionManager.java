@@ -51,8 +51,8 @@ public class SessionManager {
 
         validateInputParameters(httpSession, walletId, presentationId);
 
-        Map<String, VerifiablePresentationSessionData> presentations = (Map<String, VerifiablePresentationSessionData>) httpSession.getAttribute(SessionKeys.PRESENTATIONS  + "::" + walletId);
-        if(!presentations.containsKey(presentationId))
+        Map<String, VerifiablePresentationSessionData> presentations = (Map<String, VerifiablePresentationSessionData>) httpSession.getAttribute(SessionKeys.PRESENTATIONS + "::" + walletId);
+        if (presentations == null || !presentations.containsKey(presentationId))
             throw new IllegalArgumentException("presentationId not found in session");
         return presentations.get(presentationId);
     }

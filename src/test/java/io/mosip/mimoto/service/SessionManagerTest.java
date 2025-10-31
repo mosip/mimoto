@@ -140,7 +140,7 @@ public class SessionManagerTest {
         assertEquals(fixedInstant, result.getCreatedAt());
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void shouldReturnNullWhenNoPresentationsInSession() {
         String presentationId = "test-presentation-id";
         String walletId = "wallet123";
