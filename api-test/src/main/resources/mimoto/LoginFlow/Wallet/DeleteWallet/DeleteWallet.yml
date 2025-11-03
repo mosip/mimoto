@@ -65,7 +65,7 @@ UnlockWallet:
       	"walletId": ""
 }'
       output: '{
-      "errorCode": "internal_server_error"
+      "errorCode": "invalid_request"
 }'
 
    Mimoto_DeleteWallet_Space_WalletId_Neg:
