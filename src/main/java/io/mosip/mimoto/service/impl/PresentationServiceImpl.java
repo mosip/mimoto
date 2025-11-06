@@ -230,16 +230,20 @@ public class PresentationServiceImpl implements PresentationService {
             );
             log.info("Response from verifier after POST: {}", postResponse);
 
-            if(postResponse==null || !postResponse.containsKey("redirect_uri")) {
-                return redirectUri;
-            }
-            // Check for redirect_uri in response
-            else {
+            // Check for redirect_uri in response first
+            if (postResponse != null && postResponse.containsKey("redirect_uri")) {
                 String responseRedirectUri = (String) postResponse.get("redirect_uri");
                 if (responseRedirectUri != null && !responseRedirectUri.isEmpty()) {
                     return responseRedirectUri;
                 }
             }
+
+            // Use request's redirectUri if it's non-blank
+            if (redirectUri != null && !redirectUri.isBlank()) {
+                log.info("Using redirectUri from request: {}", redirectUri);
+                return redirectUri;
+            }
+
             // Fallback behavior if redirect_uri is not provided
             log.warn("No redirect_uri received from verifier in POST response. Falling back to response_uri.");
             return responseUri + "?status=vp_sent";

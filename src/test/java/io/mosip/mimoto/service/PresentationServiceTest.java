@@ -639,7 +639,7 @@ public class PresentationServiceTest {
     @Test
     public void testDirectPostResponseModeWithEmptyRedirectUri() throws Exception {
         VCCredentialResponse vcCredentialResponse = TestUtilities.getVCCredentialResponseDTO("Ed25519Signature2020");
-        PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTO();
+        PresentationRequestDTO presentationRequestDTO = TestUtilities.getPresentationRequestDTOWithEmptyRedirectURI();
         presentationRequestDTO.setResponseMode("direct_post");
         presentationRequestDTO.setResponseUri("https://verifier.example.com/response");
         presentationRequestDTO.setState("test-state");
