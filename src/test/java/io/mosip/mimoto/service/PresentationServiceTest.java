@@ -482,7 +482,7 @@ public class PresentationServiceTest {
 
         String result = presentationService.authorizePresentation(presentationRequestDTO);
 
-        assertEquals("https://verifier.example.com/response?status=vp_sent", result);
+        assertEquals("test_redirect_uri", result);
         verify(restApiClient).postApi(eq("https://verifier.example.com/response"), any(), any(), eq(Map.class));
     }
 
