@@ -111,7 +111,7 @@ public class DataShareServiceImpl {
         }
         VCCredentialResponse vcCredentialResponse = objectMapper.readValue(vcCredentialResponseString, VCCredentialResponse.class);
 
-        log.info("Completed Mapping the Credential to Object => ");
+        log.info("Completed Mapping the Credential to Object => {}", vcCredentialResponse.toString());
         if(vcCredentialResponse.getCredential() == null){
             DataShareResponseDto dataShareResponse = objectMapper.readValue(vcCredentialResponseString, DataShareResponseDto.class);
             String errorCode = dataShareResponse.getErrors().get(0).getErrorCode();
