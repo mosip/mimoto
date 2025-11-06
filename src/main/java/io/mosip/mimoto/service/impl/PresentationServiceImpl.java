@@ -29,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -168,6 +170,7 @@ public class PresentationServiceImpl implements PresentationService {
 
         // Create VP Token
         String vpToken = createVpToken(vpDTO);
+
         // Create PresentationSubmission
         String presentationSubmission = constructPresentationSubmission(format, vpDTO, presentationDefinitionDTO, inputDescriptorDTO);
 
@@ -175,6 +178,7 @@ public class PresentationServiceImpl implements PresentationService {
         if (presentationRequestDTO.getResponseMode() != null && "direct_post".equals(presentationRequestDTO.getResponseMode())) {
             return postVpToResponseUri(
                     presentationRequestDTO.getResponseUri(),
+                    presentationRequestDTO.getRedirectUri(),
                     vpToken,
                     presentationSubmission,
                     presentationRequestDTO.getState(),
@@ -207,33 +211,39 @@ public class PresentationServiceImpl implements PresentationService {
                 URLEncoder.encode(presentationSubmission, StandardCharsets.UTF_8));
     }
 
-    private String postVpToResponseUri(String responseUri, String vpToken, String presentationSubmission, String state, String nonce) throws JsonProcessingException {
-        Map<String, Object> postRequest = new HashMap<>();
-        postRequest.put("vp_token", vpToken);
-        postRequest.put("presentation_submission", objectMapper.readTree(presentationSubmission));
+    private String postVpToResponseUri(String responseUri, String redirectUri, String vpToken, String presentationSubmission, String state, String nonce) throws JsonProcessingException {
+        MultiValueMap<String, String> postRequest = new LinkedMultiValueMap<>();
+        postRequest.add("vp_token", Base64.getUrlEncoder().encodeToString(vpToken.getBytes(StandardCharsets.UTF_8)));
+        postRequest.add("presentation_submission", presentationSubmission);
 
         if (state != null) {
-            postRequest.put("state", state);
-        }
-
-        if (nonce != null) {
-            postRequest.put("nonce", nonce);
+            postRequest.add("state", state);
         }
 
         log.info("Posting VP to response_uri: {}", responseUri);
         try {
             Map<String, Object> postResponse = restApiClient.postApi(
                     responseUri,
-                    MediaType.APPLICATION_JSON,
+                    MediaType.APPLICATION_FORM_URLENCODED,
                     postRequest,
                     Map.class
             );
             log.info("Response from verifier after POST: {}", postResponse);
-            // Check for redirect_uri in response
-            String redirectUri = (String) postResponse.get("redirect_uri");
-            if (redirectUri != null && !redirectUri.isEmpty()) {
+
+            // Check for redirect_uri in response first
+            if (postResponse != null && postResponse.containsKey("redirect_uri")) {
+                String responseRedirectUri = (String) postResponse.get("redirect_uri");
+                if (responseRedirectUri != null && !responseRedirectUri.isEmpty()) {
+                    return responseRedirectUri;
+                }
+            }
+
+            // Use request's redirectUri if it's non-blank
+            if (redirectUri != null && !redirectUri.isBlank()) {
+                log.info("Using redirectUri from request: {}", redirectUri);
                 return redirectUri;
             }
+
             // Fallback behavior if redirect_uri is not provided
             log.warn("No redirect_uri received from verifier in POST response. Falling back to response_uri.");
             return responseUri + "?status=vp_sent";
