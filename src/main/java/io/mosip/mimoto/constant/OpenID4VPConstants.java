@@ -12,6 +12,7 @@ public class OpenID4VPConstants {
     // Authorization request structure keys
     public static final String AUTHORIZATION_REQUEST = "authorizationRequest";
     public static final String AUTHORIZATION_REQUEST_URL = "authorizationRequestUrl";
+    public static final String AUTHORIZATION_REQUEST_PREFIX = "openid4vp://authorize";
     
     // Presentation definition structure keys
     public static final String PRESENTATION_DEFINITION = "presentationDefinition";
