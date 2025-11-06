@@ -15,6 +15,6 @@ import java.util.List;
 public class PresentationDefinitionDTO {
 
     String id;
-    @JsonProperty("inputDescriptors")
+    @JsonProperty("input_descriptors")
     List<InputDescriptorDTO> inputDescriptors;
 }
