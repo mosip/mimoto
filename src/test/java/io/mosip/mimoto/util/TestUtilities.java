@@ -293,6 +293,15 @@ public class TestUtilities {
                 .redirectUri("test_redirect_uri").build();
     }
 
+    public static PresentationRequestDTO getPresentationRequestDTOWithEmptyRedirectURI() {
+        return PresentationRequestDTO.builder()
+                .presentationDefinition(getPresentationDefinitionDTO())
+                .clientId("test_client_id")
+                .resource("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/test")
+                .responseType("test_response_type")
+                .redirectUri("").build();
+    }
+
     public static VCCredentialProperties getVCCredentialPropertiesDTO(String type) {
 
         ArrayList<String> contextList = new ArrayList<>();
