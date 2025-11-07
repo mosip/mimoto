@@ -134,6 +134,7 @@ public class PresentationServiceImpl implements PresentationService {
                     try {
                         return processInputDescriptor(vcCredentialResponse, inputDescriptorDTO, presentationRequestDTO, presentationDefinitionDTO);
                     } catch (JsonProcessingException e) {
+                        log.error("Exception occured during processInputDesciptor: {}", e.getMessage());
                         throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
                     }
                 })
