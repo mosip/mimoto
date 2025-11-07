@@ -120,6 +120,7 @@ public class PresentationServiceImpl implements PresentationService {
     @Override
     public String authorizePresentation(PresentationRequestDTO presentationRequestDTO) throws IOException {
         VCCredentialResponse vcCredentialResponse = dataShareService.downloadCredentialFromDataShare(presentationRequestDTO);
+        log.info("Downloaded credential from DataShare for presentation request, {}", vcCredentialResponse.toString());
         PresentationDefinitionDTO presentationDefinitionDTO = presentationRequestDTO.getPresentationDefinition();
         if (presentationDefinitionDTO == null) {
             throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
@@ -145,26 +146,32 @@ public class PresentationServiceImpl implements PresentationService {
         String format = vcCredentialResponse.getFormat();
         VerifiablePresentationDTO vpDTO;
 
+        log.info("Processing credential format: {}, CredentialFormat.LDP_VC.getFormat() : {}", format, CredentialFormat.LDP_VC.getFormat());
         if (CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(format)) {
             VCCredentialProperties ldpCredential = objectMapper.convertValue(vcCredentialResponse.getCredential(), VCCredentialProperties.class);
             if (inputDescriptorDTO.getFormat().get("ldpVc").get("proofTypes")
                     .stream().anyMatch(proofType -> ldpCredential.getProof().getType().equals(proofType))) {
+                log.info("Credential proof type matched: {}", ldpCredential.getProof().getType());
                 vpDTO = constructVerifiablePresentationString(ldpCredential);
             } else {
+                log.info("Credential proof type did not match. Expected one of: {}", inputDescriptorDTO.getFormat().get("ldpVc").get("proofTypes"));
                 throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
             }
         } else if (CredentialFormat.VC_SD_JWT.getFormat().equalsIgnoreCase(format)
                 || CredentialFormat.DC_SD_JWT.getFormat().equalsIgnoreCase(format)) {
+            log.info("Processing SD-JWT credential");
             String credential = objectMapper.convertValue(vcCredentialResponse.getCredential(), String.class);
             Map<String, Object> jwtHeaders = parseJwtHeader(credential);
             String responseAlgo = (String) jwtHeaders.get("alg");
             if (inputDescriptorDTO.getFormat().get(format).get("sd-jwt_alg_values")
                     .stream().anyMatch(responseAlgo::equals)) {
+                log.info("SD-JWT algorithm matched: {}", responseAlgo);
                 vpDTO = constructVerifiablePresentationStringForSDjwt(credential);
             } else {
                 throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
             }
         } else {
+            log.info("Unsupported credential format: {}, CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(format): {}", format, CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(format));
             throw new VPNotCreatedException(ErrorConstants.INVALID_REQUEST.getErrorMessage());
         }
 
