@@ -57,14 +57,9 @@
         <session.redis.version>3.4.0</session.redis.version>
         <starter.redis.version>3.4.1</starter.redis.version>
 
-        <!-- data -->
-        <h2.version>2.1.210</h2.version>
-
         <!-- test -->
         <junit.version>4.13.1</junit.version>
         <mockito.version>5.15.2</mockito.version>
-        <!-- logger -->
-        <logback.version>1.2.3</logback.version>
 
         <!-- json -->
         <jackson.version>2.13.2</jackson.version>
