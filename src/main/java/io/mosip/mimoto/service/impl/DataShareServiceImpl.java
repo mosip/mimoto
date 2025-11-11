@@ -11,6 +11,7 @@ import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.util.RestApiClient;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -22,9 +23,17 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.PathMatcher;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
+
 @Slf4j
 @Service
 public class DataShareServiceImpl {
+
+    private static final Pattern SAFE_URL_SEGMENT_PATTERN = Pattern.compile("^[A-Za-z0-9._\\-]+$");
 
     @Autowired
     RestApiClient restApiClient;
@@ -102,6 +111,9 @@ public class DataShareServiceImpl {
                     ErrorConstants.RESOURCE_INVALID.getErrorMessage());
         }
 
+        validateResourceURL(credentialsResourceUri);
+
+
         // Call the API with the custom headers
         String vcCredentialResponseString = restApiClient.getApiWithCustomHeaders(credentialsResourceUri, String.class, customHeaders);
         if (vcCredentialResponseString == null) {
@@ -117,6 +129,52 @@ public class DataShareServiceImpl {
             throw new InvalidCredentialResourceException(errorCode.equals("DAT-SER-008") ? ErrorConstants.RESOURCE_NOT_FOUND.getErrorMessage() : ErrorConstants.RESOURCE_EXPIRED.getErrorMessage());
         }
         return vcCredentialResponse;
+    }
+
+    private static void validateResourceURL(String credentialsResourceUri) {
+        try {
+            URI parsedUri = new URI(credentialsResourceUri);
+            String path = parsedUri.getPath();
+            String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
+
+            String wildcardPart = getWildcardPart(decodedPath);
+
+            if (!SAFE_URL_SEGMENT_PATTERN.matcher(wildcardPart).matches()) {
+                throw new InvalidCredentialResourceException(
+                        ErrorConstants.RESOURCE_INVALID.getErrorCode(),
+                        "Invalid characters in wildcard segment");
+            }
+        } catch (URISyntaxException e) {
+            throw new InvalidCredentialResourceException(
+                    ErrorConstants.RESOURCE_INVALID.getErrorCode(),
+                    "Malformed resource URL");
+        }
+    }
+
+    @NotNull
+    private static String getWildcardPart(String decodedPath) {
+        if (decodedPath.contains("..") || decodedPath.contains("//")) {
+            throw new InvalidCredentialResourceException(
+                    ErrorConstants.RESOURCE_INVALID.getErrorCode(),
+                    "Invalid path structure in resource URL");
+        }
+
+        String[] segments = decodedPath.split("/");
+        String wildcardPart;
+        if( segments.length == 0 ){
+            throw new InvalidCredentialResourceException(
+                    ErrorConstants.RESOURCE_INVALID.getErrorCode(),
+                    "Invalid resource identifier in URL");
+        } else {
+            wildcardPart = segments[segments.length - 1];
+        }
+
+        if (wildcardPart.isEmpty() || wildcardPart.contains(" ")) {
+            throw new InvalidCredentialResourceException(
+                    ErrorConstants.RESOURCE_INVALID.getErrorCode(),
+                    "Invalid resource identifier in URL");
+        }
+        return wildcardPart;
     }
 
 }
