@@ -137,16 +137,6 @@
             <version>20231002</version>
         </dependency>
         <dependency>
-            <groupId>info.weboftrust</groupId>
-            <artifactId>ld-signatures-java</artifactId>
-            <version>1.5.0</version>
-        </dependency>
-        <dependency>
-            <groupId>decentralized-identity</groupId>
-            <artifactId>jsonld-common-java</artifactId>
-            <version>1.8.0</version>
-        </dependency>
-        <dependency>
             <groupId>io.mosip</groupId>
             <artifactId>vcverifier-jar</artifactId>
             <version>1.5.0</version>
@@ -367,14 +357,6 @@
             <artifactId>activation</artifactId>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jaxb</groupId>
-            <artifactId>jaxb-runtime</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>itext7-core</artifactId>
             <version>${itextcore.version}</version>
@@ -446,6 +428,12 @@
             <groupId>io.mosip.kernel</groupId>
             <artifactId>kernel-biometrics-api</artifactId>
             <version>${kernel.biometrics.api.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -457,6 +445,12 @@
             <groupId>io.mosip.kernel</groupId>
             <artifactId>kernel-cbeffutil-api</artifactId>
             <version>${kernel.cbeffutil.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
