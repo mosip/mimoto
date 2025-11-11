@@ -134,10 +134,9 @@ public class DataShareServiceImpl {
     private static void validateResourceURL(String credentialsResourceUri) {
         try {
             URI parsedUri = new URI(credentialsResourceUri);
-            String path = parsedUri.getPath();
-            String decodedPath = URLDecoder.decode(path, StandardCharsets.UTF_8);
+            String decodedURI = parsedUri.getPath();
 
-            String wildcardPart = getWildcardPart(decodedPath);
+            String wildcardPart = getWildcardPart(decodedURI);
 
             if (!SAFE_URL_SEGMENT_PATTERN.matcher(wildcardPart).matches()) {
                 throw new InvalidCredentialResourceException(
@@ -169,7 +168,7 @@ public class DataShareServiceImpl {
             wildcardPart = segments[segments.length - 1];
         }
 
-        if (wildcardPart.isEmpty() || wildcardPart.contains(" ")) {
+        if (wildcardPart.isEmpty()) {
             throw new InvalidCredentialResourceException(
                     ErrorConstants.RESOURCE_INVALID.getErrorCode(),
                     "Invalid resource identifier in URL");

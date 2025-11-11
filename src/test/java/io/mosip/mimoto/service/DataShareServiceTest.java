@@ -201,4 +201,18 @@ public class DataShareServiceTest {
 
         assertEquals(expectedExceptionMsg, actualException.getMessage());
     }
+
+    @Test
+    public void throwResourceInvalidRequestExceptionWhenCredentialURLHasDoubleEncodedPathTraversal() {
+        String expectedExceptionMsg = "invalid_resource --> Invalid characters in wildcard segment";
+        presentationRequestDTO.setResource("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/%252e%252e");
+
+        Mockito.when(pathMatcher.match("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/*",
+                "http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/%252e%252e")).thenReturn(true);
+
+        InvalidCredentialResourceException actualException = assertThrows(InvalidCredentialResourceException.class,
+                () -> dataShareService.downloadCredentialFromDataShare(presentationRequestDTO));
+
+        assertEquals(expectedExceptionMsg, actualException.getMessage());
+    }
 }
