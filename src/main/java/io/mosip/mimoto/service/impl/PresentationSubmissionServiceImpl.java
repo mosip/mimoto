@@ -492,16 +492,4 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
 
         log.debug("Input validation passed for request: {}", request);
     }
-
-//    public String extractRedirectUri(String body) {
-//        try {
-//            JSONObject jsonObject = new JSONObject(body);
-//            if (jsonObject.has("redirect_uri")) {
-//                return jsonObject.getString("redirect_uri");
-//            }
-//        } catch (Exception e) {
-//            log.error("Cannot parse the body of response from verifier", e);
-//        }
-//        return null;
-//    }
 }

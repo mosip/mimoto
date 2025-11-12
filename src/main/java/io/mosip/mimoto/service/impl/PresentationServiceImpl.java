@@ -368,28 +368,4 @@ public class PresentationServiceImpl implements PresentationService {
             throw new VPErrorNotSentException("Failed to send rejection to verifier - " + e.getMessage());
         }
     }
-
-    // private java.util.Optional<String> extractRedirectUriFromBody(String body) {
-    //     if (body == null || body.isBlank()) {
-    //         return java.util.Optional.empty();
-    //     }
-    //     try {
-    //         var jsonNode = objectMapper.readTree(body);
-    //         if (jsonNode.has("redirect_uri") && jsonNode.get("redirect_uri").isTextual()) {
-    //             return java.util.Optional.of(jsonNode.get("redirect_uri").asText());
-    //         }
-    //         @SuppressWarnings("unchecked")
-    //         Map<String, Object> map = objectMapper.readValue(body, Map.class);
-    //         Object ru = map.get("redirect_uri");
-    //         if (ru instanceof String) {
-    //             return java.util.Optional.of((String) ru);
-    //         }
-    //     } catch (com.fasterxml.jackson.core.JsonProcessingException jpe) {
-    //         log.debug("Response body not valid JSON or missing redirect_uri: {}", jpe.getMessage());
-    //     } catch (Exception ex) {
-    //         log.warn("Unexpected error while parsing response body for redirect_uri: {}", ex.getMessage(), ex);
-    //     }
-    //     return java.util.Optional.empty();
-    // }
-
 }

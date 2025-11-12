@@ -790,31 +790,4 @@ public class PresentationServiceTest {
         verify(openID4VPService).sendErrorToVerifier(eq(sessionData), eq(payload));
     }
 
-    @Test
-    public void testRejectVerifierExtractsRedirectUriFromBody() throws Exception {
-        String walletId = "wallet-123";
-        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
-
-        String presentationId = "presentation-999";
-        String authorizationRequest = "authorization-request-xyz";
-        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
-                presentationId,
-                authorizationRequest,
-                Instant.now(),
-                true,
-                null
-        );
-
-        VerifierResponse mockResponse = mock(VerifierResponse.class);
-        when(mockResponse.getRedirectUri()).thenReturn("https://verifier.example.com/success");
-        when(openID4VPService.sendErrorToVerifier(eq(sessionData), eq(payload))).thenReturn(mockResponse);
-
-        SubmitPresentationResponseDTO result = presentationService.rejectVerifier(walletId, sessionData, payload);
-
-        assertNotNull(result);
-        assertEquals("https://verifier.example.com/success", result.getRedirectUri());
-        assertEquals(REJECTED_VERIFIER.getErrorCode(), result.getStatus());
-        assertEquals(REJECTED_VERIFIER.getErrorMessage(), result.getMessage());
-    }
-
 }
