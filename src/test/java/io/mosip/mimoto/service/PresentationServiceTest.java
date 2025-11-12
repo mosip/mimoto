@@ -26,7 +26,7 @@ import io.mosip.mimoto.util.RestApiClient;
 import io.mosip.mimoto.util.TestUtilities;
 import io.mosip.openID4VP.OpenID4VP;
 import io.mosip.openID4VP.authorizationRequest.Verifier;
-import io.mosip.openID4VP.networkManager.NetworkResponse;
+import io.mosip.openID4VP.verifier.VerifierResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -695,12 +695,16 @@ public class PresentationServiceTest {
                 null
         );
 
-        NetworkResponse mockResponse = mock(NetworkResponse.class);
+        VerifierResponse mockResponse = mock(VerifierResponse.class);
+        when(mockResponse.getRedirectUri()).thenReturn("https://verifier.example.com/redirect");
         when(openID4VPService.sendErrorToVerifier(eq(sessionData), eq(payload))).thenReturn(mockResponse);
 
         // Should not throw
-        presentationService.rejectVerifier(walletId, sessionData, payload);
+        SubmitPresentationResponseDTO result = presentationService.rejectVerifier(walletId, sessionData, payload);
 
+        assertNotNull(result);
+        assertEquals("https://verifier.example.com/redirect", result.getRedirectUri());
+        assertEquals(REJECTED_VERIFIER.getErrorCode(), result.getStatus());
         verify(openID4VPService).sendErrorToVerifier(eq(sessionData), eq(payload));
     }
 
@@ -764,7 +768,6 @@ public class PresentationServiceTest {
     @Test
     public void testRejectVerifierWithDifferentErrorCodes() throws Exception {
         String walletId = "wallet-123";
-        OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
         String presentationId = "presentation-789";
         String authorizationRequest = "authorization-request-3";
         VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
@@ -776,42 +779,15 @@ public class PresentationServiceTest {
         );
 
         ErrorDTO payload = new ErrorDTO("interaction_required", "Interaction required from user");
-        NetworkResponse mockResponse = mock(NetworkResponse.class);
-        when(openID4VPService.sendErrorToVerifier(eq(sessionData), eq(payload))).thenReturn(mockResponse);
-
-        presentationService.rejectVerifier(walletId, sessionData, payload);
-
-        verify(openID4VPService).sendErrorToVerifier(eq(sessionData), eq(payload));
-    }
-
-    @Test
-    public void testRejectVerifierExtractsRedirectUriFromBody() throws Exception {
-        String walletId = "wallet-123";
-        ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
-
-        String presentationId = "presentation-999";
-        String authorizationRequest = "authorization-request-xyz";
-        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
-                presentationId,
-                authorizationRequest,
-                Instant.now(),
-                true,
-                null
-        );
-
-        // Inject a real ObjectMapper so JSON parsing in extractRedirectUriFromBody works
-        ReflectionTestUtils.setField(presentationService, "objectMapper", new com.fasterxml.jackson.databind.ObjectMapper());
-
-        NetworkResponse mockResponse = mock(NetworkResponse.class);
-        when(mockResponse.getBody()).thenReturn("{\"redirect_uri\":\"https://verifier.example.com/success\"}");
+        VerifierResponse mockResponse = mock(VerifierResponse.class);
+        when(mockResponse.getRedirectUri()).thenReturn("https://verifier.example.com/redirect");
         when(openID4VPService.sendErrorToVerifier(eq(sessionData), eq(payload))).thenReturn(mockResponse);
 
         SubmitPresentationResponseDTO result = presentationService.rejectVerifier(walletId, sessionData, payload);
 
         assertNotNull(result);
-        assertEquals("https://verifier.example.com/success", result.getRedirectUri());
-        assertEquals(REJECTED_VERIFIER.getErrorCode(), result.getStatus());
-        assertEquals(REJECTED_VERIFIER.getErrorMessage(), result.getMessage());
+        assertEquals("https://verifier.example.com/redirect", result.getRedirectUri());
+        verify(openID4VPService).sendErrorToVerifier(eq(sessionData), eq(payload));
     }
 
 }

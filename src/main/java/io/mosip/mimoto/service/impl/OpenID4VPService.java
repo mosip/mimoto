@@ -12,7 +12,7 @@ import io.mosip.openID4VP.authorizationRequest.WalletMetadata;
 import io.mosip.openID4VP.authorizationRequest.presentationDefinition.PresentationDefinition;
 import io.mosip.openID4VP.constants.VPFormatType;
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions;
-import io.mosip.openID4VP.networkManager.NetworkResponse;
+import io.mosip.openID4VP.verifier.VerifierResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -67,7 +67,7 @@ public class OpenID4VPService {
      * @throws ApiNotAccessibleException when verifier list can't be fetched
      * @throws IOException               for underlying IO failures
      */
-    public NetworkResponse sendErrorToVerifier(VerifiablePresentationSessionData sessionData, ErrorDTO payload) throws ApiNotAccessibleException, IOException, URISyntaxException {
+    public VerifierResponse sendErrorToVerifier(VerifiablePresentationSessionData sessionData, ErrorDTO payload) throws ApiNotAccessibleException, IOException, URISyntaxException {
         if (sessionData == null || sessionData.getPresentationId() == null || sessionData.getAuthorizationRequest() == null) {
             throw new IllegalArgumentException("Invalid presentation session data");
         }
@@ -82,8 +82,8 @@ public class OpenID4VPService {
         AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(sessionData.getAuthorizationRequest(), preRegisteredVerifiers, sessionData.isVerifierClientPreregistered());
 
         OpenID4VPExceptions.AccessDenied accessDeniedException = new OpenID4VPExceptions.AccessDenied(payload.getErrorMessage(), "OpenID4VPService");
-        NetworkResponse networkResponse = openID4VP.sendErrorResponseToVerifier(accessDeniedException);
-        log.info("Sent rejection to verifier for presentationId {}. Response: {}", sessionData.getPresentationId(), networkResponse);
-        return networkResponse;
+        VerifierResponse verifierResponse = openID4VP.sendErrorInfoToVerifier(accessDeniedException);
+        log.info("Sent rejection to verifier for presentationId {}. Response: {}", sessionData.getPresentationId(), verifierResponse);
+        return verifierResponse;
     }
 }

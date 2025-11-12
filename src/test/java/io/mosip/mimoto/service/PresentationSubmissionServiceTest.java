@@ -23,7 +23,7 @@ import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken;
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPToken;
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult;
 import io.mosip.openID4VP.constants.FormatType;
-import io.mosip.openID4VP.networkManager.NetworkResponse;
+import io.mosip.openID4VP.verifier.VerifierResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -602,18 +602,18 @@ public class PresentationSubmissionServiceTest {
 
 
     @Test
-    public void testsendAuthorizationResponseToVerifierReturnsTrue() throws Exception {
+    public void testsendVPResponseToVerifierReturnsTrue() throws Exception {
         setupSuccessfulMocks();
 
         SubmitPresentationResponseDTO response = presentationSubmissionService.submitPresentation(
                 sessionData, walletId, presentationId, request, base64Key);
 
         assertEquals(OpenID4VPConstants.STATUS_SUCCESS, response.getStatus());
-        verify(openID4VP).sendAuthorizationResponseToVerifier(anyMap());
+        verify(openID4VP).sendVPResponseToVerifier(anyMap());
     }
 
     @Test
-    public void testsendAuthorizationResponseToVerifierReturnsFalse() throws Exception {
+    public void testsendVPResponseToVerifierReturnsFalse() throws Exception {
         setupMocksForShareFailure();
 
         SubmitPresentationResponseDTO response = presentationSubmissionService.submitPresentation(
@@ -624,7 +624,7 @@ public class PresentationSubmissionServiceTest {
     }
 
     @Test
-    public void testsendAuthorizationResponseToVerifierHandlesException() throws Exception {
+    public void testsendVPResponseToVerifierHandlesException() throws Exception {
         setupMocksForShareException();
 
         SubmitPresentationResponseDTO response = presentationSubmissionService.submitPresentation(
@@ -757,7 +757,10 @@ public class PresentationSubmissionServiceTest {
                 .thenReturn(unsignedVPTokenMap);
 
 
-        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenReturn(new NetworkResponse(200, "", new HashMap<>()));
+        VerifierResponse mockVerifierResponse = mock(VerifierResponse.class);
+        when(mockVerifierResponse.getStatusCode()).thenReturn(200);
+        when(mockVerifierResponse.getRedirectUri()).thenReturn("https://verifier.example.com/redirect");
+        when(openID4VP.sendVPResponseToVerifier(anyMap())).thenReturn(mockVerifierResponse);
 
         when(objectMapper.convertValue(any(), eq(LdpVPTokenSigningResult.class)))
                 .thenReturn(mock(LdpVPTokenSigningResult.class));
@@ -777,12 +780,15 @@ public class PresentationSubmissionServiceTest {
 
     private void setupMocksForShareFailure() throws Exception {
         setupSuccessfulMocks();
-        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenReturn(new NetworkResponse(400, "", new HashMap<>()));
+        VerifierResponse mockVerifierResponse = mock(VerifierResponse.class);
+        when(mockVerifierResponse.getStatusCode()).thenReturn(400);
+        when(mockVerifierResponse.getRedirectUri()).thenReturn(null);
+        when(openID4VP.sendVPResponseToVerifier(anyMap())).thenReturn(mockVerifierResponse);
     }
 
     private void setupMocksForShareException() throws Exception {
         setupSuccessfulMocks();
-        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenThrow(new RuntimeException("Share failed"));
+        when(openID4VP.sendVPResponseToVerifier(anyMap())).thenThrow(new RuntimeException("Share failed"));
     }
 
     private void setupSuccessfulMocksForMsoMdoc() throws Exception {
@@ -813,7 +819,10 @@ public class PresentationSubmissionServiceTest {
                 .thenReturn(mock(LdpVPTokenSigningResult.class));
         when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
-        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenReturn(new NetworkResponse(200, "", new HashMap<>()));
+        VerifierResponse mockVerifierResponse = mock(VerifierResponse.class);
+        when(mockVerifierResponse.getStatusCode()).thenReturn(200);
+        when(mockVerifierResponse.getRedirectUri()).thenReturn("https://verifier.example.com/redirect");
+        when(openID4VP.sendVPResponseToVerifier(anyMap())).thenReturn(mockVerifierResponse);
 
         when(verifiablePresentationsRepository.save(any(VerifiablePresentation.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -850,7 +859,10 @@ public class PresentationSubmissionServiceTest {
                 .thenReturn(mock(LdpVPTokenSigningResult.class));
         when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
-        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenReturn(new NetworkResponse(200, "", new HashMap<>()));
+        VerifierResponse mockVerifierResponse = mock(VerifierResponse.class);
+        when(mockVerifierResponse.getStatusCode()).thenReturn(200);
+        when(mockVerifierResponse.getRedirectUri()).thenReturn("https://verifier.example.com/redirect");
+        when(openID4VP.sendVPResponseToVerifier(anyMap())).thenReturn(mockVerifierResponse);
 
         when(verifiablePresentationsRepository.save(any(VerifiablePresentation.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -1093,16 +1105,19 @@ public class PresentationSubmissionServiceTest {
     }
 
     @Test
-    public void testsendAuthorizationResponseToVerifierReturnsNonEmptyString() throws Exception {
+    public void testsendVPResponseToVerifierReturnsNonSuccessStatusCode() throws Exception {
         sessionData.setMatchingCredentials(createMockDecryptedCredentials());
         setupSuccessfulMocks();
-        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenReturn(new NetworkResponse(400, "", new HashMap<>())); // non-empty string
+        VerifierResponse mockVerifierResponse = mock(VerifierResponse.class);
+        when(mockVerifierResponse.getStatusCode()).thenReturn(400);
+        when(mockVerifierResponse.getRedirectUri()).thenReturn(null);
+        when(openID4VP.sendVPResponseToVerifier(anyMap())).thenReturn(mockVerifierResponse);
         
         SubmitPresentationResponseDTO response = presentationSubmissionService.submitPresentation(
                 sessionData, walletId, presentationId, request, base64Key);
         
         assertNotNull(response);
-        // Should return ERROR status when vpToken is not empty (sendAuthorizationResponseToVerifier returns false when non-empty)
+        // Should return ERROR status when status code is not in 200-299 range
         assertEquals(OpenID4VPConstants.STATUS_ERROR, response.getStatus());
         assertEquals(OpenID4VPConstants.MESSAGE_PRESENTATION_SHARE_FAILED, response.getMessage());
     }
@@ -1184,7 +1199,10 @@ public class PresentationSubmissionServiceTest {
 
         when(openID4VP.constructUnsignedVPToken(anyMap(), anyString(), anyString()))
                 .thenReturn(unsignedVPTokenMap);
-        when(openID4VP.sendAuthorizationResponseToVerifier(anyMap())).thenReturn(new NetworkResponse(200, "", new HashMap<>()));
+        VerifierResponse mockVerifierResponse = mock(VerifierResponse.class);
+        when(mockVerifierResponse.getStatusCode()).thenReturn(200);
+        when(mockVerifierResponse.getRedirectUri()).thenReturn("https://verifier.example.com/redirect");
+        when(openID4VP.sendVPResponseToVerifier(anyMap())).thenReturn(mockVerifierResponse);
 
         when(objectMapper.convertValue(any(), eq(LdpVPTokenSigningResult.class)))
                 .thenReturn(mock(LdpVPTokenSigningResult.class));
