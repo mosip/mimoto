@@ -33,9 +33,8 @@ import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.Unsign
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult;
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult;
 import io.mosip.openID4VP.constants.FormatType;
-import io.mosip.openID4VP.networkManager.NetworkResponse;
+import io.mosip.openID4VP.verifier.VerifierResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -107,13 +106,13 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
         // Cast to the expected type for the JAR method
         @SuppressWarnings({"unchecked", "rawtypes"}) Map<FormatType, VPTokenSigningResult> jarMap = (Map) vpTokenSigningResults;
         try {
-            NetworkResponse response = openID4VP.sendAuthorizationResponseToVerifier(jarMap);
+            VerifierResponse response = openID4VP.sendVPResponseToVerifier(jarMap);
             boolean shareSuccess = response.getStatusCode() >= 200 && response.getStatusCode() < 300;
             // Step 5: Store presentation record in database
             storePresentationRecord(walletId, presentationId, request, sessionData, shareSuccess, requestedAt);
             // Step 6: Return success response
             return SubmitPresentationResponseDTO.builder()
-                    .redirectUri(extractRedirectUri(response.getBody()))
+                    .redirectUri(response.getRedirectUri())
                     .status(shareSuccess ? OpenID4VPConstants.STATUS_SUCCESS : OpenID4VPConstants.STATUS_ERROR)
                     .message(shareSuccess ? OpenID4VPConstants.MESSAGE_PRESENTATION_SUCCESS : OpenID4VPConstants.MESSAGE_PRESENTATION_SHARE_FAILED)
                     .build();
@@ -494,15 +493,15 @@ public class PresentationSubmissionServiceImpl implements PresentationSubmission
         log.debug("Input validation passed for request: {}", request);
     }
 
-    public String extractRedirectUri(String body) {
-        try {
-            JSONObject jsonObject = new JSONObject(body);
-            if (jsonObject.has("redirect_uri")) {
-                return jsonObject.getString("redirect_uri");
-            }
-        } catch (Exception e) {
-            log.error("Cannot parse the body of response from verifier", e);
-        }
-        return null;
-    }
+//    public String extractRedirectUri(String body) {
+//        try {
+//            JSONObject jsonObject = new JSONObject(body);
+//            if (jsonObject.has("redirect_uri")) {
+//                return jsonObject.getString("redirect_uri");
+//            }
+//        } catch (Exception e) {
+//            log.error("Cannot parse the body of response from verifier", e);
+//        }
+//        return null;
+//    }
 }
