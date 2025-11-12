@@ -10,6 +10,7 @@ import io.mosip.mimoto.service.impl.OpenID4VPService;
 import io.mosip.openID4VP.OpenID4VP;
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
 import io.mosip.openID4VP.authorizationRequest.presentationDefinition.PresentationDefinition;
+import io.mosip.openID4VP.verifier.VerifierResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
@@ -331,10 +332,10 @@ public class OpenID4VPServiceTest {
         when(verifierService.getTrustedVerifiers()).thenReturn(mockVerifiersDTO);
 
         OpenID4VP mockOpenID4VP = mock(OpenID4VP.class);
-        NetworkResponse mockResponse = mock(NetworkResponse.class);
+        VerifierResponse mockResponse = mock(VerifierResponse.class);
 
         when(mockOpenID4VP.authenticateVerifier(anyString(), anyList(), anyBoolean())).thenReturn(mockAuthorizationRequest);
-        when(mockOpenID4VP.sendErrorResponseToVerifier(any())).thenReturn(mockResponse);
+        when(mockOpenID4VP.sendErrorInfoToVerifier(any())).thenReturn(mockResponse);
 
         OpenID4VPService spyService = spy(openID4VPService);
         doReturn(mockOpenID4VP).when(spyService).create(anyString());
@@ -348,14 +349,14 @@ public class OpenID4VPServiceTest {
         when(payload.getErrorMessage()).thenReturn("access_denied");
 
         // Execute
-        NetworkResponse response = spyService.sendErrorToVerifier(sessionData, payload);
+        VerifierResponse response = spyService.sendErrorToVerifier(sessionData, payload);
 
         // Verify
         assertNotNull(response);
         assertEquals(mockResponse, response);
         verify(verifierService).getTrustedVerifiers();
         verify(mockOpenID4VP).authenticateVerifier(eq("authorization-request"), anyList(), eq(true));
-        verify(mockOpenID4VP).sendErrorResponseToVerifier(any());
+        verify(mockOpenID4VP).sendErrorInfoToVerifier(any());
     }
 
     @Test
