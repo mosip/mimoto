@@ -140,4 +140,79 @@ public class DataShareServiceTest {
 
         assertEquals(expectedExceptionMsg, actualException.getMessage());
     }
+
+    @Test
+    public void throwResourceInvalidRequestExceptionWhenCredentialURLHasIllegalDirectoryCharacter() {
+        String expectedExceptionMsg = "invalid_resource --> Invalid path structure in resource URL";
+        Mockito.when(pathMatcher.match("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/*", "http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/te..st")).thenReturn(true);
+
+        presentationRequestDTO.setResource("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/te..st");
+
+        InvalidCredentialResourceException actualException = assertThrows(InvalidCredentialResourceException.class, () -> dataShareService.downloadCredentialFromDataShare(presentationRequestDTO));
+
+        assertEquals(expectedExceptionMsg, actualException.getMessage());
+    }
+
+    @Test
+    public void throwResourceInvalidRequestExceptionWhenCredentialURLHasIllegalForwardSlashCharacter() {
+        String expectedExceptionMsg = "invalid_resource --> Invalid path structure in resource URL";
+        Mockito.when(pathMatcher.match("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/*", "http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid//test")).thenReturn(true);
+
+        presentationRequestDTO.setResource("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid//test");
+
+        InvalidCredentialResourceException actualException = assertThrows(InvalidCredentialResourceException.class, () -> dataShareService.downloadCredentialFromDataShare(presentationRequestDTO));
+
+        assertEquals(expectedExceptionMsg, actualException.getMessage());
+    }
+
+    @Test
+    public void throwResourceInvalidRequestExceptionWhenCredentialURLIsMisconfiguredAndHasNoWildcard() {
+        String expectedExceptionMsg = "invalid_resource --> Invalid resource identifier in URL";
+        ReflectionTestUtils.setField(dataShareService, "dataShareGetUrlPattern", "http://datashare.datashare/*");
+        Mockito.when(pathMatcher.match("http://datashare.datashare/*", "http://datashare.datashare/")).thenReturn(true);
+
+        presentationRequestDTO.setResource("http://datashare.datashare/");
+
+        InvalidCredentialResourceException actualException = assertThrows(InvalidCredentialResourceException.class, () -> dataShareService.downloadCredentialFromDataShare(presentationRequestDTO));
+
+        assertEquals(expectedExceptionMsg, actualException.getMessage());
+    }
+
+    @Test
+    public void throwResourceInvalidRequestExceptionWhenCredentialURLHasIllegalCharacters() {
+        String expectedExceptionMsg = "invalid_resource --> Invalid characters in wildcard segment";
+        presentationRequestDTO.setResource("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/test$");
+
+        Mockito.when(pathMatcher.match("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/*", "http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/test$")).thenReturn(true);
+
+        InvalidCredentialResourceException actualException = assertThrows(InvalidCredentialResourceException.class, () -> dataShareService.downloadCredentialFromDataShare(presentationRequestDTO));
+
+        assertEquals(expectedExceptionMsg, actualException.getMessage());
+    }
+
+    @Test
+    public void throwResourceInvalidRequestExceptionWhenCredentialURLIsMalformed() {
+        String expectedExceptionMsg = "invalid_resource --> Malformed resource URL";
+        presentationRequestDTO.setResource("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/%%illegal");
+
+        Mockito.when(pathMatcher.match("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/*", "http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/%%illegal")).thenReturn(true);
+
+        InvalidCredentialResourceException actualException = assertThrows(InvalidCredentialResourceException.class, () -> dataShareService.downloadCredentialFromDataShare(presentationRequestDTO));
+
+        assertEquals(expectedExceptionMsg, actualException.getMessage());
+    }
+
+    @Test
+    public void throwResourceInvalidRequestExceptionWhenCredentialURLHasDoubleEncodedPathTraversal() {
+        String expectedExceptionMsg = "invalid_resource --> Invalid characters in wildcard segment";
+        presentationRequestDTO.setResource("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/%252e%252e");
+
+        Mockito.when(pathMatcher.match("http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/*",
+                "http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/%252e%252e")).thenReturn(true);
+
+        InvalidCredentialResourceException actualException = assertThrows(InvalidCredentialResourceException.class,
+                () -> dataShareService.downloadCredentialFromDataShare(presentationRequestDTO));
+
+        assertEquals(expectedExceptionMsg, actualException.getMessage());
+    }
 }
