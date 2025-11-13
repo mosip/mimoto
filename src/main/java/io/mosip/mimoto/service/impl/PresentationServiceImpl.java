@@ -40,6 +40,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static io.mosip.mimoto.constant.OpenID4VPConstants.AUTHORIZATION_REQUEST_PREFIX;
 import static io.mosip.mimoto.exception.ErrorConstants.REJECTED_VERIFIER;
 import static io.mosip.mimoto.util.JwtUtils.extractJwtPayloadFromSdJwt;
 import static io.mosip.mimoto.util.JwtUtils.parseJwtHeader;
@@ -78,7 +79,10 @@ public class PresentationServiceImpl implements PresentationService {
 
         List<Verifier> preRegisteredVerifiers = getPreRegisteredVerifiers();
         boolean shouldValidateClient = verifierService.isVerifierClientPreregistered(preRegisteredVerifiers, urlEncodedVPAuthorizationRequest);
-        AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(urlEncodedVPAuthorizationRequest, preRegisteredVerifiers, shouldValidateClient);
+
+        String formattedRequest = AUTHORIZATION_REQUEST_PREFIX + urlEncodedVPAuthorizationRequest;
+
+        AuthorizationRequest authorizationRequest = openID4VP.authenticateVerifier(formattedRequest, preRegisteredVerifiers, shouldValidateClient);
         VerifiablePresentationVerifierDTO verifiablePresentationVerifierDTO = createVPResponseVerifierDTO(preRegisteredVerifiers, authorizationRequest, walletId);
 
         return new VerifiablePresentationResponseDTO(presentationId, verifiablePresentationVerifierDTO);
