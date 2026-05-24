@@ -3,20 +3,20 @@
 -- file, You can obtain one at https://mozilla.org/MPL/2.0/.
 -- -------------------------------------------------------------------------------------------------
 
-\c inji_mimoto
+\c :mosipdbname
 
 GRANT CONNECT
-   ON DATABASE inji_mimoto
-   TO mimotouser;
+   ON DATABASE :mosipdbname
+   TO :dbuname;
 
 GRANT USAGE
    ON SCHEMA mimoto
-   TO mimotouser;
+   TO :dbuname;
 
 GRANT SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES
    ON ALL TABLES IN SCHEMA mimoto
-   TO mimotouser;
+   TO :dbuname;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA mimoto
-	GRANT SELECT,INSERT,UPDATE,DELETE,REFERENCES ON TABLES TO mimotouser;
+	GRANT SELECT,INSERT,UPDATE,DELETE,REFERENCES ON TABLES TO :dbuname;
 

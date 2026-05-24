@@ -4,7 +4,11 @@ dbUserPasswords:
 databases:
   inji_mimoto:
     enabled: true
-    host: "postgres-postgresql.postgres"
+    scriptsDir: inji_mimoto        # fixed - must match db_scripts/ folder in repo
+    dbName: inji_mimoto            # customize e.g. inji_mimoto02
+    dbUser: injimimotouser         # customize e.g. injimimotouser02
+    defaultDb: postgres
+    host: "postgres-postgresql"
     port: 5432
     su:
       user: postgres
@@ -12,4 +16,5 @@ databases:
         name: postgres-postgresql
         key: postgres-password
     dml: 1
+    repoUrl: https://github.com/mosip/mimoto.git
     branch: develop

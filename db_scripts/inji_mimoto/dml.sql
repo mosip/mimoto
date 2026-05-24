@@ -3,7 +3,7 @@
 -- file, You can obtain one at https://mozilla.org/MPL/2.0/.
 -- -------------------------------------------------------------------------------------------------
 
-\c inji_mimoto
+\c :mosipdbname
 
 \COPY mimoto.key_policy_def (APP_ID,KEY_VALIDITY_DURATION,PRE_EXPIRE_DAYS,ACCESS_ALLOWED,IS_ACTIVE,CR_BY,CR_DTIMES) FROM './dml/mimoto-key_policy_def.csv' delimiter ',' HEADER  csv;
 
