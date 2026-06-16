@@ -99,7 +99,13 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
                     if (!matches.isEmpty()) {
                         matchingCredentialsByDescriptor.put(i, matches);
                     } else {
-                        missingClaims.addAll(extractClaimsFromInputDescriptor(descriptor));
+                        boolean hasFormatMatch = decryptedCredentials.stream()
+                                .anyMatch(decrypted -> matchesFormat(decrypted.getCredential(), descriptor.getFormat()));
+                        if (hasFormatMatch) {
+                            missingClaims.addAll(extractClaimsFromInputDescriptor(descriptor));
+                        } else {
+                            missingClaims.addAll(extractFormatConstraintKeys(descriptor));
+                        }
                     }
         });
 
@@ -153,9 +159,12 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
 
     private MatchingCredentialsResponseDTO createEmptyResponseWithMissingClaims(PresentationDefinition presentationDefinition) {
         log.info("No credentials found for wallet");
+        Set<String> missingClaims = presentationDefinition.getInputDescriptors().stream()
+                .flatMap(descriptor -> extractFormatConstraintKeys(descriptor).stream())
+                .collect(Collectors.toSet());
         return MatchingCredentialsResponseDTO.builder()
                 .availableCredentials(Collections.emptyList())
-                .missingClaims(new HashSet<>(extractRequiredClaims(presentationDefinition)))
+                .missingClaims(missingClaims)
                 .build();
     }
 
@@ -210,8 +219,8 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
 
         String vcFormat = vc.getFormat();
 
-        if (CredentialFormat.VC_SD_JWT.getFormat().equalsIgnoreCase(vcFormat) && descriptorFormat.containsKey(CredentialFormat.VC_SD_JWT.getFormat())) {
-            return matchesSdJwtAlgorithm(vc, descriptorFormat);
+        if (CredentialFormat.isSdJwt(vcFormat) && descriptorFormat.containsKey(vcFormat.toLowerCase())) {
+            return matchesSdJwtAlgorithm(vc, descriptorFormat, vcFormat.toLowerCase());
         }
         if (CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(vcFormat) && descriptorFormat.containsKey(LDP_VC_FORMAT)) {
             return matchesLdpVcFormat(vc, descriptorFormat);
@@ -241,26 +250,17 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
         return vcProofType != null && requiredProofTypes.contains(vcProofType);
     }
 
-    private boolean matchesSdJwtAlgorithm(VCCredentialResponse vc, Map<String, Map<String, List<String>>> requestFormat) {
-        Map<String, List<String>> sdJwtFormat = requestFormat.get(CredentialFormat.VC_SD_JWT.getFormat());
+    private boolean matchesSdJwtAlgorithm(VCCredentialResponse vc, Map<String, Map<String, List<String>>> requestFormat, String formatKey) {
         if (vc.getCredential() == null || !(vc.getCredential() instanceof String sdJwtString)) {
             return false;
         }
 
-        if (!sdJwtFormat.containsKey(SD_JWT_ALG_VALUES_KEY)) {
-            return false;
+        Map<String, List<String>> sdJwtFormat = requestFormat.get(formatKey);
+        List<?> requestAlgorithms = sdJwtFormat.get(SD_JWT_ALG_VALUES_KEY);
+        if (requestAlgorithms != null) {
+            return requestAlgorithms.contains(extractSdJwtAlgorithm(sdJwtString));
         }
-
-        String sdJwtAlgorithm = extractSdJwtAlgorithm(sdJwtString);
-        Map<String, List<String>> requestFormatMap = requestFormat.get(CredentialFormat.VC_SD_JWT.getFormat());
-        if (requestFormatMap != null) {
-            List<?> requestAlgorithms = requestFormatMap.get(SD_JWT_ALG_VALUES_KEY);
-            if (requestAlgorithms != null) {
-                return requestAlgorithms.contains(sdJwtAlgorithm);
-            }
-            return true; // If no specific algorithms are required, any algorithm is acceptable
-        }
-        return false;
+        return true; // No sd-jwt_alg_values constraint → any algorithm is acceptable
     }
 
     private String extractSdJwtAlgorithm(String sdJwtString) {
@@ -307,14 +307,26 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
 
         if (CredentialFormat.LDP_VC.getFormat().equalsIgnoreCase(format)) {
             return credentialFormatHandler.extractAllCredentialProperties(vc);
-        } else if (CredentialFormat.VC_SD_JWT.getFormat().equalsIgnoreCase(format)) {
+        } else if (CredentialFormat.isSdJwt(format)) {
             Map<String, ?> extractedMap = credentialFormatHandler.extractAllCredentialProperties(vc);
             if (extractedMap == null) {
                 return Collections.emptyMap();
             }
-            Map<String, Map<String, Object>> allCredentialProperties = (Map<String, Map<String, Object>>) extractedMap;
             Map<String, Object> credentialClaimsMap = new HashMap<>();
-            allCredentialProperties.values().forEach(credentialClaimsMap::putAll);
+            // publicClaims and sdClaims are mutually exclusive by SD-JWT spec — no key collision.
+            // sdClaims values are disclosure blobs (List<String>), not decoded claim values.
+            // This supports existence-based field matching (e.g. $.given_name present).
+            // Value-filter matching on SD claims (e.g. $.age >= 18) is not supported here
+            // and requires decoding disclosures — tracked as a follow-up improvement.
+            for (Map.Entry<String, ?> outer : extractedMap.entrySet()) {
+                if (outer.getValue() instanceof Map<?, ?> innerMap) {
+                    for (Map.Entry<?, ?> inner : innerMap.entrySet()) {
+                        if (inner.getKey() instanceof String key) {
+                            credentialClaimsMap.put(key, inner.getValue());
+                        }
+                    }
+                }
+            }
             return credentialClaimsMap;
         } else {
             throw new InvalidRequestException(UNSUPPORTED_FORMAT.getErrorCode(), "Unsupported credential format: " + format);
@@ -408,8 +420,8 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
             log.warn("Failed to fetch issuer config for issuerId: {}, credentialType: {}", issuerId, credentialType, e);
         }
 
-        if (CredentialFormat.VC_SD_JWT.getFormat().equalsIgnoreCase(decryptedCredentialDTO.getCredential().getFormat())) {
-            CredentialFormatHandler credentialFormatHandler = credentialFormatHandlerFactory.getHandler(CredentialFormat.VC_SD_JWT.getFormat());
+        if (CredentialFormat.isSdJwt(decryptedCredentialDTO.getCredential().getFormat())) {
+            CredentialFormatHandler credentialFormatHandler = credentialFormatHandlerFactory.getHandler(decryptedCredentialDTO.getCredential().getFormat());
             Map<String, Map<String, Object>> allClaims = (Map<String, Map<String, Object>>) credentialFormatHandler.extractAllCredentialProperties(decryptedCredentialDTO.getCredential());
 
             publicClaimsMap = allClaims.get("publicClaims");
@@ -443,10 +455,10 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
             Map<String, Object> csMap = (Map<String, Object>) credentialSubject;
             collectPaths(csMap, "$", paths);
         } else {
-            // Remove standard JWT claims and SD-JWT metadata
             List<String> metadataKeys = Arrays.asList("vct", "cnf", "iss", "sub", "aud", "exp", "nbf", "iat", "jti", SD, "_sd_alg", "id");
-            metadataKeys.forEach(publicClaimsMap::remove);
-            collectPaths(publicClaimsMap, "$", paths);
+            Map<String, Object> filteredMap = new HashMap<>(publicClaimsMap);
+            metadataKeys.forEach(filteredMap::remove);
+            collectPaths(filteredMap, "$", paths);
         }
         return paths;
     }
@@ -491,6 +503,23 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
                 paths.add(currentPath);
             }
         }
+    }
+
+    private Set<String> extractFormatConstraintKeys(InputDescriptor descriptor) {
+        Map<String, Map<String, List<String>>> format = descriptor.getFormat();
+        if (format == null || format.isEmpty()) {
+            return Collections.singleton(descriptor.getId());
+        }
+
+        Set<String> result = new HashSet<>();
+        if (format.containsKey(CredentialFormat.VC_SD_JWT.getFormat()) || format.containsKey(CredentialFormat.DC_SD_JWT.getFormat())) {
+            result.add(SD_JWT_ALG_VALUES_KEY);
+        }
+        if (format.containsKey(LDP_VC_FORMAT)) {
+            result.add(PROOF_TYPE_KEY);
+        }
+
+        return result.isEmpty() ? Collections.singleton(descriptor.getId()) : result;
     }
 
     private boolean hasUniformKeys(List<?> list) {

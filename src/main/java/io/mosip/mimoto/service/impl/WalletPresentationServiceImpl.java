@@ -27,12 +27,15 @@ import io.mosip.mimoto.util.SigningKeyUtil;
 import io.mosip.mimoto.util.Utilities;
 import io.mosip.mimoto.util.UrlParameterUtils;
 import io.mosip.openID4VP.OpenID4VP;
+import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.sdJwt.UnsignedSdJwtVPToken;
 import io.mosip.openID4VP.common.EncoderKt;
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
 import io.mosip.openID4VP.authorizationRequest.Verifier;
 import io.mosip.openID4VP.authorizationRequest.clientMetadata.ClientMetadata;
+import io.mosip.mimoto.service.CredentialFormatHandlerFactory;
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken;
 import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.types.ldp.UnsignedLdpVPToken;
+import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.sdJwt.SdJwtVPTokenSigningResult;
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult;
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.types.ldp.LdpVPTokenSigningResult;
 import io.mosip.openID4VP.constants.FormatType;
@@ -48,6 +51,7 @@ import java.lang.IllegalArgumentException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
+import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -64,7 +68,6 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
     private static final String DEFAULT_SIGNATURE_SUITE = "JsonWebSignature2020";
     private static final String UNKNOWN_VERIFIER = "unknown";
     private static final String EMPTY_JSON = "{}";
-    private static final String DEFAULT_SIGNING_ALGORITHM_NAME = "ED25519";
 
     private final VerifierService verifierService;
 
@@ -80,7 +83,9 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
 
     private final DataProtectionService dataProtectionService;
 
-    public WalletPresentationServiceImpl(VerifierService verifierService, OpenID4VPService openID4VPService, ObjectMapper objectMapper, KeyPairRetrievalService keyPairService, CredentialMatchingService credentialMatchingService, VerifiablePresentationsRepository verifiablePresentationsRepository, DataProtectionService dataProtectionService) {
+    private final CredentialFormatHandlerFactory credentialFormatHandlerFactory;
+
+    public WalletPresentationServiceImpl(VerifierService verifierService, OpenID4VPService openID4VPService, ObjectMapper objectMapper, KeyPairRetrievalService keyPairService, CredentialMatchingService credentialMatchingService, VerifiablePresentationsRepository verifiablePresentationsRepository, DataProtectionService dataProtectionService, CredentialFormatHandlerFactory credentialFormatHandlerFactory) {
         this.verifierService = verifierService;
         this.openID4VPService = openID4VPService;
         this.objectMapper = objectMapper;
@@ -88,6 +93,7 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
         this.credentialMatchingService = credentialMatchingService;
         this.verifiablePresentationsRepository = verifiablePresentationsRepository;
         this.dataProtectionService = dataProtectionService;
+        this.credentialFormatHandlerFactory = credentialFormatHandlerFactory;
     }
 
     @Override
@@ -255,22 +261,20 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
         List<Verifier> preRegisteredVerifiers = verifierService.getTrustedVerifiers().getVerifiers().stream().map(verifierDTO -> new Verifier(verifierDTO.getClientId(), verifierDTO.getResponseUris(), verifierDTO.getJwksUri(), verifierDTO.getAllowUnsignedRequest())).toList();
         openID4VP.authenticateVerifier(sessionData.getAuthorizationRequest(), preRegisteredVerifiers, sessionData.isVerifierClientPreregistered());
 
-        // Use configurable signing algorithm
-        SigningAlgorithm signingAlgorithm = SigningAlgorithm.valueOf(DEFAULT_SIGNING_ALGORITHM_NAME);
+        // Holder key for LDP_VC is always ED25519 (Ed25519Signature2020). SD-JWT KB-JWT signing
+        // derives its own per-credential key from the KB-JWT header alg inside signVPToken.
+        SigningAlgorithm signingAlgorithm = SigningAlgorithm.ED25519;
         KeyPair keyPair = keyPairService.getKeyPairFromDB(walletId, base64Key, signingAlgorithm);
         JWK jwk = SigningKeyUtil.generateJwk(signingAlgorithm, keyPair);
-        Map<FormatType, UnsignedVPToken> unsignedVPToken = constructUnsignedVPToken(openID4VP, selectedCredentials, jwk);
+        Map<FormatType, UnsignedVPToken> unsignedVPToken = constructUnsignedVPToken(openID4VP, selectedCredentials, jwk, request.getSelectedSdClaims());
 
-        // Step 3: Sign token using user's private key
-        JWSSigner jwsSigner = SigningKeyUtil.createSigner(signingAlgorithm, jwk);
-        Map<FormatType, LdpVPTokenSigningResult> vpTokenSigningResults = signVPToken(unsignedVPToken, jwsSigner);
+        // Step 3: Sign each unsigned VP token using format-specific signing logic
+        Map<FormatType, VPTokenSigningResult> vpTokenSigningResults = signVPToken(unsignedVPToken, jwk, walletId, base64Key);
 
         // Step 4: Share verifiable presentation with verifier using OpenID4VP JAR
         log.debug("Calling OpenID4VP JAR's shareVerifiablePresentation method");
-        // Cast to the expected type for the JAR method
-        @SuppressWarnings({"unchecked", "rawtypes"}) Map<FormatType, VPTokenSigningResult> jarMap = (Map) vpTokenSigningResults;
         try {
-            VerifierResponse response = openID4VP.sendVPResponseToVerifier(jarMap);
+            VerifierResponse response = openID4VP.sendVPResponseToVerifier(vpTokenSigningResults);
             boolean shareSuccess = response.getStatusCode() >= 200 && response.getStatusCode() < 300;
             // Step 5: Store presentation record in database
             storePresentationRecord(walletId, presentationId, request, sessionData, shareSuccess, requestedAt);
@@ -285,35 +289,88 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
     }
 
     /**
-     * Signs VP token using JWSSigner for LDP_VC format
-     * Only LDP_VC format is supported. Throws InvalidRequestException for other formats.
+     * Signs each unsigned VP token by dispatching to the signing logic for its credential format.
+     * LDP_VC is signed with the ED25519 holder key; SD-JWT (vc+sd-jwt / dc+sd-jwt) signers are derived
+     * per credential from the KB-JWT header alg inside signSdJwtFormat.
      */
-    private Map<FormatType, LdpVPTokenSigningResult> signVPToken(Map<FormatType, UnsignedVPToken> unsignedVPTokensMap, JWSSigner jwsSigner) {
+    private Map<FormatType, VPTokenSigningResult> signVPToken(Map<FormatType, UnsignedVPToken> unsignedVPTokensMap, JWK ldpVcJwk, String walletId, String base64Key) throws JOSEException, KeyGenerationException, DecryptionException {
         log.debug("Signing VP token for {} format types", unsignedVPTokensMap.size());
 
-        return unsignedVPTokensMap.entrySet().stream().map(entry -> {
+        Map<FormatType, VPTokenSigningResult> results = new HashMap<>();
+        for (Map.Entry<FormatType, UnsignedVPToken> entry : unsignedVPTokensMap.entrySet()) {
             FormatType formatType = entry.getKey();
             UnsignedVPToken unsignedVPToken = entry.getValue();
 
-            if (formatType != FormatType.LDP_VC) {
-                log.error("Unsupported format type: {}. Only ldp_vc format is supported.", formatType);
-                throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Unsupported credential format: " + formatType + ". Only ldp_vc format is supported.");
+            VPTokenSigningResult signingResult;
+            if (formatType == FormatType.LDP_VC) {
+                signingResult = signLdpVcFormat(unsignedVPToken, ldpVcJwk);
+            } else if (formatType == FormatType.VC_SD_JWT || formatType == FormatType.DC_SD_JWT) {
+                signingResult = signSdJwtFormat(unsignedVPToken, walletId, base64Key);
+            } else {
+                log.error("Unsupported format type: {}", formatType);
+                throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Unsupported format type: " + formatType);
+            }
+            results.put(formatType, signingResult);
+        }
+        return results;
+    }
+
+    /**
+     * Signs SD-JWT JB-JWT tokens. The library provides unsigned KB-JWTs (header.payload) per credential UUID.
+     * Mimoto signs each one and returns the signatures.
+     */
+    private SdJwtVPTokenSigningResult signSdJwtFormat(UnsignedVPToken unsignedVPToken, String walletId, String base64Key) throws JOSEException, KeyGenerationException, DecryptionException {
+        UnsignedSdJwtVPToken sdJwtToken = (UnsignedSdJwtVPToken) unsignedVPToken;
+        Map<String, String> uuidToUnsignedKBT = sdJwtToken.getUuidToUnsignedKBT();
+
+        // Cache one signer per algorithm so multiple credentials sharing an alg reuse the same key fetch
+        Map<SigningAlgorithm, JWSSigner> signerCache = new EnumMap<>(SigningAlgorithm.class);
+
+        Map<String, String> uuidToSignature = new HashMap<>();
+        for (Map.Entry<String, String> entry: uuidToUnsignedKBT.entrySet()) {
+            String uuid = entry.getKey();
+            // "headerB64.payloadB64"
+            String unsignedKBT = entry.getValue();
+
+            // Parse the KB-JWT header produced by the OpenID4VP JAR and read its alg.
+            // The JAR derives this alg from the credential's cnf, so the header is the source of truth.
+            JWSHeader kbHeader;
+            try {
+                String[] parts = unsignedKBT.split("\\.");
+                kbHeader = JWSHeader.parse(new Base64URL(parts[0]));
+            } catch (ParseException e) {
+                throw new JOSEException("Failed to parse KB-JWT header for credential uuid: " + uuid, e);
             }
 
-            try {
-                LdpVPTokenSigningResult signingResult = signLdpVcFormat(unsignedVPToken, jwsSigner);
-                return Map.entry(formatType, signingResult);
-            } catch (JOSEException e) {
-                throw new RuntimeException("Failed to sign VP token for format: " + formatType, e);
+            SigningAlgorithm algorithm = SigningAlgorithm.fromString(kbHeader.getAlgorithm().getName());
+
+            // Build (or reuse) a signer for this algorithm using the wallet's key pair for that alg
+            JWSSigner jwsSigner = signerCache.get(algorithm);
+            if (jwsSigner == null) {
+                KeyPair keyPair = keyPairService.getKeyPairFromDB(walletId, base64Key, algorithm);
+                JWK jwk = SigningKeyUtil.generateJwk(algorithm, keyPair);
+                jwsSigner = SigningKeyUtil.createSigner(algorithm, jwk);
+                signerCache.put(algorithm, jwsSigner);
             }
-        }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+            // Standard JWT signing input: ASCII bytes of "headerB64.payloadB64"
+            byte[] signingInput = unsignedKBT.getBytes(StandardCharsets.US_ASCII);
+
+            Base64URL signature = jwsSigner.sign(kbHeader, signingInput);
+            uuidToSignature.put(uuid, signature.toString());
+        }
+
+        return new SdJwtVPTokenSigningResult(uuidToSignature);
     }
 
     /**
      * Signs LDP_VC format verifiable presentation using detached JWT
      */
-    private LdpVPTokenSigningResult signLdpVcFormat(UnsignedVPToken unsignedVPToken, JWSSigner jwsSigner) throws JOSEException {
+    private LdpVPTokenSigningResult signLdpVcFormat(UnsignedVPToken unsignedVPToken, JWK ed25519Jwk) throws JOSEException {
         log.debug("Signing LDP_VC format VP token");
+
+        // LDP_VC is always signed with the ED25519 holder key (Ed25519Signature2020)
+        JWSSigner jwsSigner = SigningKeyUtil.createSigner(SigningAlgorithm.ED25519, ed25519Jwk);
 
         String dataToSign = ((UnsignedLdpVPToken) unsignedVPToken).getDataToSign();
 
@@ -360,13 +417,14 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
     }
 
     /**
-     * Constructs unsigned VP token using the OpenID4VP JAR
+     * Constructs unsigned VP token using the OpenID4VP JAR.
+     * For SD-JWT credentials, disclosures are pre-filtered to the user's selectedSdClaims.
      */
-    private Map<FormatType, UnsignedVPToken> constructUnsignedVPToken(OpenID4VP openID4VP, List<DecryptedCredentialDTO> credentials, JWK jwk) throws JsonProcessingException {
+    private Map<FormatType, UnsignedVPToken> constructUnsignedVPToken(OpenID4VP openID4VP, List<DecryptedCredentialDTO> credentials, JWK jwk, Map<String, List<String>> selectedSdClaims) throws JsonProcessingException {
 
         log.debug("Constructing unsigned VP token for {} credentials", credentials.size());
 
-        Map<String, Map<FormatType, List<Object>>> verifiableCredentials = convertCredentialsToJarFormat(credentials);
+        Map<String, Map<FormatType, List<Object>>> verifiableCredentials = convertCredentialsToJarFormat(credentials, selectedSdClaims);
         String holderId = resolveHolderId(jwk);
         return openID4VP.constructUnsignedVPToken(verifiableCredentials, holderId, DEFAULT_SIGNATURE_SUITE);
 
@@ -388,37 +446,113 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
     }
 
     /**
-     * Converts DecryptedCredentialDTO list to the format expected by the OpenID4VP JAR
-     * Extracts the inner credential data from VCCredentialResponse wrapper to remove the "credential" wrapper
+     * Converts DecryptedCredentialDTO list to the format expected by the OpenID4VP JAR.
+     * Extracts the inner credential data from VCCredentialResponse wrapper to remove the "credential" wrapper.
+     * For SD-JWT credentials, filters disclosures down to only the user-selected claims.
      */
-    private Map<String, Map<FormatType, List<Object>>> convertCredentialsToJarFormat(List<DecryptedCredentialDTO> credentials) {
+    private Map<String, Map<FormatType, List<Object>>> convertCredentialsToJarFormat(List<DecryptedCredentialDTO> credentials, Map<String, List<String>> selectedSdClaims) {
+        Map<String, Map<FormatType, List<Object>>> result = new HashMap<>();
 
-        return credentials.stream().collect(Collectors.groupingBy(DecryptedCredentialDTO::getId, Collectors.collectingAndThen(Collectors.toList(), credList -> credList.stream().collect(Collectors.groupingBy(credential -> {
-            // Get format and credential data
-            VCCredentialResponse vcCredentialResponse = credential.getCredential();
-            String credentialFormat = vcCredentialResponse.getFormat();
-            // Convert format string to FormatType enum
-            return mapStringToFormatType(credentialFormat);
-        }, Collectors.mapping(credential -> credential.getCredential().getCredential(), Collectors.toList()))))));
+        for (DecryptedCredentialDTO credential: credentials) {
+            VCCredentialResponse vcResponse = credential.getCredential();
+            String format = vcResponse.getFormat();
+            FormatType formatType = mapStringToFormatType(format);
+
+            Object credentialData;
+            if(CredentialFormat.isSdJwt(format)) {
+                List<String> selectedPaths = selectedSdClaims != null ? selectedSdClaims.get(credential.getId()) : null;
+                credentialData = buildFilteredSdJwt(credential, selectedPaths);
+            } else {
+                credentialData = vcResponse.getCredential();
+            }
+
+            result.computeIfAbsent(credential.getId(), k -> new HashMap<>())
+                    .computeIfAbsent(formatType, k -> new ArrayList<>())
+                    .add(credentialData);
+        }
+
+        return result;
     }
 
     /**
-     * Maps format string to FormatType enum
-     * Only ldp_vc format is supported. Throws InvalidRequestException for other formats.
+     * Maps format string to FormatType enum.
      */
     private FormatType mapStringToFormatType(String format) {
         if (format == null) {
             log.error("Credential format is null");
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Credential format is required. Only ldp_vc format is supported.");
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Credential format is required.");
         }
 
         String formatLower = format.toLowerCase();
-        if (CredentialFormat.LDP_VC.getFormat().equals(formatLower)) {
-            return FormatType.LDP_VC;
+        if (CredentialFormat.LDP_VC.getFormat().equals(formatLower)) return FormatType.LDP_VC;
+        if (CredentialFormat.VC_SD_JWT.getFormat().equals(formatLower)) return FormatType.VC_SD_JWT;
+        if (CredentialFormat.DC_SD_JWT.getFormat().equals(formatLower)) return FormatType.DC_SD_JWT;
+
+        log.error("Unsupported credential format: {}", format);
+        throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Unsupported credential format: " + format);
+    }
+
+    /**
+     * Builds an SD-JWT string containing ONLY the user-selected disclosures.
+     * Disclosures are shared only when explicitly selected; if selectedPaths is null/empty
+     * (the user selected no SD claims for this credential), no disclosures are shared.
+     */
+    private String buildFilteredSdJwt(DecryptedCredentialDTO credential, List<String> selectedPaths) {
+        if (!(credential.getCredential().getCredential() instanceof String sdJwtString)) {
+            log.warn("Credential {} payload is not a String; skipping SD-JWT filtering", credential.getId());
+            return String.valueOf(credential.getCredential().getCredential());
         }
 
-        log.error("Unsupported credential format: {}. Only ldp_vc format is supported.", format);
-        throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Unsupported credential format: " + format + ". Only ldp_vc format is supported.");
+        // The issuer-signed credential JWT is everything before the first '~'.
+        // We rebuild from this and append ONLY the explicitly selected disclosures - never all.
+        String credentialJwt = sdJwtString.split("~", -1)[0];
+
+        // No selection for this credential -> user chose to disclose nothing -> share zero disclosures
+        if (selectedPaths == null || selectedPaths.isEmpty()) {
+            return credentialJwt + "~";
+        }
+
+        try {
+            // Get path -> List <disclosuresB64> mapping from the format handler
+            Map<String, ?> allProps = credentialFormatHandlerFactory
+                    .getHandler(credential.getCredential().getFormat())
+                    .extractAllCredentialProperties(credential.getCredential());
+
+            if (!(allProps.get("sdClaims") instanceof Map<?, ?> rawSdClaims)) {
+                return credentialJwt + "~";
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> sdClaimsMap = (Map<String, Object>) rawSdClaims;
+            if (sdClaimsMap.isEmpty()) {
+                return credentialJwt + "~";
+            }
+
+            // Normalize paths: "$.name" -> "name", "$.address.city" -> "address.city"
+            Set<String> normalizedPaths = selectedPaths.stream().
+                    map(p -> p.startsWith("$.") ? p.substring(2) : p)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+
+            // Collect all disclosures B64 strings for the selected paths (preserving order, deduplicating)
+            Set<String> allDisclosuresB64 = new LinkedHashSet<>();
+            for (String path : normalizedPaths) {
+                Object disclosures = sdClaimsMap.get(path);
+                if (disclosures instanceof List<?> discList) {
+                    discList.forEach(d -> allDisclosuresB64.add((String) d));
+                }
+            }
+
+            // Reconstruct: credentialJwt ~ disc1 ~ disc2 ~ (trailing ~ required by SD-JWT)
+            StringBuilder sb = new StringBuilder(credentialJwt);
+            for (String disc: allDisclosuresB64) {
+                sb.append("~").append(disc);
+            }
+            sb.append("~");
+            return sb.toString();
+
+        } catch (Exception e) {
+            log.error("Failed to filter SD-JWT disclosures for credential: {}, selectedPaths: {}. Sharing no disclosures. Error: {}", credential.getId(), selectedPaths, e.getMessage(), e);
+            return credentialJwt + "~";
+        }
     }
 
     /**
