@@ -1,61 +1,98 @@
 {
   "clientId": "{{clientId}}",
-  "presentationDefinition": {
-    "id": "c4822b58-7fb4-454e-b827-f8758fe27f9a",
-    "purpose": "Relying party is requesting your digital ID for the purpose of Self-Authentication",
-    "format": {
-      "ldp_vc": {
-        "proof_type": [
-          "Ed25519Signature2020"
-        ]
-      }
-    },
-    "input_descriptors": [
+  "nonce": "NkdHJkBIbdOdQaAjWm8gpA",
+  "responseCodeValidationRequired": false,
+  "dcqlQuery": {
+    "credentials": [
       {
-        "id": "id card credential",
-        "format": {
-          "ldp_vc": {
-            "proof_type": [
-              "RsaSignature2018"
+        "id": "student_id_credential_query",
+        "format": "dc+sd-jwt",
+        "meta": {
+          "vct_values": [
+            "student_id_credential"
+          ]
+        },
+        "claims": [
+          {
+            "id": "last_name",
+            "path": [
+              "last_name"
+            ]
+          },
+          {
+            "id": "first_name",
+            "path": [
+              "first_name"
+            ]
+          },
+          {
+            "id": "given_name",
+            "path": [
+              "first_name"
             ]
           }
-        },
-        "constraints": {
-          "fields": [
-            {
-              "path": [
-                "$.type"
-              ],
-              "filter": {
-                "type": "object",
-                "pattern": "MOSIPVerifiableCredential"
-              }
-            }
+        ],
+        "claim_sets": [
+          [
+            "first_name",
+            "last_name"
+          ],
+          [
+            "given_name"
           ]
-        }
+        ]
       },
       {
-        "id": "id card credential",
-        "format": {
-          "ldp_vc": {
-            "proof_type": [
-              "Ed25519Signature2020"
+        "id": "mosip_verifiable_credential_id",
+        "format": "ldp_vc",
+        "meta": {
+          "type_values": [
+            [
+              "https://www.w3.org/2018/credentials#VerifiableCredential",
+              "https://example.org/credentials#MOSIPVerifiableCredential"
+            ]
+          ]
+        },
+        "claims": [
+          {
+            "id": "male_gender",
+            "path": [
+              "gender",
+              null,
+              "value"
+            ],
+            "values": ["MLE"]
+          },
+          {
+            "id": "full_name_eng",
+            "path": [
+              "fullName",
+              0,
+              "language"
             ]
           }
-        },
-        "constraints": {
-          "fields": [
-            {
-              "path": [
-                "$.type"
-              ],
-              "filter": {
-                "type": "object",
-                "pattern": "InsuranceCredential"
-              }
-            }
+        ],
+        "claim_sets": [
+          [
+            "male_gender",
+            "full_name_eng"
+          ],
+          [
+            "full_name_eng"
           ]
-        }
+        ]
+      }
+    ],
+    "credential_sets": [
+      {
+        "options": [
+          [
+            "mosip_verifiable_credential_id"
+          ],
+          [
+            "student_id_credential_query"
+          ]
+        ]
       }
     ]
   }

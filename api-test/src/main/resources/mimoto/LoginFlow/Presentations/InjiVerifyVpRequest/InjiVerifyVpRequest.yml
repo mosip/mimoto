@@ -1,6 +1,6 @@
 InjiVerifyVpRequest:
    InjiVerify_InjiVerifyVpRequest_all_Valid_Smoke_sid:
-      endPoint: $INJIVERIFYBASEURL$/v1/verify/vp-request
+      endPoint: $INJIVERIFYBASEURL$/v1/verify/v2/vp-request
       description: Verify the creation of a Verifiable Presentation (VP) request as a prerequisite for generating the Verifiable Presentation
       uniqueIdentifier: TC_InjiVerify_InjiVerifyVpRequest_01
       restMethod: post
@@ -9,7 +9,7 @@ InjiVerifyVpRequest:
       inputTemplate: mimoto/LoginFlow/Presentations/InjiVerifyVpRequest/InjiVerifyVpRequest
       outputTemplate: mimoto/LoginFlow/Presentations/InjiVerifyVpRequest/InjiVerifyVpRequestResult
       input: '{
-              "clientId":"$CLIENT_ID_INJI_VERIFY$"
+      "clientId": "$CLIENT_ID_INJI_VERIFY$"
       }'
       output: '{
 }'
