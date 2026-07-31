@@ -330,10 +330,25 @@ public class CredentialPDFGeneratorService {
     }
 
     private String constructQRCodeWithAuthorizeRequest(VCCredentialResponse vcCredentialResponse, String dataShareUrl) throws WriterException, JsonProcessingException {
+        String qrData = buildOnlineSharingQrData(vcCredentialResponse, dataShareUrl);
+        log.info("OnlineSharing QR payload length: {}", qrData.length());
+        if (qrData.length() >= allowedQRDataSizeLimit) {
+            log.warn("OnlineSharing QR payload exceeds allowed size limit {}. Skipping QR generation.", allowedQRDataSizeLimit);
+            return "";
+        }
+        return constructQRCode(qrData);
+    }
+
+    private String buildOnlineSharingQrData(VCCredentialResponse vcCredentialResponse, String dataShareUrl) throws JsonProcessingException {
         PresentationDefinitionDTO presentationDefinitionDTO = presentationService.constructPresentationDefinition(vcCredentialResponse);
         String presentationString = objectMapper.writeValueAsString(presentationDefinitionDTO);
-        String qrData = String.format(ovpQRDataPattern, URLEncoder.encode(dataShareUrl, StandardCharsets.UTF_8), URLEncoder.encode(presentationString, StandardCharsets.UTF_8));
-        return constructQRCode(qrData);
+        Map<String, Object> dcqlQuery = presentationService.constructDcqlQuery(vcCredentialResponse);
+        String dcqlString = objectMapper.writeValueAsString(dcqlQuery);
+        return String.format(
+                ovpQRDataPattern,
+                URLEncoder.encode(dataShareUrl, StandardCharsets.UTF_8),
+                URLEncoder.encode(presentationString, StandardCharsets.UTF_8),
+                URLEncoder.encode(dcqlString, StandardCharsets.UTF_8));
     }
 
     private String constructQRCode(String qrData) throws WriterException {
@@ -393,9 +408,12 @@ public class CredentialPDFGeneratorService {
             // Generate the QR code data to embed into the svg for Online Sharing
             String qrCodeData = null;
             if (QRCodeType.OnlineSharing.equals(issuerDTO.getQr_code_type())) {
-                PresentationDefinitionDTO presentationDefinitionDTO = presentationService.constructPresentationDefinition(vcCredentialResponse);
-                String presentationString = objectMapper.writeValueAsString(presentationDefinitionDTO);
-                qrCodeData = String.format(ovpQRDataPattern, URLEncoder.encode(dataShareUrl, StandardCharsets.UTF_8), URLEncoder.encode(presentationString, StandardCharsets.UTF_8));
+                qrCodeData = buildOnlineSharingQrData(vcCredentialResponse, dataShareUrl);
+                log.info("OnlineSharing SVG QR payload length: {}", qrCodeData.length());
+                if (qrCodeData.length() >= allowedQRDataSizeLimit) {
+                    log.warn("OnlineSharing SVG QR payload exceeds allowed size limit {}. Skipping QR embedding.", allowedQRDataSizeLimit);
+                    qrCodeData = null;
+                }
             }
 
             // Generate list of rendered svg strings using InjiVcRenderer

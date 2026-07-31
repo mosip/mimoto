@@ -70,13 +70,15 @@ class CredentialPDFGeneratorServiceTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(credentialPDFGeneratorService, "ovpQRDataPattern", "test-pattern-%s-%s");
+        ReflectionTestUtils.setField(credentialPDFGeneratorService, "ovpQRDataPattern", "test-pattern-%s-%s-%s");
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "qrCodeHeight", 500);
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "qrCodeWidth", 500);
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "allowedQRDataSizeLimit", 2000);
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "pixelPass", pixelPass);
         ReflectionTestUtils.setField(credentialPDFGeneratorService, "faceImageLookupKeys",
                 "image,face,photo,picture,portrait");
+        lenient().when(presentationService.constructDcqlQuery(any()))
+                .thenReturn(Map.of("credentials", List.of(Map.of("id", "cred1", "format", "ldp_vc"))));
 
         setupTestData();
     }
@@ -152,7 +154,7 @@ class CredentialPDFGeneratorServiceTest {
         PresentationDefinitionDTO presentationDef = new PresentationDefinitionDTO();
         when(presentationService.constructPresentationDefinition(any()))
                 .thenReturn(presentationDef);
-        when(objectMapper.writeValueAsString(presentationDef))
+        when(objectMapper.writeValueAsString(any()))
                 .thenReturn("{\"presentation\":\"definition\"}");
 
         ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
@@ -204,8 +206,33 @@ class CredentialPDFGeneratorServiceTest {
                     "http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/test", "", "en");
 
             verify(presentationService).constructPresentationDefinition(any());
+            verify(presentationService).constructDcqlQuery(any());
             verify(pixelPass, never()).generateQRData(anyString(), anyString());
             assertNotNull(result);
+        }
+    }
+
+    @Test
+    void should_skipOnlineSharingQr_when_payloadExceedsSizeLimit() throws Exception {
+        when(credentialFormatHandlerFactory.getHandler("ldp_vc")).thenReturn(credentialFormatHandler);
+        issuerDTO.setQr_code_type(QRCodeType.OnlineSharing);
+        ReflectionTestUtils.setField(credentialPDFGeneratorService, "allowedQRDataSizeLimit", 10);
+        when(objectMapper.writeValueAsString(any())).thenReturn("{\"credential\":\"data-that-makes-payload-large\"}");
+        when(utilities.getCredentialSupportedTemplateString(anyString(), anyString()))
+                .thenReturn("<html><body>Test</body></html>");
+        when(presentationService.constructPresentationDefinition(any()))
+                .thenReturn(new PresentationDefinitionDTO());
+
+        try (MockedStatic<Utilities> mocked = mockStatic(Utilities.class)) {
+            mocked.when(() -> Utilities.encodeToString(any(), anyString()))
+                    .thenReturn("base64-encoded-qr");
+
+            ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
+                    "TestCredential", vcCredentialResponse, issuerDTO, credentialsSupportedResponse,
+                    "http://datashare.datashare/v1/datashare/get/static-policyid/static-subscriberid/test", "", "en");
+
+            assertNotNull(result);
+            mocked.verify(() -> Utilities.encodeToString(any(), anyString()), never());
         }
     }
 
@@ -224,7 +251,7 @@ class CredentialPDFGeneratorServiceTest {
         PresentationDefinitionDTO presentationDef = new PresentationDefinitionDTO();
         when(presentationService.constructPresentationDefinition(any()))
                 .thenReturn(presentationDef);
-        when(objectMapper.writeValueAsString(presentationDef))
+        when(objectMapper.writeValueAsString(any()))
                 .thenReturn("{\"presentation\":\"definition\"}");
 
         ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
@@ -246,7 +273,7 @@ class CredentialPDFGeneratorServiceTest {
         PresentationDefinitionDTO presentationDef = new PresentationDefinitionDTO();
         when(presentationService.constructPresentationDefinition(any()))
                 .thenReturn(presentationDef);
-        when(objectMapper.writeValueAsString(presentationDef))
+        when(objectMapper.writeValueAsString(any()))
                 .thenReturn("{\"presentation\":\"definition\"}");
 
         ByteArrayInputStream result = credentialPDFGeneratorService.generatePdfForVerifiableCredential(
@@ -266,7 +293,7 @@ class CredentialPDFGeneratorServiceTest {
         PresentationDefinitionDTO presentationDef = new PresentationDefinitionDTO();
         when(presentationService.constructPresentationDefinition(any()))
                 .thenReturn(presentationDef);
-        when(objectMapper.writeValueAsString(presentationDef))
+        when(objectMapper.writeValueAsString(any()))
                 .thenReturn("{\"presentation\":\"definition\"}");
 
         try (MockedStatic<Utilities> mocked = mockStatic(Utilities.class)) {
