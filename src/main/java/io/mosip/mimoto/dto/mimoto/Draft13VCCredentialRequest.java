@@ -28,4 +28,6 @@ public class Draft13VCCredentialRequest {
     private VCCredentialDefinition credentialDefinition;
 
     private String vct;
+
+    private String doctype;
 }
