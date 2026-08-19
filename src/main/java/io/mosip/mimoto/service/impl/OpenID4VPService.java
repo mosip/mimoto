@@ -9,6 +9,7 @@ import io.mosip.mimoto.util.AuthorizationRequestHelper;
 import io.mosip.openID4VP.authorizationRequest.AuthorizationPresentationExchangeRequest;
 import io.mosip.openID4VP.authorizationRequest.AuthorizationRequest;
 import io.mosip.openID4VP.authorizationRequest.LdpVpFormatSupported;
+import io.mosip.openID4VP.authorizationRequest.MsoMdocVpFormatSupported;
 import io.mosip.openID4VP.authorizationRequest.SdJwtVpFormatSupported;
 import io.mosip.openID4VP.authorizationRequest.VPFormatSupported;
 import io.mosip.openID4VP.authorizationRequest.Verifier;
@@ -52,7 +53,8 @@ public class OpenID4VPService {
         Map<VPFormatType, VPFormatSupported> vpFormatsSupported = Map.of(
                 VPFormatType.LDP_VC, new LdpVpFormatSupported(List.of(ProofType.Ed25519Signature2020), null),
                 VPFormatType.VC_SD_JWT, new SdJwtVpFormatSupported(List.of("ES256", "EdDSA"), List.of("ES256", "EdDSA")),
-                VPFormatType.DC_SD_JWT, new SdJwtVpFormatSupported(List.of("ES256", "EdDSA"), List.of("ES256", "EdDSA"))
+                VPFormatType.DC_SD_JWT, new SdJwtVpFormatSupported(List.of("ES256", "EdDSA"), List.of("ES256", "EdDSA")),
+                VPFormatType.MSO_MDOC, new MsoMdocVpFormatSupported(List.of(-7), List.of(-7))
         );
 
         WalletConfig defaultConfig = new WalletConfig();

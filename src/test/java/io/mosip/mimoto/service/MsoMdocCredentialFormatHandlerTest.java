@@ -440,6 +440,40 @@ class MsoMdocCredentialFormatHandlerTest {
         }
     }
 
+    @Test
+    void loadDisplayPropertiesFromWellknownWithDirectArrayClaimDisplayShouldBuildDtoCorrectly() {
+        Map<String, Object> credentialProperties = Map.of("family_name", "Doe");
+
+        CredentialIssuerDisplayResponse displayResponse = new CredentialIssuerDisplayResponse();
+        displayResponse.setName("Family Name");
+        displayResponse.setLocale("en");
+        List<CredentialIssuerDisplayResponse> displayList = List.of(displayResponse);
+
+        // MDL wellknown: claim value is a direct array, not {"display": [...]}
+        Map<String, Object> nsInnerClaims = new HashMap<>();
+        nsInnerClaims.put("family_name", displayList);
+        credentialsSupportedResponse.setClaims(Map.of("org.iso.18013.5.1", nsInnerClaims));
+
+        when(objectMapper.convertValue(any(), any(TypeReference.class))).thenReturn(displayList);
+
+        try (MockedStatic<LocaleUtils> mockedLocaleUtils = mockStatic(LocaleUtils.class)) {
+            mockedLocaleUtils.when(() -> LocaleUtils.resolveLocaleWithFallback(any(), eq("en"))).thenReturn("en");
+            mockedLocaleUtils.when(() -> LocaleUtils.matchesLocale(eq("en"), eq("en"))).thenReturn(true);
+
+            LinkedHashMap<String, Map<CredentialIssuerDisplayResponse, Object>> result =
+                    handler.loadDisplayPropertiesFromWellknown(credentialProperties, credentialsSupportedResponse, "en");
+
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            assertTrue(result.containsKey("family_name"));
+            CredentialIssuerDisplayResponse display = result.get("family_name").keySet().iterator().next();
+            assertEquals("Family Name", display.getName());
+            assertEquals("en", display.getLocale());
+            // must NOT call convertValue with CredentialDisplayResponseDto.class — that's the Map path
+            verify(objectMapper, never()).convertValue(any(), eq(CredentialDisplayResponseDto.class));
+        }
+    }
+
     private CredentialDisplayResponseDto createCredentialDisplayResponseDto(String name, String locale) {
         CredentialDisplayResponseDto dto = new CredentialDisplayResponseDto();
         CredentialIssuerDisplayResponse display = new CredentialIssuerDisplayResponse();

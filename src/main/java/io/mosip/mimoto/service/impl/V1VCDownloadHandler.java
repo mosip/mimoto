@@ -72,7 +72,10 @@ public class V1VCDownloadHandler implements VCDownloadHandler {
         String format = credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported().get(credentialConfigurationId).getFormat();
 
         log.debug("V1 VC Credential Response received for issuerId: {}", issuerId);
-        return new VCCredentialResponse(format, credentials.getFirst().getCredential());
+        return VCCredentialResponse.builder()
+                .format(format)
+                .credential(credentials.getFirst().getCredential())
+                .build();
     }
 
     private V1VCCredentialRequest buildCredentialRequest(IssuerDTO issuerDTO, String credentialConfigurationId, CredentialIssuerWellKnownResponse wellKnownResponse, String walletId, String base64Key, boolean isLoginFlow) throws CredentialProcessingException {

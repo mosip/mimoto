@@ -64,6 +64,9 @@ public class Draft13VCDownloadHandler implements VCDownloadHandler {
         }
 
         log.debug("VC Credential Response received");
-        return new VCCredentialResponse(vcCredentialRequest.getFormat(), response.getCredential());
+        return VCCredentialResponse.builder()
+                .format(vcCredentialRequest.getFormat())
+                .credential(response.getCredential())
+                .build();
     }
 }

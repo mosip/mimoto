@@ -19,6 +19,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 
+import io.mosip.mimoto.constant.CredentialFormat;
+import io.mosip.mimoto.dto.mimoto.CredentialsSupportedResponse;
+
+import java.util.Map;
+
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -48,8 +53,10 @@ class Draft13VCDownloadHandlerTest {
         issuerDTO = new IssuerDTO();
         issuerDTO.setIssuer_id("issuer-123");
 
+        CredentialsSupportedResponse credentialsSupportedResponse = getCredentialSupportedResponse("config-1", CredentialFormat.LDP_VC.getFormat());
         wellKnownResponse = new CredentialIssuerWellKnownResponse();
         wellKnownResponse.setCredentialEndPoint("https://example.com/credential");
+        wellKnownResponse.setCredentialConfigurationsSupported(Map.of("config-1", credentialsSupportedResponse));
 
         tokenResponse = new TokenResponseDTO();
         tokenResponse.setC_nonce("nonce-123");
@@ -64,7 +71,7 @@ class Draft13VCDownloadHandlerTest {
         boolean isLoginFlow = false;
 
         Draft13VCCredentialRequest request = getVCCredentialRequestDTO();
-        request.setFormat("jwt_vc");
+        request.setFormat(CredentialFormat.LDP_VC.getFormat());
 
         when(credentialRequestService.buildRequest(eq(issuerDTO), eq(credentialConfigurationId),
                 eq(wellKnownResponse), eq(tokenResponse.getC_nonce()), eq(walletId), eq(base64Key), eq(isLoginFlow)))
@@ -112,7 +119,7 @@ class Draft13VCDownloadHandlerTest {
         boolean isLoginFlow = false;
 
         Draft13VCCredentialRequest request = getVCCredentialRequestDTO();
-        request.setFormat("jwt_vc");
+        request.setFormat(CredentialFormat.LDP_VC.getFormat());
 
         when(credentialRequestService.buildRequest(eq(issuerDTO), eq(credentialConfigurationId),
                 eq(wellKnownResponse), eq(tokenResponse.getC_nonce()), eq(walletId), eq(base64Key), eq(isLoginFlow)))
@@ -142,7 +149,7 @@ class Draft13VCDownloadHandlerTest {
         boolean isLoginFlow = false;
 
         Draft13VCCredentialRequest request = getVCCredentialRequestDTO();
-        request.setFormat("jwt_vc");
+        request.setFormat(CredentialFormat.LDP_VC.getFormat());
 
         when(credentialRequestService.buildRequest(eq(issuerDTO), eq(credentialConfigurationId),
                 eq(wellKnownResponse), eq(tokenResponse.getC_nonce()), eq(walletId), eq(base64Key), eq(isLoginFlow)))
@@ -175,7 +182,7 @@ class Draft13VCDownloadHandlerTest {
         boolean isLoginFlow = false;
 
         Draft13VCCredentialRequest request = getVCCredentialRequestDTO();
-        request.setFormat("jwt_vc");
+        request.setFormat(CredentialFormat.LDP_VC.getFormat());
 
         when(credentialRequestService.buildRequest(eq(issuerDTO), eq(credentialConfigurationId),
                 eq(wellKnownResponse), eq(tokenResponse.getC_nonce()), eq(walletId), eq(base64Key), eq(isLoginFlow)))

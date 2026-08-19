@@ -36,6 +36,7 @@ import io.mosip.openID4VP.common.OpenID4VPErrorCodes;
 import io.mosip.openID4VP.constants.FormatType;
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions;
 import io.mosip.openID4VP.verifier.VerifierResponse;
+import io.mosip.openID4VP.wallet.Credential;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -2340,4 +2341,86 @@ public class WalletPresentationServiceTest {
             verify(jwsSigner, times(2)).sign(any(JWSHeader.class), eq(kbt.getBytes(StandardCharsets.US_ASCII)));
         }
     }
+
+    @Test
+    public void testSignVPTokensMsoMdocSignsRawCborBytesWithoutDotSplit() throws Exception {
+        Method method = WalletPresentationServiceImpl.class.getDeclaredMethod(
+                "signVPTokens", List.class, String.class, String.class);
+        method.setAccessible(true);
+
+        byte[] cborBytes = new byte[]{(byte) 0x84, 0x01, 0x02, 0x03};
+
+        UnsignedVPToken mockToken = mock(UnsignedVPToken.class);
+        when(mockToken.getId()).thenReturn("mdoc-token-1");
+        when(mockToken.getFormat()).thenReturn(FormatType.MSO_MDOC);
+        when(mockToken.getDataToSign()).thenReturn(cborBytes);
+        when(mockToken.getSignatureAlgorithm()).thenReturn("ES256");
+        when(jwsSigner.sign(any(JWSHeader.class), any(byte[].class))).thenReturn(Base64URL.encode("mdoc-sig"));
+
+        KeyPair mockKeyPair = mock(KeyPair.class);
+        JWK mockJwk = mock(JWK.class);
+        when(keyPairService.getKeyPairFromDB(eq("wallet-1"), eq("base64Key"), eq(SigningAlgorithm.ES256)))
+                .thenReturn(mockKeyPair);
+
+        try (MockedStatic<SigningKeyUtil> mockedSigningKeyUtil = mockStatic(SigningKeyUtil.class)) {
+            mockedSigningKeyUtil.when(() -> SigningKeyUtil.generateJwk(SigningAlgorithm.ES256, mockKeyPair))
+                    .thenReturn(mockJwk);
+            mockedSigningKeyUtil.when(() -> SigningKeyUtil.createSigner(SigningAlgorithm.ES256, mockJwk))
+                    .thenReturn(jwsSigner);
+
+            @SuppressWarnings("unchecked")
+            List<VPTokenSigningResult> results = (List<VPTokenSigningResult>) method.invoke(
+                    walletPresentationService, List.of(mockToken), "wallet-1", "base64Key");
+
+            assertEquals(1, results.size());
+            verify(jwsSigner).sign(any(JWSHeader.class), eq(cborBytes));
+            assertArrayEquals(Base64URL.encode("mdoc-sig").decode(), results.get(0).getSignedData());
+        }
+    }
+
+    @Test
+    public void testToLibraryCredentialMsoMdocWithStringCredentialReturnsMsoMdocCredential() throws Exception {
+        Method method = WalletPresentationServiceImpl.class.getDeclaredMethod(
+                "toLibraryCredential", DecryptedCredentialDTO.class, Map.class);
+        method.setAccessible(true);
+
+        DecryptedCredentialDTO dto = DecryptedCredentialDTO.builder()
+                .id("mdoc-cred-1")
+                .credential(VCCredentialResponse.builder()
+                        .format(CredentialFormat.MSO_MDOC.getFormat())
+                        .credential("base64url-encoded-mdoc-data")
+                        .build())
+                .build();
+
+        Credential result = (Credential) method.invoke(walletPresentationService, dto, null);
+
+        assertNotNull(result);
+        assertEquals(FormatType.MSO_MDOC, result.getFormat());
+        assertEquals("mdoc-cred-1", result.getCredentialId());
+        assertEquals("base64url-encoded-mdoc-data", result.getData());
+    }
+
+    @Test
+    public void testToLibraryCredentialMsoMdocNonStringCredentialThrowsInvalidRequest() throws Exception {
+        Method method = WalletPresentationServiceImpl.class.getDeclaredMethod(
+                "toLibraryCredential", DecryptedCredentialDTO.class, Map.class);
+        method.setAccessible(true);
+
+        DecryptedCredentialDTO dto = DecryptedCredentialDTO.builder()
+                .id("mdoc-cred-2")
+                .credential(VCCredentialResponse.builder()
+                        .format(CredentialFormat.MSO_MDOC.getFormat())
+                        .credential(Map.of("unexpected", "map"))
+                        .build())
+                .build();
+
+        try {
+            method.invoke(walletPresentationService, dto, null);
+            fail("Expected InvocationTargetException wrapping InvalidRequestException");
+        } catch (InvocationTargetException e) {
+            assertTrue(e.getCause() instanceof InvalidRequestException);
+            assertTrue(e.getCause().getMessage().contains("mso_mdoc data must be a String"));
+        }
+    }
+
 }

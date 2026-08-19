@@ -133,7 +133,17 @@ public class MsoMdocCredentialFormatHandler implements CredentialFormatHandler {
         Map<String, CredentialDisplayResponseDto> convertedClaimsMap = rawClaims.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry -> objectMapper.convertValue(entry.getValue(), CredentialDisplayResponseDto.class),
+                        entry -> {
+                            Object value = entry.getValue();
+                            if (value instanceof List) {
+                                // MDL wellknown: claim display is a direct array [{name, locale}]
+                                CredentialDisplayResponseDto dto = new CredentialDisplayResponseDto();
+                                dto.setDisplay(objectMapper.convertValue(value,
+                                        new TypeReference<List<CredentialIssuerDisplayResponse>>() {}));
+                                return dto;
+                            }
+                            return objectMapper.convertValue(value, CredentialDisplayResponseDto.class);
+                        },
                         (a, b) -> a,
                         LinkedHashMap::new
                 ));
