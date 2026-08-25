@@ -34,7 +34,6 @@ import static io.mosip.mimoto.util.JwtUtils.parseJwtHeader;
 @Slf4j
 @Service
 public class PresentationServiceImpl implements PresentationService {
-
     private final DataShareServiceImpl dataShareService;
 
     private final ObjectMapper objectMapper;

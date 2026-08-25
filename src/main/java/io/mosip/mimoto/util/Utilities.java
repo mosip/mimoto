@@ -40,6 +40,7 @@ import static io.mosip.mimoto.constant.LoggerFileConstant.DELIMITER;
 @Slf4j
 @Data
 public class Utilities {
+
     private ClassLoader classLoader = Utilities.class.getClassLoader();
 
     public ObjectMapper objectMapper = new ObjectMapper();
@@ -288,4 +289,5 @@ public class Utilities {
         // mask of length 20 or less
         return "X".repeat(Math.min(value.length(), 20));
     }
+
 }

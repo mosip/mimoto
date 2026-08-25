@@ -19,6 +19,11 @@ import io.mosip.mimoto.service.RestClientService;
 import io.mosip.mimoto.service.impl.CredentialShareServiceImpl;
 import io.mosip.mimoto.util.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -78,8 +83,22 @@ public class CredentialShareController {
      */
     @PostMapping(path = {"/callback/notify", "/callback/notify/"},consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthenticateContentAndVerifyIntent(secret = "${mosip.event.secret}", callback = "/v1/mimoto/credentialshare/callback/notify", topic = "${mosip.event.topic}")
-    @Operation(summary = SwaggerLiteralConstants.CREDENTIALS_SHARE_HANDLE_SUBSCRIBED_EVENT_SUMMARY, description = SwaggerLiteralConstants.CREDENTIALS_SHARE_HANDLE_SUBSCRIBED_EVENT_DESCRIPTION)
-    public ResponseEntity<GenericResponseDTO> handleSubscribeEvent(@RequestBody EventModel eventModel)
+    @Operation(summary = SwaggerLiteralConstants.CREDENTIALS_SHARE_HANDLE_SUBSCRIBED_EVENT_SUMMARY, 
+               description = SwaggerLiteralConstants.CREDENTIALS_SHARE_HANDLE_SUBSCRIBED_EVENT_DESCRIPTION)
+    @RequestBody(description = "Credential share callback event payload delivered by the eventing system when the issuance workflow reaches a new state.",
+                 required = true,
+                 content = @Content(schema = @Schema(implementation = EventModel.class),
+                                   mediaType = MediaType.APPLICATION_JSON_VALUE))
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", 
+                     description = "Acknowledgment returned after Mimoto accepts a credential share callback event notification.",
+                     content = @Content(schema = @Schema(implementation = GenericResponseDTO.class))),
+        @ApiResponse(responseCode = "400", 
+                     description = "Invalid request payload - Event model structure validation failed"),
+        @ApiResponse(responseCode = "500", 
+                     description = "Internal server error - Processing credential share event failed")
+    })
+    public ResponseEntity<GenericResponseDTO> handleSubscribeEvent(@Valid @org.springframework.web.bind.annotation.RequestBody EventModel eventModel)
             throws Exception {
         log.info("Received websub event:: transaction id = " + eventModel.getEvent().getTransactionId());
         GenericResponseDTO responseDTO = new GenericResponseDTO();
@@ -108,7 +127,7 @@ public class CredentialShareController {
      */
     @PostMapping(path = "/request", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = SwaggerLiteralConstants.CREDENTIALS_SHARE_REQUEST_VC_SUMMARY, description = SwaggerLiteralConstants.CREDENTIALS_SHARE_REQUEST_VC_DESCRIPTION)
-    public ResponseEntity<CredentialRequestResponseDTO> request(@RequestBody AppCredentialRequestDTO requestDTO)
+    public ResponseEntity<CredentialRequestResponseDTO> request(@org.springframework.web.bind.annotation.RequestBody AppCredentialRequestDTO requestDTO)
             throws Exception {
 
         if (StringUtils.isEmpty(requestDTO.getIndividualId())) {
@@ -180,7 +199,7 @@ public class CredentialShareController {
      */
     @PostMapping(path = "/download", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = SwaggerLiteralConstants.CREDENTIALS_SHARE_DOWNLOAD_VC_SUMMARY, description = SwaggerLiteralConstants.CREDENTIALS_SHARE_DOWNLOAD_VC_DESCRIPTION)
-    public ResponseEntity<CredentialDownloadResponseDTO> download(@Valid @RequestBody CredentialDownloadRequestDTO requestDTO, BindingResult result)
+    public ResponseEntity<CredentialDownloadResponseDTO> download(@Valid @org.springframework.web.bind.annotation.RequestBody CredentialDownloadRequestDTO requestDTO, BindingResult result)
             throws Exception {
         try {
             requestValidator.validateInputRequest(result);
