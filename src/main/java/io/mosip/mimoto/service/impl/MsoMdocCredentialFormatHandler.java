@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static io.mosip.mimoto.util.IssuerConfigUtil.camelToTitleCase;
+import static io.mosip.mimoto.util.IssuerConfigUtil.toTitleCase;
 
 /**
  * Format handler for ISO 18013-5 mdoc credentials (format {@code mso_mdoc}).
@@ -172,7 +172,7 @@ public class MsoMdocCredentialFormatHandler implements CredentialFormatHandler {
             CredentialIssuerDisplayResponse display = localizedDisplayMap.get(key);
             if (display == null) {
                 display = new CredentialIssuerDisplayResponse();
-                display.setName(camelToTitleCase(key));
+                display.setName(toTitleCase(key));
                 display.setLocale("en");
             }
             displayProperties.put(key, Map.of(display, value));
@@ -199,7 +199,7 @@ public class MsoMdocCredentialFormatHandler implements CredentialFormatHandler {
                 continue;
             }
             CredentialIssuerDisplayResponse display = new CredentialIssuerDisplayResponse();
-            display.setName(camelToTitleCase(key));
+            display.setName(toTitleCase(key));
             display.setLocale("en");
             displayProperties.put(key, Map.of(display, value));
         }

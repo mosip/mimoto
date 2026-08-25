@@ -211,10 +211,10 @@ class MsoMdocCredentialFormatHandlerTest {
 
     // loadDisplayPropertiesFromWellknown
     @Test
-    void loadDisplayPropertiesFromWellknownWithNullClaimsShouldUseFallbackWithCamelCaseLabel() {
+    void loadDisplayPropertiesFromWellknownWithNullClaimsShouldUseFallbackWithSnakeCaseLabel() {
         Map<String, Object> credentialProperties = new LinkedHashMap<>();
-        credentialProperties.put("givenName", "John");
-        credentialProperties.put("familyName", "Doe");
+        credentialProperties.put("given_name", "John");
+        credentialProperties.put("family_name", "Doe");
 
         credentialsSupportedResponse.setClaims(null);
 
@@ -223,16 +223,16 @@ class MsoMdocCredentialFormatHandlerTest {
 
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertTrue(result.containsKey("givenName"));
+        assertTrue(result.containsKey("given_name"));
 
-        CredentialIssuerDisplayResponse display = result.get("givenName").keySet().iterator().next();
+        CredentialIssuerDisplayResponse display = result.get("given_name").keySet().iterator().next();
         assertEquals("Given Name", display.getName());
         assertEquals("en", display.getLocale());
     }
 
     @Test
     void loadDisplayPropertiesFromWellknownWithEmptyClaimsShouldUseFallback() {
-        Map<String, Object> credentialProperties = Map.of("documentNumber", "DL123");
+        Map<String, Object> credentialProperties = Map.of("document_number", "DL123");
 
         credentialsSupportedResponse.setClaims(new HashMap<>());
 
@@ -241,7 +241,7 @@ class MsoMdocCredentialFormatHandlerTest {
 
         assertNotNull(result);
         assertEquals(1, result.size());
-        CredentialIssuerDisplayResponse display = result.get("documentNumber").keySet().iterator().next();
+        CredentialIssuerDisplayResponse display = result.get("document_number").keySet().iterator().next();
         assertEquals("Document Number", display.getName());
     }
 
@@ -311,10 +311,10 @@ class MsoMdocCredentialFormatHandlerTest {
 
     @Test
     void loadDisplayPropertiesFromWellknownWhenNullResolvedLocaleShouldUseFallbackLabel() {
-        Map<String, Object> credentialProperties = Map.of("givenName", "John");
+        Map<String, Object> credentialProperties = Map.of("given_name", "John");
 
         Map<String, Object> nsInnerClaims = new HashMap<>();
-        nsInnerClaims.put("givenName", new HashMap<>());
+        nsInnerClaims.put("given_name", new HashMap<>());
         credentialsSupportedResponse.setClaims(Map.of("org.iso.18013.5.1", nsInnerClaims));
 
         CredentialDisplayResponseDto dto = createCredentialDisplayResponseDto("Given Name", "en");
@@ -327,9 +327,9 @@ class MsoMdocCredentialFormatHandlerTest {
                     handler.loadDisplayPropertiesFromWellknown(credentialProperties, credentialsSupportedResponse, "fr");
 
             assertNotNull(result);
-            assertTrue(result.containsKey("givenName"));
+            assertTrue(result.containsKey("given_name"));
 
-            CredentialIssuerDisplayResponse display = result.get("givenName").keySet().iterator().next();
+            CredentialIssuerDisplayResponse display = result.get("given_name").keySet().iterator().next();
             assertEquals("Given Name", display.getName());
             assertEquals("en", display.getLocale());
         }
@@ -413,11 +413,11 @@ class MsoMdocCredentialFormatHandlerTest {
     @Test
     void loadDisplayPropertiesFromWellknownWhenKeyNotInLocalizedMapShouldUseFallbackLabel() {
         Map<String, Object> credentialProperties = new LinkedHashMap<>();
-        credentialProperties.put("givenName", "John");
-        credentialProperties.put("extraField", "extraValue");
+        credentialProperties.put("given_name", "John");
+        credentialProperties.put("extra_field", "extraValue");
 
         Map<String, Object> nsInnerClaims = new HashMap<>();
-        nsInnerClaims.put("givenName", new HashMap<>());
+        nsInnerClaims.put("given_name", new HashMap<>());
         credentialsSupportedResponse.setClaims(Map.of("org.iso.18013.5.1", nsInnerClaims));
 
         CredentialDisplayResponseDto dto = createCredentialDisplayResponseDto("Given Name", "en");
@@ -432,9 +432,9 @@ class MsoMdocCredentialFormatHandlerTest {
 
             assertNotNull(result);
             assertEquals(2, result.size());
-            assertTrue(result.containsKey("extraField"));
+            assertTrue(result.containsKey("extra_field"));
 
-            CredentialIssuerDisplayResponse extraDisplay = result.get("extraField").keySet().iterator().next();
+            CredentialIssuerDisplayResponse extraDisplay = result.get("extra_field").keySet().iterator().next();
             assertEquals("Extra Field", extraDisplay.getName());
             assertEquals("en", extraDisplay.getLocale());
         }
