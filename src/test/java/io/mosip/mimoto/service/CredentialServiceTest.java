@@ -168,12 +168,12 @@ public class CredentialServiceTest {
         String credentialConfigurationId = "CredentialType1";
         String walletId = "wallet123";
         String base64Key = "testKey123";
-        String issuerId = "issuer1";
+        String localIssuerId = "issuer1";
         String locale = "en";
 
         // Mock dependencies
-        IssuerConfig issuerConfig = mock(IssuerConfig.class);
-        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(issuerId);
+        IssuerConfig localIssuerConfig = mock(IssuerConfig.class);
+        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(localIssuerId);
         CredentialIssuerWellKnownResponse mockWellKnownResponse = new CredentialIssuerWellKnownResponse();
         mockWellKnownResponse.setCredentialEndPoint("https://example.com/credential");
         mockWellKnownResponse.setVersion(VCSpecificationVersion.DRAFT_13);
@@ -182,11 +182,11 @@ public class CredentialServiceTest {
         savedCredential.setId("credential-id-123");
 
         // Setup issuer config mocks
-        when(issuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
-        when(issuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
+        when(localIssuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
+        when(localIssuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
 
         // Mock service calls
-        when(issuersService.getIssuerConfig(issuerId, credentialConfigurationId)).thenReturn(issuerConfig);
+        when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
         when(vcDownloadHandler.downloadCredential(any(), eq(credentialConfigurationId), any(), any(), eq(walletId), eq(base64Key), eq(true)))
                 .thenReturn(getVCCredentialResponseDTO(credentialConfigurationId));
@@ -197,7 +197,7 @@ public class CredentialServiceTest {
 
         // Execute
         VerifiableCredentialResponseDTO result = credentialService.downloadCredentialAndStoreInDB(
-                tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale);
+                tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale);
 
         // Verify
         assertNotNull(result);
@@ -211,22 +211,22 @@ public class CredentialServiceTest {
         String credentialConfigurationId = "CredentialType1";
         String walletId = "wallet123";
         String base64Key = "testKey123";
-        String issuerId = "issuer1";
+        String localIssuerId = "issuer1";
         String locale = "en";
 
         // Mock dependencies
-        IssuerConfig issuerConfig = mock(IssuerConfig.class);
-        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(issuerId);
+        IssuerConfig localIssuerConfig = mock(IssuerConfig.class);
+        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(localIssuerId);
         CredentialIssuerWellKnownResponse mockWellKnownResponse = new CredentialIssuerWellKnownResponse();
         mockWellKnownResponse.setCredentialEndPoint("https://example.com/credential");
         mockWellKnownResponse.setVersion(VCSpecificationVersion.DRAFT_13);
 
         // Setup issuer config mocks
-        when(issuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
-        when(issuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
+        when(localIssuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
+        when(localIssuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
 
         // Mock service calls
-        when(issuersService.getIssuerConfig(issuerId, credentialConfigurationId)).thenReturn(issuerConfig);
+        when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
         when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true)))
                 .thenReturn(getVCCredentialResponseDTO(credentialConfigurationId));
@@ -234,7 +234,7 @@ public class CredentialServiceTest {
 
         // Execute and verify exception
         VCVerificationException exception = assertThrows(VCVerificationException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale));
+                credentialService.downloadCredentialAndStoreInDB(tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(), exception.getErrorCode());
     }
@@ -316,17 +316,17 @@ public class CredentialServiceTest {
         String credentialConfigurationId = "CredentialType1";
         String walletId = "wallet123";
         String base64Key = "testKey123";
-        String issuerId = "issuer1";
+        String localIssuerId = "issuer1";
         String locale = "en";
 
         // Mock issuersService to throw exception
-        when(issuersService.getIssuerConfig(issuerId, credentialConfigurationId))
+        when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId))
                 .thenThrow(new RuntimeException("Issuer service unavailable"));
 
         // Execute and verify exception
         CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
                 credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale));
+                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Unable to fetch issuer configuration"));
@@ -338,18 +338,18 @@ public class CredentialServiceTest {
         String credentialConfigurationId = "CredentialType1";
         String walletId = "wallet123";
         String base64Key = "testKey123";
-        String issuerId = "issuer1";
+        String localIssuerId = "issuer1";
         String locale = "en";
 
         // Mock dependencies for success until buildRequest
-        IssuerConfig issuerConfig = mock(IssuerConfig.class);
-        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(issuerId);
+        IssuerConfig localIssuerConfig = mock(IssuerConfig.class);
+        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(localIssuerId);
         CredentialIssuerWellKnownResponse mockWellKnownResponse = new CredentialIssuerWellKnownResponse();
         mockWellKnownResponse.setVersion(VCSpecificationVersion.DRAFT_13);
 
-        when(issuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
-        when(issuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
-        when(issuersService.getIssuerConfig(issuerId, credentialConfigurationId)).thenReturn(issuerConfig);
+        when(localIssuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
+        when(localIssuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
+        when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
 
         // Mock vcDownloadHandler to throw exception (simulating build credential request failure)
@@ -359,7 +359,7 @@ public class CredentialServiceTest {
         // Execute and verify exception
         CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
                 credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale));
+                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Unable to generate credential request"));
@@ -371,19 +371,19 @@ public class CredentialServiceTest {
         String credentialConfigurationId = "CredentialType1";
         String walletId = "wallet123";
         String base64Key = "testKey123";
-        String issuerId = "issuer1";
+        String localIssuerId = "issuer1";
         String locale = "en";
 
         // Mock dependencies for success until downloadCredential
-        IssuerConfig issuerConfig = mock(IssuerConfig.class);
-        IssuerDTO mockIssuerDTO = TestUtilities.getIssuerConfigDTO(issuerId);
+        IssuerConfig localIssuerConfig = mock(IssuerConfig.class);
+        IssuerDTO mockIssuerDTO = TestUtilities.getIssuerConfigDTO(localIssuerId);
         CredentialIssuerWellKnownResponse mockWellKnownResponse = new CredentialIssuerWellKnownResponse();
         mockWellKnownResponse.setCredentialEndPoint("https://example.com/credential");
         mockWellKnownResponse.setVersion(VCSpecificationVersion.DRAFT_13);
 
-        when(issuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
-        when(issuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
-        when(issuersService.getIssuerConfig(issuerId, credentialConfigurationId)).thenReturn(issuerConfig);
+        when(localIssuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
+        when(localIssuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
+        when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
 
         // Mock vcDownloadHandler to throw exception during credential download
@@ -393,7 +393,7 @@ public class CredentialServiceTest {
         // Execute and verify exception
         ExternalServiceUnavailableException exception = assertThrows(ExternalServiceUnavailableException.class, () ->
                 credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale));
+                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(SERVER_UNAVAILABLE.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains(SERVER_UNAVAILABLE.getErrorMessage()));
@@ -405,19 +405,19 @@ public class CredentialServiceTest {
         String credentialConfigurationId = "CredentialType1";
         String walletId = "wallet123";
         String base64Key = "testKey123";
-        String issuerId = "issuer1";
+        String localIssuerId = "issuer1";
         String locale = "en";
 
         // Mock dependencies for success until verify
-        IssuerConfig issuerConfig = mock(IssuerConfig.class);
-        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(issuerId);
+        IssuerConfig localIssuerConfig = mock(IssuerConfig.class);
+        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(localIssuerId);
         CredentialIssuerWellKnownResponse mockWellKnownResponse = new CredentialIssuerWellKnownResponse();
         mockWellKnownResponse.setCredentialEndPoint("https://example.com/credential");
         mockWellKnownResponse.setVersion(VCSpecificationVersion.DRAFT_13);
 
-        when(issuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
-        when(issuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
-        when(issuersService.getIssuerConfig(issuerId, credentialConfigurationId)).thenReturn(issuerConfig);
+        when(localIssuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
+        when(localIssuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
+        when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
         when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true)))
                 .thenReturn(getVCCredentialResponseDTO(credentialConfigurationId));
@@ -429,7 +429,7 @@ public class CredentialServiceTest {
         // Execute and verify exception
         VCVerificationException exception = assertThrows(VCVerificationException.class, () ->
                 credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale));
+                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Credential verification failed"));
@@ -441,19 +441,19 @@ public class CredentialServiceTest {
         String credentialConfigurationId = "CredentialType1";
         String walletId = "wallet123";
         String base64Key = "testKey123";
-        String issuerId = "issuer1";
+        String localIssuerId = "issuer1";
         String locale = "en";
 
         // Mock dependencies for success until serialization
-        IssuerConfig issuerConfig = mock(IssuerConfig.class);
-        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(issuerId);
+        IssuerConfig localIssuerConfig = mock(IssuerConfig.class);
+        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(localIssuerId);
         CredentialIssuerWellKnownResponse mockWellKnownResponse = new CredentialIssuerWellKnownResponse();
         mockWellKnownResponse.setCredentialEndPoint("https://example.com/credential");
         mockWellKnownResponse.setVersion(VCSpecificationVersion.DRAFT_13);
 
-        when(issuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
-        when(issuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
-        when(issuersService.getIssuerConfig(issuerId, credentialConfigurationId)).thenReturn(issuerConfig);
+        when(localIssuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
+        when(localIssuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
+        when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
         when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true)))
                 .thenReturn(getVCCredentialResponseDTO(credentialConfigurationId));
@@ -466,7 +466,7 @@ public class CredentialServiceTest {
         // Execute and verify exception
         CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
                 credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale));
+                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Unable to serialize credential response"));
@@ -478,19 +478,19 @@ public class CredentialServiceTest {
         String credentialConfigurationId = "CredentialType1";
         String walletId = "wallet123";
         String base64Key = "testKey123";
-        String issuerId = "issuer1";
+        String localIssuerId = "issuer1";
         String locale = "en";
 
         // Mock dependencies for success until encryption
-        IssuerConfig issuerConfig = mock(IssuerConfig.class);
-        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(issuerId);
+        IssuerConfig localIssuerConfig = mock(IssuerConfig.class);
+        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(localIssuerId);
         CredentialIssuerWellKnownResponse mockWellKnownResponse = new CredentialIssuerWellKnownResponse();
         mockWellKnownResponse.setCredentialEndPoint("https://example.com/credential");
         mockWellKnownResponse.setVersion(VCSpecificationVersion.DRAFT_13);
 
-        when(issuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
-        when(issuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
-        when(issuersService.getIssuerConfig(issuerId, credentialConfigurationId)).thenReturn(issuerConfig);
+        when(localIssuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
+        when(localIssuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
+        when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
         when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true)))
                 .thenReturn(getVCCredentialResponseDTO(credentialConfigurationId));
@@ -504,7 +504,7 @@ public class CredentialServiceTest {
         // Execute and verify exception
         CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
                 credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale));
+                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Unable to encrypt credential data"));
@@ -516,19 +516,19 @@ public class CredentialServiceTest {
         String credentialConfigurationId = "CredentialType1";
         String walletId = "wallet123";
         String base64Key = "testKey123";
-        String issuerId = "issuer1";
+        String localIssuerId = "issuer1";
         String locale = "en";
 
         // Mock dependencies for success until save
-        IssuerConfig issuerConfig = mock(IssuerConfig.class);
-        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(issuerId);
+        IssuerConfig localIssuerConfig = mock(IssuerConfig.class);
+        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(localIssuerId);
         CredentialIssuerWellKnownResponse mockWellKnownResponse = new CredentialIssuerWellKnownResponse();
         mockWellKnownResponse.setCredentialEndPoint("https://example.com/credential");
         mockWellKnownResponse.setVersion(VCSpecificationVersion.DRAFT_13);
 
-        when(issuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
-        when(issuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
-        when(issuersService.getIssuerConfig(issuerId, credentialConfigurationId)).thenReturn(issuerConfig);
+        when(localIssuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
+        when(localIssuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
+        when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
         when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true)))
                 .thenReturn(getVCCredentialResponseDTO(credentialConfigurationId));
@@ -543,7 +543,7 @@ public class CredentialServiceTest {
         // Execute and verify exception
         CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
                 credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale));
+                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Unable to save credential to database"));

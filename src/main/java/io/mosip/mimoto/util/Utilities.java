@@ -208,6 +208,27 @@ public class Utilities {
         return !StringUtils.isEmpty(specificCredentialPDFTemplate)? specificCredentialPDFTemplate : getJson("", credentialTemplatePath);
     }
 
+    public static ResponseEntity<Object> handleErrorResponse(
+            Exception exception, String flowErrorCode, HttpStatus status, MediaType contentType) {
+        String errorMessage = exception.getMessage();
+        String errorCode = flowErrorCode;
+
+        if (errorMessage.contains(DELIMITER)) {
+            String[] errorSections = errorMessage.split(DELIMITER);
+            errorCode = errorSections[0];
+            errorMessage = errorSections[1];
+        }
+
+        ResponseWrapper<Object> responseWrapper = new ResponseWrapper<>();
+        responseWrapper.setResponse(null);
+        responseWrapper.setErrors(Utilities.getErrors(errorCode, errorMessage));
+        ResponseEntity.BodyBuilder responseEntity = ResponseEntity.status(status);
+        if (contentType != null) {
+            responseEntity.contentType(contentType);
+        }
+        return responseEntity.body(responseWrapper);
+    }
+
     public static String[] handleExceptionWithErrorCode(Exception exception, String flowErrorCode) {
         String errorMessage = exception.getMessage();
         String errorCode = flowErrorCode;
@@ -219,27 +240,6 @@ public class Utilities {
         }
         return new String[]{errorCode, errorMessage};
     }
-    public static <T> ResponseEntity<ResponseWrapper<T>> handleErrorResponse(
-            Exception exception, String flowErrorCode, HttpStatus status, MediaType contentType) {
-        String errorMessage = exception.getMessage();
-        String errorCode = flowErrorCode;
-
-        if (errorMessage.contains(DELIMITER)) {
-            String[] errorSections = errorMessage.split(DELIMITER);
-            errorCode = errorSections[0];
-            errorMessage = errorSections[1];
-        }
-
-        ResponseWrapper<T> responseWrapper = new ResponseWrapper<>();
-        responseWrapper.setResponse(null);
-        responseWrapper.setErrors(Utilities.getErrors(errorCode, errorMessage));
-        ResponseEntity.BodyBuilder responseEntity = ResponseEntity.status(status);
-        if (contentType != null) {
-            responseEntity.contentType(contentType);
-        }
-        return responseEntity.body(responseWrapper);
-    }
-
     public static <T> ResponseEntity<T> getErrorResponseEntityWithoutWrapper(
             Exception exception, String flowErrorCode, HttpStatus status, MediaType contentType) {
         String errorMessage = exception.getMessage();

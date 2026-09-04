@@ -336,21 +336,21 @@ public class WalletPresentationsControllerTest {
 
     @Test
     public void testUserRejectedVerifierNullSessionData() throws Exception {
-        String walletId = "wallet-123";
+        String testWalletId = "wallet-123";
         String presentationId = "presentation-123";
         ErrorDTO payload = new ErrorDTO("access_denied", "User denied authorization");
 
         // Arrange: make session manager return null to simulate missing session data
-        when(sessionManager.getPresentationSessionData(any(HttpSession.class), eq(walletId), eq(presentationId)))
+        when(sessionManager.getPresentationSessionData(any(HttpSession.class), eq(testWalletId), eq(presentationId)))
                 .thenReturn(null);
 
         // Serialize payload to ensure MockMvc .content(...) is not null
         String content = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(payload);
 
-        mockMvc.perform(patch("/wallets/{walletId}/presentations/{presentationId}", walletId, presentationId)
+        mockMvc.perform(patch("/wallets/{walletId}/presentations/{presentationId}", testWalletId, presentationId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(content)
-                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_id", testWalletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest());
     }

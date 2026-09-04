@@ -55,6 +55,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -126,7 +127,7 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
     }
 
     @Override
-    public ResponseEntity<?> handlePresentationAction(
+    public ResponseEntity<Object> handlePresentationAction(
             String walletId, String presentationId, SubmitPresentationRequestDTO request,
             VerifiablePresentationSessionData vpSessionData, String base64Key) {
 
@@ -187,7 +188,7 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
                    KeyGenerationException, DecryptionException, OpenID4VPExceptions {
 
         validateSubmissionRequest(request);
-        LocalDateTime requestedAt = LocalDateTime.now();
+        LocalDateTime requestedAt = LocalDateTime.now(ZoneOffset.UTC);
 
         // Step 1: Create OpenID4VP instance and authenticate the verifier from session data
         List<Verifier> preRegisteredVerifiers = openID4VPService.getPreRegisteredVerifiers();
@@ -425,15 +426,7 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
             }
         }
 
-        for (CredentialQuery query : dcqlQuery.getCredentials()) {
-            if (!query.getMultiple()) {
-                int count = selectionCount.getOrDefault(query.getId(), 0);
-                if (count > 1) {
-                    throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
-                            "DCQL query '" + query.getId() + "' has multiple=false but " + count + " credential(s) were selected");
-                }
-            }
-        }
+        validateSingleSelectionConstraints(dcqlQuery, selectionCount);
 
         for (CredentialSetQuery setQuery : DcqlCredentialSetHelper.resolveEffectiveCredentialSets(dcqlQuery)) {
             if (!setQuery.getRequired()) {
@@ -454,6 +447,18 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
                 throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
                         "Credential selection must satisfy exactly one option in credential_set. " +
                         "Selected query ids: " + selectedForSet + ", Options: " + setQuery.getOptions());
+            }
+        }
+    }
+
+    private void validateSingleSelectionConstraints(DCQLQuery dcqlQuery, Map<String, Integer> selectionCount) {
+        for (CredentialQuery query : dcqlQuery.getCredentials()) {
+            if (!query.getMultiple()) {
+                int count = selectionCount.getOrDefault(query.getId(), 0);
+                if (count > 1) {
+                    throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
+                            "DCQL query '" + query.getId() + "' has multiple=false but " + count + " credential(s) were selected");
+                }
             }
         }
     }
@@ -496,38 +501,49 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
             if (credentialQuery == null || selection.getSelectedCredentialIds() == null) {
                 continue;
             }
-            for (String credentialId : selection.getSelectedCredentialIds()) {
-                if (hasExplicitSdClaimsForCredential(explicit, credentialId, selection)) {
-                    continue;
-                }
-                DecryptedCredentialDTO sessionDto = sessionById.get(credentialId);
-                if (sessionDto == null) {
-                    continue;
-                }
-                DecryptedCredentialDTO credForSd =
-                        resolveCredentialForSubmission(sessionDto, walletCredentialsById);
-                Map<String, Object> sdClaimsMap = extractSdClaimsMap(credForSd);
-
-                if (DcqlClaimSetHelper.hasClaimSets(credentialQuery)) {
-                    // claim_sets present: resolve the first satisfiable set
-                    List<String> claimIds = DcqlClaimSetHelper.resolveClaimIdsForSubmission(
-                            credentialQuery,
-                            null,
-                            path -> sdClaimsMap != null && hasDisclosureForPath(sdClaimsMap, path));
-                    List<String> claimPaths = DcqlClaimSetHelper.resolveClaimPaths(credentialQuery, claimIds);
-                    if (!claimPaths.isEmpty()) {
-                        SelectedSdClaimsUtil.mergePaths(merged, credentialId, claimPaths);
-                        log.info("DCQL claim_sets resolved for credential {} query '{}': claimIds={}, paths={}",
-                                credentialId, queryId, claimIds, claimPaths);
-                    }
-                } else {
-                    // No claim_sets: per DCQL spec §6, all queried claims that have SD
-                    // disclosures in this credential must be included in the VP.
-                    resolveAllQueriedSdClaims(credentialQuery, credentialId, sdClaimsMap, merged, queryId);
-                }
-            }
+            processDcqlSelectionCredentials(selection, credentialQuery, queryId, explicit, sessionById, walletCredentialsById, merged);
         }
         return merged.isEmpty() ? null : merged;
+    }
+
+    private void processDcqlSelectionCredentials(
+            DcqlCredentialSelection selection, CredentialQuery credentialQuery, String queryId,
+            Map<String, List<String>> explicit, Map<String, DecryptedCredentialDTO> sessionById,
+            Map<String, DecryptedCredentialDTO> walletCredentialsById, Map<String, List<String>> merged)
+            throws ApiNotAccessibleException, IOException {
+        for (String credentialId : selection.getSelectedCredentialIds()) {
+            if (hasExplicitSdClaimsForCredential(explicit, credentialId, selection)) {
+                continue;
+            }
+            DecryptedCredentialDTO sessionDto = sessionById.get(credentialId);
+            if (sessionDto == null) {
+                continue;
+            }
+            DecryptedCredentialDTO credForSd = resolveCredentialForSubmission(sessionDto, walletCredentialsById);
+            Map<String, Object> sdClaimsMap = extractSdClaimsMap(credForSd);
+            resolveClaimSetSdClaims(credentialQuery, credentialId, sdClaimsMap, merged, queryId);
+        }
+    }
+
+    private void resolveClaimSetSdClaims(CredentialQuery credentialQuery, String credentialId,
+            Map<String, Object> sdClaimsMap, Map<String, List<String>> merged, String queryId) {
+        if (DcqlClaimSetHelper.hasClaimSets(credentialQuery)) {
+            // claim_sets present: resolve the first satisfiable set
+            List<String> claimIds = DcqlClaimSetHelper.resolveClaimIdsForSubmission(
+                    credentialQuery,
+                    null,
+                    path -> sdClaimsMap != null && hasDisclosureForPath(sdClaimsMap, path));
+            List<String> claimPaths = DcqlClaimSetHelper.resolveClaimPaths(credentialQuery, claimIds);
+            if (!claimPaths.isEmpty()) {
+                SelectedSdClaimsUtil.mergePaths(merged, credentialId, claimPaths);
+                log.info("DCQL claim_sets resolved for credential {} query '{}': claimIds={}, paths={}",
+                        credentialId, queryId, claimIds, claimPaths);
+            }
+        } else {
+            // No claim_sets: per DCQL spec §6, all queried claims that have SD
+            // disclosures in this credential must be included in the VP.
+            resolveAllQueriedSdClaims(credentialQuery, credentialId, sdClaimsMap, merged, queryId);
+        }
     }
 
     private boolean hasExplicitSdClaimsForCredential(
@@ -556,7 +572,7 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
                 .filter(cq -> cq.getPath() != null && !cq.getPath().isEmpty())
                 .map(cq -> DcqlClaimSetHelper.buildClaimPath(cq.getPath()))
                 .filter(path -> sdClaimsMap != null && hasDisclosureForPath(sdClaimsMap, path))
-                .collect(Collectors.toList());
+                .toList();
         if (!sdPaths.isEmpty()) {
             SelectedSdClaimsUtil.mergePaths(merged, credentialId, sdPaths);
             log.info("DCQL all-claims resolved for credential {} query '{}': paths={}",
@@ -568,18 +584,18 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
     private Map<String, Object> extractSdClaimsMap(DecryptedCredentialDTO dto) {
         try {
             if (!CredentialFormat.isSdJwt(dto.getCredential().getFormat())) {
-                return null;
+                return Collections.emptyMap();
             }
             Map<String, ?> allProps = credentialFormatHandlerFactory
                     .getHandler(dto.getCredential().getFormat())
                     .extractAllCredentialProperties(dto.getCredential());
             if (allProps == null || !(allProps.get("sdClaims") instanceof Map<?, ?> raw)) {
-                return null;
+                return Collections.emptyMap();
             }
             return (Map<String, Object>) raw;
         } catch (Exception e) {
             log.warn("Could not extract sdClaims for credential {}: {}", dto.getId(), e.getMessage());
-            return null;
+            return Collections.emptyMap();
         }
     }
 
@@ -801,7 +817,7 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
     private VerifiablePresentationVerifierDTO createVPResponseVerifierDTO(
             List<Verifier> preRegisteredVerifiers, AuthorizationRequest authorizationRequest, String walletId) {
         boolean preRegistered = preRegisteredVerifiers.stream()
-                .map(Verifier::getClientId).anyMatch(id -> id.equals(authorizationRequest.getClientId()));
+                .map(Verifier::getClientId).anyMatch(id -> Objects.equals(id, authorizationRequest.getClientId()));
         boolean trusted = verifierService.isVerifierTrustedByWallet(authorizationRequest.getClientId(), walletId);
         String clientName = resolveClientName(authorizationRequest);
         String logo = resolveLogoUri(authorizationRequest);
@@ -839,21 +855,21 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
     /**
      * Handles verifier rejection with error details.
      */
-    private ResponseEntity<SubmitPresentationResponseDTO> handleVerifierRejection(
+    private ResponseEntity<Object> handleVerifierRejection(
             String walletId, VerifiablePresentationSessionData vpSessionData, SubmitPresentationRequestDTO request)
             throws VPErrorNotSentException {
         // Create ErrorDTO from the request
         ErrorDTO payload = new ErrorDTO();
         payload.setErrorCode(request.getErrorCode());
         payload.setErrorMessage(request.getErrorMessage());
-        return ResponseEntity.ok(rejectVerifier(walletId, vpSessionData, payload));
+        return ResponseEntity.ok(rejectVerifier(vpSessionData, payload));
     }
 
     /**
      * Rejects the verifier by sending error information.
      */
     private SubmitPresentationResponseDTO rejectVerifier(
-            String walletId, VerifiablePresentationSessionData vpSessionData, ErrorDTO payload)
+            VerifiablePresentationSessionData vpSessionData, ErrorDTO payload)
             throws VPErrorNotSentException {
         try {
             VerifierResponse verifierResponse = openID4VPService.sendErrorToVerifier(vpSessionData, payload);

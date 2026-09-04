@@ -1,6 +1,5 @@
 package io.mosip.mimoto.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mosip.mimoto.constant.SessionKeys;
 import io.mosip.mimoto.dto.mimoto.UserMetadataDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
@@ -28,13 +27,10 @@ public class SessionManagerTest {
 
     UserMetadataDTO userMetadataDTO;
     private SessionManager sessionManager;
-    @Mock
-    private ObjectMapper objectMapper;
-
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        sessionManager = new SessionManager(objectMapper);
+        sessionManager = new SessionManager();
         userMetadataDTO = new UserMetadataDTO("Test user", "https://test.com/pic.jpg", "test@example.com", "wallet123");
     }
 

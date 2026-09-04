@@ -205,7 +205,7 @@ public class WalletPresentationsController {
     @ApiResponse(responseCode = "401", description = "Unauthorized user", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = SwaggerLiteralConstants.WALLET_PRESENTATIONS_HANDLE_ACTION_401_UNAUTHORIZED_NAME, value = SwaggerLiteralConstants.WALLET_PRESENTATIONS_HANDLE_ACTION_401_UNAUTHORIZED_VALUE)))
     @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = @ExampleObject(name = SwaggerLiteralConstants.WALLET_PRESENTATIONS_HANDLE_ACTION_500_SERVER_ERROR_NAME, value = SwaggerLiteralConstants.WALLET_PRESENTATIONS_HANDLE_ACTION_500_SERVER_ERROR_VALUE)))
     @PatchMapping("/{presentationId}")
-    public ResponseEntity<?> handlePresentationAction(@PathVariable("walletId") String walletId, HttpSession httpSession, @PathVariable("presentationId") String presentationId, @Valid @RequestBody SubmitPresentationRequestDTO request) {
+    public ResponseEntity<Object> handlePresentationAction(@PathVariable("walletId") String walletId, HttpSession httpSession, @PathVariable("presentationId") String presentationId, @Valid @RequestBody SubmitPresentationRequestDTO request) {
 
         try {
             WalletUtil.validateWalletId(httpSession, walletId);

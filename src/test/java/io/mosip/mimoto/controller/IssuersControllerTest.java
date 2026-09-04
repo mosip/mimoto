@@ -28,7 +28,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static io.mosip.mimoto.exception.PlatformErrorMessages.API_NOT_ACCESSIBLE_EXCEPTION;
 import static io.mosip.mimoto.exception.PlatformErrorMessages.INVALID_ISSUER_ID_EXCEPTION;
@@ -67,7 +66,7 @@ public class IssuersControllerTest {
         IssuersDTO filteredIssuers = new IssuersDTO();
         filteredIssuers.setIssuers(issuers.getIssuers().stream().filter(issuer -> issuer.getDisplay().stream()
                         .anyMatch(displayDTO -> displayDTO.getTitle().toLowerCase().contains("Issuer1".toLowerCase())))
-                .collect(Collectors.toList()));
+                .toList());
 
         Mockito.when(issuersService.getIssuers("Issuer1"))
                 .thenReturn(filteredIssuers)
@@ -110,7 +109,7 @@ public class IssuersControllerTest {
         IssuersDTO filteredIssuers = new IssuersDTO();
         filteredIssuers.setIssuers(issuers.getIssuers().stream().filter(issuer -> issuer.getDisplay().stream()
                         .anyMatch(displayDTO -> displayDTO.getTitle().toLowerCase().contains("Issuer2".toLowerCase())))
-                .collect(Collectors.toList()));
+                .toList());
 
         Mockito.when(issuersService.getIssuers("Issuer2"))
                 .thenReturn(filteredIssuers)
@@ -248,11 +247,11 @@ public class IssuersControllerTest {
         String issuerId = "id1";
 
         //get the IssuerConfig from the json file expectedIssuerConfig and wrap it inside response to test the response of configuration endpoint response wrapper
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode originalJson = objectMapper.readTree(new ClassPathResource("responses/expectedIssuerConfig.json").getInputStream());
-        ObjectNode wrappedJson = objectMapper.createObjectNode();
+        ObjectMapper localMapper = new ObjectMapper();
+        JsonNode originalJson = localMapper.readTree(new ClassPathResource("responses/expectedIssuerConfig.json").getInputStream());
+        ObjectNode wrappedJson = localMapper.createObjectNode();
         wrappedJson.set("response", originalJson);
-        String expectedJsonString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(wrappedJson);
+        String expectedJsonString = localMapper.writerWithDefaultPrettyPrinter().writeValueAsString(wrappedJson);
         if (expectedJsonString.startsWith("\uFEFF")) {
             expectedJsonString = expectedJsonString.substring(1);
         }

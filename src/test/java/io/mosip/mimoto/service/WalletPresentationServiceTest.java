@@ -34,6 +34,7 @@ import io.mosip.openID4VP.authorizationResponse.unsignedVPToken.UnsignedVPToken;
 import io.mosip.openID4VP.authorizationResponse.vpTokenSigningResult.VPTokenSigningResult;
 import io.mosip.openID4VP.common.OpenID4VPErrorCodes;
 import io.mosip.openID4VP.constants.FormatType;
+import io.mosip.openID4VP.dcql.query.DCQLQuery;
 import io.mosip.openID4VP.exceptions.OpenID4VPExceptions;
 import io.mosip.openID4VP.verifier.VerifierResponse;
 import io.mosip.openID4VP.wallet.Credential;
@@ -264,7 +265,8 @@ public class WalletPresentationServiceTest {
         AuthorizationDcqlRequest dcqlRequest = mock(AuthorizationDcqlRequest.class);
         when(dcqlRequest.getClientId()).thenReturn("test-client");
         when(dcqlRequest.getRedirectUri()).thenReturn("https://verifier.com/redirect");
-        when(dcqlRequest.getDcqlQuery()).thenReturn(mock(io.mosip.openID4VP.dcql.query.DCQLQuery.class));
+        DCQLQuery mockDcqlQuery = mock(DCQLQuery.class);
+        when(dcqlRequest.getDcqlQuery()).thenReturn(mockDcqlQuery);
         ClientMetadata clientMetadata = mock(ClientMetadata.class);
         when(clientMetadata.getClientName()).thenReturn("DCQL Verifier");
         when(clientMetadata.getLogoUri()).thenReturn("https://verifier.com/dcql-logo.png");
@@ -291,7 +293,8 @@ public class WalletPresentationServiceTest {
         AuthorizationDcqlRequest dcqlRequest = mock(AuthorizationDcqlRequest.class);
         when(dcqlRequest.getClientId()).thenReturn("test-client");
         when(dcqlRequest.getRedirectUri()).thenReturn("https://verifier.com/redirect");
-        when(dcqlRequest.getDcqlQuery()).thenReturn(mock(io.mosip.openID4VP.dcql.query.DCQLQuery.class));
+        DCQLQuery mockDcqlQuery = mock(DCQLQuery.class);
+        when(dcqlRequest.getDcqlQuery()).thenReturn(mockDcqlQuery);
         ClientMetadata clientMetadata = mock(ClientMetadata.class);
         when(clientMetadata.getClientName()).thenReturn("   ");
         when(dcqlRequest.getClientMetadata()).thenReturn(clientMetadata);
@@ -316,7 +319,8 @@ public class WalletPresentationServiceTest {
         AuthorizationDcqlRequest dcqlRequest = mock(AuthorizationDcqlRequest.class);
         when(dcqlRequest.getClientId()).thenReturn("test-client");
         when(dcqlRequest.getRedirectUri()).thenReturn("https://verifier.com/redirect");
-        when(dcqlRequest.getDcqlQuery()).thenReturn(mock(io.mosip.openID4VP.dcql.query.DCQLQuery.class));
+        DCQLQuery mockDcqlQuery = mock(DCQLQuery.class);
+        when(dcqlRequest.getDcqlQuery()).thenReturn(mockDcqlQuery);
         when(dcqlRequest.getClientMetadata()).thenReturn(null);
         when(mockOpenID4VP.authenticateVerifier(anyString())).thenReturn(dcqlRequest);
 
@@ -1507,11 +1511,10 @@ public class WalletPresentationServiceTest {
                     .thenReturn("test-client");
 
             
-            try {
-                walletPresentationService.submitPresentation(
-                        nullSessionData, walletId, presentationId, submitRequest, base64Key);
-            } catch (Exception e) {
-            }
+            Exception ex = assertThrows(Exception.class, () ->
+                    walletPresentationService.submitPresentation(
+                            nullSessionData, walletId, presentationId, submitRequest, base64Key));
+            assertNotNull(ex);
         }
     }
 
@@ -1704,13 +1707,8 @@ public class WalletPresentationServiceTest {
         List<UnsignedVPToken> unsignedTokens = List.of(mockLdpUnsignedToken());
         when(mockOpenID4VP.constructUnsignedVPToken(anyMap())).thenReturn(unsignedTokens);
 
-        VerifierResponse verifierResponse = mock(VerifierResponse.class);
-        when(verifierResponse.getStatusCode()).thenReturn(200);
-        when(verifierResponse.getRedirectUri()).thenReturn("https://verifier.com/success");
-        when(mockOpenID4VP.sendVPResponseToVerifier(any())).thenReturn(verifierResponse);
-
+        // Fail on the first serialization attempt, simulating a failure during presentation data creation
         when(objectMapper.writeValueAsString(any()))
-                .thenReturn("{\"kty\":\"OKP\"}")
                 .thenThrow(new JsonProcessingException("JSON error") {});
 
         try (MockedStatic<SigningKeyUtil> jwtUtilMock = mockStatic(SigningKeyUtil.class);
@@ -2202,7 +2200,8 @@ public class WalletPresentationServiceTest {
         @SuppressWarnings("unchecked")
         Map<String, Object> result = (Map<String, Object>) method.invoke(walletPresentationService, credential);
 
-        assertNull(result);
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 
     @Test

@@ -208,8 +208,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         } catch (JsonProcessingException e) {
             log.error("Failed to parse decrypted credential for issuerId: {}, credentialType: {}", credentialMetadata.getIssuerId(), credentialMetadata.getCredentialType(), e);
             throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to parse decrypted credential");
-        } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
-                 InvalidWellknownResponseException | InvalidIssuerIdException e) {
+        } catch (ApiNotAccessibleException | IOException | InvalidIssuerIdException e) {
             log.error("Failed to fetch issuer details or configuration for issuerId: {}", credentialMetadata.getIssuerId(), e);
             throw new CredentialProcessingException(CREDENTIAL_FETCH_EXCEPTION.getErrorCode(), "Failed to fetch issuer configuration");
         } catch (Exception e) {
@@ -239,7 +238,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
                 })
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toList());
+                .toList();
 
         log.info("Successfully decrypted {} out of {} credentials", decryptedCredentials.size(), walletCredentials.size());
         return decryptedCredentials;

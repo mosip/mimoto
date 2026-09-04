@@ -1,10 +1,12 @@
 package io.mosip.mimoto.service;
 
+import com.google.zxing.WriterException;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 public interface CredentialService {
 
@@ -17,9 +19,14 @@ public interface CredentialService {
      * @param credentialValidity The credential validity
      * @param locale             The locale
      * @return ByteArrayInputStream containing the PDF
-     * @throws Exception If any error occurs during processing
+     * @throws ApiNotAccessibleException        If the issuer API is not accessible
+     * @throws IOException                      If an I/O error occurs
+     * @throws InvalidWellknownResponseException If the well-known response is invalid
+     * @throws ExternalServiceUnavailableException If the credential download service is unavailable
+     * @throws WriterException                  If QR code generation fails
      */
-    ByteArrayInputStream downloadCredentialAsPDF(String issuerId, String credentialType, TokenResponseDTO response, String credentialValidity, String locale) throws Exception;
+    ByteArrayInputStream downloadCredentialAsPDF(String issuerId, String credentialType, TokenResponseDTO response, String credentialValidity, String locale)
+            throws ApiNotAccessibleException, IOException, InvalidWellknownResponseException, ExternalServiceUnavailableException, WriterException;
 
     /**
      * Downloads credential and stores it in the database.

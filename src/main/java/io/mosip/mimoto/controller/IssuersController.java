@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 
@@ -111,7 +110,7 @@ public class IssuersController {
                                 displayConfig.getName(),
                                 displayConfig.getLocale(),
                                 displayConfig.getLogo().getUrl()))
-                        .collect(Collectors.toList());
+                        .toList();
                 CredentialsResponse credential = new CredentialsResponse(key,
                         value.getScope(), display);
                 credentials.add(credential);

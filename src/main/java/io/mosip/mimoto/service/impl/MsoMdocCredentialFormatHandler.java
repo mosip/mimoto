@@ -182,7 +182,7 @@ public class MsoMdocCredentialFormatHandler implements CredentialFormatHandler {
     }
 
     @Override
-    public Map<String, ?> extractAllCredentialProperties(VCCredentialResponse vcCredentialResponse) {
+    public Map<String, Object> extractAllCredentialProperties(VCCredentialResponse vcCredentialResponse) {
         return extractCredentialClaims(vcCredentialResponse);
     }
 

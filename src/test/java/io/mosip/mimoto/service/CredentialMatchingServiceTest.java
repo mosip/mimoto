@@ -2477,10 +2477,10 @@ public class CredentialMatchingServiceTest {
         when(dcqlQuery.getCredentialSets()).thenReturn(null);
         stubDcqlQuery(dcqlQuery);
 
-        List<DecryptedCredentialDTO> walletCredentials = createMockWalletCredentialsWithMapData();
-        assertNull(walletCredentials.get(0).getIdentifier());
+        List<DecryptedCredentialDTO> mapDataCredentials = createMockWalletCredentialsWithMapData();
+        assertNull(mapDataCredentials.get(0).getIdentifier());
         when(walletCredentialService.getDecryptedCredentials(eq(walletId), any()))
-                .thenReturn(walletCredentials);
+                .thenReturn(mapDataCredentials);
         when(issuersService.getIssuerConfig(anyString(), anyString())).thenReturn(createMockIssuerConfig());
 
         MatchingCredentialsDTO result = credentialMatchingService.getMatchingCredentials(
@@ -2494,7 +2494,7 @@ public class CredentialMatchingServiceTest {
         assertEquals(1, result.getMatchingCredentials().size());
         assertEquals("first-query", result.getMatchingCredentials().get(0).getIdentifier());
         assertNull("shared wallet DTO must not be mutated with a query identifier",
-                walletCredentials.get(0).getIdentifier());
+                mapDataCredentials.get(0).getIdentifier());
     }
 
     @Test
@@ -2647,7 +2647,7 @@ public class CredentialMatchingServiceTest {
                 dcqlSession, walletId, base64Key);
 
         assertFalse(result.getMatchingCredentialsResponse().getQueryGroups().get(0).getAvailableCredentials().isEmpty());
-        assertTrue(result.getMatchingCredentials().size() == 1);
+        assertEquals(1, result.getMatchingCredentials().size());
     }
 
     @Test

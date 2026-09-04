@@ -2,6 +2,7 @@ package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.zxing.WriterException;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
@@ -22,6 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.UUID;
 
 import static io.mosip.mimoto.exception.ErrorConstants.*;
@@ -61,7 +63,8 @@ public class CredentialServiceImpl implements CredentialService {
 
 
     @Override
-    public ByteArrayInputStream downloadCredentialAsPDF(String issuerId, String credentialConfigurationId, TokenResponseDTO tokenResponse, String credentialValidity, String locale) throws Exception {
+    public ByteArrayInputStream downloadCredentialAsPDF(String issuerId, String credentialConfigurationId, TokenResponseDTO tokenResponse, String credentialValidity, String locale)
+            throws ApiNotAccessibleException, IOException, InvalidWellknownResponseException, ExternalServiceUnavailableException, WriterException {
         IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
         CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse = issuersService.getIssuerWellKnownResponse(issuerDTO.getCredential_issuer_host());
         CredentialsSupportedResponse credentialsSupportedResponse = credentialIssuerWellKnownResponse.getCredentialConfigurationsSupported().get(credentialConfigurationId);

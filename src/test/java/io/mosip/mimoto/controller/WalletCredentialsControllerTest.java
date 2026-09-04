@@ -592,6 +592,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldReturnErrorResponseOnDeleteCredentialWhenSessionDoesNotHaveWalletId() throws Exception {
         mockMvc.perform(delete("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .accept(MediaType.APPLICATION_JSON)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("wallet_locked"))
@@ -604,6 +605,7 @@ public class WalletCredentialsControllerTest {
                 .when(walletCredentialService).deleteCredential(credentialId, walletId);
 
         mockMvc.perform(delete("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .accept(MediaType.APPLICATION_JSON)
                         .sessionAttr("wallet_id", walletId)
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isNotFound())
@@ -616,6 +618,7 @@ public class WalletCredentialsControllerTest {
         when(httpSession.getAttribute("wallet_id")).thenReturn("differentWalletId");
 
         mockMvc.perform(delete("/wallets/{walletId}/credentials/{credentialId}", walletId, credentialId)
+                        .accept(MediaType.APPLICATION_JSON)
                         .sessionAttr("wallet_id", "differentWalletId")
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isBadRequest())

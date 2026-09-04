@@ -2,6 +2,7 @@ package io.mosip.mimoto.controller;
 
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.util.GlobalExceptionHandler;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.util.TestUtilities;
@@ -29,7 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = CredentialsController.class)
+@SpringBootTest(classes = {CredentialsController.class, GlobalExceptionHandler.class})
 @AutoConfigureMockMvc(addFilters = false)
 @EnableWebMvc
 public class CredentialsControllerTest {
@@ -81,10 +82,11 @@ public class CredentialsControllerTest {
 
         mockMvc.perform(post("/credentials/download")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .accept(MediaType.APPLICATION_JSON)
                         .content(requestContent))
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is("RESIDENT-APP-034")))
-                .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is("Exception occurred while performing the authorization")));
+                .andExpect(jsonPath("$.errorCode", Matchers.is("internal_server_error")))
+                .andExpect(jsonPath("$.errorMessage", Matchers.is("We are unable to process request now")));
 
     }
 
@@ -95,6 +97,7 @@ public class CredentialsControllerTest {
 
         mockMvc.perform(post("/credentials/download")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .accept(MediaType.APPLICATION_JSON)
                         .content(requestContent))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is("RESIDENT-APP-026")))
@@ -109,6 +112,7 @@ public class CredentialsControllerTest {
 
         mockMvc.perform(post("/credentials/download")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .accept(MediaType.APPLICATION_JSON)
                         .content(requestContent))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is("RESIDENT-APP-026")))
@@ -124,6 +128,7 @@ public class CredentialsControllerTest {
 
         mockMvc.perform(post("/credentials/download")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .accept(MediaType.APPLICATION_JSON)
                         .content(requestContent))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is("request_timed_out")))
@@ -137,6 +142,7 @@ public class CredentialsControllerTest {
 
         mockMvc.perform(post("/credentials/download")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .accept(MediaType.APPLICATION_JSON)
                         .content(requestContent))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is("Verification Failed!")))

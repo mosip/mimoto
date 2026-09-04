@@ -47,6 +47,12 @@ public class IdpServiceImpl implements IdpService {
     @Value("${mosip.oidc.p12.path}")
     String keyStorePath;
 
+    private static final String GRANT_TYPE = "grant_type";
+    private static final String REDIRECT_URI = "redirect_uri";
+    private static final String CODE_VERIFIER = "code_verifier";
+    // RFC 7636 §4.1: code_verifier = 43*128unreserved; unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
+    private static final String CODE_VERIFIER_PATTERN = "^[A-Za-z0-9\\-._~]{43,128}$";
+
     private final JoseUtil joseUtil;
 
     private final RestTemplate restTemplate;
@@ -70,11 +76,11 @@ public class IdpServiceImpl implements IdpService {
         String clientAssertion = joseUtil.getJWT(issuerDTO.getClient_id(), keyStorePath, fileName, issuerDTO.getClient_alias(), cyptoPassword, tokenEndpoint);
         map.add("code", params.get("code"));
         map.add("client_id", issuerDTO.getClient_id());
-        map.add("grant_type", params.get("grant_type"));
-        map.add("redirect_uri", params.get("redirect_uri"));
+        map.add(GRANT_TYPE, params.get(GRANT_TYPE));
+        map.add(REDIRECT_URI, params.get(REDIRECT_URI));
         map.add("client_assertion", clientAssertion.replace("[", "").replace("]", ""));
         map.add("client_assertion_type", clientAssertionType);
-        map.add("code_verifier", params.get("code_verifier"));
+        map.add(CODE_VERIFIER, params.get(CODE_VERIFIER));
 
         return new HttpEntity<>(map, headers);
     }
@@ -101,6 +107,11 @@ public class IdpServiceImpl implements IdpService {
             InvalidWellknownResponseException {
         try {
             String issuerId = params.get("issuer");
+            String codeVerifier = params.get(CODE_VERIFIER);
+            if (codeVerifier == null || !codeVerifier.matches(CODE_VERIFIER_PATTERN)) {
+                throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Invalid code verifier.");
+            }
+
             String tokenEndpoint = getTokenEndpoint(issuerId);
 
             HttpEntity<MultiValueMap<String, String>> request =
@@ -176,7 +187,7 @@ public class IdpServiceImpl implements IdpService {
     }
 
     private void validateCodeVerifier(String codeVerifier) {
-        if (codeVerifier == null || !codeVerifier.matches("^[A-Za-z0-9\\-._~]{43,128}$")) {
+        if (codeVerifier == null || !codeVerifier.matches(CODE_VERIFIER_PATTERN)) {
             throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Invalid code verifier.");
         }
     }
@@ -184,9 +195,9 @@ public class IdpServiceImpl implements IdpService {
     private Map<String, String> convertVerifiableCredentialRequestToMap(VerifiableCredentialRequestDTO verifiableCredentialRequest) {
         Map<String, String> params = new HashMap<>();
         params.put("code", verifiableCredentialRequest.getCode());
-        params.put("redirect_uri", verifiableCredentialRequest.getRedirectUri());
-        params.put("grant_type", verifiableCredentialRequest.getGrantType());
-        params.put("code_verifier", verifiableCredentialRequest.getCodeVerifier());
+        params.put(REDIRECT_URI, verifiableCredentialRequest.getRedirectUri());
+        params.put(GRANT_TYPE, verifiableCredentialRequest.getGrantType());
+        params.put(CODE_VERIFIER, verifiableCredentialRequest.getCodeVerifier());
         params.put("issuer", verifiableCredentialRequest.getIssuer());
 
         return params;
