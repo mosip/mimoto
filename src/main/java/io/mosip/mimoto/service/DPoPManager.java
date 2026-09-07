@@ -16,10 +16,11 @@ import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import io.mosip.mimoto.dto.dpop.DpopIssuanceSession;
+import io.mosip.mimoto.constant.DPoPConstants;
+import io.mosip.mimoto.dto.dpop.DPoPSession;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -39,7 +40,7 @@ import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
  */
 @Service
 @Slf4j
-public class DpopProofService {
+public class DPoPManager {
 
     static final List<String> SUPPORTED_ALGS = List.of("RS256", "PS256", "ES256");
     private static final String DEFAULT_ALG = "ES256";
@@ -64,18 +65,14 @@ public class DpopProofService {
                 "No mutually supported DPoP algorithm. Server supports: " + supportedAlgs);
     }
 
-    public DpopIssuanceSession createSession(String state, String issuerId, String alg, String tokenHtu, String credentialHtu) {
+    public DPoPSession createSession(String state, String alg, String tokenEndpoint) {
         try {
-            JWK privateJwk = generateKey(alg);
-            String jkt = privateJwk.toPublicJWK().computeThumbprint().toString();
-            return DpopIssuanceSession.builder()
+            JWK jwk = generateKey(alg);
+            return DPoPSession.builder()
                     .state(state)
-                    .issuerId(issuerId)
                     .alg(alg)
-                    .privateJwkJson(privateJwk.toJSONString())
-                    .jkt(jkt)
-                    .tokenHtu(normalizeHtu(tokenHtu))
-                    .credentialHtu(normalizeHtu(credentialHtu))
+                    .jwkJson(jwk.toJSONString())
+                    .tokenHtu(normalizeHtu(tokenEndpoint))
                     .build();
         } catch (InvalidRequestException e) {
             throw e;
@@ -84,18 +81,46 @@ public class DpopProofService {
         }
     }
 
-    public String createProof(DpopIssuanceSession session, String htu, String htm, String nonce, String accessToken) {
+    public String jwkThumbprint(DPoPSession session) {
         try {
-            JWK privateJwk = JWK.parse(session.getPrivateJwkJson());
+            return JWK.parse(session.getJwkJson()).toPublicJWK().computeThumbprint().toString();
+        } catch (Exception e) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Unable to compute DPoP JWK thumbprint");
+        }
+    }
+
+    public String generateTokenProof(DPoPSession session) {
+        return generateTokenProof(session, null);
+    }
+
+    public String generateTokenProof(DPoPSession session, String nonce) {
+        return buildProof(session, session.getTokenHtu(), nonce, null);
+    }
+
+    public String generateCredentialProof(DPoPSession session, String credentialEndpoint, String accessToken) {
+        return generateCredentialProof(session, credentialEndpoint, accessToken, null);
+    }
+
+    public String generateCredentialProof(DPoPSession session, String credentialEndpoint, String accessToken,
+                                          String nonce) {
+        if (StringUtils.isNotBlank(nonce)) {
+            session.setIssuerDPoPNonce(nonce);
+        }
+        return buildProof(session, credentialEndpoint, session.getIssuerDPoPNonce(), accessToken);
+    }
+
+    private String buildProof(DPoPSession session, String htu, String nonce, String accessToken) {
+        try {
+            JWK jwk = JWK.parse(session.getJwkJson());
             JWSAlgorithm algorithm = JWSAlgorithm.parse(session.getAlg());
             JWSHeader header = new JWSHeader.Builder(algorithm)
                     .type(new JOSEObjectType("dpop+jwt"))
-                    .jwk(privateJwk.toPublicJWK())
+                    .jwk(jwk.toPublicJWK())
                     .build();
             Instant now = Instant.now();
             JWTClaimsSet.Builder claims = new JWTClaimsSet.Builder()
                     .jwtID(UUID.randomUUID().toString())
-                    .claim("htm", htm.toUpperCase())
+                    .claim("htm", DPoPConstants.HTTP_METHOD_POST)
                     .claim("htu", normalizeHtu(htu))
                     .issueTime(Date.from(now))
                     .expirationTime(Date.from(now.plusSeconds(PROOF_TTL_SECONDS)));
@@ -106,10 +131,10 @@ public class DpopProofService {
                 claims.claim("ath", accessTokenHash(accessToken));
             }
             SignedJWT jwt = new SignedJWT(header, claims.build());
-            jwt.sign(signer(privateJwk, algorithm));
+            jwt.sign(signer(jwk, algorithm));
             return jwt.serialize();
         } catch (Exception e) {
-            log.error("Failed to sign DPoP proof for issuer {}", session.getIssuerId(), e);
+            log.error("Failed to sign DPoP proof", e);
             throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Unable to sign DPoP proof");
         }
     }
@@ -145,11 +170,11 @@ public class DpopProofService {
         };
     }
 
-    private static JWSSigner signer(JWK privateJwk, JWSAlgorithm algorithm) throws Exception {
-        if (privateJwk instanceof RSAKey rsaKey) {
+    private static JWSSigner signer(JWK jwk, JWSAlgorithm algorithm) throws Exception {
+        if (jwk instanceof RSAKey rsaKey) {
             return new RSASSASigner(rsaKey);
         }
-        if (privateJwk instanceof ECKey ecKey) {
+        if (jwk instanceof ECKey ecKey) {
             return new ECDSASigner(ecKey);
         }
         throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Unsupported DPoP key type: " + algorithm);

@@ -10,7 +10,7 @@ import io.mosip.mimoto.dto.dpop.IssuerAuthorizeResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
 import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.service.DpopIssuanceSessionService;
+import io.mosip.mimoto.service.DPoPSessionService;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.Utilities;
 import org.hamcrest.Matchers;
@@ -57,7 +57,7 @@ public class IssuersControllerTest {
     private IssuersServiceImpl issuersService;
 
     @MockBean
-    private DpopIssuanceSessionService dpopIssuanceSessionService;
+    private DPoPSessionService dPoPSessionService;
 
     @MockBean
     private Utilities utilities;
@@ -291,11 +291,11 @@ public class IssuersControllerTest {
     }
 
     @Test
-    public void shouldReturnAuthorizationUrlAndState() throws Exception {
+    public void should_returnAuthorizationUrlAndState_when_authorizationServiceSucceeds() throws Exception {
         String authUrl = "https://dev/authorize?client_id=123&redirect_uri=https%3A%2F%2Finjiweb.example.com%2Fredirect"
                 + "&response_type=code&scope=openid+MockVerifiableCredential&state=oauth-state"
                 + "&code_challenge=challenge&code_challenge_method=S256&dpop_jkt=thumbprint";
-        when(dpopIssuanceSessionService.createAuthorizationUrl(any(), eq("LocalMock"), any()))
+        when(dPoPSessionService.createAuthorizationUrl(any(), eq("LocalMock"), any()))
                 .thenReturn(IssuerAuthorizeResponse.builder()
                         .authorizationUrl(authUrl)
                         .state("oauth-state")
@@ -317,10 +317,10 @@ public class IssuersControllerTest {
     }
 
     @Test
-    public void shouldReturnStateContainingTildeFromMimoto() throws Exception {
+    public void should_returnStateWithTilde_when_authorizationServiceSucceeds() throws Exception {
         String oauthState = "Iv~UKBqw_XGsyIT~7GuKrVLFfUvtVSEk3993qSftpm.";
         String authUrl = "https://dev/authorize?state=Iv~UKBqw_XGsyIT~7GuKrVLFfUvtVSEk3993qSftpm.";
-        when(dpopIssuanceSessionService.createAuthorizationUrl(any(), eq("LocalMock"), any()))
+        when(dPoPSessionService.createAuthorizationUrl(any(), eq("LocalMock"), any()))
                 .thenReturn(IssuerAuthorizeResponse.builder()
                         .authorizationUrl(authUrl)
                         .state(oauthState)
@@ -342,8 +342,8 @@ public class IssuersControllerTest {
     }
 
     @Test
-    public void shouldReturnBadRequestWhenAuthorizeFails() throws Exception {
-        when(dpopIssuanceSessionService.createAuthorizationUrl(any(), eq("unknown"), any()))
+    public void should_returnBadRequest_when_authorizationServiceFails() throws Exception {
+        when(dPoPSessionService.createAuthorizationUrl(any(), eq("unknown"), any()))
                 .thenThrow(new InvalidRequestException("invalid_request", "Invalid issuer"));
 
         mockMvc.perform(post("/issuers/{issuer-id}/authorize", "unknown")

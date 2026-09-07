@@ -1,18 +1,18 @@
 package io.mosip.mimoto.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mosip.mimoto.constant.DpopConstants;
+import io.mosip.mimoto.constant.DPoPConstants;
 import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.VerifiableCredentialRequestDTO;
-import io.mosip.mimoto.dto.dpop.DpopIssuanceSession;
+import io.mosip.mimoto.dto.dpop.DPoPSession;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
 import io.mosip.mimoto.exception.*;
-import io.mosip.mimoto.service.DpopIssuanceSessionService;
-import io.mosip.mimoto.service.DpopProofService;
+import io.mosip.mimoto.service.DPoPSessionService;
+import io.mosip.mimoto.service.DPoPManager;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
-import io.mosip.mimoto.util.DpopResponseHelper;
+import io.mosip.mimoto.util.DPoPResponseHelper;
 import io.mosip.mimoto.util.JoseUtil;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -67,20 +67,20 @@ public class IdpServiceImpl implements IdpService {
 
     private final IssuersService issuersService;
 
-    private final DpopIssuanceSessionService dpopIssuanceSessionService;
+    private final DPoPSessionService dPoPSessionService;
 
-    private final DpopProofService dpopProofService;
+    private final DPoPManager dPoPManager;
 
     private final ObjectMapper objectMapper;
 
     public IdpServiceImpl(JoseUtil joseUtil, @Qualifier("restTemplate") RestTemplate restTemplate, IssuersService issuersService,
-                          DpopIssuanceSessionService dpopIssuanceSessionService, DpopProofService dpopProofService,
+                          DPoPSessionService dPoPSessionService, DPoPManager dPoPManager,
                           ObjectMapper objectMapper) {
         this.joseUtil = joseUtil;
         this.restTemplate = restTemplate;
         this.issuersService = issuersService;
-        this.dpopIssuanceSessionService = dpopIssuanceSessionService;
-        this.dpopProofService = dpopProofService;
+        this.dPoPSessionService = dPoPSessionService;
+        this.dPoPManager = dPoPManager;
         this.objectMapper = objectMapper;
     }
 
@@ -177,7 +177,7 @@ public class IdpServiceImpl implements IdpService {
 
 
     @Override
-    public ResponseEntity<String> getTokenResponseV2(Map<String, String> params, String dpopProof)
+    public ResponseEntity<String> getTokenResponseV2(Map<String, String> params, String dPoPProof)
             throws ApiNotAccessibleException, IOException,
             AuthorizationServerWellknownResponseException,
             InvalidWellknownResponseException,
@@ -193,17 +193,17 @@ public class IdpServiceImpl implements IdpService {
             HttpHeaders headers = new HttpHeaders();
             headers.addAll(request.getHeaders());
 
-            if (StringUtils.hasText(dpopProof)) {
-                headers.set(DPOP_HEADER, dpopProof);
+            if (StringUtils.hasText(dPoPProof)) {
+                headers.set(DPOP_HEADER, dPoPProof);
             }
 
-            HttpEntity<MultiValueMap<String, String>> requestWithDpop =
+            HttpEntity<MultiValueMap<String, String>> requestWithDPoP =
                     new HttpEntity<>(request.getBody(), headers);
 
             return restTemplate.exchange(
                     tokenEndpoint,
                     HttpMethod.POST,
-                    requestWithDpop,
+                    requestWithDPoP,
                     String.class
             );
 
@@ -223,20 +223,20 @@ public class IdpServiceImpl implements IdpService {
             AuthorizationServerWellknownResponseException,
             InvalidWellknownResponseException,
             IssuerOnboardingException {
-        DpopIssuanceSession issuanceSession = dpopIssuanceSessionService.find(httpSession, params.get("state"));
-        if (issuanceSession == null) {
+        DPoPSession dPoPSession = dPoPSessionService.find(httpSession, params.get("state"));
+        if (dPoPSession == null) {
             return null;
         }
         try {
-            String issuerId = params.get("issuer");
+            String issuerId = boundIssuerId(dPoPSession, params);
             String tokenEndpoint = getTokenEndpoint(issuerId);
 
             HttpEntity<MultiValueMap<String, String>> request =
                     constructGetTokenRequest(params, issuerId, tokenEndpoint);
             ResponseEntity<String> asResponse =
-                    exchangeTokenWithServerDpop(tokenEndpoint, request, issuanceSession, httpSession);
+                    exchangeTokenWithServerDPoP(tokenEndpoint, request, dPoPSession);
             if (!asResponse.getStatusCode().is2xxSuccessful()) {
-                Object body = DpopResponseHelper.normalizeOAuthErrorBody(asResponse.getBody());
+                Object body = DPoPResponseHelper.normalizeOAuthErrorBody(asResponse.getBody());
                 String description = asResponse.getBody();
                 if (body instanceof Map<?, ?> map && map.get("error_description") != null) {
                     description = String.valueOf(map.get("error_description"));
@@ -246,42 +246,56 @@ public class IdpServiceImpl implements IdpService {
                 throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
                         "Token exchange failed: " + description);
             }
-            return dpopIssuanceSessionService.tokenFromSession(httpSession, params.get("state"));
+            if (!StringUtils.hasText(asResponse.getBody())) {
+                throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Token exchange returned an empty body");
+            }
+            return objectMapper.readValue(asResponse.getBody(), TokenResponseDTO.class);
         } catch (InvalidIssuerIdException e) {
             throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Invalid issuer");
         }
     }
 
-    private ResponseEntity<String> exchangeTokenWithServerDpop(String tokenEndpoint,
-                                                               HttpEntity<MultiValueMap<String, String>> request,
-                                                               DpopIssuanceSession issuanceSession,
-                                                               HttpSession httpSession) throws IOException {
-        ResponseEntity<String> asResponse = postTokenWithProof(tokenEndpoint, request, issuanceSession, issuanceSession.getAsDpopNonce());
-        if (isUseDpopNonce(asResponse)) {
-            String nonce = asResponse.getHeaders().getFirst(DpopConstants.DPOP_NONCE_HEADER);
-            issuanceSession.setAsDpopNonce(nonce);
-            dpopIssuanceSessionService.store(httpSession, issuanceSession);
-            asResponse = postTokenWithProof(tokenEndpoint, request, issuanceSession, nonce);
+    private static String boundIssuerId(DPoPSession dPoPSession, Map<String, String> params) {
+        String sessionIssuerId = dPoPSession.getIssuerId();
+        String requestIssuerId = params != null ? params.get("issuer") : null;
+        if (!StringUtils.hasText(sessionIssuerId)
+                || (StringUtils.hasText(requestIssuerId) && !sessionIssuerId.equals(requestIssuerId))) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
+                    "issuer does not match DPoP session");
         }
-        if (asResponse.getStatusCode().is2xxSuccessful() && StringUtils.hasText(asResponse.getBody())) {
-            TokenResponseDTO token = objectMapper.readValue(asResponse.getBody(), TokenResponseDTO.class);
-            issuanceSession.setAccessToken(token.getAccess_token());
-            issuanceSession.setTokenType(StringUtils.hasText(token.getToken_type())
-                    ? token.getToken_type()
-                    : DpopConstants.DPOP_TOKEN_TYPE);
-            issuanceSession.setCNonce(token.getC_nonce());
-            dpopIssuanceSessionService.store(httpSession, issuanceSession);
+        return sessionIssuerId;
+    }
+
+    private ResponseEntity<String> exchangeTokenWithServerDPoP(String tokenEndpoint,
+                                                               HttpEntity<MultiValueMap<String, String>> request,
+                                                               DPoPSession dPoPSession) {
+        ResponseEntity<String> asResponse = postTokenWithProof(tokenEndpoint, request, dPoPSession);
+        if (isUseDPoPNonce(asResponse)) {
+            String nonce = asResponse.getHeaders().getFirst(DPoPConstants.DPOP_NONCE_HEADER);
+            asResponse = postTokenWithProof(tokenEndpoint, request, dPoPSession, nonce);
         }
         return asResponse;
     }
 
     private ResponseEntity<String> postTokenWithProof(String tokenEndpoint,
                                                       HttpEntity<MultiValueMap<String, String>> request,
-                                                      DpopIssuanceSession issuanceSession,
+                                                      DPoPSession dPoPSession) {
+        return postTokenWithProof(tokenEndpoint, request, dPoPManager.generateTokenProof(dPoPSession));
+    }
+
+    private ResponseEntity<String> postTokenWithProof(String tokenEndpoint,
+                                                      HttpEntity<MultiValueMap<String, String>> request,
+                                                      DPoPSession dPoPSession,
                                                       String nonce) {
+        return postTokenWithProof(tokenEndpoint, request, dPoPManager.generateTokenProof(dPoPSession, nonce));
+    }
+
+    private ResponseEntity<String> postTokenWithProof(String tokenEndpoint,
+                                                      HttpEntity<MultiValueMap<String, String>> request,
+                                                      String dPoPProof) {
         HttpHeaders headers = new HttpHeaders();
         headers.addAll(request.getHeaders());
-        headers.set(DPOP_HEADER, dpopProofService.createProof(issuanceSession, issuanceSession.getTokenHtu(), "POST", nonce, null));
+        headers.set(DPOP_HEADER, dPoPProof);
         try {
             return restTemplate.exchange(
                     tokenEndpoint,
@@ -296,19 +310,19 @@ public class IdpServiceImpl implements IdpService {
         }
     }
 
-    private static boolean isUseDpopNonce(ResponseEntity<String> response) {
+    private static boolean isUseDPoPNonce(ResponseEntity<String> response) {
         if (response.getStatusCode().is2xxSuccessful()) {
             return false;
         }
-        String nonce = response.getHeaders().getFirst(DpopConstants.DPOP_NONCE_HEADER);
+        String nonce = response.getHeaders().getFirst(DPoPConstants.DPOP_NONCE_HEADER);
         if (!StringUtils.hasText(nonce)) {
             return false;
         }
-        Object body = DpopResponseHelper.normalizeOAuthErrorBody(response.getBody());
+        Object body = DPoPResponseHelper.normalizeOAuthErrorBody(response.getBody());
         if (body instanceof Map<?, ?> map) {
-            return DpopConstants.USE_DPOP_NONCE_ERROR.equals(String.valueOf(map.get("error")));
+            return DPoPConstants.USE_DPOP_NONCE_ERROR.equals(String.valueOf(map.get("error")));
         }
-        return StringUtils.hasText(response.getBody()) && response.getBody().contains(DpopConstants.USE_DPOP_NONCE_ERROR);
+        return StringUtils.hasText(response.getBody()) && response.getBody().contains(DPoPConstants.USE_DPOP_NONCE_ERROR);
     }
 
     private void validateCodeVerifier(String codeVerifier) {

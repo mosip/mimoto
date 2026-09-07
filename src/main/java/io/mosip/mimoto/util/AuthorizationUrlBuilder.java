@@ -1,6 +1,6 @@
 package io.mosip.mimoto.util;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -23,7 +23,7 @@ public final class AuthorizationUrlBuilder {
                                String codeChallenge,
                                String codeChallengeMethod,
                                String uiLocales,
-                               String dpopJkt) {
+                               String dPoPJkt) {
         if (StringUtils.isBlank(authorizationEndpoint)) {
             throw new IllegalArgumentException("authorization_endpoint cannot be blank");
         }
@@ -39,8 +39,8 @@ public final class AuthorizationUrlBuilder {
         if (StringUtils.isNotBlank(uiLocales)) {
             url.append("&ui_locales=").append(encode(uiLocales));
         }
-        if (StringUtils.isNotBlank(dpopJkt)) {
-            url.append("&dpop_jkt=").append(encode(dpopJkt));
+        if (StringUtils.isNotBlank(dPoPJkt)) {
+            url.append("&dpop_jkt=").append(encode(dPoPJkt));
         }
         return url.toString();
     }

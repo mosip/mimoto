@@ -11,7 +11,7 @@ import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
 import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.service.DpopIssuanceSessionService;
+import io.mosip.mimoto.service.DPoPSessionService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.Utilities;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,11 +37,11 @@ import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 public class IssuersController {
 
     private final IssuersService issuersService;
-    private final DpopIssuanceSessionService dpopIssuanceSessionService;
+    private final DPoPSessionService dPoPSessionService;
 
-    public IssuersController(IssuersService issuersService, DpopIssuanceSessionService dpopIssuanceSessionService) {
+    public IssuersController(IssuersService issuersService, DPoPSessionService dPoPSessionService) {
         this.issuersService = issuersService;
-        this.dpopIssuanceSessionService = dpopIssuanceSessionService;
+        this.dPoPSessionService = dPoPSessionService;
     }
 
     @Operation(summary = SwaggerLiteralConstants.ISSUERS_GET_ISSUERS_SUMMARY, description = SwaggerLiteralConstants.ISSUERS_GET_ISSUERS_DESCRIPTION)
@@ -127,10 +127,7 @@ public class IssuersController {
             CredentialIssuerConfigurationResponseDTO credentialIssuerConfigurationResponseDTO = new CredentialIssuerConfigurationResponseDTO(
                     credentials,
                     issuerConfiguration.getAuthorizationServerWellKnownResponse().getAuthorizationEndpoint(),
-                    issuerConfiguration.getAuthorizationServerWellKnownResponse().getGrantTypesSupported(),
-                    issuerConfiguration.getAuthorizationServerWellKnownResponse().getTokenEndpoint(),
-                    issuerConfiguration.getCredentialEndPoint(),
-                    issuerConfiguration.getAuthorizationServerWellKnownResponse().getDpopSigningAlgValuesSupported());
+                    issuerConfiguration.getAuthorizationServerWellKnownResponse().getGrantTypesSupported());
             responseWrapper.setResponse(credentialIssuerConfigurationResponseDTO);
             return ResponseEntity.status(HttpStatus.OK).body(responseWrapper);
         } catch (Exception exception) {
@@ -150,7 +147,7 @@ public class IssuersController {
                                                              HttpSession httpSession) {
         try {
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(dpopIssuanceSessionService.createAuthorizationUrl(httpSession, issuerId, request));
+                    .body(dPoPSessionService.createAuthorizationUrl(httpSession, issuerId, request));
         } catch (InvalidRequestException exception) {
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     exception, INVALID_ISSUER_ID_CONFIGURATION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);

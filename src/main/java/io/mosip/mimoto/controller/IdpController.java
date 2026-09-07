@@ -200,14 +200,14 @@ public class IdpController {
     )
     public ResponseEntity<Object> getTokenV2(@RequestParam Map<String, String> params,
                                              @PathVariable(name = "issuer") String issuer,
-                                             @RequestHeader(value = DPOP_HEADER, required = false) String dpopProof) {
+                                             @RequestHeader(value = DPOP_HEADER, required = false) String dPoPProof) {
         log.info("Reached the getTokenV2 Controller for Issuer {}", issuer);
 
         try {
             Map<String, String> tokenParams = new HashMap<>(params);
             tokenParams.put("issuer", issuer);
 
-            ResponseEntity<String> response = idpService.getTokenResponseV2(tokenParams, dpopProof);
+            ResponseEntity<String> response = idpService.getTokenResponseV2(tokenParams, dPoPProof);
 
             return ResponseEntity
                     .status(response.getStatusCode())

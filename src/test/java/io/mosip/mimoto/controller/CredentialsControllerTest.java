@@ -1,10 +1,10 @@
 package io.mosip.mimoto.controller;
 
-import io.mosip.mimoto.constant.DpopConstants;
-import io.mosip.mimoto.dto.dpop.DpopIssuanceSession;
+import io.mosip.mimoto.constant.DPoPConstants;
+import io.mosip.mimoto.dto.dpop.DPoPSession;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.exception.*;
-import io.mosip.mimoto.service.DpopIssuanceSessionService;
+import io.mosip.mimoto.service.DPoPSessionService;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
@@ -53,7 +53,7 @@ public class CredentialsControllerTest {
     private IdpService idpService;
 
     @MockBean
-    private DpopIssuanceSessionService dpopIssuanceSessionService;
+    private DPoPSessionService dPoPSessionService;
     private String locale = "test-local", issuer = "test-issuer", credential = "test-credential", requestContent;
     private TokenResponseDTO tokenResponseDTO;
 
@@ -67,24 +67,19 @@ public class CredentialsControllerTest {
                 new BasicNameValuePair("credential", credential),
                 new BasicNameValuePair("locale", locale)
         )));
-        stubBffSession();
+        stubDPoPSession();
     }
 
-    private void stubBffSession() throws Exception {
+    private void stubDPoPSession() throws Exception {
 
-        DpopIssuanceSession issuanceSession = DpopIssuanceSession.builder()
-
+        DPoPSession dPoPSession = DPoPSession.builder()
                 .state("oauth-state")
-
-                .issuerId(issuer)
-
                 .alg("RS256")
-
                 .build();
 
-        org.mockito.Mockito.when(dpopIssuanceSessionService.find(any(), eq("oauth-state"))).thenReturn(issuanceSession);
+        org.mockito.Mockito.when(dPoPSessionService.find(any(), eq("oauth-state"))).thenReturn(dPoPSession);
 
-        org.mockito.Mockito.when(dpopIssuanceSessionService.authorizationCodeParams(any(), eq("oauth-state"), any(), any()))
+        org.mockito.Mockito.when(dPoPSessionService.authorizationCodeParams(any(), eq("oauth-state"), any(), any()))
                 .thenReturn(Map.of(
                         "code", "test-code",
                         "code_verifier", "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
@@ -95,15 +90,15 @@ public class CredentialsControllerTest {
 
         org.mockito.Mockito.when(idpService.exchangeAndBindToken(anyMap(), any())).thenReturn(tokenResponseDTO);
 
-        org.mockito.Mockito.when(dpopIssuanceSessionService.credentialProof(any(), eq("oauth-state"))).thenReturn("server-dpop");
+        org.mockito.Mockito.when(dPoPSessionService.credentialProof(any(), eq("oauth-state"), any(), any())).thenReturn("server-dPoP");
 
     }
 
 
 
     @Test
-    public void downloadPDFSuccessfully() throws Exception {
-        org.mockito.Mockito.when(credentialService.downloadCredentialAsPDF(issuer, credential, tokenResponseDTO, "3", locale, "server-dpop"))
+    public void should_downloadPdf_when_dPoPSessionIsValid() throws Exception {
+        org.mockito.Mockito.when(credentialService.downloadCredentialAsPDF(issuer, credential, tokenResponseDTO, "3", locale, "server-dPoP"))
 
                 .thenReturn(new ByteArrayInputStream("test-data".getBytes()));
 
@@ -115,13 +110,13 @@ public class CredentialsControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_PDF));
         verify(idpService).exchangeAndBindToken(anyMap(), any());
         verify(idpService, never()).getTokenResponse(anyMap());
-        verify(dpopIssuanceSessionService).remove(any(), eq("oauth-state"));
+        verify(dPoPSessionService).remove(any(), eq("oauth-state"));
     }
 
     @Test
-    public void should_rejectDownload_when_clientSendsAccessTokenWithoutIssuanceSession() throws Exception {
+    public void should_rejectDownload_when_clientSendsAccessTokenWithoutDPoPSession() throws Exception {
 
-        org.mockito.Mockito.reset(dpopIssuanceSessionService, idpService);
+        org.mockito.Mockito.reset(dPoPSessionService, idpService);
 
         String preIssuedContent = EntityUtils.toString(new UrlEncodedFormEntity(List.of(
                 new BasicNameValuePair("issuer", issuer),
@@ -134,13 +129,13 @@ public class CredentialsControllerTest {
 
        mockMvc.perform(post("/credentials/download")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .header(DpopConstants.DPOP_HEADER, "guest-dpop-proof")
+                        .header(DPoPConstants.DPOP_HEADER, "guest-dpop-proof")
 
                         .content(preIssuedContent))
 
                 .andExpect(status().isBadRequest())
 
-                .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is("Issuance state is required")));
+                .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is("DPoP state is required")));
 
 
 
@@ -156,11 +151,11 @@ public class CredentialsControllerTest {
 
     @Test
 
-    public void should_exchangeTokenInternally_when_bffSessionAndGrantAreProvided() throws Exception {
+    public void should_exchangeTokenInternally_when_dPoPSessionAndGrantAreProvided() throws Exception {
 
         org.mockito.Mockito.when(credentialService.downloadCredentialAsPDF(
 
-                        eq(issuer), eq(credential), eq(tokenResponseDTO), eq("3"), eq(locale), eq("server-dpop")))
+                        eq(issuer), eq(credential), eq(tokenResponseDTO), eq("3"), eq(locale), eq("server-dPoP")))
 
                 .thenReturn(new ByteArrayInputStream("test-data".getBytes()));
 
@@ -183,7 +178,7 @@ public class CredentialsControllerTest {
 
         verify(idpService, never()).getTokenResponse(anyMap());
 
-        verify(dpopIssuanceSessionService).remove(any(), eq("oauth-state"));
+        verify(dPoPSessionService).remove(any(), eq("oauth-state"));
 
     }
 
@@ -195,15 +190,15 @@ public class CredentialsControllerTest {
 
         HttpHeaders challengeHeaders = new HttpHeaders();
 
-        challengeHeaders.set(DpopConstants.DPOP_NONCE_HEADER, "issuer-nonce-123");
+        challengeHeaders.set(DPoPConstants.DPOP_NONCE_HEADER, "issuer-nonce-123");
 
-        challengeHeaders.set(DpopConstants.WWW_AUTHENTICATE_HEADER, "DPoP error=\"use_dpop_nonce\"");
+        challengeHeaders.set(DPoPConstants.WWW_AUTHENTICATE_HEADER, "DPoP error=\"use_dpop_nonce\"");
 
         org.mockito.Mockito.when(credentialService.downloadCredentialAsPDF(
 
-                        eq(issuer), eq(credential), eq(tokenResponseDTO), eq("3"), eq(locale), eq("server-dpop")))
+                        eq(issuer), eq(credential), eq(tokenResponseDTO), eq("3"), eq(locale), eq("server-dPoP")))
 
-                .thenThrow(new DpopChallengeException(
+                .thenThrow(new DPoPChallengeException(
 
                         HttpStatus.UNAUTHORIZED,
 
@@ -211,13 +206,13 @@ public class CredentialsControllerTest {
 
                         "{\"error\":\"use_dpop_nonce\",\"error_description\":\"DPoP nonce required\"}"));
 
-        org.mockito.Mockito.when(dpopIssuanceSessionService.retryCredentialProof(any(), eq("oauth-state"), any()))
+        org.mockito.Mockito.when(dPoPSessionService.retryCredentialProof(any(), eq("oauth-state"), any(), any(), any()))
 
-                .thenReturn("retried-dpop");
+                .thenReturn("retried-dPoP");
 
         org.mockito.Mockito.when(credentialService.downloadCredentialAsPDF(
 
-                        eq(issuer), eq(credential), eq(tokenResponseDTO), eq("3"), eq(locale), eq("retried-dpop")))
+                        eq(issuer), eq(credential), eq(tokenResponseDTO), eq("3"), eq(locale), eq("retried-dPoP")))
 
                 .thenReturn(new ByteArrayInputStream("test-data".getBytes()));
 
@@ -236,9 +231,9 @@ public class CredentialsControllerTest {
 
 
 
-        verify(dpopIssuanceSessionService).retryCredentialProof(any(), eq("oauth-state"), any());
+        verify(dPoPSessionService).retryCredentialProof(any(), eq("oauth-state"), any(), any(), any());
 
-        verify(dpopIssuanceSessionService).remove(any(), eq("oauth-state"));
+        verify(dPoPSessionService).remove(any(), eq("oauth-state"));
 
     }
 
@@ -285,7 +280,7 @@ public class CredentialsControllerTest {
 
     @Test
     public void throwExceptionWhenPDFGenerationFailed() throws Exception {
-    org.mockito.Mockito.when(credentialService.downloadCredentialAsPDF(issuer, credential, tokenResponseDTO, "3", locale, "server-dpop"))
+    org.mockito.Mockito.when(credentialService.downloadCredentialAsPDF(issuer, credential, tokenResponseDTO, "3", locale, "server-dPoP"))
 
                 .thenThrow(new ApiNotAccessibleException());
 
@@ -301,7 +296,7 @@ public class CredentialsControllerTest {
 
     @Test
     public void throwExceptionOnInvalidCredentialResource() throws Exception {
-        org.mockito.Mockito.when(credentialService.downloadCredentialAsPDF(issuer, credential, tokenResponseDTO, "3", locale, "server-dpop"))
+        org.mockito.Mockito.when(credentialService.downloadCredentialAsPDF(issuer, credential, tokenResponseDTO, "3", locale, "server-dPoP"))
 
                 .thenThrow(new InvalidCredentialResourceException(
                         ErrorConstants.REQUEST_TIMED_OUT.getErrorCode(),
@@ -319,7 +314,7 @@ public class CredentialsControllerTest {
 
     @Test
     public void throwExceptionOnVCVerificationFailure() throws Exception {
-        org.mockito.Mockito.when(credentialService.downloadCredentialAsPDF(issuer, credential, tokenResponseDTO, "3", locale, "server-dpop"))
+        org.mockito.Mockito.when(credentialService.downloadCredentialAsPDF(issuer, credential, tokenResponseDTO, "3", locale, "server-dPoP"))
 
                 .thenThrow(new VCVerificationException("Verification Failed!", "Error occurred when verifying the downloaded credential"));
 

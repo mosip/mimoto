@@ -1,13 +1,13 @@
 package io.mosip.mimoto.controller;
 
 import com.google.zxing.WriterException;
-import io.mosip.mimoto.constant.DpopConstants;
+import io.mosip.mimoto.constant.DPoPConstants;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.core.http.ResponseWrapper;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
-import io.mosip.mimoto.exception.DpopChallengeException;
+import io.mosip.mimoto.exception.DPoPChallengeException;
 import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.exception.InvalidRequestException;
@@ -16,7 +16,7 @@ import io.mosip.mimoto.exception.IssuerOnboardingException;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.exception.VCVerificationException;
 import io.mosip.mimoto.service.CredentialService;
-import io.mosip.mimoto.service.DpopIssuanceSessionService;
+import io.mosip.mimoto.service.DPoPSessionService;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.util.Utilities;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,7 +29,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -58,29 +58,27 @@ public class CredentialsController {
 
     private final IdpService idpService;
 
-    private final DpopIssuanceSessionService dpopIssuanceSessionService;
+    private final DPoPSessionService dPoPSessionService;
 
     public CredentialsController(CredentialService credentialService, IdpService idpService,
-                                 DpopIssuanceSessionService dpopIssuanceSessionService) {
+                                 DPoPSessionService dPoPSessionService) {
         this.credentialService = credentialService;
         this.idpService = idpService;
-        this.dpopIssuanceSessionService = dpopIssuanceSessionService;
+        this.dPoPSessionService = dPoPSessionService;
     }
 
     @Operation(summary = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_SUMMARY, description = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_DESCRIPTION,
-            parameters = @Parameter(name = DpopConstants.OAUTH_STATE_HEADER, in = ParameterIn.HEADER, required = true,
-                    description = "OAuth state that identifies the BFF DPoP issuance session created by POST /issuers/{issuer-id}/authorize",
+            parameters = @Parameter(name = DPoPConstants.OAUTH_STATE_HEADER, in = ParameterIn.HEADER, required = true,
+                    description = "OAuth state that identifies the DPoP session created by POST /issuers/{issuer-id}/authorize",
                     schema = @Schema(type = "string")))
     @ApiResponses({
             @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/pdf")}),
             @ApiResponse(responseCode = "400", content = {@Content(schema = @Schema(implementation = ResponseWrapper.class), mediaType = "application/json")})})
     @PostMapping("/download")
     public ResponseEntity<?> downloadCredentialAsPDF(
-            @RequestHeader(value = DpopConstants.OAUTH_STATE_HEADER, required = false) String state,
+            @RequestHeader(value = DPoPConstants.OAUTH_STATE_HEADER, required = false) String state,
             @RequestParam Map<String, String> params,
             HttpSession httpSession) {
-        //TODO: remove this default value after the apitest is updated
-        params.putIfAbsent("vcStorageExpiryLimitInTimes", "-1");
 
         try {
             String issuerId = params.get("issuer");
@@ -89,18 +87,18 @@ public class CredentialsController {
             String locale = params.get("locale");
             log.info("Initiated Token Call");
             TokenResponseDTO response = getTokenResponse(params, httpSession, state, issuerId);
-            String proof = dpopIssuanceSessionService.credentialProof(httpSession, state);
+            String proof = dPoPSessionService.credentialProof(httpSession, state, issuerId, response);
 
             log.info("Initiated Download Credential Call");
             ByteArrayInputStream inputStream;
             try {
                 inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response, credentialValidity, locale, proof);
-            } catch (DpopChallengeException exception) {
+            } catch (DPoPChallengeException exception) {
                 log.info("Retrying guest credential download after DPoP nonce challenge for issuer: {}", issuerId);
-                proof = dpopIssuanceSessionService.retryCredentialProof(httpSession, state, exception);
+                proof = dPoPSessionService.retryCredentialProof(httpSession, state, issuerId, response, exception);
                 inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response, credentialValidity, locale, proof);
             }
-            dpopIssuanceSessionService.remove(httpSession, state);
+            dPoPSessionService.remove(httpSession, state);
             return ResponseEntity
                     .ok()
                     .contentType(MediaType.APPLICATION_PDF)
@@ -146,16 +144,12 @@ public class CredentialsController {
             IssuerOnboardingException {
         if (StringUtils.isBlank(state)) {
             throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
-                    "Issuance state is required");
+                    "DPoP state is required");
         }
         params.put("state", state);
-        TokenResponseDTO boundToken = dpopIssuanceSessionService.tokenFromSession(httpSession, state);
-        if (boundToken != null) {
-            return boundToken;
-        }
-        if (dpopIssuanceSessionService.find(httpSession, state) != null) {
+        if (dPoPSessionService.find(httpSession, state) != null) {
             TokenResponseDTO exchanged = idpService.exchangeAndBindToken(
-                    dpopIssuanceSessionService.authorizationCodeParams(
+                    dPoPSessionService.authorizationCodeParams(
                             httpSession, state, params.get("code"), issuerId),
                     httpSession);
             if (exchanged != null) {
@@ -163,6 +157,6 @@ public class CredentialsController {
             }
         }
         throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
-                "DPoP issuance session not found or token is not bound");
+                "DPoP session not found or token is not bound");
     }
 }

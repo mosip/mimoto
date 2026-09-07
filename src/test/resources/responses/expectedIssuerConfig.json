@@ -1,4 +1,4 @@
-﻿{
+{
     "credentials_supported": [
       {
         "name": "CredentialType1",
@@ -15,7 +15,5 @@
     "authorization_endpoint": "https://dev/authorize",
     "grant_types_supported": [
       "authorization_code"
-    ],
-    "token_endpoint": "https://dev/token",
-    "credential_endpoint": "https://dev/issuance/credential"
+    ]
 }

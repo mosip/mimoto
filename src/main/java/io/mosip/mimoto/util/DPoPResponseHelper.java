@@ -1,6 +1,6 @@
 package io.mosip.mimoto.util;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -8,17 +8,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Normalizes authorization-server OAuth error bodies for BFF token exchange.
+ * Normalizes authorization-server OAuth error bodies for DPoP token exchange.
  */
-public final class DpopResponseHelper {
+public final class DPoPResponseHelper {
 
     private static final Pattern XML_TAG = Pattern.compile("<([a-zA-Z0-9_]+)>([^<]*)</\\1>");
 
-    private DpopResponseHelper() {
+    private DPoPResponseHelper() {
     }
 
     /**
-     * MOSIP eSignet may serialize {@code OAuthError} as XML. BFF token exchange
+     * MOSIP eSignet may serialize {@code OAuthError} as XML. Token exchange
      * treats {@code use_dpop_nonce} when the body has an {@code error} field.
      */
     public static Object normalizeOAuthErrorBody(String responseBody) {

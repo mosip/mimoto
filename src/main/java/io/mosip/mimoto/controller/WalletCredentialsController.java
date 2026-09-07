@@ -1,6 +1,6 @@
 package io.mosip.mimoto.controller;
 
-import io.mosip.mimoto.constant.DpopConstants;
+import io.mosip.mimoto.constant.DPoPConstants;
 import io.mosip.mimoto.constant.SwaggerExampleConstants;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.dto.ErrorDTO;
@@ -9,7 +9,7 @@ import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
-import io.mosip.mimoto.service.DpopIssuanceSessionService;
+import io.mosip.mimoto.service.DPoPSessionService;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.util.LocaleUtils;
@@ -32,7 +32,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -60,15 +60,15 @@ public class WalletCredentialsController {
 
     private final WalletCredentialService walletCredentialService;
     private final IdpService idpService;
-    private final DpopIssuanceSessionService dpopIssuanceSessionService;
+    private final DPoPSessionService dPoPSessionService;
 
     @Autowired
     public WalletCredentialsController(WalletCredentialService walletCredentialService,
                                        IdpService idpService,
-                                       DpopIssuanceSessionService dpopIssuanceSessionService) {
+                                       DPoPSessionService dPoPSessionService) {
         this.walletCredentialService = walletCredentialService;
         this.idpService = idpService;
-        this.dpopIssuanceSessionService = dpopIssuanceSessionService;
+        this.dPoPSessionService = dPoPSessionService;
     }
 
     /**
@@ -83,10 +83,10 @@ public class WalletCredentialsController {
     @Operation(summary = "Download and store a Verifiable Credential under a specific Wallet", description = "This API is secured using session-based authentication. Upon receiving a request, the session ID is extracted from the Cookie header and used to retrieve session details from Redis for authentication. It then retrieves the wallet key from the session and use it to decrypt the signing algorithm's secret key(which is used for signing the JWT in credential request) and encrypt the downloaded Verifiable Credential. If the process completes successfully, the credential is stored in the database and certain fields will be returned in the response. In case of any issues, an appropriate error response is returned.", operationId = "downloadCredential", security = @SecurityRequirement(name = "SessionAuth"), parameters = {
             @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the wallet", schema = @Schema(type = "string")),
             @Parameter(name = "Accept-Language", in = ParameterIn.HEADER, description = "The locale for the Verifiable Credential. It follows 2 letter language code", schema = @Schema(type = "string", defaultValue = "en")),
-            @Parameter(name = DpopConstants.OAUTH_STATE_HEADER, in = ParameterIn.HEADER, required = true, description = "OAuth state that identifies the BFF DPoP issuance session created by POST /issuers/{issuer-id}/authorize", schema = @Schema(type = "string"))},
+            @Parameter(name = DPoPConstants.OAUTH_STATE_HEADER, in = ParameterIn.HEADER, required = true, description = "OAuth state that identifies the DPoP session created by POST /issuers/{issuer-id}/authorize", schema = @Schema(type = "string"))},
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
-                    description = "Request body parameters including issuer, credential type, storage expiry, and locale.",
+                    description = "Request body with issuer, credentialConfigurationId, and authorization code. PKCE and redirect_uri come from the PKCE session identified by the state header.",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = VerifiableCredentialRequestDTO.class),
@@ -106,7 +106,7 @@ public class WalletCredentialsController {
             @ExampleObject(name = "Wallet key not found in session", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"Wallet key not found in session\"}"),
             @ExampleObject(name = "Invalid issuer", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"issuerId cannot be blank\"}"),
             @ExampleObject(name = "Invalid credentialConfigurationId", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"credentialConfigurationId cannot be blank\"}"),
-            @ExampleObject(name = "Missing issuance state", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"state cannot be blank\"}"),
+            @ExampleObject(name = "Missing DPoP state", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"state cannot be blank\"}"),
             @ExampleObject(name = "Missing authorization grant", value = "{\"errorCode\": \"invalid_request\", \"errorMessage\": \"code cannot be blank\"}")})
     )
     @ApiResponse(responseCode = "500", description = "Internal server error - error occurred while serializing the VC response, encrypting the credential, or storing it", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorDTO.class), examples = {@ExampleObject(name = "Credential already exists", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Duplicate credential for issuer and type\"}"), @ExampleObject(name = "Issuer config error", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Unable to fetch issuer configuration\"}"), @ExampleObject(name = "Failed to generate VC request", value = "{\"errorCode\": \"credential_download_error\", \"errorMessage\": \"Unable to generate credential request\"}"), @ExampleObject(name = "Signature verification failed", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}"), @ExampleObject(name = "Unexpected server error", value = "{\"errorCode\": \"internal_server_error\", \"errorMessage\": \"We are unable to process request now\"}")}))
@@ -114,7 +114,7 @@ public class WalletCredentialsController {
     @PostMapping
     public ResponseEntity<VerifiableCredentialResponseDTO> downloadCredential(
             @RequestHeader(value = "Accept-Language", required = false, defaultValue = "en") @Pattern(regexp = "^[a-z]{2}$", message = "Locale must be a 2-letter code") String locale,
-            @RequestHeader(value = DpopConstants.OAUTH_STATE_HEADER, required = false) String state,
+            @RequestHeader(value = DPoPConstants.OAUTH_STATE_HEADER, required = false) String state,
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
             @RequestBody @Valid VerifiableCredentialRequestDTO verifiableCredentialRequest,
             HttpSession httpSession) throws InvalidRequestException {
@@ -143,18 +143,18 @@ public class WalletCredentialsController {
         log.info("Fetching and storing Verifiable Credential for walletId: {}", walletId);
 
         try {
-            String proof = dpopIssuanceSessionService.credentialProof(httpSession, state);
+            String proof = dPoPSessionService.credentialProof(httpSession, state, issuerId, tokenResponse);
             VerifiableCredentialResponseDTO credentialResponseDTO;
             try {
                 credentialResponseDTO = walletCredentialService.downloadVCAndStoreInDB(
                         issuerId, credentialConfigurationId, tokenResponse, locale, walletId, base64EncodedWalletKey, proof);
-            } catch (DpopChallengeException e) {
+            } catch (DPoPChallengeException e) {
                 log.info("Retrying wallet credential download after DPoP nonce challenge for issuer: {}", issuerId);
-                proof = dpopIssuanceSessionService.retryCredentialProof(httpSession, state, e);
+                proof = dPoPSessionService.retryCredentialProof(httpSession, state, issuerId, tokenResponse, e);
                 credentialResponseDTO = walletCredentialService.downloadVCAndStoreInDB(
                         issuerId, credentialConfigurationId, tokenResponse, locale, walletId, base64EncodedWalletKey, proof);
             }
-            dpopIssuanceSessionService.remove(httpSession, state);
+            dPoPSessionService.remove(httpSession, state);
             return ResponseEntity.status(HttpStatus.OK).body(credentialResponseDTO);
         } catch (ExternalServiceUnavailableException e) {
             return Utilities.getErrorResponseEntityWithoutWrapper(
@@ -318,15 +318,10 @@ public class WalletCredentialsController {
             throws ApiNotAccessibleException, IOException,
             AuthorizationServerWellknownResponseException, InvalidWellknownResponseException,
             IssuerOnboardingException {
-        TokenResponseDTO boundToken = dpopIssuanceSessionService.tokenFromSession(httpSession, state);
-        if (boundToken != null) {
-            log.info("Using session-bound access token for wallet credential download, issuer: {}", issuerId);
-            return boundToken;
-        }
-        if (dpopIssuanceSessionService.find(httpSession, state) != null) {
-            log.info("Exchanging authorization code inside wallet credential download for BFF DPoP session, issuer: {}", issuerId);
+        if (dPoPSessionService.find(httpSession, state) != null) {
+            log.info("Exchanging authorization code inside wallet credential download for DPoP session, issuer: {}", issuerId);
             TokenResponseDTO exchanged = idpService.exchangeAndBindToken(
-                    dpopIssuanceSessionService.authorizationCodeParams(
+                    dPoPSessionService.authorizationCodeParams(
                             httpSession, state, request.getCode(), issuerId),
                     httpSession);
             if (exchanged != null) {
@@ -334,6 +329,6 @@ public class WalletCredentialsController {
             }
         }
         throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
-                "DPoP issuance session not found or token is not bound");
+                "DPoP session not found or token is not bound");
     }
 }

@@ -1,6 +1,6 @@
 package io.mosip.mimoto.constant;
 
-public final class DpopConstants {
+public final class DPoPConstants {
 
     public static final String DPOP_HEADER = "DPoP";
     public static final String OAUTH_STATE_HEADER = "state";
@@ -13,7 +13,8 @@ public final class DpopConstants {
     public static final String INVALID_DPOP_PROOF_ERROR = "invalid_dpop_proof";
     public static final String DPOP_BOUND_TOKEN_MESSAGE = "DPoP-bound access token";
     public static final String CERTIFY_DPOP_NOT_SUPPORTED_MESSAGE = "DPoP tokens are not supported. Use a Bearer token.";
+    public static final String HTTP_METHOD_POST = "POST";
 
-    private DpopConstants() {
+    private DPoPConstants() {
     }
 }

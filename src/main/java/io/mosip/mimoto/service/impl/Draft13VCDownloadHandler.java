@@ -7,7 +7,7 @@ import io.mosip.mimoto.dto.mimoto.Draft13VCCredentialRequest;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponse;
 import io.mosip.mimoto.exception.CredentialProcessingException;
-import io.mosip.mimoto.exception.DpopChallengeException;
+import io.mosip.mimoto.exception.DPoPChallengeException;
 import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.service.Draft13CredentialRequestService;
@@ -32,7 +32,7 @@ public class Draft13VCDownloadHandler implements VCDownloadHandler {
     }
 
     @Override
-    public VCCredentialResponse downloadCredential(IssuerDTO issuerDTO, String credentialConfigurationId, CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse, TokenResponseDTO tokenResponse, String walletId, String base64Key, boolean isLoginFlow, String dpopProof) throws CredentialProcessingException, InvalidCredentialResourceException, ExternalServiceUnavailableException {
+    public VCCredentialResponse downloadCredential(IssuerDTO issuerDTO, String credentialConfigurationId, CredentialIssuerWellKnownResponse credentialIssuerWellKnownResponse, TokenResponseDTO tokenResponse, String walletId, String base64Key, boolean isLoginFlow, String dPoPProof) throws CredentialProcessingException, InvalidCredentialResourceException, ExternalServiceUnavailableException {
         Draft13VCCredentialRequest vcCredentialRequest;
         try {
             vcCredentialRequest = draft13CredentialRequestService.buildRequest(issuerDTO, credentialConfigurationId, credentialIssuerWellKnownResponse, tokenResponse.getC_nonce(), walletId, base64Key, isLoginFlow);
@@ -41,18 +41,18 @@ public class Draft13VCDownloadHandler implements VCDownloadHandler {
             throw new CredentialProcessingException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), "Unable to generate credential request", e);
         }
 
-        return fetchCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, tokenResponse, issuerDTO.getIssuer_id(), credentialConfigurationId, dpopProof);
+        return fetchCredential(credentialIssuerWellKnownResponse.getCredentialEndPoint(), vcCredentialRequest, tokenResponse, issuerDTO.getIssuer_id(), credentialConfigurationId, dPoPProof);
     }
 
     private VCCredentialResponse fetchCredential(String credentialEndpoint, Draft13VCCredentialRequest vcCredentialRequest, TokenResponseDTO tokenResponse, String issuerId, String credentialConfigId,
-                                                 String dpopProof) throws InvalidCredentialResourceException, ExternalServiceUnavailableException {
+                                                 String dPoPProof) throws InvalidCredentialResourceException, ExternalServiceUnavailableException {
         VerifiableCredentialResponse response;
 
         try {
             response = restApiClient.postCredentialApi(credentialEndpoint, MediaType.APPLICATION_JSON,
                     vcCredentialRequest, VerifiableCredentialResponse.class,
-                    tokenResponse.getAccess_token(), tokenResponse.getToken_type(), dpopProof);
-        } catch (DpopChallengeException e) {
+                    tokenResponse.getAccess_token(), tokenResponse.getToken_type(), dPoPProof);
+        } catch (DPoPChallengeException e) {
             throw e;
         } catch (Exception e) {
             String message = String.format("Unable to download credential from issuerId: %s, credentialConfigurationId: %s", issuerId, credentialConfigId);

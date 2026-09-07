@@ -124,7 +124,7 @@ public class WalletCredentialServiceTest {
     }
 
     @Test
-    public void shouldThrowDuplicateCredentialExceptionForMosipIssuer() {
+    public void should_throwDuplicateCredentialException_when_mosipIssuerAlreadyHasCredential() {
         when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId("Mosip", credentialType, walletId)).thenReturn(true);
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
@@ -152,7 +152,7 @@ public class WalletCredentialServiceTest {
     }
 
     @Test
-    public void shouldThrowExternalServiceUnavailableException() throws Exception {
+    public void should_throwExternalServiceUnavailableException_when_credentialServiceIsUnavailable() throws Exception {
         String mosipIssuerId = "Mosip"; // Use Mosip to trigger repository check
 
         when(walletCredentialsRepository.existsByIssuerIdAndCredentialTypeAndWalletId(mosipIssuerId, credentialType, walletId)).thenReturn(false);
@@ -602,7 +602,7 @@ public class WalletCredentialServiceTest {
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = {"   "})
-    public void shouldThrowIllegalArgumentExceptionWhenDecryptedDataIsBlankOrNull(String decryptedValue) throws Exception {
+    public void should_throwIllegalArgumentException_when_decryptedDataIsBlankOrNull(String decryptedValue) throws Exception {
         when(dataProtectionService.decryptCredential("encryptedcred1", base64Key))
                 .thenReturn(decryptedValue);
 

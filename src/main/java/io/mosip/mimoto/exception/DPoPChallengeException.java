@@ -5,16 +5,16 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 
 /**
- * Raised when an issuer responds with a DPoP nonce challenge. The BFF retries once internally.
+ * Raised when an issuer responds with a DPoP nonce challenge. Mimoto retries once internally.
  */
 @Getter
-public class DpopChallengeException extends RuntimeException {
+public class DPoPChallengeException extends RuntimeException {
 
     private final HttpStatusCode statusCode;
     private final HttpHeaders responseHeaders;
     private final String responseBody;
 
-    public DpopChallengeException(HttpStatusCode statusCode, HttpHeaders responseHeaders, String responseBody) {
+    public DPoPChallengeException(HttpStatusCode statusCode, HttpHeaders responseHeaders, String responseBody) {
         super("DPoP nonce challenge from credential issuer");
         this.statusCode = statusCode;
         this.responseHeaders = responseHeaders;

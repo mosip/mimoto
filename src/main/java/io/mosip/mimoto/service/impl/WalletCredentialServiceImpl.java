@@ -79,7 +79,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
     public VerifiableCredentialResponseDTO downloadVCAndStoreInDB(String issuerId, String credentialConfigurationId,
                                                                   TokenResponseDTO tokenResponse,
                                                                   String locale, String walletId, String base64Key,
-                                                                  String dpopProof)
+                                                                  String dPoPProof)
             throws CredentialProcessingException, ExternalServiceUnavailableException {
         log.info("Fetching and storing credential for wallet: {}, issuer: {}, type: {}", walletId, issuerId, credentialConfigurationId);
 
@@ -95,7 +95,7 @@ public class WalletCredentialServiceImpl implements WalletCredentialService {
         VerifiableCredentialResponseDTO credential;
 
         credential = credentialService.downloadCredentialAndStoreInDB(
-                tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale, dpopProof);
+                tokenResponse, credentialConfigurationId, walletId, base64Key, issuerId, locale, dPoPProof);
 
         log.debug("Credential stored successfully: {}", credential.getCredentialId());
         return credential;

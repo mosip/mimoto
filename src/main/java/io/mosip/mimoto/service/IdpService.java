@@ -24,11 +24,11 @@ public interface IdpService {
 
     TokenResponseDTO getTokenResponse(VerifiableCredentialRequestDTO verifiableCredentialRequest) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException;
 
-    ResponseEntity<String> getTokenResponseV2(Map<String, String> params, String dpopProof) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException, IssuerOnboardingException;
+    ResponseEntity<String> getTokenResponseV2(Map<String, String> params, String dPoPProof) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException, IssuerOnboardingException;
 
     /**
      * Exchanges the authorization code with a server-signed DPoP proof and stores the access token
-     * in the HTTP session. Returns {@code null} when there is no BFF issuance session for {@code state}.
+     * in the HTTP session. Returns {@code null} when there is no DPoP session for {@code state}.
      */
     TokenResponseDTO exchangeAndBindToken(Map<String, String> params, HttpSession httpSession) throws ApiNotAccessibleException, IOException, AuthorizationServerWellknownResponseException, InvalidWellknownResponseException, IssuerOnboardingException;
 }

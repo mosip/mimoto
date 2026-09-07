@@ -2,12 +2,12 @@ package io.mosip.mimoto.controller;
 
 import com.jayway.jsonpath.JsonPath;
 import io.mosip.mimoto.dto.VerifiableCredentialRequestDTO;
-import io.mosip.mimoto.dto.dpop.DpopIssuanceSession;
+import io.mosip.mimoto.dto.dpop.DPoPSession;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
-import io.mosip.mimoto.service.DpopIssuanceSessionService;
+import io.mosip.mimoto.service.DPoPSessionService;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
@@ -56,7 +56,7 @@ public class WalletCredentialsControllerTest {
     private IdpService idpService;
 
     @MockBean
-    private DpopIssuanceSessionService dpopIssuanceSessionService;
+    private DPoPSessionService dPoPSessionService;
 
     @Mock
     private HttpSession httpSession;
@@ -101,7 +101,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldDownloadCredentialSuccessfully() throws Exception {
         buildVerifiableCredentialRequest(issuer, credentialConfigurationId, code);
-        stubBffIssuance();
+        stubDPoPSession();
         when(walletCredentialService.downloadVCAndStoreInDB(eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey), nullable(String.class)))
                 .thenReturn(verifiableCredentialResponseDTO);
 
@@ -122,11 +122,11 @@ public class WalletCredentialsControllerTest {
     }
 
     @Test
-    public void shouldExchangeTokenInternallyWhenBffSessionAndGrantAreProvided() throws Exception {
+    public void should_exchangeTokenInternally_when_dPoPSessionAndGrantAreProvided() throws Exception {
         buildVerifiableCredentialRequest(issuer, credentialConfigurationId, code);
         TokenResponseDTO boundToken = new TokenResponseDTO();
-        when(dpopIssuanceSessionService.find(any(), eq("oauth-state")))
-                .thenReturn(DpopIssuanceSession.builder().state("oauth-state").build());
+        when(dPoPSessionService.find(any(), eq("oauth-state")))
+                .thenReturn(DPoPSession.builder().state("oauth-state").build());
         when(idpService.exchangeAndBindToken(anyMap(), any())).thenReturn(boundToken);
         when(walletCredentialService.downloadVCAndStoreInDB(eq(issuer), eq(credentialConfigurationId), eq(boundToken), eq(locale), eq(walletId), eq(walletKey), nullable(String.class)))
                 .thenReturn(verifiableCredentialResponseDTO);
@@ -144,13 +144,13 @@ public class WalletCredentialsControllerTest {
 
         verify(idpService).exchangeAndBindToken(anyMap(), any());
         verify(idpService, never()).getTokenResponse(any(VerifiableCredentialRequestDTO.class));
-        verify(dpopIssuanceSessionService).remove(any(), eq("oauth-state"));
+        verify(dPoPSessionService).remove(any(), eq("oauth-state"));
     }
 
     @Test
-    public void shouldReturnErroResponseWhenRequestedCredentialIsAlreadyAvailableInWallet() throws Exception {
+    public void should_returnErrorResponse_when_requestedCredentialAlreadyExistsInWallet() throws Exception {
         buildVerifiableCredentialRequest(issuer, credentialConfigurationId, code);
-        stubBffIssuance();
+        stubDPoPSession();
         when(walletCredentialService.downloadVCAndStoreInDB(eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey), nullable(String.class)))
                 .thenThrow(new InvalidRequestException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), "Duplicate credential for issuer and type"));
 
@@ -185,7 +185,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldCallServiceWithCorrectParameters() throws Exception {
         buildVerifiableCredentialRequest(issuer, credentialConfigurationId, code);
-        stubBffIssuance();
+        stubDPoPSession();
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
@@ -204,7 +204,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldSetDefaultAndProceedWhenOptionalRequestParametersAreNotPassed() throws Exception {
         buildVerifiableCredentialRequest(issuer, credentialConfigurationId, code);
-        stubBffIssuance();
+        stubDPoPSession();
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
@@ -345,7 +345,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldThrowServiceUnavailableForTokenResponseFailure() throws Exception {
         buildVerifiableCredentialRequest(issuer, credentialConfigurationId, code);
-        stubBffIssuance();
+        stubDPoPSession();
         when(idpService.exchangeAndBindToken(anyMap(), any()))
                 .thenThrow(new ApiNotAccessibleException("API not accessible"));
 
@@ -362,7 +362,7 @@ public class WalletCredentialsControllerTest {
     @Test
     public void shouldThrowServiceUnavailableForExternalServiceFailure() throws Exception {
         buildVerifiableCredentialRequest(issuer, credentialConfigurationId, code);
-        stubBffIssuance();
+        stubDPoPSession();
         when(walletCredentialService.downloadVCAndStoreInDB(anyString(), anyString(), any(), anyString(), anyString(), anyString(), nullable(String.class)))
                 .thenThrow(new ExternalServiceUnavailableException("Service unavailable", "Service unavailable"));
 
@@ -629,7 +629,7 @@ public class WalletCredentialsControllerTest {
     }
 
     @Test
-    public void should_rejectDownload_when_clientSendsAccessTokenWithoutIssuanceGrant() throws Exception {
+    public void should_rejectDownload_when_clientSendsAccessTokenWithoutDPoPSession() throws Exception {
         verifiableCredentialRequest.setIssuer(issuer);
         verifiableCredentialRequest.setCredentialConfigurationId(credentialConfigurationId);
 
@@ -654,20 +654,20 @@ public class WalletCredentialsControllerTest {
     @Test
     public void should_retryInternally_when_walletCredentialDownloadRequiresNonce() throws Exception {
         buildVerifiableCredentialRequest(issuer, credentialConfigurationId, code);
-        stubBffIssuance();
+        stubDPoPSession();
 
         HttpHeaders challengeHeaders = new HttpHeaders();
         challengeHeaders.set("DPoP-Nonce", "wallet-issuer-nonce");
         challengeHeaders.set("WWW-Authenticate", "DPoP error=\"use_dpop_nonce\"");
         when(walletCredentialService.downloadVCAndStoreInDB(
-                eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey), eq("server-dpop")))
-                .thenThrow(new DpopChallengeException(
+                eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey), eq("server-dPoP")))
+                .thenThrow(new DPoPChallengeException(
                         org.springframework.http.HttpStatus.UNAUTHORIZED,
                         challengeHeaders,
                         "{\"error\":\"use_dpop_nonce\"}"));
-        when(dpopIssuanceSessionService.retryCredentialProof(any(), eq(state), any())).thenReturn("retried-dpop");
+        when(dPoPSessionService.retryCredentialProof(any(), eq(state), any(), any(), any())).thenReturn("retried-dPoP");
         when(walletCredentialService.downloadVCAndStoreInDB(
-                eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey), eq("retried-dpop")))
+                eq(issuer), eq(credentialConfigurationId), any(), eq(locale), eq(walletId), eq(walletKey), eq("retried-dPoP")))
                 .thenReturn(verifiableCredentialResponseDTO);
 
         mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
@@ -681,14 +681,14 @@ public class WalletCredentialsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.credentialId").value("credentialId123"));
 
-        verify(dpopIssuanceSessionService).retryCredentialProof(any(), eq(state), any());
-        verify(dpopIssuanceSessionService).remove(any(), eq(state));
+        verify(dPoPSessionService).retryCredentialProof(any(), eq(state), any(), any(), any());
+        verify(dPoPSessionService).remove(any(), eq(state));
     }
 
-    private void stubBffIssuance() throws Exception {
-        when(dpopIssuanceSessionService.find(any(), eq(state)))
-                .thenReturn(DpopIssuanceSession.builder().state(state).build());
-        when(dpopIssuanceSessionService.authorizationCodeParams(any(), eq(state), any(), any()))
+    private void stubDPoPSession() throws Exception {
+        when(dPoPSessionService.find(any(), eq(state)))
+                .thenReturn(DPoPSession.builder().state(state).build());
+        when(dPoPSessionService.authorizationCodeParams(any(), eq(state), any(), any()))
                 .thenReturn(Map.of(
                         "code", code,
                         "code_verifier", "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
@@ -697,7 +697,7 @@ public class WalletCredentialsControllerTest {
                         "issuer", issuer,
                         "state", state));
         when(idpService.exchangeAndBindToken(anyMap(), any())).thenReturn(new TokenResponseDTO());
-        when(dpopIssuanceSessionService.credentialProof(any(), eq(state))).thenReturn("server-dpop");
+        when(dPoPSessionService.credentialProof(any(), eq(state), any(), any())).thenReturn("server-dPoP");
     }
 
     private void buildVerifiableCredentialRequest(String issuer, String credentialConfigurationId, String code) {

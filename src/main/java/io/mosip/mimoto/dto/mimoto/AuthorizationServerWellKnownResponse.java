@@ -39,5 +39,5 @@ public class AuthorizationServerWellKnownResponse {
     @SerializedName("dpop_signing_alg_values_supported")
     @JsonProperty("dpop_signing_alg_values_supported")
     @Schema(description = "JWS algorithms the authorization server accepts for DPoP proofs")
-    private List<@NotBlank String> dpopSigningAlgValuesSupported;
+    private List<@NotBlank String> dPoPSigningAlgValuesSupported;
 }

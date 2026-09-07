@@ -52,10 +52,10 @@ public class IdpServiceTest {
     private IssuersService issuersService;
 
     @Mock
-    private DpopIssuanceSessionService dpopIssuanceSessionService;
+    private DPoPSessionService dPoPSessionService;
 
     @Mock
-    private DpopProofService dpopProofService;
+    private DPoPManager dPoPManager;
 
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -267,7 +267,7 @@ public class IdpServiceTest {
     }
 
     @Test
-    public void shouldRejectVerifiableCredentialRequestWithoutCodeVerifier() {
+    public void should_rejectVerifiableCredentialRequest_when_codeVerifierIsMissing() {
         VerifiableCredentialRequestDTO requestDTO = new VerifiableCredentialRequestDTO();
         requestDTO.setCode("sampleCode");
         requestDTO.setIssuer("issuer123");
@@ -295,7 +295,7 @@ public class IdpServiceTest {
     }
 
     @Test
-    public void shouldPassThroughUseDpopNonceErrorWithNonceHeaderAsIsForV2TokenResponse() throws Exception {
+    public void shouldPassThroughUseDPoPNonceErrorWithNonceHeaderAsIsForV2TokenResponse() throws Exception {
         String tokenEndpoint = "https://as.example.com/token";
         String errorBody = "{\"error\":\"use_dpop_nonce\",\"error_description\":\"nonce required\"}";
         HttpHeaders responseHeaders = new HttpHeaders();
@@ -339,26 +339,18 @@ public class IdpServiceTest {
     }
 
     @Test
-    public void shouldExchangeAndBindTokenDuringDownloadWhenBffSessionExists() throws Exception {
+    public void should_bindToken_when_dPoPSessionExists() throws Exception {
         params.put("state", "oauth-state");
         jakarta.servlet.http.HttpSession httpSession = mock(jakarta.servlet.http.HttpSession.class);
-        io.mosip.mimoto.dto.dpop.DpopIssuanceSession issuanceSession = io.mosip.mimoto.dto.dpop.DpopIssuanceSession.builder()
+        io.mosip.mimoto.dto.dpop.DPoPSession dPoPSession = io.mosip.mimoto.dto.dpop.DPoPSession.builder()
                 .state("oauth-state")
                 .issuerId("issuer123")
                 .alg("RS256")
                 .tokenHtu("https://as.example.com/token")
-                .credentialHtu("https://issuer.example/credential")
-                .privateJwkJson("{}")
+                .jwkJson("{}")
                 .build();
-        when(dpopIssuanceSessionService.find(httpSession, "oauth-state")).thenReturn(issuanceSession);
-        when(dpopIssuanceSessionService.tokenFromSession(httpSession, "oauth-state")).thenAnswer(invocation -> {
-            TokenResponseDTO token = new TokenResponseDTO();
-            token.setAccess_token(issuanceSession.getAccessToken());
-            token.setToken_type(issuanceSession.getTokenType());
-            token.setC_nonce(issuanceSession.getCNonce());
-            return token;
-        });
-        when(dpopProofService.createProof(any(), any(), any(), any(), any())).thenReturn("server-dpop");
+        when(dPoPSessionService.find(httpSession, "oauth-state")).thenReturn(dPoPSession);
+        when(dPoPManager.generateTokenProof(any())).thenReturn("server-dPoP");
 
         String tokenEndpoint = "https://as.example.com/token";
         setupV2TokenEndpoint(tokenEndpoint);
@@ -370,31 +362,23 @@ public class IdpServiceTest {
         assertEquals("secret-token", result.getAccess_token());
         assertEquals("DPoP", result.getToken_type());
         assertEquals("n1", result.getC_nonce());
-        verify(dpopIssuanceSessionService, atLeastOnce()).store(eq(httpSession), argThat(session ->
-                "secret-token".equals(session.getAccessToken()) && "DPoP".equals(session.getTokenType())));
+        verify(dPoPSessionService, never()).store(any(), any());
     }
 
     @Test
-    public void shouldRetryTokenExchangeInternallyOnUseDpopNonceDuringDownload() throws Exception {
+    public void should_retryTokenExchange_when_authorizationServerRequiresDPoPNonce() throws Exception {
         params.put("state", "oauth-state");
         jakarta.servlet.http.HttpSession httpSession = mock(jakarta.servlet.http.HttpSession.class);
-        io.mosip.mimoto.dto.dpop.DpopIssuanceSession issuanceSession = io.mosip.mimoto.dto.dpop.DpopIssuanceSession.builder()
+        io.mosip.mimoto.dto.dpop.DPoPSession dPoPSession = io.mosip.mimoto.dto.dpop.DPoPSession.builder()
                 .state("oauth-state")
                 .issuerId("issuer123")
                 .alg("RS256")
                 .tokenHtu("https://as.example.com/token")
-                .credentialHtu("https://issuer.example/credential")
-                .privateJwkJson("{}")
+                .jwkJson("{}")
                 .build();
-        when(dpopIssuanceSessionService.find(httpSession, "oauth-state")).thenReturn(issuanceSession);
-        when(dpopIssuanceSessionService.tokenFromSession(httpSession, "oauth-state")).thenAnswer(invocation -> {
-            TokenResponseDTO token = new TokenResponseDTO();
-            token.setAccess_token(issuanceSession.getAccessToken());
-            token.setToken_type(issuanceSession.getTokenType());
-            return token;
-        });
-        when(dpopProofService.createProof(any(), any(), eq("POST"), isNull(), isNull())).thenReturn("proof-without-nonce");
-        when(dpopProofService.createProof(any(), any(), eq("POST"), eq("as-nonce"), isNull())).thenReturn("proof-with-nonce");
+        when(dPoPSessionService.find(httpSession, "oauth-state")).thenReturn(dPoPSession);
+        when(dPoPManager.generateTokenProof(any())).thenReturn("proof-without-nonce");
+        when(dPoPManager.generateTokenProof(any(), eq("as-nonce"))).thenReturn("proof-with-nonce");
 
         String tokenEndpoint = "https://as.example.com/token";
         setupV2TokenEndpoint(tokenEndpoint);
@@ -411,16 +395,35 @@ public class IdpServiceTest {
 
         assertEquals("secret-token", result.getAccess_token());
         verify(restTemplate, times(2)).exchange(eq(tokenEndpoint), eq(HttpMethod.POST), any(), eq(String.class));
-        verify(dpopProofService).createProof(any(), any(), eq("POST"), eq("as-nonce"), isNull());
+        verify(dPoPManager).generateTokenProof(any(), eq("as-nonce"));
     }
 
     @Test
-    public void shouldReturnNullFromExchangeAndBindTokenWhenBffSessionMissing() throws Exception {
+    public void should_returnNull_when_dPoPSessionIsMissing() throws Exception {
         params.put("state", "oauth-state");
         jakarta.servlet.http.HttpSession httpSession = mock(jakarta.servlet.http.HttpSession.class);
-        when(dpopIssuanceSessionService.find(httpSession, "oauth-state")).thenReturn(null);
+        when(dPoPSessionService.find(httpSession, "oauth-state")).thenReturn(null);
 
         assertNull(idpService.exchangeAndBindToken(params, httpSession));
+        verify(restTemplate, never()).exchange(anyString(), any(), any(), eq(String.class));
+    }
+
+    @Test
+    public void should_throwInvalidRequest_when_tokenRequestIssuerDoesNotMatchSession() throws Exception {
+        params.put("state", "oauth-state");
+        jakarta.servlet.http.HttpSession httpSession = mock(jakarta.servlet.http.HttpSession.class);
+        io.mosip.mimoto.dto.dpop.DPoPSession dPoPSession = io.mosip.mimoto.dto.dpop.DPoPSession.builder()
+                .state("oauth-state")
+                .issuerId("session-issuer")
+                .alg("RS256")
+                .tokenHtu("https://as.example.com/token")
+                .jwkJson("{}")
+                .build();
+        when(dPoPSessionService.find(httpSession, "oauth-state")).thenReturn(dPoPSession);
+
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> idpService.exchangeAndBindToken(params, httpSession));
+        assertEquals("issuer does not match DPoP session", exception.getErrorText());
         verify(restTemplate, never()).exchange(anyString(), any(), any(), eq(String.class));
     }
 
