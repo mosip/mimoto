@@ -510,7 +510,7 @@ public class TestUtilities {
                 redirectUri
         );
         VerifiablePresentationSessionData presentationSessionData =
-                new VerifiablePresentationSessionData("123e4567-e89b-12d3-a456-426614174000", "authorizationRequest", time, true, null, false, null);
+                new VerifiablePresentationSessionData("123e4567-e89b-12d3-a456-426614174000", "authorizationRequest", time, true, null, false, null, null);
 
         VPResponseDTO presentationResponseDTO = new VPResponseDTO(
                 presentationSessionData.getPresentationId(), presentationVerifierDTO, false);

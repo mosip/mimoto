@@ -117,7 +117,7 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
                 createVPResponseVerifierDTO(preRegisteredVerifiers, authorizationRequest, walletId);
 
         VPResponseDTO responseDTO = new VPResponseDTO(presentationId, verifierDTO, dcql);
-        return new VPAuthorizationResult(responseDTO, authorizationRequest);
+        return new VPAuthorizationResult(responseDTO, authorizationRequest, openID4VP);
     }
 
     @Override
@@ -191,11 +191,15 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
         validateSubmissionRequest(request);
         LocalDateTime requestedAt = LocalDateTime.now(ZoneOffset.UTC);
 
-        // Step 1: Create OpenID4VP instance and authenticate the verifier from session data
-        List<Verifier> preRegisteredVerifiers = openID4VPService.getPreRegisteredVerifiers();
-        OpenID4VP openID4VP = openID4VPService.create(
-                presentationId, preRegisteredVerifiers, sessionData.isVerifierClientPreregistered());
-        openID4VP.authenticateVerifier(sessionData.getAuthorizationRequest());
+        // Step 1: Reuse the OpenID4VP instance from the initial handleVPAuthorizationRequest call.
+        // Re-calling authenticateVerifier would regenerate walletNonce, causing a wallet_nonce mismatch
+        // in the request_uri_method=post flow where the conformance suite validates the original nonce.
+        OpenID4VP openID4VP = sessionData.getOpenID4VPInstance();
+        if (openID4VP == null) {
+            List<Verifier> preRegisteredVerifiers = openID4VPService.getPreRegisteredVerifiers();
+            openID4VP = openID4VPService.create(presentationId, preRegisteredVerifiers, sessionData.isVerifierClientPreregistered());
+            openID4VP.authenticateVerifier(sessionData.getAuthorizationRequest());
+        }
 
         // Step 2: Load wallet credentials and resolve effective SD-JWT claim paths for submission
         Map<String, DecryptedCredentialDTO> walletCredentialsById = walletCredentialService

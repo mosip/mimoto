@@ -104,7 +104,8 @@ public class WalletPresentationsController {
                     verifiablePresentationResponseDTO.getVerifiablePresentationVerifierDTO().isPreregisteredWithWallet(),
                     null,
                     verifiablePresentationResponseDTO.isDcql(),
-                    result.getParsedAuthorizationRequest());
+                    result.getParsedAuthorizationRequest(),
+                    result.getOpenID4VP());
 
             sessionManager.storePresentationSessionData(httpSession, verifiablePresentationSessionData, walletId);
 
