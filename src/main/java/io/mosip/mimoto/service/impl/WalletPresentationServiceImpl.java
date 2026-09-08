@@ -100,7 +100,7 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
     }
 
     @Override
-    public VPResponseDTO handleVPAuthorizationRequest(String urlEncodedVPAuthorizationRequest, String walletId)
+    public VPAuthorizationResult handleVPAuthorizationRequest(String urlEncodedVPAuthorizationRequest, String walletId)
             throws ApiNotAccessibleException, IOException, URISyntaxException {
 
         String presentationId = UUID.randomUUID().toString();
@@ -116,7 +116,8 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
         VerifiablePresentationVerifierDTO verifierDTO =
                 createVPResponseVerifierDTO(preRegisteredVerifiers, authorizationRequest, walletId);
 
-        return new VPResponseDTO(presentationId, verifierDTO, dcql);
+        VPResponseDTO responseDTO = new VPResponseDTO(presentationId, verifierDTO, dcql);
+        return new VPAuthorizationResult(responseDTO, authorizationRequest, openID4VP);
     }
 
     @Override
@@ -190,11 +191,15 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
         validateSubmissionRequest(request);
         LocalDateTime requestedAt = LocalDateTime.now(ZoneOffset.UTC);
 
-        // Step 1: Create OpenID4VP instance and authenticate the verifier from session data
-        List<Verifier> preRegisteredVerifiers = openID4VPService.getPreRegisteredVerifiers();
-        OpenID4VP openID4VP = openID4VPService.create(
-                presentationId, preRegisteredVerifiers, sessionData.isVerifierClientPreregistered());
-        openID4VP.authenticateVerifier(sessionData.getAuthorizationRequest());
+        // Step 1: Reuse the OpenID4VP instance from the initial handleVPAuthorizationRequest call.
+        // Re-calling authenticateVerifier would regenerate walletNonce, causing a wallet_nonce mismatch
+        // in the request_uri_method=post flow where the conformance suite validates the original nonce.
+        OpenID4VP openID4VP = sessionData.getOpenID4VPInstance();
+        if (openID4VP == null) {
+            List<Verifier> preRegisteredVerifiers = openID4VPService.getPreRegisteredVerifiers();
+            openID4VP = openID4VPService.create(presentationId, preRegisteredVerifiers, sessionData.isVerifierClientPreregistered());
+            openID4VP.authenticateVerifier(sessionData.getAuthorizationRequest());
+        }
 
         // Step 2: Load wallet credentials and resolve effective SD-JWT claim paths for submission
         Map<String, DecryptedCredentialDTO> walletCredentialsById = walletCredentialService
@@ -398,10 +403,7 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
     private void validateDcqlSelections(SubmitPresentationRequestDTO request, VerifiablePresentationSessionData sessionData)
             throws ApiNotAccessibleException, IOException {
 
-        DCQLQuery dcqlQuery = openID4VPService.resolveDcqlQuery(
-                sessionData.getPresentationId(),
-                sessionData.getAuthorizationRequest(),
-                sessionData.isVerifierClientPreregistered());
+        DCQLQuery dcqlQuery = AuthorizationRequestHelper.extractDcqlQuery(sessionData.getParsedAuthorizationRequest());
         if (dcqlQuery == null) {
             return;
         }
@@ -481,10 +483,7 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
             return merged.isEmpty() ? null : merged;
         }
 
-        DCQLQuery dcqlQuery = openID4VPService.resolveDcqlQuery(
-                sessionData.getPresentationId(),
-                sessionData.getAuthorizationRequest(),
-                sessionData.isVerifierClientPreregistered());
+        DCQLQuery dcqlQuery = AuthorizationRequestHelper.extractDcqlQuery(sessionData.getParsedAuthorizationRequest());
         if (dcqlQuery == null) {
             return merged.isEmpty() ? null : merged;
         }

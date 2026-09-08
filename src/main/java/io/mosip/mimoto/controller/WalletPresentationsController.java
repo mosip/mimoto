@@ -7,6 +7,7 @@ import io.mosip.mimoto.dto.MatchingCredentialsResponseDTO;
 import io.mosip.mimoto.dto.MatchingCredentialsDTO;
 import io.mosip.mimoto.dto.SubmitPresentationRequestDTO;
 import io.mosip.mimoto.dto.VPAuthorizationRequestDTO;
+import io.mosip.mimoto.dto.VPAuthorizationResult;
 import io.mosip.mimoto.dto.VPResponseDTO;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
@@ -93,7 +94,8 @@ public class WalletPresentationsController {
         try {
             WalletUtil.validateWalletId(httpSession, walletId);
 
-            VPResponseDTO verifiablePresentationResponseDTO = walletPresentationService.handleVPAuthorizationRequest(vpAuthorizationRequest.getAuthorizationRequestUrl(), walletId);
+            VPAuthorizationResult result = walletPresentationService.handleVPAuthorizationRequest(vpAuthorizationRequest.getAuthorizationRequestUrl(), walletId);
+            VPResponseDTO verifiablePresentationResponseDTO = result.getResponseDTO();
 
             VerifiablePresentationSessionData verifiablePresentationSessionData = new VerifiablePresentationSessionData(
                     verifiablePresentationResponseDTO.getPresentationId(),
@@ -101,7 +103,9 @@ public class WalletPresentationsController {
                     Instant.now(),
                     verifiablePresentationResponseDTO.getVerifiablePresentationVerifierDTO().isPreregisteredWithWallet(),
                     null,
-                    verifiablePresentationResponseDTO.isDcql());
+                    verifiablePresentationResponseDTO.isDcql(),
+                    result.getParsedAuthorizationRequest(),
+                    result.getOpenID4VP());
 
             sessionManager.storePresentationSessionData(httpSession, verifiablePresentationSessionData, walletId);
 
