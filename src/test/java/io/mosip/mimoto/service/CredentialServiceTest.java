@@ -1,9 +1,12 @@
 package io.mosip.mimoto.service;
 
+import io.mosip.mimoto.constant.DPoPConstants;
 import io.mosip.mimoto.constant.VCSpecificationVersion;
 import io.mosip.mimoto.dto.IssuerDTO;
+import io.mosip.mimoto.dto.dpop.DPoPSession;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.dto.mimoto.*;
+import io.mosip.mimoto.exception.DPoPChallengeException;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.VCVerificationException;
 import io.mosip.mimoto.model.QRCodeType;
@@ -21,6 +24,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import io.mosip.mimoto.util.TestUtilities;
@@ -48,7 +54,7 @@ import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -72,6 +78,12 @@ public class CredentialServiceTest {
 
     @Mock
     IssuersServiceImpl issuersService;
+
+    @Mock
+    IdpService idpService;
+
+    @Mock
+    DPoPSessionService dPoPSessionService;
 
     @Mock
     WalletCredentialsRepository walletCredentialsRepository;
@@ -130,8 +142,7 @@ public class CredentialServiceTest {
                 any(CredentialIssuerWellKnownResponse.class), any(TokenResponseDTO.class),
                 any(), any(), eq(false), any())).thenReturn(getVCCredentialResponseDTO("CredentialType1"));
         when(credentialVerifierService.verify(any(VCCredentialResponse.class))).thenReturn(false);
-        VCVerificationException actualException = assertThrows(VCVerificationException.class, () ->
-                credentialService.downloadCredentialAsPDF(issuerId, "CredentialType1", expectedTokenResponse, "once", "en", null));
+        VCVerificationException actualException = assertThrows(VCVerificationException.class, this::downloadPdf);
 
         assertEquals("signature_verification_failed --> Error while doing signature verification", actualException.getMessage());
     }
@@ -156,10 +167,103 @@ public class CredentialServiceTest {
                 eq("en")
         )).thenReturn(expectedPDFByteArray);
 
-        ByteArrayInputStream actualPDFByteArray =
-                credentialService.downloadCredentialAsPDF(issuerId, "CredentialType1", expectedTokenResponse, "once", "en", null);
+        ByteArrayInputStream actualPDFByteArray = downloadPdf();
 
         assertEquals(expectedPDFByteArray, actualPDFByteArray);
+    }
+
+    @Test
+    public void shouldRetryCredentialProofWhenIssuerRequiresDPoPNonce() throws Exception {
+        when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
+        HttpHeaders challengeHeaders = new HttpHeaders();
+        challengeHeaders.set(DPoPConstants.DPOP_NONCE_HEADER, "issuer-nonce");
+        when(vcDownloadHandler.downloadCredential(any(IssuerDTO.class), any(String.class),
+                any(CredentialIssuerWellKnownResponse.class), any(TokenResponseDTO.class),
+                any(), any(), eq(false), any()))
+                .thenThrow(new DPoPChallengeException(HttpStatus.UNAUTHORIZED, challengeHeaders, "{}"))
+                .thenReturn(getVCCredentialResponseDTO("CredentialType1"));
+        when(credentialVerifierService.verify(any(VCCredentialResponse.class))).thenReturn(true);
+        issuerDTO.setQr_code_type(QRCodeType.None);
+        ByteArrayInputStream expectedPDFByteArray = generatePdfFromHTML();
+        Mockito.when(credentialUtilService.generatePdfForVerifiableCredential(
+                eq("CredentialType1"),
+                any(VCCredentialResponse.class),
+                eq(issuerDTO),
+                eq(wellKnownResponse.getCredentialConfigurationsSupported().get("CredentialType1")),
+                eq(""),
+                eq("once"),
+                eq("en")
+        )).thenReturn(expectedPDFByteArray);
+        stubTokenExchange(expectedTokenResponse);
+        when(dPoPSessionService.retryCredentialProof(any(), eq("oauth-state"), any(), eq("issuer-nonce"), any()))
+                .thenReturn("retry-proof");
+
+        ByteArrayInputStream actualPDFByteArray = downloadPdf();
+
+        assertEquals(expectedPDFByteArray, actualPDFByteArray);
+        verify(dPoPSessionService).retryCredentialProof(any(), eq("oauth-state"), any(), eq("issuer-nonce"), any());
+    }
+
+    @Test
+    public void shouldRetryWalletCredentialProofWhenIssuerRequiresDPoPNonce() throws Exception {
+        TokenResponseDTO tokenResponse = getTokenResponseDTO();
+        String credentialConfigurationId = "CredentialType1";
+        String walletId = "wallet123";
+        String base64Key = "testKey123";
+        String localIssuerId = "issuer1";
+        String locale = "en";
+        IssuerConfig localIssuerConfig = mock(IssuerConfig.class);
+        IssuerDTO mockIssuerDTO = getIssuerConfigDTO(localIssuerId);
+        CredentialIssuerWellKnownResponse mockWellKnownResponse = new CredentialIssuerWellKnownResponse();
+        mockWellKnownResponse.setCredentialEndPoint("https://example.com/credential");
+        mockWellKnownResponse.setVersion(VCSpecificationVersion.DRAFT_13);
+        VerifiableCredential savedCredential = new VerifiableCredential();
+        savedCredential.setId("credential-id-123");
+        HttpHeaders challengeHeaders = new HttpHeaders();
+        challengeHeaders.set(DPoPConstants.DPOP_NONCE_HEADER, "wallet-issuer-nonce");
+
+        when(localIssuerConfig.getIssuerDTO()).thenReturn(mockIssuerDTO);
+        when(localIssuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
+        when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
+        when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
+        when(vcDownloadHandler.downloadCredential(any(), eq(credentialConfigurationId), any(), any(), eq(walletId), eq(base64Key), eq(true), any()))
+                .thenThrow(new DPoPChallengeException(HttpStatus.UNAUTHORIZED, challengeHeaders, "{}"))
+                .thenReturn(getVCCredentialResponseDTO(credentialConfigurationId));
+        when(credentialVerifierService.verify(any(VCCredentialResponse.class))).thenReturn(true);
+        when(objectMapper.writeValueAsString(any())).thenReturn("{\"credential\":\"data\"}");
+        when(dataProtectionService.encryptCredential(any(), eq(base64Key))).thenReturn("encrypted-credential");
+        when(walletCredentialsRepository.save(any(VerifiableCredential.class))).thenReturn(savedCredential);
+        when(dPoPSessionService.retryCredentialProof(any(), eq("oauth-state"), any(), eq("wallet-issuer-nonce"), any()))
+                .thenReturn("retry-proof");
+
+        VerifiableCredentialResponseDTO result = downloadAndStore(
+                tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale);
+
+        assertNotNull(result);
+        assertEquals("credential-id-123", result.getCredentialId());
+        verify(dPoPSessionService).retryCredentialProof(any(), eq("oauth-state"), any(), eq("wallet-issuer-nonce"), any());
+    }
+
+    @Test
+    public void shouldThrowInvalidRequestExceptionWhenDPoPStateIsBlank() {
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+                credentialService.downloadCredentialAsPDF(
+                        issuerId, "CredentialType1", "once", "en", "auth-code", " ", new MockHttpSession()));
+
+        assertEquals(INVALID_REQUEST.getErrorCode(), exception.getErrorCode());
+        assertTrue(exception.getMessage().contains("DPoP state is required"));
+    }
+
+    @Test
+    public void shouldThrowInvalidRequestExceptionWhenDPoPSessionIsMissing() {
+        when(dPoPSessionService.find(any(), eq("oauth-state"))).thenReturn(null);
+
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
+                credentialService.downloadCredentialAsPDF(
+                        issuerId, "CredentialType1", "once", "en", "auth-code", "oauth-state", new MockHttpSession()));
+
+        assertEquals(INVALID_REQUEST.getErrorCode(), exception.getErrorCode());
+        assertTrue(exception.getMessage().contains("DPoP session not found or token is not bound"));
     }
 
     @Test
@@ -197,8 +301,8 @@ public class CredentialServiceTest {
         when(walletCredentialsRepository.save(any(VerifiableCredential.class))).thenReturn(savedCredential);
 
         // Execute
-        VerifiableCredentialResponseDTO result = credentialService.downloadCredentialAndStoreInDB(
-                tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale, null);
+        VerifiableCredentialResponseDTO result = downloadAndStore(
+                tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale);
 
         // Verify
         assertNotNull(result);
@@ -229,83 +333,77 @@ public class CredentialServiceTest {
         // Mock service calls
         when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
-        when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true), isNull()))
+        when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true), any()))
                 .thenReturn(getVCCredentialResponseDTO(credentialConfigurationId));
         when(credentialVerifierService.verify(any())).thenReturn(false);
 
         // Execute and verify exception
         VCVerificationException exception = assertThrows(VCVerificationException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale, null));
+                downloadAndStore(tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(), exception.getErrorCode());
     }
 
     @Test
-    public void shouldThrowInvalidRequestExceptionForNullTokenResponse() {
+    public void shouldThrowInvalidRequestExceptionForNullTokenResponse() throws Exception {
+        when(dPoPSessionService.find(any(), eq("oauth-state")))
+                .thenReturn(DPoPSession.builder().state("oauth-state").build());
+        when(dPoPSessionService.authorizationCodeParams(any(), eq("oauth-state"), any(), any()))
+                .thenReturn(Map.of("code", "auth-code"));
+        when(idpService.exchangeAndBindToken(any(), any())).thenReturn(null);
+
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
                 credentialService.downloadCredentialAndStoreInDB(
-                        null, "CredentialType1", "wallet123", "testKey123", "issuer1", "en", null));
+                        issuerId, "CredentialType1", "wallet123", "testKey123", "en",
+                        "auth-code", "oauth-state", new MockHttpSession()));
 
         assertEquals(INVALID_REQUEST.getErrorCode(), exception.getErrorCode());
-        assertTrue(exception.getMessage().contains("Token response or access token cannot be null"));
+        assertTrue(exception.getMessage().contains("DPoP session not found or token is not bound"));
     }
 
     @Test
-    public void shouldThrowInvalidRequestExceptionForBlankAccessToken() {
+    public void shouldThrowInvalidRequestExceptionForBlankAccessToken() throws Exception {
         TokenResponseDTO tokenResponse = new TokenResponseDTO();
-        tokenResponse.setAccess_token(""); // blank token
+        tokenResponse.setAccess_token("");
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, "CredentialType1", "wallet123", "testKey123", "issuer1", "en", null));
+                downloadAndStore(tokenResponse, "CredentialType1", "wallet123", "testKey123", "issuer1", "en"));
 
         assertEquals(INVALID_REQUEST.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Token response or access token cannot be null"));
     }
 
     @Test
-    public void shouldThrowInvalidRequestExceptionForBlankCredentialConfigurationId() {
-        TokenResponseDTO tokenResponse = getTokenResponseDTO();
-
+    public void shouldThrowInvalidRequestExceptionForBlankCredentialConfigurationId() throws Exception {
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, "", "wallet123", "testKey123", "issuer1", "en", null));
+                downloadAndStore(getTokenResponseDTO(), "", "wallet123", "testKey123", "issuer1", "en"));
 
         assertEquals(INVALID_REQUEST.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Credential configuration id cannot be null or blank"));
     }
 
     @Test
-    public void shouldThrowInvalidRequestExceptionForBlankWalletId() {
-        TokenResponseDTO tokenResponse = getTokenResponseDTO();
-
+    public void shouldThrowInvalidRequestExceptionForBlankWalletId() throws Exception {
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, "CredentialType1", "", "testKey123", "issuer1", "en", null));
+                downloadAndStore(getTokenResponseDTO(), "CredentialType1", "", "testKey123", "issuer1", "en"));
 
         assertEquals(INVALID_REQUEST.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Wallet ID cannot be null or blank"));
     }
 
     @Test
-    public void shouldThrowInvalidRequestExceptionForBlankBase64Key() {
-        TokenResponseDTO tokenResponse = getTokenResponseDTO();
-
+    public void shouldThrowInvalidRequestExceptionForBlankBase64Key() throws Exception {
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, "CredentialType1", "wallet123", "", "issuer1", "en", null));
+                downloadAndStore(getTokenResponseDTO(), "CredentialType1", "wallet123", "", "issuer1", "en"));
 
         assertEquals(INVALID_REQUEST.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Wallet key cannot be null or blank"));
     }
 
     @Test
-    public void shouldThrowInvalidRequestExceptionForBlankIssuerId() {
-        TokenResponseDTO tokenResponse = getTokenResponseDTO();
-
+    public void shouldThrowInvalidRequestExceptionForBlankIssuerId() throws Exception {
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, "CredentialType1", "wallet123", "testKey123", "", "en", null));
+                downloadAndStore(getTokenResponseDTO(), "CredentialType1", "wallet123", "testKey123", "", "en"));
 
         assertEquals(INVALID_REQUEST.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Issuer ID cannot be null or blank"));
@@ -326,8 +424,7 @@ public class CredentialServiceTest {
 
         // Execute and verify exception
         CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale, null));
+                downloadAndStore(tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Unable to fetch issuer configuration"));
@@ -359,8 +456,7 @@ public class CredentialServiceTest {
 
         // Execute and verify exception
         CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale, null));
+                downloadAndStore(tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Unable to generate credential request"));
@@ -388,13 +484,12 @@ public class CredentialServiceTest {
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
 
         // Mock vcDownloadHandler to throw exception during credential download
-        when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true), isNull()))
+        when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true), any()))
                 .thenThrow(new ExternalServiceUnavailableException(SERVER_UNAVAILABLE.getErrorCode(), SERVER_UNAVAILABLE.getErrorMessage()));
 
         // Execute and verify exception
         ExternalServiceUnavailableException exception = assertThrows(ExternalServiceUnavailableException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale, null));
+                downloadAndStore(tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(SERVER_UNAVAILABLE.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains(SERVER_UNAVAILABLE.getErrorMessage()));
@@ -420,7 +515,7 @@ public class CredentialServiceTest {
         when(localIssuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
         when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
-        when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true), isNull()))
+        when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true), any()))
                 .thenReturn(getVCCredentialResponseDTO(credentialConfigurationId));
 
         // Mock credentialVerifierService to throw exception
@@ -429,8 +524,7 @@ public class CredentialServiceTest {
 
         // Execute and verify exception
         VCVerificationException exception = assertThrows(VCVerificationException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale, null));
+                downloadAndStore(tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(SIGNATURE_VERIFICATION_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Credential verification failed"));
@@ -456,7 +550,7 @@ public class CredentialServiceTest {
         when(localIssuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
         when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
-        when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true), isNull()))
+        when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true), any()))
                 .thenReturn(getVCCredentialResponseDTO(credentialConfigurationId));
         when(credentialVerifierService.verify(any(VCCredentialResponse.class))).thenReturn(true);
 
@@ -466,8 +560,7 @@ public class CredentialServiceTest {
 
         // Execute and verify exception
         CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale, null));
+                downloadAndStore(tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Unable to serialize credential response"));
@@ -493,7 +586,7 @@ public class CredentialServiceTest {
         when(localIssuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
         when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
-        when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true), isNull()))
+        when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true), any()))
                 .thenReturn(getVCCredentialResponseDTO(credentialConfigurationId));
         when(credentialVerifierService.verify(any(VCCredentialResponse.class))).thenReturn(true);
         when(objectMapper.writeValueAsString(any())).thenReturn("{\"credential\":\"data\"}");
@@ -504,8 +597,7 @@ public class CredentialServiceTest {
 
         // Execute and verify exception
         CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale, null));
+                downloadAndStore(tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Unable to encrypt credential data"));
@@ -531,7 +623,7 @@ public class CredentialServiceTest {
         when(localIssuerConfig.getWellKnownResponse()).thenReturn(mockWellKnownResponse);
         when(issuersService.getIssuerConfig(localIssuerId, credentialConfigurationId)).thenReturn(localIssuerConfig);
         when(vcDownloadHandlerFactory.getHandler(VCSpecificationVersion.DRAFT_13)).thenReturn(vcDownloadHandler);
-        when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true), isNull()))
+        when(vcDownloadHandler.downloadCredential(any(), any(), any(), any(), any(), any(), eq(true), any()))
                 .thenReturn(getVCCredentialResponseDTO(credentialConfigurationId));
         when(credentialVerifierService.verify(any(VCCredentialResponse.class))).thenReturn(true);
         when(objectMapper.writeValueAsString(any())).thenReturn("{\"credential\":\"data\"}");
@@ -543,10 +635,34 @@ public class CredentialServiceTest {
 
         // Execute and verify exception
         CredentialProcessingException exception = assertThrows(CredentialProcessingException.class, () ->
-                credentialService.downloadCredentialAndStoreInDB(
-                        tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale, null));
+                downloadAndStore(tokenResponse, credentialConfigurationId, walletId, base64Key, localIssuerId, locale));
 
         assertEquals(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(), exception.getErrorCode());
         assertTrue(exception.getMessage().contains("Unable to save credential to database"));
+    }
+
+    private ByteArrayInputStream downloadPdf() throws Exception {
+        stubTokenExchange(expectedTokenResponse);
+        return credentialService.downloadCredentialAsPDF(
+                issuerId, "CredentialType1", "once", "en", "auth-code", "oauth-state", new MockHttpSession());
+    }
+
+    private VerifiableCredentialResponseDTO downloadAndStore(TokenResponseDTO tokenResponse,
+                                                             String credentialConfigurationId, String walletId,
+                                                             String base64Key, String issuerId, String locale)
+            throws Exception {
+        stubTokenExchange(tokenResponse);
+        return credentialService.downloadCredentialAndStoreInDB(
+                issuerId, credentialConfigurationId, walletId, base64Key, locale,
+                "auth-code", "oauth-state", new MockHttpSession());
+    }
+
+    private void stubTokenExchange(TokenResponseDTO tokenResponse) throws Exception {
+        when(dPoPSessionService.find(any(), eq("oauth-state")))
+                .thenReturn(DPoPSession.builder().state("oauth-state").build());
+        when(dPoPSessionService.authorizationCodeParams(any(), eq("oauth-state"), any(), any()))
+                .thenReturn(Map.of("code", "auth-code"));
+        when(idpService.exchangeAndBindToken(any(), any())).thenReturn(tokenResponse);
+        when(dPoPSessionService.credentialProof(any(), eq("oauth-state"), any(), any())).thenReturn("server-dPoP");
     }
 }

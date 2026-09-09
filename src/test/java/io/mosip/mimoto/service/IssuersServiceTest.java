@@ -9,10 +9,14 @@ import io.mosip.mimoto.dto.IssuersV2DTO;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
 import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
 import io.mosip.mimoto.dto.mimoto.IssuerConfig;
+import io.mosip.mimoto.dto.dpop.IssuerAuthorizeRequest;
+import io.mosip.mimoto.dto.dpop.IssuerAuthorizeResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
+import io.mosip.mimoto.service.DPoPSessionService;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.IssuerConfigUtil;
 import io.mosip.mimoto.util.Utilities;
@@ -31,6 +35,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.mock.web.MockHttpSession;
+
 import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -48,6 +54,9 @@ public class IssuersServiceTest {
 
     @Mock
     IssuerConfigUtil issuersConfigUtil;
+
+    @Mock
+    DPoPSessionService dPoPSessionService;
 
     @Spy
     ObjectMapper objectMapper;
@@ -82,7 +91,7 @@ public class IssuersServiceTest {
         expectedCredentialIssuerConfiguration = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
         Mockito.when(issuersConfigUtil.getAuthServerWellknown(authServerWellknownUrl)).thenReturn(expectedCredentialIssuerConfiguration.getAuthorizationServerWellKnownResponse());
 
-        issuersService = new IssuersServiceImpl(utilities, objectMapper, issuersConfigUtil, publicUrl, context);
+        issuersService = new IssuersServiceImpl(utilities, objectMapper, issuersConfigUtil, publicUrl, context, dPoPSessionService);
     }
 
     @Test
@@ -438,7 +447,7 @@ public class IssuersServiceTest {
         String localContext = "/v4/mimoto";
         String getTokenPath = "/v2/get-token/";
         IssuersServiceImpl serviceWithConfig = new IssuersServiceImpl(
-                utilities, objectMapper, issuersConfigUtil, localPublicUrl, localContext);
+                utilities, objectMapper, issuersConfigUtil, localPublicUrl, localContext, dPoPSessionService);
 
         String issuerIdMissing = "Issuer-Missing";
         String issuerIdExisting = "Issuer-Existing";
@@ -474,7 +483,7 @@ public class IssuersServiceTest {
         String getTokenPath = "/v2/get-token/";
 
         IssuersServiceImpl serviceWithConfig = new IssuersServiceImpl(
-                utilities, objectMapper, issuersConfigUtil, localPublicUrl, localContext);
+                utilities, objectMapper, issuersConfigUtil, localPublicUrl, localContext, dPoPSessionService);
 
         String issuerIdMissing = "IssuerV2-Missing";
         String issuerIdExisting = "Issuer-Existing";
@@ -500,5 +509,56 @@ public class IssuersServiceTest {
 
         assertEquals(expectedGeneratedUrlIssuerA, result.getIssuers().get(0).getTokenEndpoint());
         assertEquals(existingUrl, result.getIssuers().get(1).getTokenEndpoint());
+    }
+
+    @Test
+    public void shouldPassIssuerConfigurationToDPoPSessionServiceWhenCreatingAuthorizationUrl() throws Exception {
+        IssuerAuthorizeRequest request = authorizeRequest("CredentialType1");
+        MockHttpSession httpSession = new MockHttpSession();
+        IssuerAuthorizeResponse expected = IssuerAuthorizeResponse.builder()
+                .authorizationUrl("https://dev/authorize")
+                .state("oauth-state")
+                .build();
+        when(dPoPSessionService.createAuthorizationUrl(eq(httpSession), eq(request), any(), any(),
+                eq("CredentialType1_vc_ldp"))).thenReturn(expected);
+
+        IssuerAuthorizeResponse actual = issuersService.createAuthorizationUrl(httpSession, issuerId, request);
+
+        assertEquals(expected, actual);
+        verify(dPoPSessionService).createAuthorizationUrl(eq(httpSession), eq(request), any(), any(),
+                eq("CredentialType1_vc_ldp"));
+    }
+
+    @Test
+    public void shouldThrowInvalidRequestWhenCredentialConfigurationIdIsUnknown() throws Exception {
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> issuersService.createAuthorizationUrl(new MockHttpSession(), issuerId,
+                        authorizeRequest("UnknownCredential")));
+
+        assertEquals("credentialConfigurationId is not supported by this issuer", exception.getErrorText());
+        verify(dPoPSessionService, never()).createAuthorizationUrl(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void shouldThrowInvalidRequestWhenClientIdIsBlank() throws Exception {
+        issuers.getIssuers().get(0).setClient_id(" ");
+        issuersConfigJsonValue = new Gson().toJson(issuers);
+        when(utilities.getIssuersConfigJsonValue()).thenReturn(issuersConfigJsonValue);
+        when(objectMapper.readValue(issuersConfigJsonValue, IssuersDTO.class)).thenReturn(issuers);
+
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> issuersService.createAuthorizationUrl(new MockHttpSession(), issuerId,
+                        authorizeRequest("CredentialType1")));
+
+        assertEquals("client_id is missing", exception.getErrorText());
+        verify(dPoPSessionService, never()).createAuthorizationUrl(any(), any(), any(), any(), any());
+    }
+
+    private static IssuerAuthorizeRequest authorizeRequest(String credentialConfigurationId) {
+        IssuerAuthorizeRequest request = new IssuerAuthorizeRequest();
+        request.setRedirectUri("https://injiweb.example.com/redirect");
+        request.setCredentialConfigurationId(credentialConfigurationId);
+        request.setUiLocales("en");
+        return request;
     }
 }

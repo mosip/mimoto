@@ -28,19 +28,22 @@ import static org.mockito.Mockito.when;
 
 public class DPoPSessionServiceAuthorizeTest {
 
+    private static final String SCOPE = "CredentialType1_vc_ldp";
+
     @Test
     public void should_includePkceAndDPoPJkt_when_authorizationUrlIsBuilt() throws Exception {
         PkceSessionManager pkceSessionManager = new PkceSessionManager();
         DPoPSessionService service = serviceWithMocks(pkceSessionManager);
         MockHttpSession httpSession = new MockHttpSession();
 
-        IssuerAuthorizeResponse response = service.createAuthorizationUrl(httpSession, "LocalMockid", authorizeRequest());
+        IssuerAuthorizeResponse response = createAuthorizationUrl(service, httpSession);
 
         assertTrue(response.getAuthorizationUrl().startsWith("https://dev/authorize?"));
         assertTrue(response.getAuthorizationUrl().contains("client_id=123"));
         assertTrue(response.getAuthorizationUrl().contains("dpop_jkt=thumbprint"));
         assertTrue(response.getAuthorizationUrl().contains("code_challenge_method=S256"));
         assertTrue(response.getAuthorizationUrl().contains("code_challenge="));
+        assertTrue(response.getAuthorizationUrl().contains("scope=CredentialType1_vc_ldp"));
         assertTrue(response.getAuthorizationUrl().contains("response_type=code"));
         assertTrue(response.getAuthorizationUrl().contains("ui_locales=en"));
         assertTrue(response.getAuthorizationUrl().contains("state=" + java.net.URLEncoder.encode(response.getState(), java.nio.charset.StandardCharsets.UTF_8)));
@@ -48,7 +51,6 @@ public class DPoPSessionServiceAuthorizeTest {
 
         DPoPSession storedDPoP = service.find(httpSession, response.getState());
         assertNotNull(storedDPoP);
-        assertEquals("LocalMockid", storedDPoP.getIssuerId());
         assertEquals("ES256", storedDPoP.getAlg());
 
         PkceSession storedPkce = pkceSessionManager.find(httpSession, response.getState());
@@ -63,7 +65,7 @@ public class DPoPSessionServiceAuthorizeTest {
         PkceSessionManager pkceSessionManager = new PkceSessionManager();
         DPoPSessionService service = serviceWithMocks(pkceSessionManager);
         MockHttpSession httpSession = new MockHttpSession();
-        IssuerAuthorizeResponse response = service.createAuthorizationUrl(httpSession, "LocalMockid", authorizeRequest());
+        IssuerAuthorizeResponse response = createAuthorizationUrl(service, httpSession);
 
         Map<String, String> params = service.authorizationCodeParams(httpSession, response.getState(), "auth-code", "LocalMockid");
 
@@ -77,44 +79,24 @@ public class DPoPSessionServiceAuthorizeTest {
     }
 
     @Test
-    public void should_throwInvalidRequest_when_issuerDoesNotMatchSession() throws Exception {
+    public void should_throwInvalidRequest_when_issuerIdIsBlank() throws Exception {
         DPoPSessionService service = serviceWithMocks();
         MockHttpSession httpSession = new MockHttpSession();
-        IssuerAuthorizeResponse response = service.createAuthorizationUrl(httpSession, "LocalMockid", authorizeRequest());
+        IssuerAuthorizeResponse response = createAuthorizationUrl(service, httpSession);
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class,
-                () -> service.authorizationCodeParams(httpSession, response.getState(), "auth-code", "OtherIssuer"));
-        assertEquals("issuer does not match DPoP session", exception.getErrorText());
+                () -> service.authorizationCodeParams(httpSession, response.getState(), "auth-code", " "));
+        assertEquals("issuerId cannot be blank", exception.getErrorText());
     }
 
     @Test
     public void should_throwInvalidRequest_when_authorizationCodeIsBlank() throws Exception {
         DPoPSessionService service = serviceWithMocks();
         MockHttpSession httpSession = new MockHttpSession();
-        IssuerAuthorizeResponse response = service.createAuthorizationUrl(httpSession, "LocalMockid", authorizeRequest());
+        IssuerAuthorizeResponse response = createAuthorizationUrl(service, httpSession);
 
         assertThrows(InvalidRequestException.class,
                 () -> service.authorizationCodeParams(httpSession, response.getState(), " ", "LocalMockid"));
-    }
-
-    @Test
-    public void should_throwInvalidRequest_when_clientIdIsBlank() throws Exception {
-        IssuersService issuersService = mock(IssuersService.class);
-        DPoPManager dPoPManager = mock(DPoPManager.class);
-        DPoPSessionService service = new DPoPSessionService(issuersService, dPoPManager, new PkceSessionManager());
-
-        CredentialIssuerConfiguration configuration =
-                getCredentialIssuerConfigurationResponseDto("LocalMock", "CredentialType1", List.of());
-        IssuerDTO issuer = getIssuerDTO("LocalMock");
-        issuer.setClient_id(" ");
-
-        when(issuersService.getIssuerConfiguration("LocalMockid")).thenReturn(configuration);
-        when(issuersService.getIssuerDetails("LocalMockid")).thenReturn(issuer);
-        when(dPoPManager.selectAlgorithm(any())).thenReturn("ES256");
-        stubCreateSession(dPoPManager);
-
-        assertThrows(InvalidRequestException.class,
-                () -> service.createAuthorizationUrl(new MockHttpSession(), "LocalMockid", authorizeRequest()));
     }
 
     @Test
@@ -124,11 +106,9 @@ public class DPoPSessionServiceAuthorizeTest {
         MockHttpSession httpSession = new MockHttpSession();
         DPoPSession first = DPoPSession.builder()
                 .state("state-a")
-                .issuerId("LocalMockid")
                 .build();
         DPoPSession second = DPoPSession.builder()
                 .state("state-b")
-                .issuerId("LocalMockid")
                 .build();
 
         Thread firstStore = new Thread(() -> service.store(httpSession, first));
@@ -153,21 +133,19 @@ public class DPoPSessionServiceAuthorizeTest {
         assertNotNull(service.find(httpSession, "state-b"));
     }
 
+    private static IssuerAuthorizeResponse createAuthorizationUrl(DPoPSessionService service, MockHttpSession httpSession) {
+        return service.createAuthorizationUrl(httpSession, authorizeRequest(),
+                issuerConfiguration(), issuer(), SCOPE);
+    }
+
     private static DPoPSessionService serviceWithMocks() throws Exception {
         return serviceWithMocks(new PkceSessionManager());
     }
 
     private static DPoPSessionService serviceWithMocks(PkceSessionManager pkceSessionManager) throws Exception {
-        IssuersService issuersService = mock(IssuersService.class);
         DPoPManager dPoPManager = mock(DPoPManager.class);
-        DPoPSessionService service = new DPoPSessionService(issuersService, dPoPManager, pkceSessionManager);
+        DPoPSessionService service = new DPoPSessionService(dPoPManager, pkceSessionManager);
 
-        CredentialIssuerConfiguration configuration =
-                getCredentialIssuerConfigurationResponseDto("LocalMock", "CredentialType1", List.of());
-        IssuerDTO issuer = getIssuerDTO("LocalMock");
-
-        when(issuersService.getIssuerConfiguration("LocalMockid")).thenReturn(configuration);
-        when(issuersService.getIssuerDetails("LocalMockid")).thenReturn(issuer);
         when(dPoPManager.selectAlgorithm(any())).thenReturn("ES256");
         stubCreateSession(dPoPManager);
         when(dPoPManager.jwkThumbprint(any())).thenReturn("thumbprint");
@@ -180,14 +158,22 @@ public class DPoPSessionServiceAuthorizeTest {
                         .state(invocation.getArgument(0))
                         .alg("ES256")
                         .jwkJson("{}")
+                        .tokenHtu(invocation.getArgument(2))
                         .build());
+    }
+
+    private static CredentialIssuerConfiguration issuerConfiguration() {
+        return getCredentialIssuerConfigurationResponseDto("LocalMock", "CredentialType1", List.of());
+    }
+
+    private static IssuerDTO issuer() {
+        return getIssuerDTO("LocalMock");
     }
 
     private static IssuerAuthorizeRequest authorizeRequest() {
         IssuerAuthorizeRequest request = new IssuerAuthorizeRequest();
         request.setRedirectUri("https://injiweb.example.com/redirect");
-        request.setScope("openid MockVerifiableCredential");
-        request.setResponseType("code");
+        request.setCredentialConfigurationId("CredentialType1");
         request.setUiLocales("en");
         return request;
     }

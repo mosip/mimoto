@@ -10,7 +10,6 @@ import io.mosip.mimoto.dto.dpop.IssuerAuthorizeResponse;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
 import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.service.DPoPSessionService;
 import io.mosip.mimoto.service.impl.IssuersServiceImpl;
 import io.mosip.mimoto.util.Utilities;
 import org.hamcrest.Matchers;
@@ -55,9 +54,6 @@ public class IssuersControllerTest {
 
     @MockBean
     private IssuersServiceImpl issuersService;
-
-    @MockBean
-    private DPoPSessionService dPoPSessionService;
 
     @MockBean
     private Utilities utilities;
@@ -295,7 +291,7 @@ public class IssuersControllerTest {
         String authUrl = "https://dev/authorize?client_id=123&redirect_uri=https%3A%2F%2Finjiweb.example.com%2Fredirect"
                 + "&response_type=code&scope=openid+MockVerifiableCredential&state=oauth-state"
                 + "&code_challenge=challenge&code_challenge_method=S256&dpop_jkt=thumbprint";
-        when(dPoPSessionService.createAuthorizationUrl(any(), eq("LocalMock"), any()))
+        when(issuersService.createAuthorizationUrl(any(), eq("LocalMock"), any()))
                 .thenReturn(IssuerAuthorizeResponse.builder()
                         .authorizationUrl(authUrl)
                         .state("oauth-state")
@@ -306,8 +302,7 @@ public class IssuersControllerTest {
                         .content("""
                                 {
                                   "redirectUri": "https://injiweb.example.com/redirect",
-                                  "scope": "openid MockVerifiableCredential",
-                                  "responseType": "code",
+                                  "credentialConfigurationId": "MockVerifiableCredential",
                                   "uiLocales": "en"
                                 }
                                 """))
@@ -320,7 +315,7 @@ public class IssuersControllerTest {
     public void should_returnStateWithTilde_when_authorizationServiceSucceeds() throws Exception {
         String oauthState = "Iv~UKBqw_XGsyIT~7GuKrVLFfUvtVSEk3993qSftpm.";
         String authUrl = "https://dev/authorize?state=Iv~UKBqw_XGsyIT~7GuKrVLFfUvtVSEk3993qSftpm.";
-        when(dPoPSessionService.createAuthorizationUrl(any(), eq("LocalMock"), any()))
+        when(issuersService.createAuthorizationUrl(any(), eq("LocalMock"), any()))
                 .thenReturn(IssuerAuthorizeResponse.builder()
                         .authorizationUrl(authUrl)
                         .state(oauthState)
@@ -331,8 +326,7 @@ public class IssuersControllerTest {
                         .content("""
                                 {
                                   "redirectUri": "https://injiweb.example.com/redirect",
-                                  "scope": "openid MockVerifiableCredential",
-                                  "responseType": "code",
+                                  "credentialConfigurationId": "MockVerifiableCredential",
                                   "uiLocales": "en"
                                 }
                                 """))
@@ -343,7 +337,7 @@ public class IssuersControllerTest {
 
     @Test
     public void should_returnBadRequest_when_authorizationServiceFails() throws Exception {
-        when(dPoPSessionService.createAuthorizationUrl(any(), eq("unknown"), any()))
+        when(issuersService.createAuthorizationUrl(any(), eq("unknown"), any()))
                 .thenThrow(new InvalidRequestException("invalid_request", "Invalid issuer"));
 
         mockMvc.perform(post("/issuers/{issuer-id}/authorize", "unknown")
@@ -351,8 +345,7 @@ public class IssuersControllerTest {
                         .content("""
                                 {
                                   "redirectUri": "https://injiweb.example.com/redirect",
-                                  "scope": "openid MockVerifiableCredential",
-                                  "responseType": "code",
+                                  "credentialConfigurationId": "MockVerifiableCredential",
                                   "uiLocales": "en"
                                 }
                                 """))

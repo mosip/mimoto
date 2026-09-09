@@ -62,7 +62,11 @@
         },
         {
             "name": "Wallet Binding",
-            "description": "Authorization related endpoints"
+            "description": "Wallet binding related endpoints"
+        },
+        {
+            "name": "Token",
+            "description": "OIDC token exchange endpoints"
         },
         {
             "name": "Verifiers",
@@ -1077,29 +1081,26 @@
                         "name": "state",
                         "in": "header",
                         "required": true,
-                        "description": "OAuth state that identifies the BFF DPoP issuance session created by POST /issuers/{issuer-id}/authorize",
+                        "description": "OAuth state that identifies the DPoP session created by POST /issuers/{issuer-id}/authorize",
                         "schema": {
                             "type": "string"
                         }
                     }
                 ],
                 "requestBody": {
-                    "description": "Request body parameters including issuer, credential type, and authorization code grant fields. Do not send accessToken or DPoP.",
+                    "description": "Request body with issuer, credentialConfigurationId, and authorization code.",
                     "content": {
                         "application/json": {
                             "schema": {
                                 "$ref": "#/components/schemas/VerifiableCredentialRequestDTO"
                             },
                             "examples": {
-                                "Authorization code grant": {
-                                    "description": "Download using authorization code grant fields",
+                                "VerifiableCredentialRequest Example": {
+                                    "description": "VerifiableCredentialRequest Example",
                                     "value": {
                                         "issuer": "issuerId",
                                         "credentialConfigurationId": "MockVerifiableCredential",
-                                        "code": "authCode",
-                                        "grantType": "authorization_code",
-                                        "redirectUri": "https://example.com/cb",
-                                        "codeVerifier": "verifier"
+                                        "code": "authCode"
                                     }
                                 }
                             }
@@ -1255,8 +1256,8 @@
                                             "errorMessage": "credentialConfigurationId cannot be blank"
                                         }
                                     },
-                                    "Missing issuance state": {
-                                        "description": "Missing issuance state",
+                                    "Missing DPoP state": {
+                                        "description": "Missing DPoP state",
                                         "value": {
                                             "errorCode": "invalid_request",
                                             "errorMessage": "state cannot be blank"
@@ -1267,6 +1268,13 @@
                                         "value": {
                                             "errorCode": "invalid_request",
                                             "errorMessage": "code cannot be blank"
+                                        }
+                                    },
+                                    "Invalid code": {
+                                        "description": "Invalid code",
+                                        "value": {
+                                            "errorCode": "invalid_request",
+                                            "errorMessage": "Token exchange failed: invalid_grant"
                                         }
                                     }
                                 }
@@ -1610,7 +1618,7 @@
         "/get-token/{issuer}": {
             "post": {
                 "tags": [
-                    "Wallet Binding"
+                    "Token"
                 ],
                 "summary": "Retrieve accessToken for OIDC flow",
                 "description": "This endpoint allow you to retrieve the access token in exchange for authorization code",
@@ -1703,7 +1711,7 @@
         "/v2/get-token/{issuer}": {
             "post": {
                 "tags": [
-                    "Wallet Binding"
+                    "Token"
                 ],
                 "summary": "Retrieve accessToken for OIDC flow with DPoP support",
                 "description": "This endpoint allows you to retrieve an access token in exchange for an authorization code and returns the authorization server response as-is. Optionally accepts a DPoP proof header and forwards DPoP-Nonce / WWW-Authenticate response headers to the client.",
@@ -2249,20 +2257,21 @@
                     "Credentials download as guest user using OpenId4VCI"
                 ],
                 "summary": "Download credentials as PDF",
-                "description": "BFF guest download. Requires an issuance session from POST /issuers/{issuer-id}/authorize. Send OAuth state in the state request header, plus code, grant_type, redirect_uri, and code_verifier in the form body. Mimoto exchanges the token and signs DPoP proofs server-side. Do not send access_token or a DPoP header.",
+                "description": "For guest download. Requires a DPoP session from POST /issuers/{issuer-id}/authorize. Send OAuth state in the state request header and the authorization code in the form body. Mimoto applies stored PKCE, exchanges the token, and signs DPoP proofs server-side. Do not send access_token, grant_type, redirect_uri, code_verifier, or a DPoP header.",
                 "operationId": "downloadCredentialAsPDF",
                 "parameters": [
                     {
                         "name": "state",
                         "in": "header",
                         "required": true,
-                        "description": "OAuth state that identifies the BFF DPoP issuance session created by POST /issuers/{issuer-id}/authorize",
+                        "description": "OAuth state that identifies the DPoP session created by POST /issuers/{issuer-id}/authorize",
                         "schema": {
                             "type": "string"
                         }
                     }
                 ],
                 "requestBody": {
+                    "description": "Request body parameters including issuer, credential type, storage expiry, locale, and authorization code. Do not send accessToken or DPoP.",
                     "required": true,
                     "content": {
                         "application/x-www-form-urlencoded": {
@@ -2271,10 +2280,7 @@
                                 "required": [
                                     "issuer",
                                     "credential",
-                                    "code",
-                                    "grant_type",
-                                    "redirect_uri",
-                                    "code_verifier"
+                                    "code"
                                 ],
                                 "properties": {
                                     "issuer": {
@@ -2290,16 +2296,6 @@
                                         "type": "string"
                                     },
                                     "code": {
-                                        "type": "string"
-                                    },
-                                    "grant_type": {
-                                        "type": "string",
-                                        "example": "authorization_code"
-                                    },
-                                    "redirect_uri": {
-                                        "type": "string"
-                                    },
-                                    "code_verifier": {
                                         "type": "string"
                                     }
                                 }
@@ -4211,11 +4207,6 @@
                                                 "authorization_endpoint": "https://esignet-insurance.collab.mosip.net/authorize",
                                                 "grant_types_supported": [
                                                     "authorization_code"
-                                                ],
-                                                "token_endpoint": "https://esignet-insurance.collab.mosip.net/v1/esignet/oauth/v2/token",
-                                                "credential_endpoint": "https://injicertify-insurance.collab.mosip.net/v1/certify/issuance/credential",
-                                                "dpop_signing_alg_values_supported": [
-                                                    "ES256"
                                                 ]
                                             },
                                             "errors": []
@@ -4234,7 +4225,7 @@
                     "Issuers"
                 ],
                 "summary": "Build OpenID4VCI authorization URL",
-                "description": "Creates a BFF DPoP issuance session keyed by the OAuth state request header and returns the authorization URL, including ui_locales and dpop_jkt. Guest callers receive a SESSION cookie. Inji Web should open authorizationUrl.",
+                "description": "Creates a PKCE session and a DPoP session keyed by the same OAuth state and returns the authorization URL, including ui_locales and dpop_jkt. Guest callers receive a SESSION cookie. Inji Web should open authorizationUrl.",
                 "operationId": "authorize",
                 "parameters": [
                     {
@@ -4249,7 +4240,7 @@
                         "name": "state",
                         "in": "header",
                         "required": true,
-                        "description": "OAuth state that keys the BFF DPoP issuance session and is placed on the authorization URL",
+                        "description": "OAuth state that keys the DPoP session and is placed on the authorization URL",
                         "schema": {
                             "type": "string",
                             "example": "Iv~UKBqw_XGsyIT~7GuKrVLFfUvtVSEk3993qSftpm."
@@ -5039,35 +5030,21 @@
             },
             "IssuerAuthorizeRequest": {
                 "required": [
-                    "codeChallenge",
-                    "codeChallengeMethod",
                     "redirectUri",
-                    "scope",
-                    "responseType",
+                    "credentialConfigurationId",
                     "uiLocales"
                 ],
                 "type": "object",
-                "description": "PKCE parameters used to build the OpenID4VCI authorization URL. code_verifier stays in the browser.",
+                "description": "Parameters used to build the OpenID4VCI authorization URL. Mimoto generates PKCE state, code_verifier, and code_challenge. Scope comes from the issuer well-known entry for credentialConfigurationId. response_type is always code.",
                 "properties": {
-                    "codeChallenge": {
-                        "type": "string",
-                        "example": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
-                    },
-                    "codeChallengeMethod": {
-                        "type": "string",
-                        "example": "S256"
-                    },
                     "redirectUri": {
                         "type": "string",
                         "example": "https://injiweb.example.com/redirect"
                     },
-                    "scope": {
+                    "credentialConfigurationId": {
                         "type": "string",
-                        "example": "openid MockVerifiableCredential"
-                    },
-                    "responseType": {
-                        "type": "string",
-                        "example": "code"
+                        "description": "Credential configuration id from the issuer well-known. Mimoto uses its scope on the authorization URL.",
+                        "example": "MockVerifiableCredential"
                     },
                     "uiLocales": {
                         "type": "string",
@@ -5091,10 +5068,7 @@
                 "required": [
                     "issuer",
                     "credentialConfigurationId",
-                    "code",
-                    "grantType",
-                    "redirectUri",
-                    "codeVerifier"
+                    "code"
                 ],
                 "type": "object",
                 "properties": {
@@ -5112,24 +5086,9 @@
                         "type": "string",
                         "description": "The authorization code received from the authorization server",
                         "example": "authCode"
-                    },
-                    "grantType": {
-                        "type": "string",
-                        "description": "The grant type for the authorization request",
-                        "example": "authorization_code"
-                    },
-                    "redirectUri": {
-                        "type": "string",
-                        "description": "The redirect URI for the authorization request",
-                        "example": "https://example.com/cb"
-                    },
-                    "codeVerifier": {
-                        "type": "string",
-                        "description": "The code verifier used for PKCE (Proof Key for Code Exchange)",
-                        "example": "verifier"
                     }
                 },
-                "description": "Credential download request used in the OpenID4VCI BFF flow. Mimoto exchanges the authorization code using the issuance session identified by the state request header."
+                "description": "Credential download request used in the OpenID4VCI flow to exchange an authorization code for a credential."
             },
             "VerifiableCredentialResponseDTO": {
                 "required": [
@@ -7157,30 +7116,9 @@
                             "description": "Grant types supported by the issuer's authorization server.",
                             "example": "[\"authorization_code\"]"
                         }
-                    },
-                    "token_endpoint": {
-                        "type": "string",
-                        "format": "uri",
-                        "description": "Public authorization server token URL used as DPoP htu. May differ from the backend URL Mimoto posts to.",
-                        "example": "https://esignet-insurance.collab.mosip.net/v1/esignet/oauth/v2/token"
-                    },
-                    "credential_endpoint": {
-                        "type": "string",
-                        "format": "uri",
-                        "description": "Real credential issuer endpoint used as DPoP htu for credential requests",
-                        "example": "https://injicertify-insurance.collab.mosip.net/v1/certify/issuance/credential"
-                    },
-                    "dpop_signing_alg_values_supported": {
-                        "type": "array",
-                        "description": "JWS algorithms the authorization server accepts for DPoP proofs",
-                        "items": {
-                            "type": "string",
-                            "example": "ES256"
-                        },
-                        "nullable": true
                     }
                 },
-                "description": "Issuer configuration response containing the credential types supported by the issuer and authorization server details required by the client, including DPoP htu endpoints when available."
+                "description": "Issuer configuration response containing the credential types supported by the issuer and authorization server details required by the client."
             },
             "CredentialsResponse": {
                 "required": [

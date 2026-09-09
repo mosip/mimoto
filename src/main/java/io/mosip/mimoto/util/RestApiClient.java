@@ -5,6 +5,7 @@ import io.mosip.mimoto.constant.DPoPConstants;
 import io.mosip.mimoto.core.http.RequestWrapper;
 import io.mosip.mimoto.dto.SecretKeyRequest;
 import io.mosip.mimoto.exception.DPoPChallengeException;
+import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.TokenGenerationFailedException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Objects;
+
+import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
 
 /**
  * The Class RestApiClient.
@@ -237,11 +240,25 @@ public class RestApiClient {
             }
 
             return parseCredentialErrorBody(uri, responseClass, e);
-        } catch (DPoPChallengeException e) {
+        } catch (DPoPChallengeException | InvalidRequestException e) {
             throw e;
         } catch (Exception e) {
             log.error("RestApiClient::postCredentialApi()::error uri: {} {}", uri, e.getMessage(), e);
             return null;
+        }
+    }
+
+    private static void requireHttpsCredentialEndpoint(String uri) {
+        URI parsed;
+        try {
+            parsed = URI.create(StringUtils.defaultString(uri).trim());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
+                    "Credential endpoint must use HTTPS");
+        }
+        if (!"https".equalsIgnoreCase(parsed.getScheme())) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
+                    "Credential endpoint must use HTTPS");
         }
     }
 
@@ -329,6 +346,7 @@ public class RestApiClient {
 
     private <T> T exchangeCredential(String uri, MediaType mediaType, Object requestType, Class<T> responseClass,
                                      String accessToken, boolean useDPoP, String dPoPProof) {
+        requireHttpsCredentialEndpoint(uri);
         HttpEntity<Object> requestEntity = setCredentialRequestHeader(requestType, mediaType, accessToken, useDPoP, dPoPProof);
         ResponseEntity<T> response = plainRestTemplate.exchange(uri, HttpMethod.POST, requestEntity, responseClass);
         return response.getBody();

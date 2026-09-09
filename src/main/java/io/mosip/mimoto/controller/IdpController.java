@@ -37,7 +37,6 @@ import java.util.Set;
 
 @RestController
 @Slf4j
-@Tag(name = SwaggerLiteralConstants.IDP_NAME, description = SwaggerLiteralConstants.IDP_DESCRIPTION)
 public class IdpController {
     private static final boolean USE_BEARER_TOKEN = true;
     private static final String DPOP_HEADER = "DPoP";
@@ -68,6 +67,7 @@ public class IdpController {
         this.requestValidator = requestValidator;
     }
 
+    @Tag(name = SwaggerLiteralConstants.IDP_NAME, description = SwaggerLiteralConstants.IDP_DESCRIPTION)
     @Operation(summary = SwaggerLiteralConstants.IDP_BINDING_OTP_SUMMARY, description = SwaggerLiteralConstants.IDP_BINDING_OTP_DESCRIPTION)
     @PostMapping(value = "/binding-otp", produces = MediaType.APPLICATION_JSON_VALUE)
     @SuppressWarnings("unchecked")
@@ -92,6 +92,7 @@ public class IdpController {
 
     }
 
+    @Tag(name = SwaggerLiteralConstants.IDP_NAME, description = SwaggerLiteralConstants.IDP_DESCRIPTION)
     @Operation(summary = SwaggerLiteralConstants.IDP_WALLET_BINDING_SUMMARY, description = SwaggerLiteralConstants.IDP_WALLET_BINDING_DESCRIPTION)
     @PostMapping(path = "/wallet-binding", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ResponseWrapper<WalletBindingResponseDto>> request(@RequestBody WalletBindingRequestDTO requestDTO)
@@ -128,6 +129,7 @@ public class IdpController {
         }
     }
 
+    @Tag(name = SwaggerLiteralConstants.IDP_TOKEN_NAME, description = SwaggerLiteralConstants.IDP_TOKEN_DESCRIPTION)
     @Operation(summary = SwaggerLiteralConstants.IDP_GET_TOKEN_SUMMARY, description = SwaggerLiteralConstants.IDP_GET_TOKEN_DESCRIPTION)
     @ApiResponses({
             @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = TokenResponseDTO.class), mediaType = "application/json")}),
@@ -149,6 +151,7 @@ public class IdpController {
         }
     }
 
+    @Tag(name = SwaggerLiteralConstants.IDP_TOKEN_NAME, description = SwaggerLiteralConstants.IDP_TOKEN_DESCRIPTION)
     @Operation(
             summary = SwaggerLiteralConstants.IDP_GET_TOKEN_V2_SUMMARY,
             description = SwaggerLiteralConstants.IDP_GET_TOKEN_V2_DESCRIPTION

@@ -65,11 +65,12 @@ public class DPoPManager {
                 "No mutually supported DPoP algorithm. Server supports: " + supportedAlgs);
     }
 
-    public DPoPSession createSession(String state, String alg, String tokenEndpoint) {
+    public DPoPSession createSession(String state, String issuerId, String alg, String tokenEndpoint) {
         try {
             JWK jwk = generateKey(alg);
             return DPoPSession.builder()
                     .state(state)
+                    .issuerId(issuerId)
                     .alg(alg)
                     .jwkJson(jwk.toJSONString())
                     .tokenHtu(normalizeHtu(tokenEndpoint))

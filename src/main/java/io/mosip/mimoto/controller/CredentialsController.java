@@ -4,20 +4,16 @@ import com.google.zxing.WriterException;
 import io.mosip.mimoto.constant.DPoPConstants;
 import io.mosip.mimoto.constant.SwaggerLiteralConstants;
 import io.mosip.mimoto.core.http.ResponseWrapper;
-import io.mosip.mimoto.dto.idp.TokenResponseDTO;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
-import io.mosip.mimoto.exception.DPoPChallengeException;
 import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.InvalidWellknownResponseException;
-import io.mosip.mimoto.exception.IssuerOnboardingException;
 import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.exception.VCVerificationException;
 import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.DPoPSessionService;
-import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.util.Utilities;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,7 +25,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -46,8 +41,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Map;
 
-import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
-
 @RestController
 @RequestMapping(value = "/credentials")
 @Slf4j
@@ -56,21 +49,19 @@ public class CredentialsController {
 
     private final CredentialService credentialService;
 
-    private final IdpService idpService;
-
     private final DPoPSessionService dPoPSessionService;
 
-    public CredentialsController(CredentialService credentialService, IdpService idpService,
-                                 DPoPSessionService dPoPSessionService) {
+    public CredentialsController(CredentialService credentialService, DPoPSessionService dPoPSessionService) {
         this.credentialService = credentialService;
-        this.idpService = idpService;
         this.dPoPSessionService = dPoPSessionService;
     }
 
     @Operation(summary = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_SUMMARY, description = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_DESCRIPTION,
             parameters = @Parameter(name = DPoPConstants.OAUTH_STATE_HEADER, in = ParameterIn.HEADER, required = true,
                     description = "OAuth state that identifies the DPoP session created by POST /issuers/{issuer-id}/authorize",
-                    schema = @Schema(type = "string")))
+                    schema = @Schema(type = "string")),
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Request body parameters including issuer, credential type, storage expiry, locale, and authorization code."))
     @ApiResponses({
             @ApiResponse(responseCode = "200", content = {@Content(mediaType = "application/pdf")}),
             @ApiResponse(responseCode = "400", content = {@Content(schema = @Schema(implementation = ResponseWrapper.class), mediaType = "application/json")})})
@@ -81,24 +72,14 @@ public class CredentialsController {
             HttpSession httpSession) {
 
         try {
-            String issuerId = params.get("issuer");
-            String credentialType = params.get("credential");
-            String credentialValidity = params.get("vcStorageExpiryLimitInTimes");
-            String locale = params.get("locale");
-            log.info("Initiated Token Call");
-            TokenResponseDTO response = getTokenResponse(params, httpSession, state, issuerId);
-            String proof = dPoPSessionService.credentialProof(httpSession, state, issuerId, response);
-
-            log.info("Initiated Download Credential Call");
-            ByteArrayInputStream inputStream;
-            try {
-                inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response, credentialValidity, locale, proof);
-            } catch (DPoPChallengeException exception) {
-                log.info("Retrying guest credential download after DPoP nonce challenge for issuer: {}", issuerId);
-                proof = dPoPSessionService.retryCredentialProof(httpSession, state, issuerId, response, exception);
-                inputStream = credentialService.downloadCredentialAsPDF(issuerId, credentialType, response, credentialValidity, locale, proof);
-            }
-            dPoPSessionService.remove(httpSession, state);
+            ByteArrayInputStream inputStream = credentialService.downloadCredentialAsPDF(
+                    params.get("issuer"),
+                    params.get("credential"),
+                    params.get("vcStorageExpiryLimitInTimes"),
+                    params.get("locale"),
+                    params.get("code"),
+                    state,
+                    httpSession);
             return ResponseEntity
                     .ok()
                     .contentType(MediaType.APPLICATION_PDF)
@@ -122,6 +103,8 @@ public class CredentialsController {
         } catch (Exception exception) {
             log.error("Exception occurred while generating pdf ", exception);
             return Utilities.handleErrorResponse(exception, PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
+        } finally {
+            dPoPSessionService.remove(httpSession, state);
         }
     }
 
@@ -135,28 +118,5 @@ public class CredentialsController {
     public ResponseEntity<Object> handleServerErrorException(Exception ex) {
         log.error("Credential download server error: ", ex);
         return Utilities.handleErrorResponse(ex, PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
-    }
-
-    private TokenResponseDTO getTokenResponse(Map<String, String> params, HttpSession httpSession, String state, String issuerId)
-            throws ApiNotAccessibleException, IOException,
-            AuthorizationServerWellknownResponseException,
-            InvalidWellknownResponseException,
-            IssuerOnboardingException {
-        if (StringUtils.isBlank(state)) {
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
-                    "DPoP state is required");
-        }
-        params.put("state", state);
-        if (dPoPSessionService.find(httpSession, state) != null) {
-            TokenResponseDTO exchanged = idpService.exchangeAndBindToken(
-                    dPoPSessionService.authorizationCodeParams(
-                            httpSession, state, params.get("code"), issuerId),
-                    httpSession);
-            if (exchanged != null) {
-                return exchanged;
-            }
-        }
-        throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
-                "DPoP session not found or token is not bound");
     }
 }

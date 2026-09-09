@@ -130,50 +130,16 @@ public class IdpServiceTest {
     }
 
     @Test
-    public void should_useAuthorizationAudienceForClientAssertion_when_authorizationAudienceIsConfigured() throws Exception {
-        String proxyTokenEndpoint = "http://localhost:8088/v1/esignet/oauth/v2/token";
-        String audience = "http://localhost:3000/v1/esignet/oauth/v2/token";
-        IssuerDTO issuerDTO = new IssuerDTO();
-        issuerDTO.setClient_id("client123");
-        issuerDTO.setClient_alias("clientAlias");
-        issuerDTO.setAuthorization_audience(audience);
-
-        when(issuersService.getIssuerDetails("issuer123")).thenReturn(issuerDTO);
-        when(joseUtil.getJWT(eq("client123"), any(), any(), eq("clientAlias"), any(), eq(audience)))
-                .thenReturn("jwt-token");
-
-        idpService.constructGetTokenRequest(params, "issuer123", proxyTokenEndpoint);
-
-        verify(joseUtil).getJWT(eq("client123"), any(), any(), eq("clientAlias"), any(), eq(audience));
-        verify(joseUtil, never()).getJWT(eq("client123"), any(), any(), eq("clientAlias"), any(), eq(proxyTokenEndpoint));
-    }
-
-    @Test
     public void should_returnTokenEndpoint_when_credentialIssuerConfigurationResponseIsUsed() throws Exception {
         CredentialIssuerConfiguration credentialIssuerConfiguration =
                 getCredentialIssuerConfigurationResponseDto("issuer1", "CredentialType1", List.of());
         String expectedTokenEndpoint = "https://dev/token";
 
-        when(issuersService.getIssuerDetails("issuer1")).thenReturn(new IssuerDTO());
         when(issuersService.getIssuerConfiguration("issuer1")).thenReturn(credentialIssuerConfiguration);
 
         String actualTokenEndpoint = idpService.getTokenEndpoint("issuer1");
 
         assertEquals(expectedTokenEndpoint, actualTokenEndpoint);
-    }
-
-    @Test
-    public void should_returnProxyTokenEndpoint_when_proxyTokenEndpointIsConfigured() throws Exception {
-        String proxyTokenEndpoint = "http://localhost:8088/v1/esignet/oauth/v2/token";
-        IssuerDTO issuerDTO = new IssuerDTO();
-        issuerDTO.setProxy_token_endpoint(proxyTokenEndpoint);
-
-        when(issuersService.getIssuerDetails("issuer1")).thenReturn(issuerDTO);
-
-        String actualTokenEndpoint = idpService.getTokenEndpoint("issuer1");
-
-        assertEquals(proxyTokenEndpoint, actualTokenEndpoint);
-        verify(issuersService, never()).getIssuerConfiguration("issuer1");
     }
 
     @Test
@@ -295,7 +261,7 @@ public class IdpServiceTest {
     }
 
     @Test
-    public void shouldPassThroughUseDPoPNonceErrorWithNonceHeaderAsIsForV2TokenResponse() throws Exception {
+    public void should_passThroughUseDPoPNonceErrorWithNonceHeader_when_v2TokenEndpointRequiresNonce() throws Exception {
         String tokenEndpoint = "https://as.example.com/token";
         String errorBody = "{\"error\":\"use_dpop_nonce\",\"error_description\":\"nonce required\"}";
         HttpHeaders responseHeaders = new HttpHeaders();
@@ -344,7 +310,6 @@ public class IdpServiceTest {
         jakarta.servlet.http.HttpSession httpSession = mock(jakarta.servlet.http.HttpSession.class);
         io.mosip.mimoto.dto.dpop.DPoPSession dPoPSession = io.mosip.mimoto.dto.dpop.DPoPSession.builder()
                 .state("oauth-state")
-                .issuerId("issuer123")
                 .alg("RS256")
                 .tokenHtu("https://as.example.com/token")
                 .jwkJson("{}")
@@ -371,7 +336,6 @@ public class IdpServiceTest {
         jakarta.servlet.http.HttpSession httpSession = mock(jakarta.servlet.http.HttpSession.class);
         io.mosip.mimoto.dto.dpop.DPoPSession dPoPSession = io.mosip.mimoto.dto.dpop.DPoPSession.builder()
                 .state("oauth-state")
-                .issuerId("issuer123")
                 .alg("RS256")
                 .tokenHtu("https://as.example.com/token")
                 .jwkJson("{}")
@@ -409,12 +373,12 @@ public class IdpServiceTest {
     }
 
     @Test
-    public void should_throwInvalidRequest_when_tokenRequestIssuerDoesNotMatchSession() throws Exception {
+    public void should_throwInvalidRequest_when_tokenRequestIssuerIsBlank() throws Exception {
         params.put("state", "oauth-state");
+        params.put("issuer", " ");
         jakarta.servlet.http.HttpSession httpSession = mock(jakarta.servlet.http.HttpSession.class);
         io.mosip.mimoto.dto.dpop.DPoPSession dPoPSession = io.mosip.mimoto.dto.dpop.DPoPSession.builder()
                 .state("oauth-state")
-                .issuerId("session-issuer")
                 .alg("RS256")
                 .tokenHtu("https://as.example.com/token")
                 .jwkJson("{}")
@@ -423,7 +387,7 @@ public class IdpServiceTest {
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class,
                 () -> idpService.exchangeAndBindToken(params, httpSession));
-        assertEquals("issuer does not match DPoP session", exception.getErrorText());
+        assertEquals("issuerId cannot be blank", exception.getErrorText());
         verify(restTemplate, never()).exchange(anyString(), any(), any(), eq(String.class));
     }
 

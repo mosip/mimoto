@@ -93,10 +93,7 @@ public class IdpServiceImpl implements IdpService {
 
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-        String audience = StringUtils.hasText(issuerDTO.getAuthorization_audience())
-                ? issuerDTO.getAuthorization_audience()
-                : tokenEndpoint;
-        String clientAssertion = joseUtil.getJWT(issuerDTO.getClient_id(), keyStorePath, fileName, issuerDTO.getClient_alias(), cyptoPassword, audience);
+        String clientAssertion = joseUtil.getJWT(issuerDTO.getClient_id(), keyStorePath, fileName, issuerDTO.getClient_alias(), cyptoPassword, tokenEndpoint);
         map.add("code", params.get("code"));
         map.add("client_id", issuerDTO.getClient_id());
         map.add(GRANT_TYPE, params.get(GRANT_TYPE));
@@ -113,14 +110,6 @@ public class IdpServiceImpl implements IdpService {
             throws ApiNotAccessibleException, IOException,
             AuthorizationServerWellknownResponseException,
             InvalidWellknownResponseException {
-        try {
-            IssuerDTO issuerDTO = issuersService.getIssuerDetails(issuerId);
-            if (StringUtils.hasText(issuerDTO.getProxy_token_endpoint())) {
-                return issuerDTO.getProxy_token_endpoint();
-            }
-        } catch (InvalidIssuerIdException e) {
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Invalid issuer");
-        }
         CredentialIssuerConfiguration credentialIssuerConfiguration =
                 issuersService.getIssuerConfiguration(issuerId);
         return credentialIssuerConfiguration.getAuthorizationServerWellKnownResponse().getTokenEndpoint();
@@ -228,7 +217,7 @@ public class IdpServiceImpl implements IdpService {
             return null;
         }
         try {
-            String issuerId = boundIssuerId(dPoPSession, params);
+            String issuerId = requireIssuerId(params);
             String tokenEndpoint = getTokenEndpoint(issuerId);
 
             HttpEntity<MultiValueMap<String, String>> request =
@@ -255,44 +244,41 @@ public class IdpServiceImpl implements IdpService {
         }
     }
 
-    private static String boundIssuerId(DPoPSession dPoPSession, Map<String, String> params) {
-        String sessionIssuerId = dPoPSession.getIssuerId();
-        String requestIssuerId = params != null ? params.get("issuer") : null;
-        if (!StringUtils.hasText(sessionIssuerId)
-                || (StringUtils.hasText(requestIssuerId) && !sessionIssuerId.equals(requestIssuerId))) {
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
-                    "issuer does not match DPoP session");
+    private static String requireIssuerId(Map<String, String> params) {
+        String issuerId = params != null ? params.get("issuer") : null;
+        if (!StringUtils.hasText(issuerId)) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "issuerId cannot be blank");
         }
-        return sessionIssuerId;
+        return issuerId;
     }
 
     private ResponseEntity<String> exchangeTokenWithServerDPoP(String tokenEndpoint,
                                                                HttpEntity<MultiValueMap<String, String>> request,
                                                                DPoPSession dPoPSession) {
-        ResponseEntity<String> asResponse = postTokenWithProof(tokenEndpoint, request, dPoPSession);
+        ResponseEntity<String> asResponse = postTokenWithSessionProof(tokenEndpoint, request, dPoPSession);
         if (isUseDPoPNonce(asResponse)) {
             String nonce = asResponse.getHeaders().getFirst(DPoPConstants.DPOP_NONCE_HEADER);
-            asResponse = postTokenWithProof(tokenEndpoint, request, dPoPSession, nonce);
+            asResponse = postTokenWithNonceProof(tokenEndpoint, request, dPoPSession, nonce);
         }
         return asResponse;
     }
 
-    private ResponseEntity<String> postTokenWithProof(String tokenEndpoint,
-                                                      HttpEntity<MultiValueMap<String, String>> request,
-                                                      DPoPSession dPoPSession) {
-        return postTokenWithProof(tokenEndpoint, request, dPoPManager.generateTokenProof(dPoPSession));
+    private ResponseEntity<String> postTokenWithSessionProof(String tokenEndpoint,
+                                                             HttpEntity<MultiValueMap<String, String>> request,
+                                                             DPoPSession dPoPSession) {
+        return postTokenRequestWithDPoP(tokenEndpoint, request, dPoPManager.generateTokenProof(dPoPSession));
     }
 
-    private ResponseEntity<String> postTokenWithProof(String tokenEndpoint,
-                                                      HttpEntity<MultiValueMap<String, String>> request,
-                                                      DPoPSession dPoPSession,
-                                                      String nonce) {
-        return postTokenWithProof(tokenEndpoint, request, dPoPManager.generateTokenProof(dPoPSession, nonce));
+    private ResponseEntity<String> postTokenWithNonceProof(String tokenEndpoint,
+                                                           HttpEntity<MultiValueMap<String, String>> request,
+                                                           DPoPSession dPoPSession,
+                                                           String nonce) {
+        return postTokenRequestWithDPoP(tokenEndpoint, request, dPoPManager.generateTokenProof(dPoPSession, nonce));
     }
 
-    private ResponseEntity<String> postTokenWithProof(String tokenEndpoint,
-                                                      HttpEntity<MultiValueMap<String, String>> request,
-                                                      String dPoPProof) {
+    private ResponseEntity<String> postTokenRequestWithDPoP(String tokenEndpoint,
+                                                            HttpEntity<MultiValueMap<String, String>> request,
+                                                            String dPoPProof) {
         HttpHeaders headers = new HttpHeaders();
         headers.addAll(request.getHeaders());
         headers.set(DPOP_HEADER, dPoPProof);

@@ -11,7 +11,6 @@ import io.mosip.mimoto.dto.mimoto.*;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
 import io.mosip.mimoto.exception.InvalidRequestException;
-import io.mosip.mimoto.service.DPoPSessionService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.util.Utilities;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,11 +36,9 @@ import static io.mosip.mimoto.exception.PlatformErrorMessages.*;
 public class IssuersController {
 
     private final IssuersService issuersService;
-    private final DPoPSessionService dPoPSessionService;
 
-    public IssuersController(IssuersService issuersService, DPoPSessionService dPoPSessionService) {
+    public IssuersController(IssuersService issuersService) {
         this.issuersService = issuersService;
-        this.dPoPSessionService = dPoPSessionService;
     }
 
     @Operation(summary = SwaggerLiteralConstants.ISSUERS_GET_ISSUERS_SUMMARY, description = SwaggerLiteralConstants.ISSUERS_GET_ISSUERS_DESCRIPTION)
@@ -147,7 +144,7 @@ public class IssuersController {
                                                              HttpSession httpSession) {
         try {
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(dPoPSessionService.createAuthorizationUrl(httpSession, issuerId, request));
+                    .body(issuersService.createAuthorizationUrl(httpSession, issuerId, request));
         } catch (InvalidRequestException exception) {
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     exception, INVALID_ISSUER_ID_CONFIGURATION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
