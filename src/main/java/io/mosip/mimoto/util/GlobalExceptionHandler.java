@@ -10,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -23,7 +22,6 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Collections;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @ControllerAdvice
 @ResponseBody
@@ -146,14 +144,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorDTO> handleValidationException(MethodArgumentNotValidException ex) {
         BindingResult br = ex.getBindingResult();
-        String fieldErrors = br.getFieldErrors().stream()
+        String message = br.getFieldErrors().stream()
                 .map(fe -> fe.getField() + " " + fe.getDefaultMessage())
-                .collect(Collectors.joining("; "));
-        String globalErrors = br.getGlobalErrors().stream()
-                .map(ObjectError::getDefaultMessage)
-                .collect(Collectors.joining("; "));
-        String message = Stream.of(fieldErrors, globalErrors)
-                .filter(s -> s != null && !s.isBlank())
                 .collect(Collectors.joining("; "));
         if (message.isBlank()) {
             message = "Invalid request";

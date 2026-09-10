@@ -6,6 +6,7 @@ import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.service.DPoPSessionService;
+import io.mosip.mimoto.service.PkceSessionManager;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
 import jakarta.servlet.http.HttpSession;
@@ -48,6 +49,9 @@ public class WalletCredentialsControllerTest {
 
     @MockBean
     private DPoPSessionService dPoPSessionService;
+
+    @MockBean
+    private PkceSessionManager pkceSessionManager;
 
     @Mock
     private HttpSession httpSession;
@@ -136,6 +140,7 @@ public class WalletCredentialsControllerTest {
                 eq(issuer), eq(credentialConfigurationId), eq(locale), eq(walletId), eq(walletKey),
                 eq(code), eq(state), any());
         verify(dPoPSessionService).remove(any(), eq("oauth-state"));
+        verify(pkceSessionManager).remove(any(), eq("oauth-state"));
     }
 
     @Test
@@ -158,6 +163,7 @@ public class WalletCredentialsControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("credential_download_error"))
                 .andExpect(jsonPath("$.errorMessage").value("Duplicate credential for issuer and type"));
         verify(dPoPSessionService).remove(any(), eq(state));
+        verify(pkceSessionManager).remove(any(), eq(state));
     }
 
     @Test
@@ -660,6 +666,7 @@ public class WalletCredentialsControllerTest {
                 .andExpect(jsonPath("$.credentialId").value("credentialId123"));
 
         verify(dPoPSessionService).remove(any(), eq(state));
+        verify(pkceSessionManager).remove(any(), eq(state));
     }
 
     private void buildVerifiableCredentialRequest(String issuer, String credentialConfigurationId, String code) {

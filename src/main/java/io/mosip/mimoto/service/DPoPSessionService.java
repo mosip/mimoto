@@ -2,14 +2,9 @@ package io.mosip.mimoto.service;
 
 import io.mosip.mimoto.constant.DPoPConstants;
 import io.mosip.mimoto.constant.SessionKeys;
-import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.dpop.DPoPSession;
-import io.mosip.mimoto.dto.dpop.IssuerAuthorizeRequest;
-import io.mosip.mimoto.dto.dpop.IssuerAuthorizeResponse;
 import io.mosip.mimoto.dto.idp.TokenResponseDTO;
-import io.mosip.mimoto.dto.mimoto.CredentialIssuerConfiguration;
-import io.mosip.mimoto.dto.pkce.PkceSession;
-import io.mosip.mimoto.util.AuthorizationUrlBuilder;
+import io.mosip.mimoto.dto.mimoto.AuthorizationServerWellKnownResponse;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -26,52 +21,20 @@ import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
 public class DPoPSessionService {
 
     private final DPoPManager dPoPManager;
-    private final PkceSessionManager pkceSessionManager;
 
-    public DPoPSessionService(DPoPManager dPoPManager, PkceSessionManager pkceSessionManager) {
+    public DPoPSessionService(DPoPManager dPoPManager) {
         this.dPoPManager = dPoPManager;
-        this.pkceSessionManager = pkceSessionManager;
     }
 
-    public IssuerAuthorizeResponse createAuthorizationUrl(HttpSession httpSession,
-                                                          IssuerAuthorizeRequest request,
-                                                          CredentialIssuerConfiguration configuration,
-                                                          IssuerDTO issuer,
-                                                          String scope) {
-        if (httpSession == null) {
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "HTTP session is required for DPoP");
+    public DPoPSession createSession(String state, AuthorizationServerWellKnownResponse authorizationServer) {
+        if (StringUtils.isBlank(state)) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "state cannot be blank");
         }
-        if (request == null) {
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "authorization request is required");
+        if (authorizationServer == null || StringUtils.isBlank(authorizationServer.getTokenEndpoint())) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "token_endpoint is missing");
         }
-        PkceSession pkceSession = pkceSessionManager.createSession(request.getRedirectUri());
-        DPoPSession dPoPSession = createDPoPSession(pkceSession.getState(), configuration);
-        pkceSessionManager.store(httpSession, pkceSession);
-        store(httpSession, dPoPSession);
-        String authorizationUrl = AuthorizationUrlBuilder.build(
-                configuration.getAuthorizationServerWellKnownResponse().getAuthorizationEndpoint(),
-                issuer.getClient_id(),
-                pkceSession.getRedirectUri(),
-                scope,
-                DPoPConstants.AUTHORIZATION_RESPONSE_TYPE,
-                pkceSession.getState(),
-                pkceSession.getCodeChallenge(),
-                "S256",
-                request.getUiLocales(),
-                dPoPManager.jwkThumbprint(dPoPSession));
-        return IssuerAuthorizeResponse.builder()
-                .authorizationUrl(authorizationUrl)
-                .state(pkceSession.getState())
-                .build();
-    }
-
-    private DPoPSession createDPoPSession(String state, CredentialIssuerConfiguration configuration) {
-        String alg = dPoPManager.selectAlgorithm(
-                configuration.getAuthorizationServerWellKnownResponse().getDPoPSigningAlgValuesSupported());
-        DPoPSession dPoPSession = dPoPManager.createSession(
-                state,
-                alg,
-                configuration.getAuthorizationServerWellKnownResponse().getTokenEndpoint());
+        String alg = dPoPManager.selectAlgorithm(authorizationServer.getDPoPSigningAlgValuesSupported());
+        DPoPSession dPoPSession = dPoPManager.createSession(state, alg, authorizationServer.getTokenEndpoint());
         log.info("Created DPoP session alg {}", alg);
         return dPoPSession;
     }
@@ -109,29 +72,6 @@ public class DPoPSessionService {
             sessions.remove(state);
             httpSession.setAttribute(SessionKeys.DPOP_SESSION, sessions);
         }
-        pkceSessionManager.remove(httpSession, state);
-    }
-
-    public Map<String, String> authorizationCodeParams(HttpSession httpSession, String state, String code, String issuerId) {
-        require(httpSession, state);
-        PkceSession pkceSession = pkceSessionManager.require(httpSession, state);
-        if (StringUtils.isBlank(pkceSession.getCodeVerifier()) || StringUtils.isBlank(pkceSession.getRedirectUri())) {
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "PKCE session is incomplete");
-        }
-        if (StringUtils.isBlank(code)) {
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "code cannot be blank");
-        }
-        if (StringUtils.isBlank(issuerId)) {
-            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "issuerId cannot be blank");
-        }
-        Map<String, String> params = new HashMap<>();
-        params.put("code", code);
-        params.put("code_verifier", pkceSession.getCodeVerifier());
-        params.put("redirect_uri", pkceSession.getRedirectUri());
-        params.put("grant_type", "authorization_code");
-        params.put("issuer", issuerId);
-        params.put("state", state);
-        return params;
     }
 
     public String credentialProof(HttpSession httpSession, String state, TokenResponseDTO token,

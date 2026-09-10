@@ -11,8 +11,10 @@ import io.mosip.mimoto.exception.CredentialProcessingException;
 import io.mosip.mimoto.exception.DPoPChallengeException;
 import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
+import io.mosip.mimoto.constant.DPoPConstants;
 import io.mosip.mimoto.service.V1CredentialRequestService;
 import io.mosip.mimoto.service.VCDownloadHandler;
+import io.mosip.mimoto.util.CredentialApiClient;
 import io.mosip.mimoto.util.RestApiClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -34,10 +36,13 @@ public class V1VCDownloadHandler implements VCDownloadHandler {
 
     private final V1CredentialRequestService v1CredentialRequestService;
     private final RestApiClient restApiClient;
+    private final CredentialApiClient credentialApiClient;
 
-    public V1VCDownloadHandler(V1CredentialRequestService v1CredentialRequestService, RestApiClient restApiClient) {
+    public V1VCDownloadHandler(V1CredentialRequestService v1CredentialRequestService, RestApiClient restApiClient,
+                               CredentialApiClient credentialApiClient) {
         this.v1CredentialRequestService = v1CredentialRequestService;
         this.restApiClient = restApiClient;
+        this.credentialApiClient = credentialApiClient;
     }
 
     @Override
@@ -90,10 +95,22 @@ public class V1VCDownloadHandler implements VCDownloadHandler {
     private V1VCCredentialResponse postCredentialRequest(String credentialEndpoint, V1VCCredentialRequest request,
                                                          TokenResponseDTO tokenResponse, String dPoPProof) {
         try {
-            return restApiClient.postCredentialApi(credentialEndpoint, MediaType.APPLICATION_JSON, request,
-                    V1VCCredentialResponse.class, tokenResponse.getAccess_token(), tokenResponse.getToken_type(), dPoPProof);
+            if (isDPoPRequest(tokenResponse, dPoPProof)) {
+                return credentialApiClient.postCredentialApi(credentialEndpoint, MediaType.APPLICATION_JSON, request,
+                        V1VCCredentialResponse.class, tokenResponse.getAccess_token(), tokenResponse.getToken_type(), dPoPProof);
+            }
+            return restApiClient.postApiWithErrorResponse(credentialEndpoint, MediaType.APPLICATION_JSON, request,
+                    V1VCCredentialResponse.class, tokenResponse.getAccess_token());
         } catch (DPoPChallengeException e) {
             throw e;
         }
+    }
+
+    private static boolean isDPoPRequest(TokenResponseDTO tokenResponse, String dPoPProof) {
+        if (dPoPProof == null || dPoPProof.isBlank()) {
+            return false;
+        }
+        String tokenType = tokenResponse.getToken_type();
+        return tokenType == null || !DPoPConstants.BEARER_TOKEN_TYPE.equalsIgnoreCase(tokenType);
     }
 }

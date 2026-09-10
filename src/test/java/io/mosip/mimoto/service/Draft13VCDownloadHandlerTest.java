@@ -10,6 +10,7 @@ import io.mosip.mimoto.exception.CredentialProcessingException;
 import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.service.impl.Draft13VCDownloadHandler;
+import io.mosip.mimoto.util.CredentialApiClient;
 import io.mosip.mimoto.util.RestApiClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,6 +41,9 @@ class Draft13VCDownloadHandlerTest {
 
     @Mock
     private RestApiClient restApiClient;
+
+    @Mock
+    private CredentialApiClient credentialApiClient;
 
     @InjectMocks
     private Draft13VCDownloadHandler handler;
@@ -81,14 +84,12 @@ class Draft13VCDownloadHandlerTest {
         VerifiableCredentialResponse mockResponse = new VerifiableCredentialResponse();
         mockResponse.setCredential("mock-credential-data");
 
-        when(restApiClient.postCredentialApi(
+        when(restApiClient.postApi(
                 eq("https://example.com/credential"),
                 eq(MediaType.APPLICATION_JSON),
                 eq(request),
                 eq(VerifiableCredentialResponse.class),
-                eq("valid-access-token"),
-                nullable(String.class),
-                nullable(String.class)
+                eq("valid-access-token")
         )).thenReturn(mockResponse);
 
         VCCredentialResponse result = handler.downloadCredential(
@@ -128,14 +129,12 @@ class Draft13VCDownloadHandlerTest {
                 eq(wellKnownResponse), eq(tokenResponse.getC_nonce()), eq(walletId), eq(base64Key), eq(isLoginFlow)))
                 .thenReturn(request);
 
-        when(restApiClient.postCredentialApi(
+        when(restApiClient.postApi(
                 eq("https://example.com/credential"),
                 eq(MediaType.APPLICATION_JSON),
                 eq(request),
                 eq(VerifiableCredentialResponse.class),
-                eq("valid-access-token"),
-                nullable(String.class),
-                nullable(String.class)
+                eq("valid-access-token")
         )).thenReturn(null);
 
         ExternalServiceUnavailableException exception = assertThrows(
@@ -163,14 +162,12 @@ class Draft13VCDownloadHandlerTest {
         VerifiableCredentialResponse mockResponse = new VerifiableCredentialResponse();
         mockResponse.setCredential(null);
 
-        when(restApiClient.postCredentialApi(
+        when(restApiClient.postApi(
                 eq("https://example.com/credential"),
                 eq(MediaType.APPLICATION_JSON),
                 eq(request),
                 eq(VerifiableCredentialResponse.class),
-                eq("valid-access-token"),
-                nullable(String.class),
-                nullable(String.class)
+                eq("valid-access-token")
         )).thenReturn(mockResponse);
 
         InvalidCredentialResourceException exception = assertThrows(
@@ -195,7 +192,7 @@ class Draft13VCDownloadHandlerTest {
                 eq(wellKnownResponse), eq(tokenResponse.getC_nonce()), eq(walletId), eq(base64Key), eq(isLoginFlow)))
                 .thenReturn(request);
 
-        when(restApiClient.postCredentialApi(anyString(), any(), any(), any(), anyString(), nullable(String.class), nullable(String.class)))
+        when(restApiClient.postApi(anyString(), any(), any(), any(), anyString()))
                 .thenThrow(new RuntimeException("API down"));
 
         ExternalServiceUnavailableException exception = assertThrows(

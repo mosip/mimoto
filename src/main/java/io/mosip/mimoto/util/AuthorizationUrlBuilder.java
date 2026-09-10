@@ -6,8 +6,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Builds the OpenID4VCI authorization request URL, matching
- * inji-vci-client {@code AuthorizationUrlBuilder}.
+ * Builds the OpenID4VCI authorization request URL.
  */
 public final class AuthorizationUrlBuilder {
 

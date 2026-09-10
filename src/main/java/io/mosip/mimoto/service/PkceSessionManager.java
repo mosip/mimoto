@@ -14,7 +14,7 @@ import java.util.Map;
 import static io.mosip.mimoto.exception.ErrorConstants.INVALID_REQUEST;
 
 /**
- * Creates and stores PKCE sessions, matching inji-vci-client {@code PKCESessionManager}.
+ * Creates and stores PKCE sessions.
  */
 @Service
 public class PkceSessionManager {
@@ -64,6 +64,27 @@ public class PkceSessionManager {
             sessions.remove(state);
             httpSession.setAttribute(SessionKeys.PKCE_SESSION, sessions);
         }
+    }
+
+    public Map<String, String> authorizationCodeParams(HttpSession httpSession, String state, String code, String issuerId) {
+        PkceSession pkceSession = require(httpSession, state);
+        if (StringUtils.isBlank(pkceSession.getCodeVerifier()) || StringUtils.isBlank(pkceSession.getRedirectUri())) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "PKCE session is incomplete");
+        }
+        if (StringUtils.isBlank(code)) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "code cannot be blank");
+        }
+        if (StringUtils.isBlank(issuerId)) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "issuerId cannot be blank");
+        }
+        Map<String, String> params = new HashMap<>();
+        params.put("code", code);
+        params.put("code_verifier", pkceSession.getCodeVerifier());
+        params.put("redirect_uri", pkceSession.getRedirectUri());
+        params.put("grant_type", "authorization_code");
+        params.put("issuer", issuerId);
+        params.put("state", state);
+        return params;
     }
 
     @SuppressWarnings("unchecked")

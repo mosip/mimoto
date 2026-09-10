@@ -58,6 +58,12 @@ public class IssuersServiceTest {
     @Mock
     DPoPSessionService dPoPSessionService;
 
+    @Mock
+    PkceSessionManager pkceSessionManager;
+
+    @Mock
+    DPoPManager dPoPManager;
+
     @Spy
     ObjectMapper objectMapper;
 
@@ -91,7 +97,8 @@ public class IssuersServiceTest {
         expectedCredentialIssuerConfiguration = getCredentialIssuerConfigurationResponseDto(issuerId, "CredentialType1", List.of());
         Mockito.when(issuersConfigUtil.getAuthServerWellknown(authServerWellknownUrl)).thenReturn(expectedCredentialIssuerConfiguration.getAuthorizationServerWellKnownResponse());
 
-        issuersService = new IssuersServiceImpl(utilities, objectMapper, issuersConfigUtil, publicUrl, context, dPoPSessionService);
+        issuersService = new IssuersServiceImpl(utilities, objectMapper, issuersConfigUtil, publicUrl, context,
+                dPoPSessionService, pkceSessionManager, dPoPManager);
     }
 
     @Test
@@ -447,7 +454,8 @@ public class IssuersServiceTest {
         String localContext = "/v4/mimoto";
         String getTokenPath = "/v2/get-token/";
         IssuersServiceImpl serviceWithConfig = new IssuersServiceImpl(
-                utilities, objectMapper, issuersConfigUtil, localPublicUrl, localContext, dPoPSessionService);
+                utilities, objectMapper, issuersConfigUtil, localPublicUrl, localContext,
+                dPoPSessionService, pkceSessionManager, dPoPManager);
 
         String issuerIdMissing = "Issuer-Missing";
         String issuerIdExisting = "Issuer-Existing";
@@ -483,7 +491,8 @@ public class IssuersServiceTest {
         String getTokenPath = "/v2/get-token/";
 
         IssuersServiceImpl serviceWithConfig = new IssuersServiceImpl(
-                utilities, objectMapper, issuersConfigUtil, localPublicUrl, localContext, dPoPSessionService);
+                utilities, objectMapper, issuersConfigUtil, localPublicUrl, localContext,
+                dPoPSessionService, pkceSessionManager, dPoPManager);
 
         String issuerIdMissing = "IssuerV2-Missing";
         String issuerIdExisting = "Issuer-Existing";
@@ -512,21 +521,34 @@ public class IssuersServiceTest {
     }
 
     @Test
-    public void shouldPassIssuerConfigurationToDPoPSessionServiceWhenCreatingAuthorizationUrl() throws Exception {
+    public void shouldCreatePkceAndDPoPSessionsThenBuildAuthorizationUrl() throws Exception {
         IssuerAuthorizeRequest request = authorizeRequest("CredentialType1");
         MockHttpSession httpSession = new MockHttpSession();
-        IssuerAuthorizeResponse expected = IssuerAuthorizeResponse.builder()
-                .authorizationUrl("https://dev/authorize")
+        io.mosip.mimoto.dto.pkce.PkceSession pkceSession = io.mosip.mimoto.dto.pkce.PkceSession.builder()
                 .state("oauth-state")
+                .codeVerifier("code-verifier")
+                .codeChallenge("code-challenge")
+                .redirectUri("https://injiweb.example.com/redirect")
                 .build();
-        when(dPoPSessionService.createAuthorizationUrl(eq(httpSession), eq(request), any(), any(),
-                eq("CredentialType1_vc_ldp"))).thenReturn(expected);
+        io.mosip.mimoto.dto.dpop.DPoPSession dPoPSession = io.mosip.mimoto.dto.dpop.DPoPSession.builder()
+                .state("oauth-state")
+                .alg("ES256")
+                .jwkJson("{}")
+                .build();
+        when(pkceSessionManager.createSession(eq("https://injiweb.example.com/redirect"))).thenReturn(pkceSession);
+        when(dPoPSessionService.createSession(eq("oauth-state"), any())).thenReturn(dPoPSession);
+        when(dPoPManager.jwkThumbprint(dPoPSession)).thenReturn("thumbprint");
 
         IssuerAuthorizeResponse actual = issuersService.createAuthorizationUrl(httpSession, issuerId, request);
 
-        assertEquals(expected, actual);
-        verify(dPoPSessionService).createAuthorizationUrl(eq(httpSession), eq(request), any(), any(),
-                eq("CredentialType1_vc_ldp"));
+        assertEquals("oauth-state", actual.getState());
+        org.junit.Assert.assertTrue(actual.getAuthorizationUrl().startsWith("https://dev/authorize?"));
+        org.junit.Assert.assertTrue(actual.getAuthorizationUrl().contains("dpop_jkt=thumbprint"));
+        org.junit.Assert.assertTrue(actual.getAuthorizationUrl().contains("code_challenge=code-challenge"));
+        verify(pkceSessionManager).createSession("https://injiweb.example.com/redirect");
+        verify(dPoPSessionService).createSession(eq("oauth-state"), any());
+        verify(pkceSessionManager).store(httpSession, pkceSession);
+        verify(dPoPSessionService).store(httpSession, dPoPSession);
     }
 
     @Test
@@ -536,7 +558,8 @@ public class IssuersServiceTest {
                         authorizeRequest("UnknownCredential")));
 
         assertEquals("credentialConfigurationId is not supported by this issuer", exception.getErrorText());
-        verify(dPoPSessionService, never()).createAuthorizationUrl(any(), any(), any(), any(), any());
+        verify(pkceSessionManager, never()).createSession(any());
+        verify(dPoPSessionService, never()).createSession(any(), any());
     }
 
     @Test
@@ -551,7 +574,8 @@ public class IssuersServiceTest {
                         authorizeRequest("CredentialType1")));
 
         assertEquals("client_id is missing", exception.getErrorText());
-        verify(dPoPSessionService, never()).createAuthorizationUrl(any(), any(), any(), any(), any());
+        verify(pkceSessionManager, never()).createSession(any());
+        verify(dPoPSessionService, never()).createSession(any(), any());
     }
 
     private static IssuerAuthorizeRequest authorizeRequest(String credentialConfigurationId) {

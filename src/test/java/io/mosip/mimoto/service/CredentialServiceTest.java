@@ -86,6 +86,9 @@ public class CredentialServiceTest {
     DPoPSessionService dPoPSessionService;
 
     @Mock
+    PkceSessionManager pkceSessionManager;
+
+    @Mock
     WalletCredentialsRepository walletCredentialsRepository;
 
     @Mock
@@ -348,7 +351,7 @@ public class CredentialServiceTest {
     public void shouldThrowInvalidRequestExceptionForNullTokenResponse() throws Exception {
         when(dPoPSessionService.find(any(), eq("oauth-state")))
                 .thenReturn(DPoPSession.builder().state("oauth-state").build());
-        when(dPoPSessionService.authorizationCodeParams(any(), eq("oauth-state"), any(), any()))
+        when(pkceSessionManager.authorizationCodeParams(any(), eq("oauth-state"), any(), any()))
                 .thenReturn(Map.of("code", "auth-code"));
         when(idpService.exchangeAndBindToken(any(), any())).thenReturn(null);
 
@@ -660,7 +663,7 @@ public class CredentialServiceTest {
     private void stubTokenExchange(TokenResponseDTO tokenResponse) throws Exception {
         when(dPoPSessionService.find(any(), eq("oauth-state")))
                 .thenReturn(DPoPSession.builder().state("oauth-state").build());
-        when(dPoPSessionService.authorizationCodeParams(any(), eq("oauth-state"), any(), any()))
+        when(pkceSessionManager.authorizationCodeParams(any(), eq("oauth-state"), any(), any()))
                 .thenReturn(Map.of("code", "auth-code"));
         when(idpService.exchangeAndBindToken(any(), any())).thenReturn(tokenResponse);
         when(dPoPSessionService.credentialProof(any(), eq("oauth-state"), any(), any())).thenReturn("server-dPoP");

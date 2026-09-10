@@ -17,6 +17,7 @@ import io.mosip.mimoto.service.CredentialVerifierService;
 import io.mosip.mimoto.service.DPoPSessionService;
 import io.mosip.mimoto.service.IdpService;
 import io.mosip.mimoto.service.IssuersService;
+import io.mosip.mimoto.service.PkceSessionManager;
 import io.mosip.mimoto.service.DataProtectionService;
 import io.mosip.mimoto.service.VCDownloadHandler;
 import io.mosip.mimoto.service.VCDownloadHandlerFactory;
@@ -45,6 +46,7 @@ public class CredentialServiceImpl implements CredentialService {
     private final VCDownloadHandlerFactory vcDownloadHandlerFactory;
     private final IdpService idpService;
     private final DPoPSessionService dPoPSessionService;
+    private final PkceSessionManager pkceSessionManager;
 
     public CredentialServiceImpl(
             ObjectMapper objectMapper,
@@ -56,7 +58,8 @@ public class CredentialServiceImpl implements CredentialService {
             DataShareServiceImpl dataShareService,
             VCDownloadHandlerFactory vcDownloadHandlerFactory,
             IdpService idpService,
-            DPoPSessionService dPoPSessionService) {
+            DPoPSessionService dPoPSessionService,
+            PkceSessionManager pkceSessionManager) {
 
         this.objectMapper = objectMapper;
         this.dataProtectionService = dataProtectionService;
@@ -68,6 +71,7 @@ public class CredentialServiceImpl implements CredentialService {
         this.vcDownloadHandlerFactory = vcDownloadHandlerFactory;
         this.idpService = idpService;
         this.dPoPSessionService = dPoPSessionService;
+        this.pkceSessionManager = pkceSessionManager;
     }
 
 
@@ -104,7 +108,7 @@ public class CredentialServiceImpl implements CredentialService {
         }
         if (dPoPSessionService.find(httpSession, state) != null) {
             TokenResponseDTO exchanged = idpService.exchangeAndBindToken(
-                    dPoPSessionService.authorizationCodeParams(httpSession, state, code, issuerId),
+                    pkceSessionManager.authorizationCodeParams(httpSession, state, code, issuerId),
                     httpSession);
             if (exchanged != null) {
                 return exchanged;

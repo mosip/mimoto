@@ -14,6 +14,7 @@ import io.mosip.mimoto.exception.PlatformErrorMessages;
 import io.mosip.mimoto.exception.VCVerificationException;
 import io.mosip.mimoto.service.CredentialService;
 import io.mosip.mimoto.service.DPoPSessionService;
+import io.mosip.mimoto.service.PkceSessionManager;
 import io.mosip.mimoto.util.Utilities;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -50,10 +51,13 @@ public class CredentialsController {
     private final CredentialService credentialService;
 
     private final DPoPSessionService dPoPSessionService;
+    private final PkceSessionManager pkceSessionManager;
 
-    public CredentialsController(CredentialService credentialService, DPoPSessionService dPoPSessionService) {
+    public CredentialsController(CredentialService credentialService, DPoPSessionService dPoPSessionService,
+                                 PkceSessionManager pkceSessionManager) {
         this.credentialService = credentialService;
         this.dPoPSessionService = dPoPSessionService;
+        this.pkceSessionManager = pkceSessionManager;
     }
 
     @Operation(summary = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_SUMMARY, description = SwaggerLiteralConstants.CREDENTIALS_DOWNLOAD_VC_DESCRIPTION,
@@ -105,6 +109,7 @@ public class CredentialsController {
             return Utilities.handleErrorResponse(exception, PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         } finally {
             dPoPSessionService.remove(httpSession, state);
+            pkceSessionManager.remove(httpSession, state);
         }
     }
 

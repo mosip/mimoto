@@ -9,6 +9,7 @@ import io.mosip.mimoto.dto.mimoto.VerifiableCredentialResponseDTO;
 import io.mosip.mimoto.dto.resident.WalletCredentialResponseDTO;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.service.DPoPSessionService;
+import io.mosip.mimoto.service.PkceSessionManager;
 import io.mosip.mimoto.service.WalletCredentialService;
 import io.mosip.mimoto.util.LocaleUtils;
 import io.mosip.mimoto.util.Utilities;
@@ -58,12 +59,15 @@ public class WalletCredentialsController {
 
     private final WalletCredentialService walletCredentialService;
     private final DPoPSessionService dPoPSessionService;
+    private final PkceSessionManager pkceSessionManager;
 
     @Autowired
     public WalletCredentialsController(WalletCredentialService walletCredentialService,
-                                       DPoPSessionService dPoPSessionService) {
+                                       DPoPSessionService dPoPSessionService,
+                                       PkceSessionManager pkceSessionManager) {
         this.walletCredentialService = walletCredentialService;
         this.dPoPSessionService = dPoPSessionService;
+        this.pkceSessionManager = pkceSessionManager;
     }
 
     /**
@@ -147,6 +151,7 @@ public class WalletCredentialsController {
                     e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         } finally {
             dPoPSessionService.remove(httpSession, state);
+            pkceSessionManager.remove(httpSession, state);
         }
     }
 

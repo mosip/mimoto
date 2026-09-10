@@ -5,12 +5,18 @@ import io.mosip.mimoto.dto.IssuerDTO;
 import io.mosip.mimoto.dto.IssuerV2DTO;
 import io.mosip.mimoto.dto.IssuersDTO;
 import io.mosip.mimoto.dto.IssuersV2DTO;
+import io.mosip.mimoto.constant.DPoPConstants;
+import io.mosip.mimoto.dto.dpop.DPoPSession;
 import io.mosip.mimoto.dto.dpop.IssuerAuthorizeRequest;
 import io.mosip.mimoto.dto.dpop.IssuerAuthorizeResponse;
 import io.mosip.mimoto.dto.mimoto.*;
+import io.mosip.mimoto.dto.pkce.PkceSession;
 import io.mosip.mimoto.exception.*;
+import io.mosip.mimoto.service.DPoPManager;
 import io.mosip.mimoto.service.DPoPSessionService;
 import io.mosip.mimoto.service.IssuersService;
+import io.mosip.mimoto.service.PkceSessionManager;
+import io.mosip.mimoto.util.AuthorizationUrlBuilder;
 import io.mosip.mimoto.util.IssuerConfigUtil;
 import io.mosip.mimoto.util.Utilities;
 import jakarta.servlet.http.HttpSession;
@@ -46,18 +52,25 @@ public class IssuersServiceImpl implements IssuersService {
 
     private final DPoPSessionService dPoPSessionService;
 
+    private final PkceSessionManager pkceSessionManager;
+
+    private final DPoPManager dPoPManager;
+
     private static final String GET_TOKEN_PATH = "/v2/get-token/";
 
     public IssuersServiceImpl(Utilities utilities, ObjectMapper objectMapper, IssuerConfigUtil issuersConfigUtil,
                               @Value("${mosip.api.public.url}") String mosipApiPublicUrl,
                               @Value("${server.servlet.context-path}") String contextPath,
-                              DPoPSessionService dPoPSessionService) {
+                              DPoPSessionService dPoPSessionService, PkceSessionManager pkceSessionManager,
+                              DPoPManager dPoPManager) {
         this.utilities = utilities;
         this.objectMapper = objectMapper;
         this.issuersConfigUtil = issuersConfigUtil;
         this.mosipApiPublicUrl = mosipApiPublicUrl;
         this.contextPath = contextPath;
         this.dPoPSessionService = dPoPSessionService;
+        this.pkceSessionManager = pkceSessionManager;
+        this.dPoPManager = dPoPManager;
     }
 
     @Override
@@ -185,6 +198,9 @@ public class IssuersServiceImpl implements IssuersService {
     @Override
     public IssuerAuthorizeResponse createAuthorizationUrl(HttpSession httpSession, String issuerId,
                                                           IssuerAuthorizeRequest request) throws Exception {
+        if (httpSession == null) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "HTTP session is required for DPoP");
+        }
         if (request == null) {
             throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "authorization request is required");
         }
@@ -198,7 +214,28 @@ public class IssuersServiceImpl implements IssuersService {
             throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "client_id is missing");
         }
         String scope = scopeForCredentialConfiguration(configuration, request.getCredentialConfigurationId());
-        return dPoPSessionService.createAuthorizationUrl(httpSession, request, configuration, issuer, scope);
+
+        PkceSession pkceSession = pkceSessionManager.createSession(request.getRedirectUri());
+        DPoPSession dPoPSession = dPoPSessionService.createSession(
+                pkceSession.getState(), configuration.getAuthorizationServerWellKnownResponse());
+        pkceSessionManager.store(httpSession, pkceSession);
+        dPoPSessionService.store(httpSession, dPoPSession);
+
+        String authorizationUrl = AuthorizationUrlBuilder.build(
+                configuration.getAuthorizationServerWellKnownResponse().getAuthorizationEndpoint(),
+                issuer.getClient_id(),
+                pkceSession.getRedirectUri(),
+                scope,
+                DPoPConstants.AUTHORIZATION_RESPONSE_TYPE,
+                pkceSession.getState(),
+                pkceSession.getCodeChallenge(),
+                "S256",
+                request.getUiLocales(),
+                dPoPManager.jwkThumbprint(dPoPSession));
+        return IssuerAuthorizeResponse.builder()
+                .authorizationUrl(authorizationUrl)
+                .state(pkceSession.getState())
+                .build();
     }
 
     private String scopeForCredentialConfiguration(CredentialIssuerConfiguration configuration,

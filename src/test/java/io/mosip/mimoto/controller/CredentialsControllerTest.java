@@ -7,6 +7,7 @@ import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.exception.InvalidRequestException;
 import io.mosip.mimoto.exception.VCVerificationException;
 import io.mosip.mimoto.service.DPoPSessionService;
+import io.mosip.mimoto.service.PkceSessionManager;
 import io.mosip.mimoto.service.impl.CredentialServiceImpl;
 import io.mosip.mimoto.util.GlobalExceptionHandler;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -53,6 +54,9 @@ public class CredentialsControllerTest {
     @MockBean
     private DPoPSessionService dPoPSessionService;
 
+    @MockBean
+    private PkceSessionManager pkceSessionManager;
+
     private String locale = "test-local", issuer = "test-issuer", credential = "test-credential", requestContent;
 
     @Before
@@ -82,6 +86,7 @@ public class CredentialsControllerTest {
         verify(credentialService).downloadCredentialAsPDF(
                 eq(issuer), eq(credential), eq("3"), eq(locale), eq("test-code"), eq("oauth-state"), any());
         verify(dPoPSessionService).remove(any(), eq("oauth-state"));
+        verify(pkceSessionManager).remove(any(), eq("oauth-state"));
     }
 
     @Test
@@ -108,6 +113,7 @@ public class CredentialsControllerTest {
         verify(credentialService).downloadCredentialAsPDF(
                 eq(issuer), eq(credential), eq("3"), eq(locale), isNull(), isNull(), any());
         verify(dPoPSessionService).remove(any(), isNull());
+        verify(pkceSessionManager).remove(any(), isNull());
     }
 
     @Test
@@ -125,6 +131,7 @@ public class CredentialsControllerTest {
                 .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is("RESIDENT-APP-034")))
                 .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is("Exception occurred while performing the authorization")));
         verify(dPoPSessionService).remove(any(), eq("oauth-state"));
+        verify(pkceSessionManager).remove(any(), eq("oauth-state"));
     }
 
     @Test
@@ -158,6 +165,7 @@ public class CredentialsControllerTest {
                 .andExpect(jsonPath("$.errors[0].errorCode", Matchers.is("RESIDENT-APP-026")))
                 .andExpect(jsonPath("$.errors[0].errorMessage", Matchers.is("Api not accessible failure")));
         verify(dPoPSessionService).remove(any(), eq("oauth-state"));
+        verify(pkceSessionManager).remove(any(), eq("oauth-state"));
     }
 
     @Test

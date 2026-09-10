@@ -146,6 +146,7 @@ public class IssuersController {
             return ResponseEntity.status(HttpStatus.OK)
                     .body(issuersService.createAuthorizationUrl(httpSession, issuerId, request));
         } catch (InvalidRequestException exception) {
+            log.error("Invalid authorization request for issuer {}", issuerId, exception);
             return Utilities.getErrorResponseEntityWithoutWrapper(
                     exception, INVALID_ISSUER_ID_CONFIGURATION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
         } catch (Exception exception) {

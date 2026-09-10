@@ -10,8 +10,7 @@ import java.io.Serializable;
 
 /**
  * Server-side DPoP state that must survive the browser redirect.
- * Mirrors inji-vci-client {@code DPoPManager.Session}. PKCE lives in
- * {@code PkceSession}, stored under a separate HTTP session attribute.
+ * PKCE lives in {@code PkceSession}, stored under a separate HTTP session attribute.
  * Access token, {@code jkt}, and credential {@code htu} are not stored; they
  * are passed or computed at proof time. Credential {@code htu} and
  * {@code issuerId} come from the download request and issuer well-known.
