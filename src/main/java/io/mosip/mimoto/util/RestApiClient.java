@@ -21,6 +21,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -195,11 +196,12 @@ public class RestApiClient {
             return plainRestTemplate.postForObject(uri, setRequestHeader(requestType, mediaType, bearerToken), responseClass);
         } catch (HttpClientErrorException e) {
             log.error("RestApiClient::postApiWithErrorResponse()::client error uri: {} status: {}", uri, e.getStatusCode());
-log.debug("RestApiClient::postApiWithErrorResponse()::client error response body: {}", e.getResponseBodyAsString());
+            log.debug("RestApiClient::postApiWithErrorResponse()::client error response body: {}", e.getResponseBodyAsString());
             try {
                 return new com.fasterxml.jackson.databind.ObjectMapper().readValue(e.getResponseBodyAsString(), responseClass);
             } catch (Exception ex) {
-                log.error("RestApiClient::postApiWithErrorResponse()::failed to parse error body as {}: {}", responseClass.getSimpleName(), ex.getMessage());
+                log.error("RestApiClient::postApiWithErrorResponse()::failed to parse error body as {}: {}",
+                        responseClass.getSimpleName(), ex.getMessage());
                 return null;
             }
         } catch (Exception e) {

@@ -147,6 +147,9 @@ public class GlobalExceptionHandler {
         String message = br.getFieldErrors().stream()
                 .map(fe -> fe.getField() + " " + fe.getDefaultMessage())
                 .collect(Collectors.joining("; "));
+        if (message.isBlank()) {
+            message = "Invalid request";
+        }
         log.warn("Validation failed: {}", message);
         ErrorDTO err = new ErrorDTO("invalid_request", message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);

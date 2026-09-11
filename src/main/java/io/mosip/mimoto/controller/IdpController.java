@@ -37,13 +37,13 @@ import java.util.Set;
 
 @RestController
 @Slf4j
-@Tag(name = SwaggerLiteralConstants.IDP_NAME, description = SwaggerLiteralConstants.IDP_DESCRIPTION)
 public class IdpController {
     private static final boolean USE_BEARER_TOKEN = true;
     private static final String DPOP_HEADER = "DPoP";
     private static final Set<String> HOP_BY_HOP_HEADERS = Set.of(
             HttpHeaders.TRANSFER_ENCODING,
             HttpHeaders.CONNECTION,
+            HttpHeaders.CONTENT_LENGTH,
             "Keep-Alive",
             "Proxy-Authenticate",
             "Proxy-Authorization",
@@ -67,6 +67,7 @@ public class IdpController {
         this.requestValidator = requestValidator;
     }
 
+    @Tag(name = SwaggerLiteralConstants.IDP_NAME, description = SwaggerLiteralConstants.IDP_DESCRIPTION)
     @Operation(summary = SwaggerLiteralConstants.IDP_BINDING_OTP_SUMMARY, description = SwaggerLiteralConstants.IDP_BINDING_OTP_DESCRIPTION)
     @PostMapping(value = "/binding-otp", produces = MediaType.APPLICATION_JSON_VALUE)
     @SuppressWarnings("unchecked")
@@ -91,6 +92,7 @@ public class IdpController {
 
     }
 
+    @Tag(name = SwaggerLiteralConstants.IDP_NAME, description = SwaggerLiteralConstants.IDP_DESCRIPTION)
     @Operation(summary = SwaggerLiteralConstants.IDP_WALLET_BINDING_SUMMARY, description = SwaggerLiteralConstants.IDP_WALLET_BINDING_DESCRIPTION)
     @PostMapping(path = "/wallet-binding", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ResponseWrapper<WalletBindingResponseDto>> request(@RequestBody WalletBindingRequestDTO requestDTO)
@@ -127,6 +129,7 @@ public class IdpController {
         }
     }
 
+    @Tag(name = SwaggerLiteralConstants.IDP_TOKEN_NAME, description = SwaggerLiteralConstants.IDP_TOKEN_DESCRIPTION)
     @Operation(summary = SwaggerLiteralConstants.IDP_GET_TOKEN_SUMMARY, description = SwaggerLiteralConstants.IDP_GET_TOKEN_DESCRIPTION)
     @ApiResponses({
             @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = TokenResponseDTO.class), mediaType = "application/json")}),
@@ -148,6 +151,7 @@ public class IdpController {
         }
     }
 
+    @Tag(name = SwaggerLiteralConstants.IDP_TOKEN_NAME, description = SwaggerLiteralConstants.IDP_TOKEN_DESCRIPTION)
     @Operation(
             summary = SwaggerLiteralConstants.IDP_GET_TOKEN_V2_SUMMARY,
             description = SwaggerLiteralConstants.IDP_GET_TOKEN_V2_DESCRIPTION
@@ -199,14 +203,14 @@ public class IdpController {
     )
     public ResponseEntity<Object> getTokenV2(@RequestParam Map<String, String> params,
                                              @PathVariable(name = "issuer") String issuer,
-                                             @RequestHeader(value = DPOP_HEADER, required = false) String dpopProof) {
+                                             @RequestHeader(value = DPOP_HEADER, required = false) String dPoPProof) {
         log.info("Reached the getTokenV2 Controller for Issuer {}", issuer);
 
         try {
             Map<String, String> tokenParams = new HashMap<>(params);
             tokenParams.put("issuer", issuer);
 
-            ResponseEntity<String> response = idpService.getTokenResponseV2(tokenParams, dpopProof);
+            ResponseEntity<String> response = idpService.getTokenResponseV2(tokenParams, dPoPProof);
 
             return ResponseEntity
                     .status(response.getStatusCode())
