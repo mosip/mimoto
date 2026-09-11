@@ -77,7 +77,7 @@ public class WalletCredentialsController {
      * @param verifiableCredentialRequest Request body parameters including issuer, credential type, storage expiry, and locale.
      * @param httpSession                 The HTTP session containing wallet key and ID.
      * @return The stored Verifiable Credential details.
-     * @throws InvalidRequestException If input parameters or session are invalid.
+     * @throws Exception If input, session, token exchange, or credential processing fails.
      */
     @Operation(summary = "Download and store a Verifiable Credential under a specific Wallet", description = "This API is secured using session-based authentication. Upon receiving a request, the session ID is extracted from the Cookie header and used to retrieve session details from Redis for authentication. It then retrieves the wallet key from the session and use it to decrypt the signing algorithm's secret key(which is used for signing the JWT in credential request) and encrypt the downloaded Verifiable Credential. If the process completes successfully, the credential is stored in the database and certain fields will be returned in the response. In case of any issues, an appropriate error response is returned.", operationId = "downloadCredential", security = @SecurityRequirement(name = "SessionAuth"), parameters = {
             @Parameter(name = "walletId", in = ParameterIn.PATH, required = true, description = "Unique identifier of the wallet", schema = @Schema(type = "string")),
@@ -117,7 +117,7 @@ public class WalletCredentialsController {
             @RequestHeader(value = DPoPConstants.OAUTH_STATE_HEADER) String state,
             @PathVariable("walletId") @NotBlank(message = "Wallet ID cannot be blank") String walletId,
             @RequestBody @Valid VerifiableCredentialRequestDTO verifiableCredentialRequest,
-            HttpSession httpSession) throws InvalidRequestException {
+            HttpSession httpSession) throws Exception {
         try {
             if (!LocaleUtils.isValidLanguageCode(locale)) {
                 throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), "Locale must be a valid 2-letter code");
@@ -137,22 +137,37 @@ public class WalletCredentialsController {
                     issuerId, credentialConfigurationId, locale, walletId, base64EncodedWalletKey,
                     verifiableCredentialRequest.getCode(), state, httpSession);
             return ResponseEntity.status(HttpStatus.OK).body(credentialResponseDTO);
-        } catch (ApiNotAccessibleException | IOException | AuthorizationServerWellknownResponseException |
-                 InvalidWellknownResponseException | IssuerOnboardingException e) {
-            log.error("Error fetching token response for issuer: {}", verifiableCredentialRequest.getIssuer(), e);
-            return Utilities.getErrorResponseEntityFromPlatformErrorMessage(
-                    CREDENTIAL_DOWNLOAD_EXCEPTION, HttpStatus.SERVICE_UNAVAILABLE, MediaType.APPLICATION_JSON);
-        } catch (ExternalServiceUnavailableException e) {
-            return Utilities.getErrorResponseEntityWithoutWrapper(
-                    e, e.getErrorCode(), HttpStatus.SERVICE_UNAVAILABLE, MediaType.APPLICATION_JSON);
-        } catch (CredentialProcessingException e) {
-            log.error("Error processing credential download for walletId: {}", walletId, e);
-            return Utilities.getErrorResponseEntityWithoutWrapper(
-                    e, e.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         } finally {
             dPoPSessionService.remove(httpSession, state);
             pkceSessionManager.remove(httpSession, state);
         }
+    }
+
+    @ExceptionHandler({
+            ApiNotAccessibleException.class,
+            IOException.class,
+            AuthorizationServerWellknownResponseException.class,
+            InvalidWellknownResponseException.class,
+            IssuerOnboardingException.class
+    })
+    public ResponseEntity<Object> handleTokenOrWellknownFailure(Exception ex) {
+        log.error("Error fetching token response during wallet credential download", ex);
+        return Utilities.getErrorResponseEntityFromPlatformErrorMessage(
+                CREDENTIAL_DOWNLOAD_EXCEPTION, HttpStatus.SERVICE_UNAVAILABLE, MediaType.APPLICATION_JSON);
+    }
+
+    @ExceptionHandler(ExternalServiceUnavailableException.class)
+    public ResponseEntity<Object> handleExternalServiceUnavailable(ExternalServiceUnavailableException ex) {
+        log.error("External service unavailable during wallet credential download", ex);
+        return Utilities.getErrorResponseEntityWithoutWrapper(
+                ex, ex.getErrorCode(), HttpStatus.SERVICE_UNAVAILABLE, MediaType.APPLICATION_JSON);
+    }
+
+    @ExceptionHandler(CredentialProcessingException.class)
+    public ResponseEntity<Object> handleCredentialProcessingException(CredentialProcessingException ex) {
+        log.error("Error processing wallet credential", ex);
+        return Utilities.getErrorResponseEntityWithoutWrapper(
+                ex, ex.getErrorCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
     }
 
     /**

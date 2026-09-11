@@ -229,7 +229,7 @@ public class IssuersServiceImpl implements IssuersService {
                 DPoPConstants.AUTHORIZATION_RESPONSE_TYPE,
                 pkceSession.getState(),
                 pkceSession.getCodeChallenge(),
-                "S256",
+                PkceSession.CODE_CHALLENGE_METHOD,
                 request.getUiLocales(),
                 dPoPManager.jwkThumbprint(dPoPSession));
         return IssuerAuthorizeResponse.builder()

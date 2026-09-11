@@ -9,7 +9,6 @@ import io.mosip.mimoto.exception.ExternalServiceUnavailableException;
 import io.mosip.mimoto.exception.InvalidCredentialResourceException;
 import io.mosip.mimoto.service.impl.V1VCDownloadHandler;
 import io.mosip.mimoto.util.CredentialApiClient;
-import io.mosip.mimoto.util.RestApiClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,8 +40,6 @@ class V1VCDownloadHandlerTest {
 
     @Mock
     private V1CredentialRequestService v1CredentialRequestService;
-    @Mock
-    private RestApiClient restApiClient;
     @Mock
     private CredentialApiClient credentialApiClient;
     @InjectMocks
@@ -102,8 +99,8 @@ class V1VCDownloadHandlerTest {
                 .credentials(List.of(v1Credential("eyJhbGciOiJFUzI1NiJ9.credential-payload.signature")))
                 .build();
 
-        when(restApiClient.postApiWithErrorResponse(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
-                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN)))
+        when(credentialApiClient.postCredentialApi(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
+                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN), isNull(), isNull()))
                 .thenReturn(mockResponse);
 
         VCCredentialResponse result = handler.downloadCredential(issuerDTO, CREDENTIAL_CONFIG_ID,
@@ -126,8 +123,8 @@ class V1VCDownloadHandlerTest {
                 .credentials(List.of(v1Credential("first-credential"), v1Credential("second-credential"), v1Credential("third-credential")))
                 .build();
 
-        when(restApiClient.postApiWithErrorResponse(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
-                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN)))
+        when(credentialApiClient.postCredentialApi(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
+                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN), isNull(), isNull()))
                 .thenReturn(mockResponse);
 
         VCCredentialResponse result = handler.downloadCredential(issuerDTO, CREDENTIAL_CONFIG_ID,
@@ -149,8 +146,8 @@ class V1VCDownloadHandlerTest {
                 .credentials(List.of(v1Credential("login-credential-data")))
                 .build();
 
-        when(restApiClient.postApiWithErrorResponse(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
-                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN)))
+        when(credentialApiClient.postCredentialApi(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
+                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN), isNull(), isNull()))
                 .thenReturn(mockResponse);
 
         VCCredentialResponse result = handler.downloadCredential(issuerDTO, CREDENTIAL_CONFIG_ID,
@@ -192,12 +189,12 @@ class V1VCDownloadHandlerTest {
                 .credentials(List.of(v1Credential("retry-credential-data")))
                 .build();
 
-        when(restApiClient.postApiWithErrorResponse(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
-                eq(firstRequest), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN)))
+        when(credentialApiClient.postCredentialApi(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
+                eq(firstRequest), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN), isNull(), isNull()))
                 .thenReturn(invalidNonceResponse);
 
-        when(restApiClient.postApiWithErrorResponse(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
-                eq(retryRequest), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN)))
+        when(credentialApiClient.postCredentialApi(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
+                eq(retryRequest), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN), isNull(), isNull()))
                 .thenReturn(successResponse);
 
         VCCredentialResponse result = handler.downloadCredential(issuerDTO, CREDENTIAL_CONFIG_ID,
@@ -222,8 +219,8 @@ class V1VCDownloadHandlerTest {
                 .errorDescription("Nonce Transaction could not be found.")
                 .build();
 
-        when(restApiClient.postApiWithErrorResponse(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
-                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN)))
+        when(credentialApiClient.postCredentialApi(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
+                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN), isNull(), isNull()))
                 .thenReturn(invalidNonceResponse);
 
         ExternalServiceUnavailableException exception = assertThrows(
@@ -249,8 +246,8 @@ class V1VCDownloadHandlerTest {
                 .errorDescription("Nonce Transaction could not be found.")
                 .build();
 
-        when(restApiClient.postApiWithErrorResponse(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
-                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN)))
+        when(credentialApiClient.postCredentialApi(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
+                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN), isNull(), isNull()))
                 .thenReturn(invalidNonceResponse);
 
         assertThrows(ExternalServiceUnavailableException.class,
@@ -275,8 +272,8 @@ class V1VCDownloadHandlerTest {
                 .errorDescription("Nonce Transaction could not be found.")
                 .build();
 
-        when(restApiClient.postApiWithErrorResponse(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
-                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN)))
+        when(credentialApiClient.postCredentialApi(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
+                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN), isNull(), isNull()))
                 .thenReturn(invalidNonceResponse);
 
         assertThrows(ExternalServiceUnavailableException.class,
@@ -298,8 +295,8 @@ class V1VCDownloadHandlerTest {
                 .credentials(null)
                 .build();
 
-        when(restApiClient.postApiWithErrorResponse(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
-                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN)))
+        when(credentialApiClient.postCredentialApi(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
+                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN), isNull(), isNull()))
                 .thenReturn(mockResponse);
 
         InvalidCredentialResourceException exception = assertThrows(
@@ -321,8 +318,8 @@ class V1VCDownloadHandlerTest {
                 .credentials(List.of())
                 .build();
 
-        when(restApiClient.postApiWithErrorResponse(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
-                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN)))
+        when(credentialApiClient.postCredentialApi(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
+                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN), isNull(), isNull()))
                 .thenReturn(mockResponse);
 
         InvalidCredentialResourceException exception = assertThrows(
@@ -340,7 +337,7 @@ class V1VCDownloadHandlerTest {
         when(v1CredentialRequestService.buildRequest(any(), anyString(), any(), any(), any(), anyBoolean()))
                 .thenReturn(request);
 
-        when(restApiClient.postApiWithErrorResponse(anyString(), any(), any(), any(), anyString()))
+        when(credentialApiClient.postCredentialApi(anyString(), any(), any(), any(), anyString(), isNull(), isNull()))
                 .thenReturn(null);
 
         ExternalServiceUnavailableException exception = assertThrows(
@@ -366,8 +363,8 @@ class V1VCDownloadHandlerTest {
                 .errorDescription("The access token is expired")
                 .build();
 
-        when(restApiClient.postApiWithErrorResponse(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
-                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN)))
+        when(credentialApiClient.postCredentialApi(eq(CREDENTIAL_ENDPOINT), eq(MediaType.APPLICATION_JSON),
+                eq(request), eq(V1VCCredentialResponse.class), eq(ACCESS_TOKEN), isNull(), isNull()))
                 .thenReturn(errorResponse);
 
         ExternalServiceUnavailableException exception = assertThrows(
@@ -378,8 +375,8 @@ class V1VCDownloadHandlerTest {
         assertTrue(exception.getMessage().contains("invalid_token"));
         verify(v1CredentialRequestService, times(1))
                 .buildRequest(any(), anyString(), any(), any(), any(), anyBoolean());
-        verify(restApiClient, times(1))
-                .postApiWithErrorResponse(anyString(), any(), any(), any(), anyString());
+        verify(credentialApiClient, times(1))
+                .postCredentialApi(anyString(), any(), any(), any(), anyString(), isNull(), isNull());
     }
 
     @Test
@@ -391,7 +388,7 @@ class V1VCDownloadHandlerTest {
         when(v1CredentialRequestService.buildRequest(any(), anyString(), any(), any(), any(), anyBoolean()))
                 .thenReturn(request);
 
-        when(restApiClient.postApiWithErrorResponse(anyString(), any(), any(), any(), anyString()))
+        when(credentialApiClient.postCredentialApi(anyString(), any(), any(), any(), anyString(), isNull(), isNull()))
                 .thenReturn(null);
 
         assertThrows(ExternalServiceUnavailableException.class,
@@ -400,8 +397,8 @@ class V1VCDownloadHandlerTest {
 
         verify(v1CredentialRequestService, times(1))
                 .buildRequest(any(), anyString(), any(), any(), any(), anyBoolean());
-        verify(restApiClient, times(1))
-                .postApiWithErrorResponse(anyString(), any(), any(), any(), anyString());
+        verify(credentialApiClient, times(1))
+                .postCredentialApi(anyString(), any(), any(), any(), anyString(), isNull(), isNull());
     }
 
     @Test

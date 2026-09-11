@@ -73,7 +73,7 @@ public class CredentialsController {
     public ResponseEntity<?> downloadCredentialAsPDF(
             @RequestHeader(value = DPoPConstants.OAUTH_STATE_HEADER, required = false) String state,
             @RequestParam Map<String, String> params,
-            HttpSession httpSession) {
+            HttpSession httpSession) throws Exception {
 
         try {
             ByteArrayInputStream inputStream = credentialService.downloadCredentialAsPDF(
@@ -89,37 +89,33 @@ public class CredentialsController {
                     .contentType(MediaType.APPLICATION_PDF)
                     .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, "Content-Disposition")
                     .body(new InputStreamResource(inputStream));
-        } catch (InvalidRequestException exception) {
-            log.error("Invalid credential download request ", exception);
-            return Utilities.handleErrorResponse(exception, PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
-        } catch (ApiNotAccessibleException | IOException exception) {
-            log.error("Exception occurred while fetching credential types ", exception);
-            return Utilities.handleErrorResponse(exception, PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
-        } catch (InvalidCredentialResourceException invalidCredentialResourceException) {
-            log.error("Exception occurred while pushing the data to data share ", invalidCredentialResourceException);
-            return Utilities.handleErrorResponse(invalidCredentialResourceException, PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
-        } catch (VCVerificationException exception) {
-            log.error("Exception occurred while verification of the verifiable Credential" + exception);
-            return Utilities.handleErrorResponse(exception, PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
-        } catch (ExternalServiceUnavailableException exception) {
-            log.error("External service unavailable during credential download: ", exception);
-            return Utilities.handleErrorResponse(exception, PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.SERVICE_UNAVAILABLE, MediaType.APPLICATION_JSON);
-        } catch (Exception exception) {
-            log.error("Exception occurred while generating pdf ", exception);
-            return Utilities.handleErrorResponse(exception, PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);
         } finally {
             dPoPSessionService.remove(httpSession, state);
             pkceSessionManager.remove(httpSession, state);
         }
     }
 
-    @ExceptionHandler({AuthorizationServerWellknownResponseException.class, InvalidWellknownResponseException.class})
+    @ExceptionHandler({
+            InvalidRequestException.class,
+            ApiNotAccessibleException.class,
+            IOException.class,
+            InvalidCredentialResourceException.class,
+            VCVerificationException.class,
+            AuthorizationServerWellknownResponseException.class,
+            InvalidWellknownResponseException.class
+    })
     public ResponseEntity<Object> handleBadRequestException(Exception ex) {
         log.error("Credential download failed: ", ex);
         return Utilities.handleErrorResponse(ex, PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
     }
 
-    @ExceptionHandler({WriterException.class})
+    @ExceptionHandler(ExternalServiceUnavailableException.class)
+    public ResponseEntity<Object> handleServiceUnavailableException(Exception ex) {
+        log.error("External service unavailable during credential download: ", ex);
+        return Utilities.handleErrorResponse(ex, PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.SERVICE_UNAVAILABLE, MediaType.APPLICATION_JSON);
+    }
+
+    @ExceptionHandler({WriterException.class, Exception.class})
     public ResponseEntity<Object> handleServerErrorException(Exception ex) {
         log.error("Credential download server error: ", ex);
         return Utilities.handleErrorResponse(ex, PlatformErrorMessages.MIMOTO_PDF_SIGN_EXCEPTION.getCode(), HttpStatus.INTERNAL_SERVER_ERROR, MediaType.APPLICATION_JSON);

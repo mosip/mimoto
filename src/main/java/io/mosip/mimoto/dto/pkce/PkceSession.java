@@ -19,6 +19,8 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class PkceSession implements Serializable {
 
+    public static final String CODE_CHALLENGE_METHOD = "S256";
+
     @Serial
     private static final long serialVersionUID = 1L;
 

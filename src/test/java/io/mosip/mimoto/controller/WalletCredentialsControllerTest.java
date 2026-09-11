@@ -355,6 +355,8 @@ public class WalletCredentialsControllerTest {
                         .sessionAttr("wallet_key", walletKey))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.errorCode").value("credential_download_error"));
+        verify(dPoPSessionService).remove(any(), eq(state));
+        verify(pkceSessionManager).remove(any(), eq(state));
     }
 
     @Test
@@ -372,6 +374,30 @@ public class WalletCredentialsControllerTest {
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.errorCode").value("Service unavailable"))
                 .andExpect(jsonPath("$.errorMessage").value("Service unavailable"));
+        verify(dPoPSessionService).remove(any(), eq(state));
+        verify(pkceSessionManager).remove(any(), eq(state));
+    }
+
+    @Test
+    public void shouldThrowInternalServerErrorForCredentialProcessingFailure() throws Exception {
+        buildVerifiableCredentialRequest(issuer, credentialConfigurationId, code);
+        when(walletCredentialService.downloadVCAndStoreInDB(
+                eq(issuer), eq(credentialConfigurationId), anyString(), eq(walletId), eq(walletKey),
+                eq(code), eq(state), any()))
+                .thenThrow(new CredentialProcessingException(CREDENTIAL_DOWNLOAD_EXCEPTION.getErrorCode(),
+                        "Unable to process credential"));
+
+        mockMvc.perform(post("/wallets/{walletId}/credentials", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("state", state)
+                        .content(createRequestBody(verifiableCredentialRequest))
+                        .sessionAttr("wallet_id", walletId)
+                        .sessionAttr("wallet_key", walletKey))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.errorCode").value("credential_download_error"))
+                .andExpect(jsonPath("$.errorMessage").value("Unable to process credential"));
+        verify(dPoPSessionService).remove(any(), eq(state));
+        verify(pkceSessionManager).remove(any(), eq(state));
     }
 
     // Tests for fetchAllCredentialsForGivenWallet
