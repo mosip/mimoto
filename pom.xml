@@ -157,7 +157,7 @@
         <dependency>
             <groupId>io.inji</groupId>
             <artifactId>inji-openid4vp-jar</artifactId>
-            <version>1.0.0-beta-SNAPSHOT</version>
+            <version>1.0.0-alpha.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
