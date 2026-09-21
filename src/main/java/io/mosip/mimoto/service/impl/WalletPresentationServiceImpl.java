@@ -14,6 +14,7 @@ import io.mosip.mimoto.constant.SigningAlgorithm;
 import io.mosip.mimoto.dto.*;
 import io.mosip.mimoto.dto.mimoto.VCCredentialResponse;
 import io.mosip.mimoto.dto.resident.VerifiablePresentationSessionData;
+import jakarta.servlet.http.HttpSession;
 import io.mosip.mimoto.exception.*;
 import io.mosip.mimoto.model.VerifiablePresentation;
 import io.mosip.mimoto.repository.VerifiablePresentationsRepository;
@@ -54,6 +55,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.text.ParseException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -79,6 +81,7 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
     private final VerifiablePresentationsRepository verifiablePresentationsRepository;
     private final CredentialFormatHandlerFactory credentialFormatHandlerFactory;
     private final WalletCredentialService walletCredentialService;
+    private final SessionManager sessionManager;
 
     public WalletPresentationServiceImpl(
             VerifierService verifierService,
@@ -88,7 +91,8 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
             CredentialMatchingService credentialMatchingService,
             VerifiablePresentationsRepository verifiablePresentationsRepository,
             CredentialFormatHandlerFactory credentialFormatHandlerFactory,
-            WalletCredentialService walletCredentialService) {
+            WalletCredentialService walletCredentialService,
+            SessionManager sessionManager) {
         this.verifierService = verifierService;
         this.openID4VPService = openID4VPService;
         this.objectMapper = objectMapper;
@@ -97,10 +101,11 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
         this.verifiablePresentationsRepository = verifiablePresentationsRepository;
         this.credentialFormatHandlerFactory = credentialFormatHandlerFactory;
         this.walletCredentialService = walletCredentialService;
+        this.sessionManager = sessionManager;
     }
 
     @Override
-    public VPResponseDTO handleVPAuthorizationRequest(String urlEncodedVPAuthorizationRequest, String walletId)
+    public VPResponseDTO handleVPAuthorizationRequest(String urlEncodedVPAuthorizationRequest, String walletId, HttpSession session)
             throws ApiNotAccessibleException, IOException, URISyntaxException {
 
         String presentationId = UUID.randomUUID().toString();
@@ -116,7 +121,20 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
         VerifiablePresentationVerifierDTO verifierDTO =
                 createVPResponseVerifierDTO(preRegisteredVerifiers, authorizationRequest, walletId);
 
-        return new VPResponseDTO(presentationId, verifierDTO, dcql);
+        VPResponseDTO responseDTO = new VPResponseDTO(presentationId, verifierDTO, dcql);
+
+        VerifiablePresentationSessionData sessionData = new VerifiablePresentationSessionData(
+                presentationId,
+                urlEncodedVPAuthorizationRequest,
+                Instant.now(),
+                verifierDTO.isPreregisteredWithWallet(),
+                null,
+                dcql,
+                authorizationRequest,
+                openID4VP);
+        sessionManager.storePresentationSessionData(session, sessionData, walletId);
+
+        return responseDTO;
     }
 
     @Override
@@ -190,11 +208,15 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
         validateSubmissionRequest(request);
         LocalDateTime requestedAt = LocalDateTime.now(ZoneOffset.UTC);
 
-        // Step 1: Create OpenID4VP instance and authenticate the verifier from session data
-        List<Verifier> preRegisteredVerifiers = openID4VPService.getPreRegisteredVerifiers();
-        OpenID4VP openID4VP = openID4VPService.create(
-                presentationId, preRegisteredVerifiers, sessionData.isVerifierClientPreregistered());
-        openID4VP.authenticateVerifier(sessionData.getAuthorizationRequest());
+        // Step 1: Reuse the OpenID4VP instance from the initial handleVPAuthorizationRequest call.
+        // Re-calling authenticateVerifier would regenerate walletNonce, causing a wallet_nonce mismatch
+        // in the request_uri_method=post flow where the conformance suite validates the original nonce.
+        OpenID4VP openID4VP = sessionData.getOpenID4VPInstance();
+        if (openID4VP == null) {
+            List<Verifier> preRegisteredVerifiers = openID4VPService.getPreRegisteredVerifiers();
+            openID4VP = openID4VPService.create(presentationId, preRegisteredVerifiers, sessionData.isVerifierClientPreregistered());
+            openID4VP.authenticateVerifier(sessionData.getAuthorizationRequest());
+        }
 
         // Step 2: Load wallet credentials and resolve effective SD-JWT claim paths for submission
         Map<String, DecryptedCredentialDTO> walletCredentialsById = walletCredentialService
@@ -398,10 +420,7 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
     private void validateDcqlSelections(SubmitPresentationRequestDTO request, VerifiablePresentationSessionData sessionData)
             throws ApiNotAccessibleException, IOException {
 
-        DCQLQuery dcqlQuery = openID4VPService.resolveDcqlQuery(
-                sessionData.getPresentationId(),
-                sessionData.getAuthorizationRequest(),
-                sessionData.isVerifierClientPreregistered());
+        DCQLQuery dcqlQuery = AuthorizationRequestHelper.extractDcqlQuery(sessionData.getParsedAuthorizationRequest());
         if (dcqlQuery == null) {
             return;
         }
@@ -481,10 +500,7 @@ public class WalletPresentationServiceImpl implements WalletPresentationService 
             return merged.isEmpty() ? null : merged;
         }
 
-        DCQLQuery dcqlQuery = openID4VPService.resolveDcqlQuery(
-                sessionData.getPresentationId(),
-                sessionData.getAuthorizationRequest(),
-                sessionData.isVerifierClientPreregistered());
+        DCQLQuery dcqlQuery = AuthorizationRequestHelper.extractDcqlQuery(sessionData.getParsedAuthorizationRequest());
         if (dcqlQuery == null) {
             return merged.isEmpty() ? null : merged;
         }

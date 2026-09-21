@@ -23,6 +23,7 @@ import io.mosip.mimoto.service.CredentialFormatHandler;
 import io.mosip.mimoto.service.CredentialMatchingService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.WalletCredentialService;
+import io.mosip.mimoto.util.AuthorizationRequestHelper;
 import io.mosip.mimoto.util.JwtUtils;
 import io.mosip.mimoto.util.DcqlClaimSetHelper;
 import io.mosip.mimoto.util.DcqlCredentialSetHelper;
@@ -190,10 +191,7 @@ public class CredentialMatchingServiceImpl implements CredentialMatchingService 
             VerifiablePresentationSessionData sessionData,
             List<DecryptedCredentialDTO> decryptedCredentials) throws ApiNotAccessibleException, IOException {
 
-        DCQLQuery dcqlQuery = openID4VPService.resolveDcqlQuery(
-                sessionData.getPresentationId(),
-                sessionData.getAuthorizationRequest(),
-                sessionData.isVerifierClientPreregistered());
+        DCQLQuery dcqlQuery = AuthorizationRequestHelper.extractDcqlQuery(sessionData.getParsedAuthorizationRequest());
 
         if (dcqlQuery == null) {
             throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
