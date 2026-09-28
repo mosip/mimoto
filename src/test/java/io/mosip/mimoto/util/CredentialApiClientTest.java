@@ -140,7 +140,7 @@ class CredentialApiClientTest {
     }
 
     @Test
-    void postCredentialApi_shouldSendDPoPWhenProofPresentEvenIfTokenTypeIsBearer() {
+    void postCredentialApi_shouldSendBearerWhenTokenTypeIsBearerEvenIfDPoPProofPresent() {
         when(plainRestTemplate.exchange(eq(TEST_URI), eq(HttpMethod.POST), any(HttpEntity.class), eq(TestResponse.class)))
                 .thenReturn(new ResponseEntity<>(new TestResponse("credential"), HttpStatus.OK));
 
@@ -149,10 +149,10 @@ class CredentialApiClientTest {
                 ACCESS_TOKEN, DPoPConstants.BEARER_TOKEN_TYPE, DPOP_PROOF);
 
         ArgumentCaptor<HttpEntity> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-        verify(plainRestTemplate).exchange(eq(TEST_URI), eq(HttpMethod.POST), requestCaptor.capture(), eq(TestResponse.class));
+        verify(plainRestTemplate, times(1)).exchange(eq(TEST_URI), eq(HttpMethod.POST), requestCaptor.capture(), eq(TestResponse.class));
         HttpHeaders headers = requestCaptor.getValue().getHeaders();
-        assertEquals("DPoP " + ACCESS_TOKEN, headers.getFirst(HttpHeaders.AUTHORIZATION));
-        assertEquals(DPOP_PROOF, headers.getFirst(DPoPConstants.DPOP_HEADER));
+        assertEquals("Bearer " + ACCESS_TOKEN, headers.getFirst(HttpHeaders.AUTHORIZATION));
+        assertNull(headers.getFirst(DPoPConstants.DPOP_HEADER));
     }
 
     @Test

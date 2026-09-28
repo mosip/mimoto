@@ -44,7 +44,8 @@ public class CredentialApiClient {
 
     /**
      * Posts a credential request supporting DPoP authorization and Bearer downgrade (RFC 9449 §7.2).
-     * Retries once as Bearer when the issuer rejects the DPoP auth scheme. Never downgrades a
+     * When {@code token_type} is Bearer, the first request sends {@code Authorization: Bearer} only.
+     * Otherwise retries once as Bearer when the issuer rejects the DPoP auth scheme. Never downgrades a
      * use_dpop_nonce challenge or an issuer that requires a DPoP-bound token to be presented with a
      * DPoP proof.
      */
@@ -132,12 +133,15 @@ public class CredentialApiClient {
     }
 
     /**
-     * Send DPoP whenever a proof was built, even if the Authorization Server returned
-     * {@code token_type: Bearer} for a DPoP-bound token. Issuers that do not support DPoP
-     * are handled by one Bearer retry.
+     * Send DPoP only when a proof is present and {@code token_type} is not Bearer.
+     * RFC 9449 Section 5: {@code token_type: Bearer} means the access token is not DPoP-bound,
+     * so the first request uses {@code Authorization: Bearer} only.
      */
     private static boolean shouldSendDPoP(String tokenType, String dPoPProof) {
-        return StringUtils.isNotBlank(dPoPProof);
+        if (StringUtils.isBlank(dPoPProof)) {
+            return false;
+        }
+        return !DPoPConstants.BEARER_TOKEN_TYPE.equalsIgnoreCase(StringUtils.trimToEmpty(tokenType));
     }
 
     /**
