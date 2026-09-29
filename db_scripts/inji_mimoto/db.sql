@@ -1,4 +1,4 @@
-CREATE DATABASE :mosipdbname
+CREATE DATABASE :dbname
 	ENCODING = 'UTF8' 
 	LC_COLLATE = 'en_US.UTF-8' 
 	LC_CTYPE = 'en_US.UTF-8' 
@@ -8,10 +8,10 @@ CREATE DATABASE :mosipdbname
 
 COMMENT ON DATABASE mosip_idp IS 'mimoto related data is stored in this database';
 
-\c :mosipdbname postgres
+\c :dbname postgres
 
 DROP SCHEMA IF EXISTS mimoto CASCADE;
 CREATE SCHEMA mimoto;
 ALTER SCHEMA mimoto OWNER TO postgres;
-ALTER DATABASE :mosipdbname SET search_path TO mimoto,pg_catalog,public;
+ALTER DATABASE :dbname SET search_path TO mimoto,pg_catalog,public;
 

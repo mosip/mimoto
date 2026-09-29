@@ -1,4 +1,4 @@
-\c :mosipdbname
+\c :dbname
 
 \ir ddl/mimoto-key_alias.sql
 \ir ddl/mimoto-key_policy_def.sql
