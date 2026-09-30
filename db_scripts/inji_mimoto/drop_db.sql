@@ -3,5 +3,5 @@
 -- file, You can obtain one at https://mozilla.org/MPL/2.0/.
 -- -------------------------------------------------------------------------------------------------
 
-DROP DATABASE IF EXISTS :dbname;
+DROP DATABASE IF EXISTS :mosipdbname;
 

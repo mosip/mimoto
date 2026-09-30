@@ -3,10 +3,10 @@
 -- file, You can obtain one at https://mozilla.org/MPL/2.0/.
 -- -------------------------------------------------------------------------------------------------
 
-\c :dbname
+\c :mosipdbname
 
 GRANT CONNECT
-   ON DATABASE :dbname
+   ON DATABASE :mosipdbname
    TO :dbuname;
 
 GRANT USAGE
