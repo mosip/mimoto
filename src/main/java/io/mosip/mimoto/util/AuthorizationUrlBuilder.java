@@ -13,7 +13,10 @@ public final class AuthorizationUrlBuilder {
     private AuthorizationUrlBuilder() {
     }
 
-    public static String build(String authorizationEndpoint,
+    /**
+     * Authorization URL used when PAR is not used. The query string carries the authorization parameters, including scope, PKCE, and dpop_jkt.
+     */
+    public static String buildAuthorizationUrl(String authorizationEndpoint,
                                String clientId,
                                String redirectUri,
                                String scope,
@@ -41,6 +44,26 @@ public final class AuthorizationUrlBuilder {
         if (StringUtils.isNotBlank(dPoPJkt)) {
             url.append("&dpop_jkt=").append(encode(dPoPJkt));
         }
+        return url.toString();
+    }
+
+    /**
+     * Authorization URL used after a successful PAR call. The query string carries only client_id and request_uri.
+     */
+    public static String buildParAuthorizationUrl(String authorizationEndpoint, String clientId, String requestUri) {
+        if (StringUtils.isBlank(authorizationEndpoint)) {
+            throw new IllegalArgumentException("authorization_endpoint cannot be blank");
+        }
+        if (StringUtils.isBlank(clientId)) {
+            throw new IllegalArgumentException("client_id cannot be blank");
+        }
+        if (StringUtils.isBlank(requestUri)) {
+            throw new IllegalArgumentException("request_uri cannot be blank");
+        }
+        StringBuilder url = new StringBuilder(authorizationEndpoint);
+        url.append(authorizationEndpoint.contains("?") ? "&" : "?");
+        url.append("client_id=").append(encode(clientId));
+        url.append("&request_uri=").append(encode(requestUri));
         return url.toString();
     }
 

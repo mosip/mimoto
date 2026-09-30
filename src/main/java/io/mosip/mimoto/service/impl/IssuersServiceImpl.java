@@ -16,6 +16,7 @@ import io.mosip.mimoto.service.DPoPManager;
 import io.mosip.mimoto.service.DPoPSessionService;
 import io.mosip.mimoto.service.IssuersService;
 import io.mosip.mimoto.service.PkceSessionManager;
+import io.mosip.mimoto.service.PushedAuthorizationRequestService;
 import io.mosip.mimoto.util.AuthorizationUrlBuilder;
 import io.mosip.mimoto.util.IssuerConfigUtil;
 import io.mosip.mimoto.util.Utilities;
@@ -56,13 +57,16 @@ public class IssuersServiceImpl implements IssuersService {
 
     private final DPoPManager dPoPManager;
 
+    private final PushedAuthorizationRequestService pushedAuthorizationRequestService;
+
     private static final String GET_TOKEN_PATH = "/v2/get-token/";
 
     public IssuersServiceImpl(Utilities utilities, ObjectMapper objectMapper, IssuerConfigUtil issuersConfigUtil,
                               @Value("${mosip.api.public.url}") String mosipApiPublicUrl,
                               @Value("${server.servlet.context-path}") String contextPath,
                               DPoPSessionService dPoPSessionService, PkceSessionManager pkceSessionManager,
-                              DPoPManager dPoPManager) {
+                              DPoPManager dPoPManager,
+                              PushedAuthorizationRequestService pushedAuthorizationRequestService) {
         this.utilities = utilities;
         this.objectMapper = objectMapper;
         this.issuersConfigUtil = issuersConfigUtil;
@@ -71,6 +75,7 @@ public class IssuersServiceImpl implements IssuersService {
         this.dPoPSessionService = dPoPSessionService;
         this.pkceSessionManager = pkceSessionManager;
         this.dPoPManager = dPoPManager;
+        this.pushedAuthorizationRequestService = pushedAuthorizationRequestService;
     }
 
     @Override
@@ -221,8 +226,58 @@ public class IssuersServiceImpl implements IssuersService {
         pkceSessionManager.store(httpSession, pkceSession);
         dPoPSessionService.store(httpSession, dPoPSession);
 
-        String authorizationUrl = AuthorizationUrlBuilder.build(
-                configuration.getAuthorizationServerWellKnownResponse().getAuthorizationEndpoint(),
+        AuthorizationServerWellKnownResponse authServerWellknown = configuration.getAuthorizationServerWellKnownResponse();
+        String parEndpoint = authServerWellknown.getPushedAuthorizationRequestEndpoint();
+        boolean parRequired = Boolean.TRUE.equals(authServerWellknown.getRequirePushedAuthorizationRequests());
+        String dpopJkt = dPoPManager.jwkThumbprint(dPoPSession);
+
+        String authorizationUrl;
+
+        if (parRequired && StringUtils.isBlank(parEndpoint)) {
+            throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(),
+                    "Authorization server requires pushed authorization requests but did not advertise a pushed_authorization_request_endpoint");
+        }
+
+        if (StringUtils.isNotBlank(parEndpoint)) {
+            try {
+                PushedAuthorizationResponse parResponse = pushedAuthorizationRequestService.pushAuthorizationRequest(
+                        parEndpoint,
+                        issuer,
+                        pkceSession.getRedirectUri(),
+                        scope,
+                        pkceSession.getState(),
+                        pkceSession.getCodeChallenge(),
+                        PkceSession.CODE_CHALLENGE_METHOD,
+                        request.getUiLocales(),
+                        dpopJkt);
+                authorizationUrl = AuthorizationUrlBuilder.buildParAuthorizationUrl(
+                        authServerWellknown.getAuthorizationEndpoint(), issuer.getClient_id(), parResponse.getRequestUri());
+            } catch (PushedAuthorizationRequestException exception) {
+                if (parRequired) {
+                    throw new InvalidRequestException(INVALID_REQUEST.getErrorCode(), exception.getMessage(), exception);
+                }
+                log.warn("PAR attempt failed at {} and PAR is not required, falling back to the standard authorization request: {}",
+                        parEndpoint, exception.getMessage());
+                authorizationUrl = buildAuthorizationUrl(authServerWellknown, issuer, pkceSession, scope, request, dpopJkt);
+            }
+        } else {
+            authorizationUrl = buildAuthorizationUrl(authServerWellknown, issuer, pkceSession, scope, request, dpopJkt);
+        }
+
+        return IssuerAuthorizeResponse.builder()
+                .authorizationUrl(authorizationUrl)
+                .state(pkceSession.getState())
+                .build();
+    }
+
+    private String buildAuthorizationUrl(AuthorizationServerWellKnownResponse authServerWellknown,
+                                                 IssuerDTO issuer,
+                                                 PkceSession pkceSession,
+                                                 String scope,
+                                                 IssuerAuthorizeRequest request,
+                                                 String dpopJkt) {
+        return AuthorizationUrlBuilder.buildAuthorizationUrl(
+                authServerWellknown.getAuthorizationEndpoint(),
                 issuer.getClient_id(),
                 pkceSession.getRedirectUri(),
                 scope,
@@ -231,11 +286,7 @@ public class IssuersServiceImpl implements IssuersService {
                 pkceSession.getCodeChallenge(),
                 PkceSession.CODE_CHALLENGE_METHOD,
                 request.getUiLocales(),
-                dPoPManager.jwkThumbprint(dPoPSession));
-        return IssuerAuthorizeResponse.builder()
-                .authorizationUrl(authorizationUrl)
-                .state(pkceSession.getState())
-                .build();
+                dpopJkt);
     }
 
     private String scopeForCredentialConfiguration(CredentialIssuerConfiguration configuration,

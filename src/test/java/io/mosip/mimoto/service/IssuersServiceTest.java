@@ -11,6 +11,9 @@ import io.mosip.mimoto.dto.mimoto.CredentialIssuerWellKnownResponse;
 import io.mosip.mimoto.dto.mimoto.IssuerConfig;
 import io.mosip.mimoto.dto.dpop.IssuerAuthorizeRequest;
 import io.mosip.mimoto.dto.dpop.IssuerAuthorizeResponse;
+import io.mosip.mimoto.dto.mimoto.AuthorizationServerWellKnownResponse;
+import io.mosip.mimoto.dto.mimoto.PushedAuthorizationResponse;
+import io.mosip.mimoto.exception.PushedAuthorizationRequestException;
 import io.mosip.mimoto.exception.ApiNotAccessibleException;
 import io.mosip.mimoto.exception.AuthorizationServerWellknownResponseException;
 import io.mosip.mimoto.exception.InvalidIssuerIdException;
@@ -41,6 +44,7 @@ import static io.mosip.mimoto.util.TestUtilities.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -63,6 +67,9 @@ public class IssuersServiceTest {
 
     @Mock
     DPoPManager dPoPManager;
+
+    @Mock
+    PushedAuthorizationRequestService pushedAuthorizationRequestService;
 
     @Spy
     ObjectMapper objectMapper;
@@ -98,7 +105,7 @@ public class IssuersServiceTest {
         Mockito.when(issuersConfigUtil.getAuthServerWellknown(authServerWellknownUrl)).thenReturn(expectedCredentialIssuerConfiguration.getAuthorizationServerWellKnownResponse());
 
         issuersService = new IssuersServiceImpl(utilities, objectMapper, issuersConfigUtil, publicUrl, context,
-                dPoPSessionService, pkceSessionManager, dPoPManager);
+                dPoPSessionService, pkceSessionManager, dPoPManager, pushedAuthorizationRequestService);
     }
 
     @Test
@@ -455,7 +462,7 @@ public class IssuersServiceTest {
         String getTokenPath = "/v2/get-token/";
         IssuersServiceImpl serviceWithConfig = new IssuersServiceImpl(
                 utilities, objectMapper, issuersConfigUtil, localPublicUrl, localContext,
-                dPoPSessionService, pkceSessionManager, dPoPManager);
+                dPoPSessionService, pkceSessionManager, dPoPManager, pushedAuthorizationRequestService);
 
         String issuerIdMissing = "Issuer-Missing";
         String issuerIdExisting = "Issuer-Existing";
@@ -492,7 +499,7 @@ public class IssuersServiceTest {
 
         IssuersServiceImpl serviceWithConfig = new IssuersServiceImpl(
                 utilities, objectMapper, issuersConfigUtil, localPublicUrl, localContext,
-                dPoPSessionService, pkceSessionManager, dPoPManager);
+                dPoPSessionService, pkceSessionManager, dPoPManager, pushedAuthorizationRequestService);
 
         String issuerIdMissing = "IssuerV2-Missing";
         String issuerIdExisting = "Issuer-Existing";
@@ -545,6 +552,7 @@ public class IssuersServiceTest {
         org.junit.Assert.assertTrue(actual.getAuthorizationUrl().startsWith("https://dev/authorize?"));
         org.junit.Assert.assertTrue(actual.getAuthorizationUrl().contains("dpop_jkt=thumbprint"));
         org.junit.Assert.assertTrue(actual.getAuthorizationUrl().contains("code_challenge=code-challenge"));
+        verify(pushedAuthorizationRequestService, never()).pushAuthorizationRequest(any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(pkceSessionManager).createSession("https://injiweb.example.com/redirect");
         verify(dPoPSessionService).createSession(eq("oauth-state"), any());
         verify(pkceSessionManager).store(httpSession, pkceSession);
@@ -576,6 +584,104 @@ public class IssuersServiceTest {
         assertEquals("client_id is missing", exception.getErrorText());
         verify(pkceSessionManager, never()).createSession(any());
         verify(dPoPSessionService, never()).createSession(any(), any());
+    }
+
+    @Test
+    public void shouldBuildRequestUriUrlWhenParIsRequired() throws Exception {
+        AuthorizationServerWellKnownResponse authServer = authServer();
+        authServer.setRequirePushedAuthorizationRequests(true);
+        authServer.setPushedAuthorizationRequestEndpoint("https://dev/par");
+        PushedAuthorizationResponse parResponse = parResponse("urn:example:request", 60L);
+        when(pushedAuthorizationRequestService.pushAuthorizationRequest(eq("https://dev/par"), any(), eq("https://injiweb.example.com/redirect"),
+                eq("CredentialType1_vc_ldp"), eq("oauth-state"), eq("code-challenge"), eq("S256"), eq("en"), eq("thumbprint")))
+                .thenReturn(parResponse);
+        stubAuthorizeSessions();
+
+        IssuerAuthorizeResponse actual = issuersService.createAuthorizationUrl(new MockHttpSession(), issuerId, authorizeRequest("CredentialType1"));
+
+        assertEquals("https://dev/authorize?client_id=123&request_uri=urn%3Aexample%3Arequest", actual.getAuthorizationUrl());
+        assertEquals("oauth-state", actual.getState());
+    }
+
+    @Test
+    public void shouldFailWhenParIsRequiredAndEndpointIsMissing() throws Exception {
+        authServer().setRequirePushedAuthorizationRequests(true);
+        stubAuthorizeSessions();
+
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> issuersService.createAuthorizationUrl(new MockHttpSession(), issuerId, authorizeRequest("CredentialType1")));
+
+        assertEquals("Authorization server requires pushed authorization requests but did not advertise a pushed_authorization_request_endpoint",
+                exception.getErrorText());
+        verify(pushedAuthorizationRequestService, never()).pushAuthorizationRequest(any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    public void shouldFailWhenParIsRequiredAndPushFails() throws Exception {
+        AuthorizationServerWellKnownResponse authServer = authServer();
+        authServer.setRequirePushedAuthorizationRequests(true);
+        authServer.setPushedAuthorizationRequestEndpoint("https://dev/par");
+        when(pushedAuthorizationRequestService.pushAuthorizationRequest(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenThrow(new PushedAuthorizationRequestException("PAR request failed at https://dev/par: invalid_client"));
+        stubAuthorizeSessions();
+
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class,
+                () -> issuersService.createAuthorizationUrl(new MockHttpSession(), issuerId, authorizeRequest("CredentialType1")));
+
+        assertTrue(exception.getErrorText().contains("invalid_client"));
+    }
+
+    @Test
+    public void shouldBuildRequestUriUrlWhenParEndpointIsPresentAndNotRequired() throws Exception {
+        authServer().setPushedAuthorizationRequestEndpoint("https://dev/par");
+        when(pushedAuthorizationRequestService.pushAuthorizationRequest(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(parResponse("urn:example:optional", 90L));
+        stubAuthorizeSessions();
+
+        IssuerAuthorizeResponse actual = issuersService.createAuthorizationUrl(new MockHttpSession(), issuerId, authorizeRequest("CredentialType1"));
+
+        assertEquals("https://dev/authorize?client_id=123&request_uri=urn%3Aexample%3Aoptional", actual.getAuthorizationUrl());
+    }
+
+    @Test
+    public void shouldFallBackToStandardUrlWhenOptionalParFails() throws Exception {
+        authServer().setPushedAuthorizationRequestEndpoint("https://dev/par");
+        when(pushedAuthorizationRequestService.pushAuthorizationRequest(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenThrow(new PushedAuthorizationRequestException("PAR request failed"));
+        stubAuthorizeSessions();
+
+        IssuerAuthorizeResponse actual = issuersService.createAuthorizationUrl(new MockHttpSession(), issuerId, authorizeRequest("CredentialType1"));
+
+        assertTrue(actual.getAuthorizationUrl().contains("code_challenge=code-challenge"));
+        assertTrue(actual.getAuthorizationUrl().contains("dpop_jkt=thumbprint"));
+    }
+
+    private AuthorizationServerWellKnownResponse authServer() {
+        return expectedCredentialIssuerConfiguration.getAuthorizationServerWellKnownResponse();
+    }
+
+    private void stubAuthorizeSessions() {
+        io.mosip.mimoto.dto.pkce.PkceSession pkceSession = io.mosip.mimoto.dto.pkce.PkceSession.builder()
+                .state("oauth-state")
+                .codeVerifier("code-verifier")
+                .codeChallenge("code-challenge")
+                .redirectUri("https://injiweb.example.com/redirect")
+                .build();
+        io.mosip.mimoto.dto.dpop.DPoPSession dPoPSession = io.mosip.mimoto.dto.dpop.DPoPSession.builder()
+                .state("oauth-state")
+                .alg("ES256")
+                .jwkJson("{}")
+                .build();
+        when(pkceSessionManager.createSession(eq("https://injiweb.example.com/redirect"))).thenReturn(pkceSession);
+        when(dPoPSessionService.createSession(eq("oauth-state"), any())).thenReturn(dPoPSession);
+        when(dPoPManager.jwkThumbprint(dPoPSession)).thenReturn("thumbprint");
+    }
+
+    private static PushedAuthorizationResponse parResponse(String requestUri, long expiresIn) {
+        PushedAuthorizationResponse parResponse = new PushedAuthorizationResponse();
+        parResponse.setRequestUri(requestUri);
+        parResponse.setExpiresIn(expiresIn);
+        return parResponse;
     }
 
     private static IssuerAuthorizeRequest authorizeRequest(String credentialConfigurationId) {

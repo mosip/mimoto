@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "OpenID4VCI authorization URL built by Mimoto, including dpop_jkt. PKCE state is generated server-side.")
+@Schema(description = "OpenID4VCI authorization URL built by Mimoto. The URL is either the full authorization query string or client_id and request_uri when PAR is used. PKCE state is generated server-side.")
 public class IssuerAuthorizeResponse {
 
-    @Schema(description = "Authorization Server URL. Inji Web should open this URL.",
+    @Schema(description = "Authorization Server URL. Inji Web should open this URL. Without PAR this is the normal authorization URL, including dpop_jkt. With PAR it contains only client_id and request_uri.",
             example = "https://as.example.com/authorize?client_id=...&dpop_jkt=...")
     private String authorizationUrl;
 

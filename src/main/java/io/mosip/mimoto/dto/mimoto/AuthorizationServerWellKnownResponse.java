@@ -40,4 +40,14 @@ public class AuthorizationServerWellKnownResponse {
     @JsonProperty("dpop_signing_alg_values_supported")
     @Schema(description = "JWS algorithms the authorization server accepts for DPoP proofs")
     private List<@NotBlank String> dPoPSigningAlgValuesSupported;
+
+    @SerializedName("pushed_authorization_request_endpoint")
+    @JsonProperty("pushed_authorization_request_endpoint")
+    @Schema(description = "PAR endpoint. Present when the authorization server supports pushed authorization requests.")
+    private String pushedAuthorizationRequestEndpoint;
+
+    @SerializedName("require_pushed_authorization_requests")
+    @JsonProperty("require_pushed_authorization_requests")
+    @Schema(description = "True when the authorization server accepts authorization requests only through PAR.")
+    private Boolean requirePushedAuthorizationRequests;
 }

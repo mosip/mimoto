@@ -56,7 +56,7 @@ public class SwaggerLiteralConstants {
     public static final String ISSUERS_GET_ISSUER_CONFIGURATION_SUMMARY = "Retrieve specific issuer's and its corresponding authorization server well-known config";
     public static final String ISSUERS_GET_ISSUER_CONFIGURATION_DESCRIPTION = "This endpoint allows you to retrieve the well-known configuration of a specific issuer and its corresponding authorization server";
     public static final String ISSUERS_AUTHORIZE_SUMMARY = "Build OpenID4VCI authorization URL";
-    public static final String ISSUERS_AUTHORIZE_DESCRIPTION = "Creates a PKCE session and a DPoP session keyed by the same OAuth state, and returns the authorization URL including ui_locales and dpop_jkt. Guest callers receive a SESSION cookie. Inji Web should store the returned state for the UI session and open authorizationUrl.";
+    public static final String ISSUERS_AUTHORIZE_DESCRIPTION = "Creates a PKCE session and a DPoP session keyed by the same OAuth state. When the authorization server advertises PAR and the push succeeds, the returned authorizationUrl contains only client_id and request_uri. If PAR is optional and the push fails, or PAR is not advertised, the URL is the full authorization query string. Guest callers receive a SESSION cookie. Inji Web should store the returned state for the UI session and open authorizationUrl.";
 
     /* Issuers V2 Controller */
     public static final String ISSUERS_V2_NAME = "Issuers V2";
