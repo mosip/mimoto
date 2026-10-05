@@ -1,0 +1,44 @@
+IssuersAuthorize:
+   Mimoto_IssuersAuthorize_MosipForGoogleLogin_All_Valid_Smoke_sid:
+      endPoint: /v1/mimoto/issuers/{issuerId}/authorize
+      description: Verify that an OpenID4VCI authorization URL and DPoP/PKCE session state are created for the logged-in Google user before downloading the Mosip credential
+      uniqueIdentifier: TC_Mimoto_IssuersAuthorizeForGoogleLogin_01
+      role: userDefinedCookie
+      restMethod: post
+      additionalDependencies: TC_Mimoto_GoogleLoginToken_01,TC_Mimoto_UnlockWallet_01
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/DownloadMosipIssuerCredential/IssuersAuthorize/IssuersAuthorize
+      outputTemplate: mimoto/responseCode
+      input: '{
+      "issuerId": "Mosip",
+      "redirectUri": "$INJIREDIRECTURI$",
+      "credentialConfigurationId": "MOSIPVerifiableCredential",
+      "uiLocales": "en",
+      "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      "cookieName": "SESSION"
+}'
+      output: '{
+      "responseCode": "200"
+}'
+
+   Mimoto_IssuersAuthorize_MosipForGoogleLogin_ForNeg_sid:
+      endPoint: /v1/mimoto/issuers/{issuerId}/authorize
+      description: Create a fresh DPoP/PKCE session state for the logged-in Google user, used by the negative download test cases
+      uniqueIdentifier: TC_Mimoto_IssuersAuthorizeForGoogleLogin_02
+      role: userDefinedCookie
+      restMethod: post
+      additionalDependencies: TC_Mimoto_GoogleLoginToken_01,TC_Mimoto_UnlockWallet_01
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/LoginFlow/DownloadMosipIssuerCredential/IssuersAuthorize/IssuersAuthorize
+      outputTemplate: mimoto/responseCode
+      input: '{
+      "issuerId": "Mosip",
+      "redirectUri": "$INJIREDIRECTURI$",
+      "credentialConfigurationId": "MOSIPVerifiableCredential",
+      "uiLocales": "en",
+      "cookie": "$ID:GoogleLoginToken_all_Valid_Smoke_sessionCookie$",
+      "cookieName": "SESSION"
+}'
+      output: '{
+      "responseCode": "200"
+}'
