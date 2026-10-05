@@ -2,9 +2,13 @@ package io.inji.testrig.apirig.mimoto.testscripts;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
 import org.testng.ITest;
 import org.testng.ITestContext;
 import org.testng.ITestResult;
@@ -29,7 +33,10 @@ import io.mosip.testrig.apirig.utils.AuthenticationTestException;
 import io.mosip.testrig.apirig.utils.GlobalConstants;
 import io.mosip.testrig.apirig.utils.GlobalMethods;
 import io.mosip.testrig.apirig.utils.SecurityXSSException;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 
 public class PostWithFormDataBodyForPdfDownload extends MimotoUtil implements ITest {
 	private static final Logger logger = Logger.getLogger(PostWithFormDataBodyForPdfDownload.class);
@@ -94,8 +101,8 @@ public class PostWithFormDataBodyForPdfDownload extends MimotoUtil implements IT
 		
 		String inputJson = getJsonFromTemplate(testCaseDTO.getInput(), testCaseDTO.getInputTemplate());
 		inputJson = MimotoUtil.inputstringKeyWordHandeler(inputJson, testCaseName);
-		
-		pdf = postWithFormDataBodyForPdf(ApplnURI + testCaseDTO.getEndPoint(), inputJson, COOKIENAME,  testCaseDTO.getRole(), testCaseDTO.getTestCaseName());
+
+		pdf = postWithFormDataBodyForPdfWithStateHeaderAndCookie(ApplnURI + testCaseDTO.getEndPoint(), inputJson);
 		PdfReader pdfReader = null;
 		ByteArrayInputStream bIS = null;
 		
@@ -111,8 +118,9 @@ public class PostWithFormDataBodyForPdfDownload extends MimotoUtil implements IT
 		}
 		 
 		if (pdf != null && (new String(pdf).contains("errors") || pdfAsText == null)) {
+			// pdf bytes are actually a JSON error body here, not a PDF - surface it instead of "null"
 			GlobalMethods.reportResponse(null, ApplnURI + testCaseDTO.getEndPoint(),
-					"Not able to download issuer credential");
+					"Not able to download issuer credential. Raw response: " + new String(pdf));
 			if (!testCaseName.contains("_Neg")) {
 				throw new AdminTestException("Not able to download issuer credential");
 			}
@@ -120,6 +128,42 @@ public class PostWithFormDataBodyForPdfDownload extends MimotoUtil implements IT
 			GlobalMethods.reportResponse(null, ApplnURI + testCaseDTO.getEndPoint(), pdfAsText);
 		}
 		
+	}
+
+	/**
+	 * Posts the credential download request as form data, additionally forwarding a
+	 * DPoP "state" header and a guest DPoP session cookie when present in the input
+	 * JSON (both are removed from the form body since the backend expects them as
+	 * a header/cookie, not form fields).
+	 */
+	private byte[] postWithFormDataBodyForPdfWithStateHeaderAndCookie(String url, String inputJson) {
+		JSONObject json = new JSONObject(inputJson);
+		String state = json.optString("state", "");
+		String cookieValue = json.optString("cookie", "");
+		String cookieName = json.optString("cookieName", "");
+		json.remove("state");
+		json.remove("cookie");
+		json.remove("cookieName");
+
+		Map<String, String> formParams = new HashMap<>();
+		Iterator<String> keys = json.keys();
+		while (keys.hasNext()) {
+			String key = keys.next();
+			formParams.put(key, String.valueOf(json.get(key)));
+		}
+
+		RequestSpecification request = RestAssured.given().relaxedHTTPSValidation().contentType(ContentType.URLENC)
+				.formParams(formParams)
+				.header("X-XSRF-TOKEN", BaseTestCase.CSRF_TOKEN)
+				.cookie("XSRF-TOKEN", BaseTestCase.CSRF_COOKIE);
+		if (!state.isBlank()) {
+			request = request.header("state", state);
+		}
+		if (!cookieValue.isBlank() && !cookieName.isBlank()) {
+			request = request.cookie(cookieName, cookieValue);
+		}
+		Response response = request.post(url);
+		return response.asByteArray();
 	}
 
 	/**
