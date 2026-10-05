@@ -1,0 +1,44 @@
+IssuersAuthorize:
+   Mimoto_IssuersAuthorize_Mosip_All_Valid_Smoke_sid:
+      endPoint: /v1/mimoto/issuers/{issuerId}/authorize
+      description: Verify that an OpenID4VCI authorization URL and DPoP/PKCE session state are created successfully for a guest download of the Mosip issuer
+      uniqueIdentifier: TC_Mimoto_IssuersAuthorize_01
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/IssuersAuthorize/IssuersAuthorize
+      outputTemplate: mimoto/responseCode
+      input: '{
+      "issuerId": "Mosip",
+      "redirectUri": "$INJIREDIRECTURI$",
+      "credentialConfigurationId": "MOSIPVerifiableCredential",
+      "uiLocales": "en",
+      "cookie": "apitest-xsrf-bypass",
+      "cookieName": "XSRF-TOKEN",
+      "X-XSRF-TOKEN": "apitest-xsrf-bypass"
+}'
+      output: '{
+      "responseCode": "200"
+}'
+
+   Mimoto_IssuersAuthorize_StayProtected_All_Valid_Smoke_sid:
+      endPoint: /v1/mimoto/issuers/{issuerId}/authorize
+      description: Verify that an OpenID4VCI authorization URL and DPoP/PKCE session state are created successfully for a guest download of the StayProtected issuer
+      uniqueIdentifier: TC_Mimoto_IssuersAuthorize_02
+      role: userDefinedCookie
+      restMethod: post
+      checkOnlyStatusCodeInResponse: true
+      inputTemplate: mimoto/IssuersAuthorize/IssuersAuthorize
+      outputTemplate: mimoto/responseCode
+      input: '{
+      "issuerId": "StayProtected",
+      "redirectUri": "$INJIREDIRECTURI$",
+      "credentialConfigurationId": "InsuranceCredential",
+      "uiLocales": "en",
+      "cookie": "apitest-xsrf-bypass",
+      "cookieName": "XSRF-TOKEN",
+      "X-XSRF-TOKEN": "apitest-xsrf-bypass"
+}'
+      output: '{
+      "responseCode": "200"
+}'
