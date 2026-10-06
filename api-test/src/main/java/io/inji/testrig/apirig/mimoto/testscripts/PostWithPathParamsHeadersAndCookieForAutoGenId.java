@@ -17,6 +17,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import io.inji.testrig.apirig.mimoto.utils.MimotoConfigManager;
+import io.inji.testrig.apirig.mimoto.utils.MimotoConstants;
 import io.inji.testrig.apirig.mimoto.utils.MimotoUtil;
 import io.mosip.testrig.apirig.dto.OutputValidationDto;
 import io.mosip.testrig.apirig.dto.TestCaseDTO;
@@ -36,10 +37,6 @@ import org.json.JSONObject;
 
 public class PostWithPathParamsHeadersAndCookieForAutoGenId extends MimotoUtil implements ITest {
 	private static final Logger logger = Logger.getLogger(PostWithPathParamsHeadersAndCookieForAutoGenId.class);
-	// api-internal gateway enforces a double-submit XSRF cookie/header pair; any matching value passes it
-	private static final String XSRF_BYPASS_VALUE = "apitest-xsrf-bypass";
-	private static final String XSRF_HEADER_NAME = "X-XSRF-TOKEN";
-	private static final String XSRF_COOKIE_NAME = "XSRF-TOKEN";
 	protected String testCaseName = "";
 	public String pathParams = null;
 	public String headers = null;
@@ -176,16 +173,16 @@ public class PostWithPathParamsHeadersAndCookieForAutoGenId extends MimotoUtil i
 			JSONObject json = new JSONObject(inputJson);
 			String xsrfValue = fetchRealXsrfToken(null, null);
 			if (xsrfValue == null || xsrfValue.isBlank()) {
-				xsrfValue = XSRF_BYPASS_VALUE;
+				xsrfValue = MimotoConstants.XSRF_BYPASS_VALUE;
 			}
-			if (!json.has(XSRF_HEADER_NAME)) {
-				json.put(XSRF_HEADER_NAME, xsrfValue);
+			if (!json.has(MimotoConstants.XSRF_HEADER_NAME)) {
+				json.put(MimotoConstants.XSRF_HEADER_NAME, xsrfValue);
 			}
 			if (!json.has("cookie")) {
 				json.put("cookie", xsrfValue);
 			}
 			if (!json.has("cookieName")) {
-				json.put("cookieName", XSRF_COOKIE_NAME);
+				json.put("cookieName", MimotoConstants.XSRF_COOKIE_NAME);
 			}
 			return json.toString();
 		} catch (Exception e) {
@@ -206,7 +203,7 @@ public class PostWithPathParamsHeadersAndCookieForAutoGenId extends MimotoUtil i
 		try {
 			JSONObject json = new JSONObject(inputJson);
 			return json.has("cookie") && json.has("cookieName")
-					&& !XSRF_COOKIE_NAME.equals(json.optString("cookieName"));
+					&& !MimotoConstants.XSRF_COOKIE_NAME.equals(json.optString("cookieName"));
 		} catch (Exception e) {
 			return false;
 		}
@@ -227,7 +224,7 @@ public class PostWithPathParamsHeadersAndCookieForAutoGenId extends MimotoUtil i
 				request = request.cookie(sessionCookieName, sessionCookieValue);
 			}
 			Response response = request.get(ApplnURI + "/v1/mimoto/issuers");
-			return response.getCookie(XSRF_COOKIE_NAME);
+			return response.getCookie(MimotoConstants.XSRF_COOKIE_NAME);
 		} catch (Exception e) {
 			logger.warn("Warning: Unable to fetch a real XSRF-TOKEN, falling back to a dummy value");
 			return null;
@@ -247,7 +244,7 @@ public class PostWithPathParamsHeadersAndCookieForAutoGenId extends MimotoUtil i
 		String cookieName = json.optString("cookieName", "");
 		json.remove("cookie");
 		json.remove("cookieName");
-		json.remove(XSRF_HEADER_NAME);
+		json.remove(MimotoConstants.XSRF_HEADER_NAME);
 
 		Map<String, String> pathParamsMap = new HashMap<>();
 		if (pathParams != null) {
@@ -264,7 +261,7 @@ public class PostWithPathParamsHeadersAndCookieForAutoGenId extends MimotoUtil i
 		if (headers != null) {
 			for (String h : headers.split(",")) {
 				String key = h.trim();
-				if (key.isEmpty() || XSRF_HEADER_NAME.equals(key)) {
+				if (key.isEmpty() || MimotoConstants.XSRF_HEADER_NAME.equals(key)) {
 					continue;
 				}
 				if (json.has(key)) {
@@ -277,9 +274,9 @@ public class PostWithPathParamsHeadersAndCookieForAutoGenId extends MimotoUtil i
 		// the dummy double-submit value if the priming call fails.
 		String xsrfValue = fetchRealXsrfToken(cookieName, cookieValue);
 		if (xsrfValue == null || xsrfValue.isBlank()) {
-			xsrfValue = XSRF_BYPASS_VALUE;
+			xsrfValue = MimotoConstants.XSRF_BYPASS_VALUE;
 		}
-		headersMap.put(XSRF_HEADER_NAME, xsrfValue);
+		headersMap.put(MimotoConstants.XSRF_HEADER_NAME, xsrfValue);
 
 		String bodyStr = json.toString();
 		String url = ApplnURI + endPoint;
@@ -289,7 +286,7 @@ public class PostWithPathParamsHeadersAndCookieForAutoGenId extends MimotoUtil i
 				.contentType(ContentType.JSON)
 				.accept(ContentType.JSON)
 				.headers(headersMap)
-				.cookie(XSRF_COOKIE_NAME, xsrfValue)
+				.cookie(MimotoConstants.XSRF_COOKIE_NAME, xsrfValue)
 				.body(bodyStr);
 		if (!pathParamsMap.isEmpty()) {
 			request = request.pathParams(pathParamsMap);

@@ -41,7 +41,6 @@
 		<parameter name="pathParams" value="issuerId" />
 		<parameter name="headers" value="X-XSRF-TOKEN" />
 		<parameter name="idKeyName" value="state,authorizationUrl,sessionCookie" />
-		<parameter name="prerequisite" value="Yes" />
 		<classes>
 			<class
 					name="io.inji.testrig.apirig.mimoto.testscripts.PostWithPathParamsHeadersAndCookieForAutoGenId" />
@@ -293,7 +292,6 @@
 		<parameter name="pathParams" value="issuerId" />
 		<parameter name="headers" value="" />
 		<parameter name="idKeyName" value="state,authorizationUrl" />
-		<parameter name="prerequisite" value="Yes" />
 		<classes>
 			<class
 					name="io.inji.testrig.apirig.mimoto.testscripts.PostWithPathParamsHeadersAndCookieForAutoGenId" />
@@ -345,7 +343,6 @@
 		<parameter name="pathParams" value="issuerId" />
 		<parameter name="headers" value="" />
 		<parameter name="idKeyName" value="state,authorizationUrl" />
-		<parameter name="prerequisite" value="Yes" />
 		<classes>
 			<class
 					name="io.inji.testrig.apirig.mimoto.testscripts.PostWithPathParamsHeadersAndCookieForAutoGenId" />
