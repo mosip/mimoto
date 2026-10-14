@@ -19,7 +19,7 @@ OAuthDetailsRequestSunBirdCForGoogleLogin:
       	"prompt": "login",
       	"acrValues": "mosip:idp:acr:knowledge",
       	"nonce": "$UNIQUENONCEVALUEFORESIGNET$",
-      	"state": "eree2311",
+      	"state": "$ID:IssuersAuthorize_StayProtectedForGoogleLogin_All_Valid_Smoke_sid_state$",
       	"claimsLocales": "en",
       	"codeChallenge": "$ID:IssuersAuthorize_StayProtectedForGoogleLogin_All_Valid_Smoke_sid_authorizationUrl$",
         "codeChallengeMethod": "S256"
@@ -48,7 +48,7 @@ OAuthDetailsRequestSunBirdCForGoogleLogin:
       	"prompt": "login",
       	"acrValues": "mosip:idp:acr:knowledge",
       	"nonce": "$UNIQUENONCEVALUEFORESIGNET$",
-      	"state": "eree2311",
+      	"state": "$ID:IssuersAuthorize_StayProtectedForGoogleLogin_MultipleVC_sid_state$",
       	"claimsLocales": "en",
       	"codeChallenge": "$ID:IssuersAuthorize_StayProtectedForGoogleLogin_MultipleVC_sid_authorizationUrl$",
         "codeChallengeMethod": "S256"
