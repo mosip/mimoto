@@ -2,6 +2,14 @@ package io.mosip.mimoto.constant;
 
 public class SwaggerLiteralConstants {
 
+    /* Device Registration Controller */
+    public static final String DEVICE_NAME = "Device Registration";
+    public static final String DEVICE_DESCRIPTION = "Registers wallet device keys after platform attestation, used to gate get-token";
+    public static final String DEVICE_NONCE_SUMMARY = "Get a single-use nonce";
+    public static final String DEVICE_NONCE_DESCRIPTION = "Returns a nonce for device registration or for a device proof on get-token. Each nonce is accepted once and expires after expires_in seconds.";
+    public static final String DEVICE_REGISTER_SUMMARY = "Register a device key";
+    public static final String DEVICE_REGISTER_DESCRIPTION = "Verifies a platform attestation (Play Integrity on Android) requested with base64url(SHA-256(nonce + JWK thumbprint)) and registers the device public key. Returns 201 with no body.";
+
     /* Attestation Controller */
     public static final String ATTESTATION_NAME = "Attestation";
     public static final String ATTESTATION_DESCRIPTION = "All the attestation related endpoints";

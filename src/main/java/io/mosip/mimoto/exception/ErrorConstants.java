@@ -54,7 +54,13 @@ public enum ErrorConstants {
     JWT_SIGNING_ERROR("jwt_signing_error", "Failed to sign JWT token during presentation submission"),
     KEY_GENERATION_ERROR("key_generation_error", "Failed to generate or retrieve cryptographic key"),
     DECRYPTION_ERROR("decryption_error", "Failed to decrypt data"),
-    INVALID_RESPONSE_MODE("invalid_response_mode", "The requested response mode is not supported.");
+    INVALID_RESPONSE_MODE("invalid_response_mode", "The requested response mode is not supported."),
+
+    INVALID_NONCE("invalid_nonce", "The nonce is unknown, expired or already used"),
+    ATTESTATION_FAILED("attestation_failed", "The device attestation could not be verified"),
+    DEVICE_REVOKED("device_revoked", "The device key has been revoked"),
+    INVALID_DEVICE_PROOF("invalid_device_proof", "The device proof is missing or invalid"),
+    DEVICE_NOT_REGISTERED("device_not_registered", "The device key is not registered");
 
     private final String errorCode;
     private final String errorMessage;
