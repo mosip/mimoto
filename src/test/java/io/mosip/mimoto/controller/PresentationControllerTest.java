@@ -570,7 +570,7 @@ public class PresentationControllerTest {
     }
 
     @Test
-    public void should_rejectUntrustedVerifierRedirect_andFallBackToRegisteredRedirectUri() throws Exception {
+    public void should_fallBackToRegisteredRedirectUri_when_verifierErrorRedirectIsUntrusted() throws Exception {
         String errorCode = "VP_NOT_CREATED";
         String errorMessage = "VP creation failed";
         when(objectMapper.readValue(PRESENTATION_DEFINITION_JSON, PresentationDefinitionDTO.class))

@@ -120,7 +120,7 @@ public class CredentialShareControllerTest {
     }
 
     @Test
-    public void requestShouldFailWhenResidentResponseIsNull() throws Exception {
+    public void should_throwApisResourceAccessException_when_residentResponseIsNull() throws Exception {
         AppCredentialRequestDTO requestDTO = new AppCredentialRequestDTO();
         requestDTO.setUser("mono");
         requestDTO.setTransactionID("transactionId");

@@ -116,29 +116,29 @@ public class VerifierServiceTest {
     }
 
     @Test
-    public void verifyRedirectUriReturnsRedirectUriWhenItMatchesRegisteredUri() {
+    public void should_returnRedirectUri_when_itMatchesRegisteredUri() {
         assertEquals("https://test-redirectUri",
                 verifiersService.verifyRedirectUri("test-clientId", "https://test-redirectUri"));
     }
 
     @Test
-    public void verifyRedirectUriReturnsNullWhenRedirectUriDoesNotMatch() {
+    public void should_returnNull_when_redirectUriDoesNotMatch() {
         assertNull(verifiersService.verifyRedirectUri("test-clientId", "https://evil.example/phish"));
     }
 
     @Test
-    public void verifyRedirectUriReturnsNullWhenRedirectUriIsBlank() {
+    public void should_returnNull_when_redirectUriIsBlank() {
         assertNull(verifiersService.verifyRedirectUri("test-clientId", "  "));
         assertNull(verifiersService.verifyRedirectUri("test-clientId", null));
     }
 
     @Test
-    public void verifyRedirectUriReturnsNullWhenClientIsUnknown() {
+    public void should_returnNull_when_clientIsUnknown() {
         assertNull(verifiersService.verifyRedirectUri("unknown-client", "https://test-redirectUri"));
     }
 
     @Test
-    public void verifyRedirectUriReturnsNullWhenTrustedVerifiersCannotBeLoaded() {
+    public void should_returnNull_when_trustedVerifiersCannotBeLoaded() {
         when(utilities.getTrustedVerifiersJsonValue()).thenReturn(null);
 
         assertNull(verifiersService.verifyRedirectUri("test-clientId", "https://test-redirectUri"));
