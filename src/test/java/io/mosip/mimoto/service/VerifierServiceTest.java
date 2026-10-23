@@ -116,6 +116,35 @@ public class VerifierServiceTest {
     }
 
     @Test
+    public void verifyRedirectUriReturnsRedirectUriWhenItMatchesRegisteredUri() {
+        assertEquals("https://test-redirectUri",
+                verifiersService.verifyRedirectUri("test-clientId", "https://test-redirectUri"));
+    }
+
+    @Test
+    public void verifyRedirectUriReturnsNullWhenRedirectUriDoesNotMatch() {
+        assertNull(verifiersService.verifyRedirectUri("test-clientId", "https://evil.example/phish"));
+    }
+
+    @Test
+    public void verifyRedirectUriReturnsNullWhenRedirectUriIsBlank() {
+        assertNull(verifiersService.verifyRedirectUri("test-clientId", "  "));
+        assertNull(verifiersService.verifyRedirectUri("test-clientId", null));
+    }
+
+    @Test
+    public void verifyRedirectUriReturnsNullWhenClientIsUnknown() {
+        assertNull(verifiersService.verifyRedirectUri("unknown-client", "https://test-redirectUri"));
+    }
+
+    @Test
+    public void verifyRedirectUriReturnsNullWhenTrustedVerifiersCannotBeLoaded() {
+        when(utilities.getTrustedVerifiersJsonValue()).thenReturn(null);
+
+        assertNull(verifiersService.verifyRedirectUri("test-clientId", "https://test-redirectUri"));
+    }
+
+    @Test
     public void validateVerifier_succeedsWhenResponseUriNullAndRedirectUriMatches() throws ApiNotAccessibleException, IOException {
         verifiersService.validateVerifier("test-clientId", null, "https://test-redirectUri");
     }
