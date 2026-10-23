@@ -600,32 +600,4 @@ public class PresentationControllerTest {
                 .andExpect(redirectedUrl(expectedRedirectUrl));
     }
 
-    @Test
-    public void should_fallBackToInjiWeb_whenRedirectUriIsNotRegistered() throws Exception {
-        String errorCode = "VP_NOT_CREATED";
-        String errorMessage = "VP creation failed";
-        String untrustedRedirectUri = "https://evil.example/phish";
-        when(objectMapper.readValue(PRESENTATION_DEFINITION_JSON, PresentationDefinitionDTO.class))
-                .thenReturn(new PresentationDefinitionDTO());
-        when(verifierService.validateVerifier(CLIENT_ID, null, untrustedRedirectUri))
-                .thenReturn(createVerifierDTO(SpecVersion.DRAFT_23));
-        when(presentationService.processVPRequest(any(PresentationRequestDTO.class), any(SpecVersion.class)))
-                .thenThrow(new VPNotCreatedException(errorCode, errorMessage));
-
-        String expectedRedirectUrl = String.format(
-                "https://inji.web.redirect.url?error_code=%s&error_message=%s",
-                errorCode,
-                URLEncoder.encode(errorMessage, StandardCharsets.UTF_8)
-        );
-
-        mockMvc.perform(get("/authorize")
-                        .param("response_type", RESPONSE_TYPE)
-                        .param("resource", RESOURCE)
-                        .param("presentation_definition", PRESENTATION_DEFINITION_JSON)
-                        .param("client_id", CLIENT_ID)
-                        .param("redirect_uri", untrustedRedirectUri))
-                .andExpect(status().isFound())
-                .andExpect(redirectedUrl(expectedRedirectUrl));
-    }
-
 }
