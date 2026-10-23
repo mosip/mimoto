@@ -133,7 +133,8 @@ public class PresentationController {
                 log.error("Failed to post authorization error to response_uri. Falling back to error redirect.", postFailure);
             }
         }
-        sendRedirect(response, redirectUri, code, message, exception);
+        String trustedFallback = verifierService.verifyRedirectUri(clientId, redirectUri);
+        sendRedirect(response, trustedFallback != null ? trustedFallback : injiWebRedirectUrl, code, message, exception);
     }
 
     private void sendRedirect(HttpServletResponse response, String domain, String code, String message, Exception exception) throws IOException {
