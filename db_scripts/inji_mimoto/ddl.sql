@@ -10,3 +10,4 @@
 \ir ddl/mimoto-verifiable_credentials.sql
 \ir ddl/mimoto-trusted-verifiers.sql
 \ir ddl/mimoto-verifiable_presentations.sql
+\ir ddl/mimoto-device_registration.sql
